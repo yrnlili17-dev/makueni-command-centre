@@ -68,7 +68,7 @@ app.use("/s", shortLinkRouter);
 if (isProd) {
   const dashboardDir = path.resolve(
     process.cwd(),
-    "artifacts/commandcentre/dist/public",
+    "../commandcentre/dist/public",
   );
 
   app.use(express.static(dashboardDir));
