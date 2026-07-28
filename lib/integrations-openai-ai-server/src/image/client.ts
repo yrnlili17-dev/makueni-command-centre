@@ -1,17 +1,23 @@
 import OpenAI from "openai";
 
-const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
-const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+const apiKey =
+  process.env.AI_INTEGRATIONS_OPENAI_API_KEY ||
+  process.env.OPENAI_API_KEY;
 
-export const imageAiEnabled = Boolean(apiKey && baseURL);
+const baseURL =
+  process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ||
+  "https://api.openai.com/v1";
 
-if (!imageAiEnabled) {
-  console.warn(
-    "OpenAI image integration is disabled because the required environment variables are not configured.",
-  );
+export const aiEnabled = Boolean(
+  process.env.AI_INTEGRATIONS_OPENAI_API_KEY &&
+  process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+);
+
+if (!aiEnabled) {
+  console.warn("OpenAI integration is disabled.");
 }
 
-export const openaiImageClient = new OpenAI({
+export const openai = new OpenAI({
   apiKey: apiKey || "openai-disabled",
-  baseURL: baseURL || "https://api.openai.com/v1",
+  baseURL,
 });
