@@ -147,7 +147,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="p-6 flex items-center gap-3 border-b border-border">
           <img src={brandIcon} alt="CommandCentre OS" className="w-8 h-8 object-contain" />
           <div className="flex flex-col">
-            <span className="font-bold tracking-widest text-sm">KALOKI 2027 COMMAND CENTRE</span>
+            <span className="font-bold tracking-widest text-sm">CAMPAIGN COMMAND CENTRE</span>
             <span className="text-[10px] text-primary font-mono tracking-widest">[ SYSTEM_ACTIVE ]</span>
           </div>
         </div>
