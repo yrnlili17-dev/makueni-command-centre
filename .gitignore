@@ -53,3 +53,6 @@ __pycache__/
 *.py[cod]
 .streamlit/secrets.toml
 *.zip
+
+*.swp
+*.swo
