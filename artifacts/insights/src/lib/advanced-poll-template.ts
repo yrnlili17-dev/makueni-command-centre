@@ -11,7 +11,7 @@ export interface PollTemplate {
   questions: TemplateQuestion[];
 }
 
-// Candidate roster for the Matungulu MNA race. Edit these names/spellings in the
+// Candidate roster for the Makueni MNA race. Edit these names/spellings in the
 // builder before publishing, and mirror any changes in the favorability and
 // second-choice questions below.
 const CANDIDATES = [
@@ -59,7 +59,7 @@ const performanceQuestions: TemplateQuestion[] = [
 // salience. Built only from the question types the app supports
 // (single_choice, multi_choice, open_ended).
 export const ADVANCED_POLL_TEMPLATE: PollTemplate = {
-  title: "Matungulu Constituency Opinion Poll — 2027 (Advanced)",
+  title: "Makueni Constituency Opinion Poll — 2027 (Advanced)",
   description:
     "Scientifically structured constituency poll: screening, likely-voter filter, demographics for stratification, vote intention (with undecided/none), intensity, second choice, favorability, and issue salience. Edit candidate names and the ward list to match the official IEBC roster before publishing.",
   questions: [
@@ -72,13 +72,13 @@ export const ADVANCED_POLL_TEMPLATE: PollTemplate = {
     },
     {
       type: "single_choice",
-      text: "Do you currently live in Matungulu Constituency?",
+      text: "Do you currently live in Makueni Constituency?",
       options: ["Yes", "No"],
       required: true,
     },
     {
       type: "single_choice",
-      text: "Are you registered to vote at a polling station within Matungulu?",
+      text: "Are you registered to vote at a polling station within Makueni?",
       options: ["Yes", "No", "Not sure"],
       required: true,
     },
@@ -101,8 +101,8 @@ export const ADVANCED_POLL_TEMPLATE: PollTemplate = {
       text: "Which ward do you live in?",
       options: [
         "Tala",
-        "Matungulu North",
-        "Matungulu West",
+        "Makueni North",
+        "Makueni West",
         "Kyeleni",
         "Kauti",
         "Other / Not sure",
@@ -157,7 +157,7 @@ export const ADVANCED_POLL_TEMPLATE: PollTemplate = {
     // ─── Section C · Mood & incumbent assessment ───
     {
       type: "single_choice",
-      text: "Generally, do you think things in Matungulu are heading in the right or the wrong direction?",
+      text: "Generally, do you think things in Makueni are heading in the right or the wrong direction?",
       options: ["Right direction", "Wrong direction", "Mixed / Both", "Don't know"],
       required: false,
     },
@@ -177,7 +177,7 @@ export const ADVANCED_POLL_TEMPLATE: PollTemplate = {
     // ─── Section D · Vote intention (primary outcome) ───
     {
       type: "single_choice",
-      text: "If the election for Member of National Assembly for Matungulu were held today, who would you vote for?",
+      text: "If the election for Member of National Assembly for Makueni were held today, who would you vote for?",
       options: [
         ...CANDIDATES,
         "Other candidate",

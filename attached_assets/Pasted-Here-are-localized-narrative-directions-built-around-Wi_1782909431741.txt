@@ -1,15 +1,15 @@
-Here are localized narrative directions built around Wiper’s “Komboa Kenya” and Mwanamule’s profile, tailored to Matungulu. Think of these as “core storylines” you can test in vernacular and English:
+Here are localized narrative directions built around Wiper’s “Komboa Kenya” and Mwanamule’s profile, tailored to Makueni. Think of these as “core storylines” you can test in vernacular and English:
 
 ### 1. Development & Reliability (Primary Narrative)
-**Core idea:** “A trusted engineer to fix Matungulu’s basics – water, roads, jobs.”
+**Core idea:** “A trusted engineer to fix Makueni’s basics – water, roads, jobs.”
 
 - English:  
-  - “Mwanamule: Mhandisi wa Maendeleo, Komboa Matungulu.”  
-  - “Under the Umbrella, Matungulu Must Move Forward.”
+  - “Mwanamule: Mhandisi wa Maendeleo, Komboa Makueni.”  
+  - “Under the Umbrella, Makueni Must Move Forward.”
 - Kiswahili/Kikamba mix:  
-  - “Mwanamule, Mhandisi wa Kweli – Tũkomboe Matungulu, tũtwe na maji, njia na kasi ya kazi.”  
+  - “Mwanamule, Mhandisi wa Kweli – Tũkomboe Makueni, tũtwe na maji, njia na kasi ya kazi.”  
 - Pure Kikamba flavor (for barazas/posters, adjust spelling to local norm):  
-  - “Mwanamule: Mũtumia wa nesa, twambie Matungulu ĩĩsye mbele.”
+  - “Mwanamule: Mũtumia wa nesa, twambie Makueni ĩĩsye mbele.”
 
 **Why:** Links his biomedical engineer credibility to fixing water, roads, health – concrete issues every ward feels.
 
@@ -19,9 +19,9 @@ Here are localized narrative directions built around Wiper’s “Komboa Kenya�
 **Core idea:** “The youth are the engine; the MP is the connector.”
 
 - English:  
-  - “Mwanamule: Empowering Youth, Building Matungulu’s Future.”  
+  - “Mwanamule: Empowering Youth, Building Makueni’s Future.”  
 - Kiswahili/Kikamba:  
-  - “Vijana Kwanza, Kazi Kwanza – Mwanamule aũsya matalanta ma Matungulu.”  
+  - “Vijana Kwanza, Kazi Kwanza – Mwanamule aũsya matalanta ma Makueni.”  
   - “Mwanamule na Vijana: Tũsye na Kazi, Siyo Ahadi Tupu.”
 
 **Why:** Speaks to 75,000 youth; keeps it about practical empowerment (skills, hustles, bodaboda, ICT).
@@ -32,9 +32,9 @@ Here are localized narrative directions built around Wiper’s “Komboa Kenya�
 **Core idea:** “No more excuses on water and roads.”
 
 - English:  
-  - “Maji, Barabara, Kazi – Mwanamule Delivers for Matungulu.”  
+  - “Maji, Barabara, Kazi – Mwanamule Delivers for Makueni.”  
 - Kiswahili/Kikamba:  
-  - “Maji kwa Boma, Barabara kwa Soko – Mwanamule Atũnge Matungulu.”  
+  - “Maji kwa Boma, Barabara kwa Soko – Mwanamule Atũnge Makueni.”  
   - “Tũtandĩkĩe na Maji na Barabara – Mũtumia ni Mwanamule.”
 
 **Why:** Directly matches top grievances: clean water and infrastructure.
@@ -42,13 +42,13 @@ Here are localized narrative directions built around Wiper’s “Komboa Kenya�
 ---
 
 ### 4. Integrity & Oversight Narrative
-**Core idea:** “A serious MP who fights for Matungulu’s share in Nairobi.”
+**Core idea:** “A serious MP who fights for Makueni’s share in Nairobi.”
 
 - English:  
-  - “Your Voice in Nairobi, Your Defender in Matungulu.”  
+  - “Your Voice in Nairobi, Your Defender in Makueni.”  
   - “Mwanamule: Maendeleo Bila Ulaghai.”  
 - Kiswahili/Kikamba:  
-  - “Mwanamule: Sauti ya Matungulu Bungeni, Mlinzi wa Fedha za Wenyeji.”  
+  - “Mwanamule: Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji.”  
   - “Maendeleo na Ukweli – Sio Siasa za Porojo.”
 
 **Why:** Distinguishes him from “holiday MPs”; ties to constitutional mandate pillar.
@@ -59,12 +59,12 @@ Here are localized narrative directions built around Wiper’s “Komboa Kenya�
 **Core idea:** “One of us, who knows our roads, our churches, our quarries.”
 
 - English:  
-  - “From Matungulu, For Matungulu – Mwanamule Under the Umbrella.”  
+  - “From Makueni, For Makueni – Mwanamule Under the Umbrella.”  
 - Kiswahili/Kikamba:  
-  - “Mwanamule wa Kitũi kya Matungulu – Twĩtwe na Mũtumia ĩtũ.”  
-  - “Mwanamule: Mwana wa Matungulu, Mwana wa Kila Kijiji.”
+  - “Mwanamule wa Kitũi kya Makueni – Twĩtwe na Mũtumia ĩtũ.”  
+  - “Mwanamule: Mwana wa Makueni, Mwana wa Kila Kijiji.”
 
-**Why:** Taps into local patronage and home-ward advantage (Matungulu West).
+**Why:** Taps into local patronage and home-ward advantage (Makueni West).
 
 ---
 
@@ -72,18 +72,18 @@ Here are localized narrative directions built around Wiper’s “Komboa Kenya�
 
 1. **By Ward:**
    - Tala: Emphasize “markets, youth, bodaboda, security.”  
-   - Matungulu West/North/East: “water, coffee prices, roads, bursaries.”  
+   - Makueni West/North/East: “water, coffee prices, roads, bursaries.”  
    - Kyeleni: “water, feeder roads, security, quarry safety.”
 
 2. **By Language Mix:**
    - Posters/billboards: Short bilingual lines:  
      - Top: “Komboa Kenya”  
-     - Bottom: “Komboa Matungulu na Mwanamule – Maji, Barabara, Kazi.”
+     - Bottom: “Komboa Makueni na Mwanamule – Maji, Barabara, Kazi.”
    - Barazas/church: He leans into Kikamba versions; MC uses Kiswahili and English.
 
 3. **Online vs Offline:**
    - Online: Use the youth-focused variant:  
-     - “Vijana Kwanza, Kazi Kwanza – Mwanamule Matungulu 2027.”  
+     - “Vijana Kwanza, Kazi Kwanza – Mwanamule Makueni 2027.”  
    - Offline (barazas/markets): Use water/roads + integrity lines.
 
 ---

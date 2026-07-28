@@ -6,7 +6,7 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "seed": "tsx ./src/seed.ts",
-    "import-matungulu-insights": "tsx ./src/import-matungulu-insights.ts",
+    "import-makueni-insights": "tsx ./src/import-makueni-insights.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
