@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     region: frankfurt
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && PORT=10000 BASE_PATH=/ NODE_ENV=production pnpm --filter @workspace/commandcentre run build && pnpm --filter @workspace/api-server run build
+    buildCommand: corepack enable && pnpm config set dangerouslyAllowAllBuilds true && pnpm install --frozen-lockfile && PORT=10000 BASE_PATH=/ NODE_ENV=production pnpm --filter @workspace/commandcentre run build && pnpm --filter @workspace/api-server run build
     startCommand: pnpm --filter @workspace/api-server run start
     healthCheckPath: /api/healthz
     envVars:
