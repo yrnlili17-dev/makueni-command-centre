@@ -17,10 +17,41 @@ declare global {
 declare module "express-session" {
   interface SessionData {
     userId?: number;
+    emergencyAuth?: boolean;
   }
 }
 
 export type PermLevel = "none" | "read" | "write";
+
+export const emergencyPermissions: Record<string, PermLevel> = new Proxy(
+  {},
+  {
+    get: () => "write" as PermLevel,
+  },
+);
+
+export function emergencyUser(): AdminUser {
+  return {
+    id: -1,
+    name: process.env.EMERGENCY_LOGIN_NAME || "Emergency Administrator",
+    email: process.env.EMERGENCY_LOGIN_EMAIL || "emergency-admin@local.invalid",
+    username: process.env.EMERGENCY_LOGIN_USERNAME || "emergency-admin",
+    passwordHash: null,
+    phone: null,
+    role: "super_admin",
+    status: "active",
+    notes: "Temporary emergency database-independent account",
+    inviteToken: null,
+    invitedBy: null,
+    lastLoginAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+}
+
+export function isEmergencySession(req: Request): boolean {
+  return req.session?.emergencyAuth === true;
+}
 
 // ── Password hashing ──────────────────────────────────────────────────────────
 
@@ -105,13 +136,19 @@ export function sanitizeUser(user: AdminUser): Omit<AdminUser, "passwordHash"> {
 // ── Session helpers / middleware ──────────────────────────────────────────────
 
 export async function getSessionUser(req: Request): Promise<AdminUser | null> {
+  if (isEmergencySession(req)) {
+    return emergencyUser();
+  }
+
   const userId = req.session?.userId;
   if (!userId) return null;
+
   const [user] = await db
     .select()
     .from(adminUsersTable)
     .where(eq(adminUsersTable.id, userId))
     .limit(1);
+
   return user ?? null;
 }
 
@@ -147,6 +184,12 @@ export function requirePermission(module: string, level: PermLevel = "read") {
       return;
     }
     req.currentUser = user;
+
+    if (isEmergencySession(req)) {
+      next();
+      return;
+    }
+
     const perms = await permissionsForRole(user.role);
     const have = perms[module] ?? "none";
     const ok = level === "read" ? have === "read" || have === "write" : have === "write";
