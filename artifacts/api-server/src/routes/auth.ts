@@ -34,21 +34,31 @@ function safeEqual(value: string, expected: string): boolean {
 }
 
 function emergencyLoginAllowed(identifier: string, password: string): boolean {
-  if (process.env.EMERGENCY_LOGIN_ENABLED !== "true") {
-    return false;
-  }
+  const enabled = process.env.EMERGENCY_LOGIN_ENABLED === "true";
+  const expectedUsername = process.env.EMERGENCY_LOGIN_USERNAME ?? "";
+  const expectedPassword = process.env.EMERGENCY_LOGIN_PASSWORD ?? "";
 
-  const expectedUsername = process.env.EMERGENCY_LOGIN_USERNAME;
-  const expectedPassword = process.env.EMERGENCY_LOGIN_PASSWORD;
+  const usernameMatches =
+    expectedUsername.length > 0 &&
+    identifier.trim().toLowerCase() === expectedUsername.trim().toLowerCase();
 
-  if (!expectedUsername || !expectedPassword) {
-    return false;
-  }
+  const passwordMatches =
+    expectedPassword.length > 0 &&
+    safeEqual(password, expectedPassword);
 
-  return (
-    safeEqual(identifier.trim().toLowerCase(), expectedUsername.toLowerCase()) &&
-    safeEqual(password, expectedPassword)
-  );
+  console.log("Emergency login diagnostic:", {
+    enabled,
+    usernameConfigured: expectedUsername.length > 0,
+    passwordConfigured: expectedPassword.length > 0,
+    submittedUsername: identifier.trim().toLowerCase(),
+    configuredUsername: expectedUsername.trim().toLowerCase(),
+    usernameMatches,
+    submittedPasswordLength: password.length,
+    configuredPasswordLength: expectedPassword.length,
+    passwordMatches,
+  });
+
+  return enabled && usernameMatches && passwordMatches;
 }
 
 router.post("/login", async (req, res) => {
