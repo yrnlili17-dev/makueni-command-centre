@@ -50,7 +50,7 @@ export default function Login() {
 
         <div className="flex flex-col items-center mb-8">
           <img src={brandIcon} alt="Logo" className="w-16 h-16 mb-4" />
-          <h1 className="text-xl font-bold tracking-widest text-foreground">MAKUENI COMMAND CENTRE</h1>
+          <h1 className="text-xl font-bold tracking-widest text-foreground">KALOKI 2027 COMMAND CENTRE</h1>
           <p className="text-xs font-mono text-muted-foreground mt-2 tracking-widest">[ AUTHENTICATION_REQUIRED ]</p>
         </div>
 

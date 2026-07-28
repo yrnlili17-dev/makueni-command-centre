@@ -11,7 +11,7 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+const WARDS = ["Tulimani", "Mbooni", "Kithungo/Kitundu", "Kisau/Kiteta", "Kako/Waia", "Kalawa", "Kiima Kiu/Kalanzoni", "Mukaa", "Kasikeu", "Kee", "Kilungu", "Ilima", "Ukia", "Wote", "Muvau/Kikumini", "Mavindini", "Kitise/Kithuki", "Kathonzweni", "Nzaui/Kilili/Kalamba", "Mbitini", "Makindu", "Nguumo", "Kikumbulyu North", "Kikumbulyu South", "Nguu/Masumba", "Emali/Mulala", "Masongaleni", "Mtito Andei", "Thange", "Ivingoni/Nzambani"];
 const ROLES = ["canvasser", "team_lead", "coordinator", "phone_banker", "data_entry", "mobilizer", "agent"];
 const TASK_CATEGORIES = ["canvassing", "voter_registration", "distribution", "mobilization", "data_collection", "media", "logistics", "security"];
 const PRIORITIES = ["low", "medium", "high", "critical"];
@@ -197,7 +197,7 @@ export default function Volunteers() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-widest">VOLUNTEER COMMAND</h1>
-          <p className="text-[10px] font-mono text-muted-foreground mt-0.5">GROUND FORCE MANAGEMENT · MATUNGULU CONSTITUENCY</p>
+          <p className="text-[10px] font-mono text-muted-foreground mt-0.5">GROUND FORCE MANAGEMENT · MAKUENI COUNTY</p>
         </div>
         {tab === "roster" && (
           <button onClick={() => setShowEnlist(v => !v)} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 font-mono text-xs hover:bg-primary/90">
@@ -752,7 +752,7 @@ export default function Volunteers() {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h2 className="font-mono text-sm font-bold tracking-widest">CAMPAIGN MANAGER DAILY REPORT</h2>
-                    <p className="font-mono text-[10px] text-muted-foreground">HON. STEPHEN MULE — MATUNGULU MNA · DATE: {report.date}</p>
+                    <p className="font-mono text-[10px] text-muted-foreground">PROF. PHILIP KALOKI — MAKUENI GOVERNOR 2027 · DATE: {report.date}</p>
                   </div>
                   {report.summary.criticalIssues > 0 && (
                     <span className="font-mono text-[10px] text-red-500 border border-red-500/40 px-2 py-1 animate-pulse">⚠ {report.summary.criticalIssues} CRITICAL ISSUE{report.summary.criticalIssues > 1 ? "S" : ""} REQUIRE ATTENTION</span>

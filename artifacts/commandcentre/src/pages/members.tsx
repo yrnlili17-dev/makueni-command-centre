@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, Trash2, Edit2, X, Check } from "lucide-react";
 
 const SUPPORT_LEVELS = ["strong_supporter", "supporter", "undecided", "soft_opponent", "opponent"];
-const WARDS = ["Tala", "Makueni North", "Makueni East", "Kyeleni", "Makueni West"];
+const WARDS = ["Tulimani", "Mbooni", "Kithungo/Kitundu", "Kisau/Kiteta", "Kako/Waia", "Kalawa", "Kiima Kiu/Kalanzoni", "Mukaa", "Kasikeu", "Kee", "Kilungu", "Ilima", "Ukia", "Wote", "Muvau/Kikumini", "Mavindini", "Kitise/Kithuki", "Kathonzweni", "Nzaui/Kilili/Kalamba", "Mbitini", "Makindu", "Nguumo", "Kikumbulyu North", "Kikumbulyu South", "Nguu/Masumba", "Emali/Mulala", "Masongaleni", "Mtito Andei", "Thange", "Ivingoni/Nzambani"];
 const STATUSES = ["active", "inactive", "deceased"];
 
 function SupportBadge({ level }: { level?: string | null }) {

@@ -1,0 +1,141 @@
+first_name,last_name,full_name,phone,national_id,email,gender,date_of_birth,ward,constituency,county,polling_station,source_files,duplicate_source_rows
+Alex,Zawadi Maluni,Alex Zawadi Maluni,+254704114859,29631392,,,,Ilima,Kaiti,Makueni,Ndolo,KAITI_Representatives_Import(2).csv,1
+Christine,Mutungi,Christine Mutungi,+254717868543,31500344,,,,Ilima,Kaiti,Makueni,Kyamuoso,KAITI_Representatives_Import(2).csv,1
+Nicholas,Nyamai Matata,Nicholas Nyamai Matata,+254725262905,23979063,,,,Ilima,Kaiti,Makueni,Kyesuni,KAITI_Representatives_Import(2).csv,1
+Teresia,Ndanu Peter,Teresia Ndanu Peter,+254723880941,9937708,,,,Ilima,Kaiti,Makueni,Kyakatoni,KAITI_Representatives_Import(2).csv,1
+Albert,Mwovi,Albert Mwovi,+254712265689,22376479,,,,Kee,Kaiti,Makueni,Kyamwalye,KAITI_Representatives_Import(2).csv,1
+Angelina,Ngula,Angelina Ngula,+254769460295,21331919,,,,Kee,Kaiti,Makueni,Mwea,KAITI_Representatives_Import(2).csv,1
+Antony,Sila Kivondo,Antony Sila Kivondo,+254742039659,11732661,,,,Kee,Kaiti,Makueni,Mutulani,KAITI_Representatives_Import(2).csv,1
+Lucia,John,Lucia John,+254721569502,11478109,,,,Kee,Kaiti,Makueni,Thoma,KAITI_Representatives_Import(2).csv,1
+Emmanuel,Wambua,Emmanuel Wambua,+254112207202,34721635,,,,Kilungu,Kaiti,Makueni,Nunguni,KAITI_Representatives_Import(2).csv,1
+Josphine,Kalondu,Josphine Kalondu,+254702296729,33600808,,,,Kilungu,Kaiti,Makueni,Matua,KAITI_Representatives_Import(2).csv,1
+Martin,Maweu,Martin Maweu,+254700509739,3364890,,,,Kilungu,Kaiti,Makueni,Kalongo,KAITI_Representatives_Import(2).csv,1
+Mary,Nthunya,Mary Nthunya,+254726615486,11017292,,,,Kilungu,Kaiti,Makueni,Kithembe,KAITI_Representatives_Import(2).csv,1
+Albanus,Musyoki Munywoki,Albanus Musyoki Munywoki,+254706407777,23247663,,,,Ukia,Kaiti,Makueni,Iuani A.i.c,KAITI_Representatives_Import(2).csv,1
+Felista,Mueni Tom,Felista Mueni Tom,+254759860763,29860050,,,,Ukia,Kaiti,Makueni,Mukuyuni,KAITI_Representatives_Import(2).csv,1
+Fridah,Muendo,Fridah Muendo,+254743090442,30598543,,,,Ukia,Kaiti,Makueni,Kinyongo,KAITI_Representatives_Import(2).csv,1
+Jackson,Mwanzia Waita,Jackson Mwanzia Waita,+254721384032,21144647,,,,Ukia,Kaiti,Makueni,Kyamutimba,KAITI_Representatives_Import(2).csv,1
+Jemina,John,Jemina John,+254746919799,9582892,,,,Ukia,Kaiti,Makueni,Nthongoni,KAITI_Representatives_Import(2).csv,1
+John,Kilonzi,John Kilonzi,+254716882436,21368964,,,,Ukia,Kaiti,Makueni,A.c.k Kaiti-kilala,KAITI_Representatives_Import(2).csv,1
+Abdalla,Musyoka,Abdalla Musyoka,+254710662069,970698,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Abel,Mutevu,Abel Mutevu,+254721642600,7406281,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Aisha,Juma,Aisha Juma,+254717406031,25927108,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Benjamin,Mutangili,Benjamin Mutangili,+254704277447,5422178,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Charles,Mulei,Charles Mulei,+254742876658,36745619,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Daniel,Mwndwa,Daniel Mwndwa,+254708893001,36669399,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+David,Kitusi,David Kitusi,+254796001009,7781357,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Evarlyne,Jacob,Evarlyne Jacob,+254792737237,22361123,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Gabriel,Kisilu,Gabriel Kisilu,+254725374628,22969671,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Jacinta,Mutisya,Jacinta Mutisya,+254702210558,26013662,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Jacob,Mwanza,Jacob Mwanza,+254721666972,13025713,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+James,Matheka,James Matheka,+254714835123,28063636,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Joseph,Kikuto,Joseph Kikuto,+254722671212,31401511,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Joseph,Mutua,Joseph Mutua,+254720278255,14715987,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Kenneth,Kaunga,Kenneth Kaunga,+254721238768,14423538,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Kyalo,Mutuse,Kyalo Mutuse,+254715625587,26952822,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Muse,Wambua,Muse Wambua,+254796318887,21717422,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Paul,Kimeu,Paul Kimeu,+254725246296,7707846,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Peter,Ndolo,Peter Ndolo,+254726797212,30067874,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Robert,Mbuvi,Robert Mbuvi,+254727290030,24960814,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Robert,Mulwa,Robert Mulwa,+254720702056,21941518,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Rosalia,Kisele,Rosalia Kisele,+254720875781,13677427,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Samuel,Masila,Samuel Masila,+254796956638,33645524,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Simon,Sila,Simon Sila,+254722134186,26893182,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Wanahisha,Abdalla,Wanahisha Abdalla,+254725027314,1496413,,,,,Kibwezi West,Makueni County,,KIBWEZI_WEST_CONSTITUENCY_Split(1).csv; Makueni_ master(1).csv,2
+Andrew,Kimilu Nzioki,Andrew Kimilu Nzioki,+254712420881,28489584,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Annah,Mutisya,Annah Mutisya,+254711135064,6120703,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Augustus,Mutiso Kyania,Augustus Mutiso Kyania,+254721792618,24361783,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Caroline,Munanie Musee,Caroline Munanie Musee,+254722851336,14698390,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Catherine,Mukai Ithamba,Catherine Mukai Ithamba,+254727386189,22082440,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Christopher,Wambua Kethae,Christopher Wambua Kethae,+254721299996,7001637,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Cosmas,Mbolu,Cosmas Mbolu,+254705521387,29688020,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Dennis,Mwaka Mutuku,Dennis Mwaka Mutuku,+254727736177,42826890,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Esther,Kwini Mbithi,Esther Kwini Mbithi,+254743804039,6051793,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Fidelia,Kiptoo,Fidelia Kiptoo,+254785205574,21359233,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Francisca,Wanza Munyao,Francisca Wanza Munyao,+254724377883,3358406,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Fredrick,Kakui Muthani,Fredrick Kakui Muthani,+254719265663,31754159,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Jonathan,Junior Ngumbau,Jonathan Junior Ngumbau,+254722814685,4944183,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Julius,Kyalo Mutwili,Julius Kyalo Mutwili,+254722424460,5091864,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Makali,Mohamed,Makali Mohamed,+254713484135,27542782,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Onesmus,Mutio,Onesmus Mutio,+254741221721,38729975,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Pauline,Kimwatu,Pauline Kimwatu,+254726773669,23242096,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Peter,Mulili Mutungi,Peter Mulili Mutungi,+254722920801,1011810,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Rabons,Obadiah Kynguti,Rabons Obadiah Kynguti,+254722249740,0972534,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Sabina,Mueni Paul,Sabina Mueni Paul,+254724220379,13184887,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Serah,Nduku Ndambuki,Serah Nduku Ndambuki,+254722982878,16054445,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Stephen,Tama Muthiani,Stephen Tama Muthiani,+254726121005,21446328,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Thomas,Muthui Mutiso,Thomas Muthui Mutiso,+254725906041,8353546,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Zainab,Mutungi,Zainab Mutungi,+254768071389,12584956,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Zipporah,Kamathe Masau,Zipporah Kamathe Masau,+254726677309,9711216,,,,,Kilome,Makueni County,,KILOME_LIST(1).csv; Makueni_ master(1).csv,2
+Agnes,Mueni Mutie,Agnes Mueni Mutie,+254727897327,11404812,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Agnes,Nduku Pius Maitha,Agnes Nduku Pius Maitha,+254711297626,0246100,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Albanus,Matheka David,Albanus Matheka David,+254721853297,22392950,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Basil,Koli Ngata,Basil Koli Ngata,+254712956208,28294484,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Benson,Muema Mulwa,Benson Muema Mulwa,+254728665366,13267118,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Boniface,Mwanzia Munyao,Boniface Mwanzia Munyao,+254702504950,31040124,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Carol,Taabu Muthoni,Carol Taabu Muthoni,+254723021658,24183377,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Daniel,Mutinda Muteti,Daniel Mutinda Muteti,+254728029519,9290173,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Erick,Muthoka Peter,Erick Muthoka Peter,+254711969476,23508546,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Francis,Mailu Mulandi,Francis Mailu Mulandi,+254721603542,0314855,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Gerald,Ngao,Gerald Ngao,+254792340108,32501003,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Hon.,Diana Musenya,Hon. Diana Musenya,+254728364364,11052681,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Hon.,Mbula Mutula,Hon. Mbula Mutula,+254722117048,27786742,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Hon.,Sammy Mutuku Maseka,Hon. Sammy Mutuku Maseka,+254729381881,2251930,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Joseph,Mutinda Mutua,Joseph Mutinda Mutua,+254798882270,11615425,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Joshua,Kimeu Kimolo,Joshua Kimeu Kimolo,+254728535392,2600385,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Joyce,Musyawa,Joyce Musyawa,+254725041009,8056034,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Mary,Musyimi,Mary Musyimi,+254722927841,8353399,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Maurice,Muoki Mwema,Maurice Muoki Mwema,+254727201040,25224771,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Mohammed,Muli,Mohammed Muli,+254725992189,27176312,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Onesmus,Kyule,Onesmus Kyule,+254721251025,0938077,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Paul,Makau Muindi,Paul Makau Muindi,+254757726000,4882607,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Rebecca,Ndunge Mumina,Rebecca Ndunge Mumina,+254707578216,20168518,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Robert,Mulei Menze Munguti,Robert Mulei Menze Munguti,+254708547676,23310924,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Thomas,Maende Mutinda,Thomas Maende Mutinda,+254748236540,33957467,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Wincaster,Mwende Kioko,Wincaster Mwende Kioko,+254720211834,21592772,,,,,Makueni,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Alex,Mutua,Alex Mutua,+254704499459,,,,,,,Makueni County,Mavindini,Combined_Makueni_List(1).csv; Makueni_ master(1).csv; Makueni_Contacts_Import(2).csv,3
+Alex,Wambua,Alex Wambua,+254701266771,,,,,,,Makueni County,Kamulalani Polling Station,Combined_Makueni_List(1).csv; Makueni_ master(1).csv; Makueni_Contacts_Import(2).csv,3
+Antony,Ngei,Antony Ngei,+254726333591,7710057,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Benjamin,Ndivo,Benjamin Ndivo,+254727401226,10819979,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Bonface,M Kakui,Bonface M Kakui,+254783924622,,,,,,,Makueni,Ngwata Farmers,Makueni_Contacts_Import(2).csv,1
+Brian,N Mutunga,Brian N Mutunga,+254726087843,25452221,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Caro,Mutheu,Caro Mutheu,+254708011406,,,,,,,Makueni County,Ngwata Polytechnic,Combined_Makueni_List(1).csv; Makueni_ master(1).csv; Makueni_Contacts_Import(2).csv,3
+Christine,Muli,Christine Muli,+254759890088,1284876,,,,,,Makueni,,Contacts_List_Exact(2).xlsx,1
+Daniel,Ndavi Matingi,Daniel Ndavi Matingi,+254714751504,26543053,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Dominic,Kasee,Dominic Kasee,+254704044486,,,,,,,Makueni County,Ngwata Farmers,Combined_Makueni_List(1).csv; Makueni_ master(1).csv; Makueni_Contacts_Import(2).csv,3
+Duncan,Muli Koti,Duncan Muli Koti,+254722608692,3548513,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Felix,Muema Mutinda,Felix Muema Mutinda,+254706241084,28351718,,,,,,Makueni County,,Combined_Makueni_List(1).csv; Makueni_ master(1).csv,2
+Francis,Kisolo,Francis Kisolo,+254723907732,25234803,,,,,,Makueni,,Contacts_List_Exact(2).xlsx,1
+Georgina,Ndanu,Georgina Ndanu,+254725722409,11602195,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Gerald,Kimeu,Gerald Kimeu,+254727598393,21923803,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Gershom,Katumo,Gershom Katumo,+254721939836,,,,,,,Makueni,Molemuni Polling Station,Makueni_Contacts_Import(2).csv,1
+Jackson,Mutune,Jackson Mutune,+254722278688,21554985,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Jackson,Wambua,Jackson Wambua,+254712348031,1325640,,,,,,Makueni,,Contacts_List_Exact(2).xlsx,1
+Janet,Mwikali,Janet Mwikali,+254721393011,13728832,,,,,,Makueni,,Contacts_List_Exact(2).xlsx,1
+Jenifer,Mutinga,Jenifer Mutinga,+254715771697,2812,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+John,Musili,John Musili,+254704947546,27042089,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+John,Nthei,John Nthei,+254714472187,,,,,,,Makueni,Ivoleni Primary,Makueni_Contacts_Import(2).csv,1
+Johnston,Musili,Johnston Musili,+254715683850,20536575,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Jonathan,Wambua,Jonathan Wambua,+254722481207,11647955,,,,,,Makueni,,Contacts_List_Exact(2).xlsx,1
+Joseph,Kimilu,Joseph Kimilu,+254721311242,7945224,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Joseph,Kimuli Makanyanga,Joseph Kimuli Makanyanga,+254740429380,,,,,,,Makueni County,Kai Polling Station,Combined_Makueni_List(1).csv; Makueni_ master(1).csv; Makueni_Contacts_Import(2).csv,3
+Kilonzo,Mutuku,Kilonzo Mutuku,+254707448791,,,,,,,Makueni County,Molemuni Primary,Combined_Makueni_List(1).csv; Makueni_ master(1).csv; Makueni_Contacts_Import(2).csv,3
+Lucy,Mueni,Lucy Mueni,+254790928592,28921775,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Martin,Mboloi,Martin Mboloi,+254722780253,7794407,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Michael,Kaleli,Michael Kaleli,+254769060623,,,,,,,Makueni,Ngwata Farmers,Makueni_Contacts_Import(2).csv,1
+Mutisya,Kalunda,Mutisya Kalunda,+254727464112,,,,,,,Makueni County,Ngwata Youth Polytechnic,Combined_Makueni_List(1).csv; Makueni_ master(1).csv; Makueni_Contacts_Import(2).csv,3
+Patrick,Musili,Patrick Musili,07277704775,21651322,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Paul,Mulei,Paul Mulei,+254797992393,38041466,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Raphael,Muli,Raphael Muli,+254717638948,11061664,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Robinson,Kithembwa,Robinson Kithembwa,+254720358489,22620853,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Roggers,Mejah Musomba,Roggers Mejah Musomba,+254743282031,,,,,,,Makueni,Molemuni Primary School,Makueni_Contacts_Import(2).csv,1
+Ruth,Suvai,Ruth Suvai,+254725634128,12713682,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Shadrack,Mbuta,Shadrack Mbuta,+254714671520,,,,,,,Makueni County,Kamulalani Polling Station,Combined_Makueni_List(1).csv; Makueni_ master(1).csv; Makueni_Contacts_Import(2).csv,3
+Shadrack,Nyamu,Shadrack Nyamu,+254720205740,12957398,,,,,,Makueni,,Contacts_List_Exact(2).xlsx,1
+Shalom,Paskal Mwendwa,Shalom Paskal Mwendwa,+254748287751,,,,,,,Makueni,Sultan Hamud Polling,Makueni_Contacts_Import(2).csv,1
+Stephen,Mutunga,Stephen Mutunga,+254799266590,,,,,,,Makueni,Nzambani Polling Station,Makueni_Contacts_Import(2).csv,1
+Stephen,Mwanzia,Stephen Mwanzia,+254794989079,,,,,,,Makueni County,Kambu Township,Combined_Makueni_List(1).csv; Makueni_ master(1).csv; Makueni_Contacts_Import(2).csv,3
+Stephen,Wambua,Stephen Wambua,+254723602300,27185236,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Susan,Kaloki,Susan Kaloki,,,,,,,,Makueni County,,Contacts_List_Makueni(1).csv; Makueni_ master(1).csv,2
+Titus,Muthama,Titus Muthama,+254721695327,3034160,,,,,,Makueni,,Contacts_List_Exact(2).xlsx,1
+Zawadi,Mutheu,Zawadi Mutheu,+254112087502,690084335,,,,,,Makueni,,Contacts_List_Exact(2).xlsx,1

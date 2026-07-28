@@ -114,7 +114,7 @@ export default function Turnout() {
             <TrendingUp className="w-5 h-5 text-primary" /> VOTER TURNOUT FORECAST
           </h1>
           <p className="font-mono text-[11px] text-muted-foreground mt-1">
-            Ward-level projection · registered voters × expected turnout × support · Hon. Stephen Mule
+            Ward-level projection · registered voters × expected turnout × support · Prof. Philip Kaloki
           </p>
         </div>
         <button
@@ -139,7 +139,7 @@ export default function Turnout() {
               sub={`${fmt(data.totals.predictedVotes)} OF ${fmt(data.totals.registered)} VOTERS`}
             />
             <StatCard
-              label="PROJECTED MULE VOTES"
+              label="PROJECTED KALOKI VOTES"
               value={fmt(data.totals.predictedMuleVotes)}
               sub={`${data.totals.predictedMuleShare}% PROJECTED VOTE SHARE`}
               accent="text-green-400"
@@ -147,7 +147,7 @@ export default function Turnout() {
             <StatCard
               label="REGISTERED VOTERS"
               value={fmt(data.totals.registered)}
-              sub={`${data.wards.length} WARDS · MATUNGULU`}
+              sub={`${data.wards.length} WARDS · MAKUENI COUNTY`}
             />
             <StatCard
               label="TOP GOTV PRIORITY"
@@ -210,7 +210,7 @@ export default function Turnout() {
                     <th className="text-center p-3">TURNOUT %</th>
                     <th className="text-center p-3">SUPPORT %</th>
                     <th className="text-right p-3">PROJ. VOTES</th>
-                    <th className="text-right p-3">PROJ. MULE</th>
+                    <th className="text-right p-3">PROJ. KALOKI</th>
                     <th className="text-right p-3">GOTV UPSIDE</th>
                     {hasTally && <th className="text-right p-3">ACTUAL T/O</th>}
                   </tr>
@@ -295,7 +295,7 @@ export default function Turnout() {
               <Vote className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
               <div>
                 <div className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">SUPPORT SHARE</div>
-                <p className="text-xs text-muted-foreground">Set your best ward-level estimate for Mule; defaults to {data.defaults.support}%.</p>
+                <p className="text-xs text-muted-foreground">Set your best ward-level estimate for Kaloki; defaults to {data.defaults.support}%.</p>
               </div>
             </div>
             <div className="bg-card border border-border p-4 flex items-start gap-3">

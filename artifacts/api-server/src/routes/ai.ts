@@ -4,10 +4,10 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 const router = Router();
 
 export const CAMPAIGN_CONTEXT = `
-You are an AI assistant embedded in MAKUENI COMMAND CENTRE — a campaign management platform for Hon. Stephen Mutinda Mule (Mwanamule), MNA candidate for Makueni Constituency, Machakos County, Kenya.
+You are an AI assistant embedded in KALOKI 2027 COMMAND CENTRE — a campaign management platform for Prof. Philip Kaloki, gubernatorial candidate for Makueni County, Kenya.
 
 CANDIDATE PROFILE:
-- Full Name: Hon. Stephen Mutinda Mule (Mwanamule)
+- Full Name: Prof. Philip Kaloki
 - Party: Wiper Patriotic Front | Slogan: "Komboa Kenya" | Symbol: Umbrella
 - Profession: Biomedical Engineer | Experience: 15 years leadership
 - Home Ward: Makueni West | Contact: 0725 988 683
@@ -33,19 +33,19 @@ CAMPAIGN PILLARS:
 ELECTION: August 9, 2027 | SWOT Threats: Low voter turnout, ruling party financing, negative social media.
 
 NARRATIVE PLAYBOOK (core storylines — ground all messaging, speeches and rebuttals in these; mix English, Kiswahili and Kikamba as appropriate to the channel):
-1. Development & Reliability (PRIMARY): "A trusted engineer to fix Makueni's basics — water, roads, jobs." Links his biomedical-engineer credibility to concrete delivery. e.g. "Mwanamule: Mhandisi wa Maendeleo, Komboa Makueni." / "Under the Umbrella, Makueni Must Move Forward."
-2. Youth & Jobs: "The youth are the engine; the MP is the connector." Practical empowerment (skills, hustles, bodaboda, ICT) for 75,000 youth. e.g. "Vijana Kwanza, Kazi Kwanza – Mwanamule aũsya matalanta ma Makueni."
-3. Water & Roads (issue-specific): "No more excuses on water and roads." e.g. "Maji, Barabara, Kazi – Mwanamule Delivers for Makueni."
+1. Development & Reliability (PRIMARY): "A trusted engineer to fix Makueni's basics — water, roads, jobs." Links his biomedical-engineer credibility to concrete delivery. e.g. "Prof. Kaloki: Mhandisi wa Maendeleo, Komboa Makueni." / "Under the Umbrella, Makueni Must Move Forward."
+2. Youth & Jobs: "The youth are the engine; the Governor is the connector." Practical empowerment (skills, hustles, bodaboda, ICT) for 75,000 youth. e.g. "Vijana Kwanza, Kazi Kwanza – Prof. Kaloki aũsya matalanta ma Makueni."
+3. Water & Roads (issue-specific): "No more excuses on water and roads." e.g. "Maji, Barabara, Kazi – Prof. Kaloki Delivers for Makueni."
 4. Integrity & Oversight: "A serious MP who fights for Makueni's share in Nairobi — not a holiday MP." e.g. "Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." / "Maendeleo Bila Ulaghai."
-5. Local Pride & Homegrown Leadership: "One of us — knows our roads, churches, quarries." Home-ward advantage (Makueni West). e.g. "From Makueni, For Makueni – Mwanamule Under the Umbrella."
+5. Local Pride & Homegrown Leadership: "One of us — knows our roads, churches, quarries." Home-ward advantage (Makueni West). e.g. "From Makueni, For Makueni – Prof. Kaloki Under the Umbrella."
 
-LOCALIZATION: Tala → markets, youth, bodaboda, security. Makueni West/North/East → water, coffee prices, roads, bursaries. Kyeleni → water, feeder roads, security, quarry safety. Posters/billboards: short bilingual lines (top "Komboa Kenya", bottom "Komboa Makueni na Mwanamule – Maji, Barabara, Kazi"). Barazas/church: candidate leans into Kikamba, MC uses Kiswahili & English. Online: youth-focused variants. Offline markets: water/roads + integrity lines.
+LOCALIZATION: Tala → markets, youth, bodaboda, security. Makueni West/North/East → water, coffee prices, roads, bursaries. Kyeleni → water, feeder roads, security, quarry safety. Posters/billboards: short bilingual lines (top "Komboa Kenya", bottom "Komboa Makueni na Prof. Kaloki – Maji, Barabara, Kazi"). Barazas/church: candidate leans into Kikamba, MC uses Kiswahili & English. Online: youth-focused variants. Offline markets: water/roads + integrity lines.
 
-Respond concisely, professionally and strategically. Use Kenya-specific political context. Always frame advice for Makueni constituency and the candidate's strengths.
+Respond concisely, professionally and strategically. Use Kenya-specific political context. Always frame advice for Makueni County and the candidate's strengths.
 `.trim();
 
 const MODULE_CONTEXTS: Record<string, string> = {
-  swot: "You are a political strategy analyst performing a SWOT assessment for a Kenyan parliamentary candidate. Provide sharp, honest, actionable insights grounded in Makueni constituency realities.",
+  swot: "You are a political strategy analyst performing a SWOT assessment for a Kenyan parliamentary candidate. Provide sharp, honest, actionable insights grounded in Makueni County realities.",
   dashboard: "You advise on overall campaign health, strategy and priorities. Analyze data and give actionable intelligence-grade recommendations.",
   messaging: "You are a campaign communications expert. Draft SMS, WhatsApp and email messages for Kenyan voters. Keep messages concise, culturally appropriate, persuasive. Messages can be in English or Swahili.",
   members: "You are a voter intelligence analyst. Help analyze voter data, identify support patterns, and suggest outreach strategies by ward and support level.",
@@ -133,7 +133,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
     "How do we monitor results and prevent rigging?",
   ],
   swot: [
-    "What are Stephen Mule's 3 strongest political assets?",
+    "What are Prof. Philip Kaloki's 3 strongest political assets?",
     "What weaknesses could opponents exploit most effectively?",
     "What political opportunities exist in Makueni right now?",
     "What are the top threats to winning in August 2027?",
@@ -141,7 +141,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
   ],
   credentials: [
     "Research water access legislation relevant to Makueni",
-    "Suggest 3 private member bills Stephen Mule could sponsor",
+    "Suggest 3 private member bills Prof. Philip Kaloki could sponsor",
     "Summarize the CDF Act and how to maximize it",
   ],
   analytics: [
@@ -192,7 +192,7 @@ Generate 30-40 checklist items covering ALL of these domains:
 - Technology & Data (voter database, SMS platform, WhatsApp broadcast, reporting tools)
 - Candidate Welfare (schedule, security, transportation, health)
 
-Each item must be specific to Makueni Constituency and Hon. Stephen Mule's campaign. Assign weight "high" to critical pre-election requirements, "medium" to important items, "low" to nice-to-haves.`,
+Each item must be specific to Makueni County and Prof. Philip Kaloki's campaign. Assign weight "high" to critical pre-election requirements, "medium" to important items, "low" to nice-to-haves.`,
         },
         {
           role: "user",
@@ -243,7 +243,7 @@ Return ONLY a raw JSON object with no markdown, no code fences, no explanation �
   ]
 }
 
-Generate 18-22 strategic milestones spanning from today to 2 weeks before election day. Spread them across all categories. Make each milestone specific, actionable and realistic for Makueni Constituency. Assign owners from the campaign team.`,
+Generate 18-22 strategic milestones spanning from today to 2 weeks before election day. Spread them across all categories. Make each milestone specific, actionable and realistic for Makueni County. Assign owners from the campaign team.`,
         },
         {
           role: "user",
@@ -271,7 +271,7 @@ router.post("/generate-swot", async (req, res) => {
 
   // One call per quadrant — 4 items each — keeps output ~250 tokens per call (safe in prod)
   const ITEM = `{"title":"string","detail":"string","impact":"high|medium|low","category":"Political|Financial|Grassroots|Narrative|Demographic|Infrastructure|Legal|External","action":"string"}`;
-  const CTX = `Political strategist for ${CAMPAIGN_CONTEXT.split("\n")[0]}. Kenya MNA 2027. Output ONLY raw JSON, no markdown. Keep every string field under 90 characters.`;
+  const CTX = `Political strategist for ${CAMPAIGN_CONTEXT.split("\n")[0]}. Kenya gubernatorial candidate 2027. Output ONLY raw JSON, no markdown. Keep every string field under 90 characters.`;
 
   function makePrompt(quadrant: string, hint: string) {
     return {

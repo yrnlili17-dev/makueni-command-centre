@@ -166,7 +166,7 @@ export default function FieldOps() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-widest">FIELD OPERATIONS</h1>
-          <p className="text-[10px] font-mono text-muted-foreground mt-1 tracking-widest">GROUND GAME COMMAND · 165 POLLING STATIONS · MATUNGULU CONSTITUENCY</p>
+          <p className="text-[10px] font-mono text-muted-foreground mt-1 tracking-widest">GROUND GAME COMMAND · 165 POLLING STATIONS · MAKUENI COUNTY</p>
         </div>
         <div className="flex gap-2">
           <button

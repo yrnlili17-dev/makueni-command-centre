@@ -24,15 +24,15 @@ const idParamSchema = z.object({ id: z.coerce.number().int().positive() });
 const SCAN_CATEGORIES = [
   {
     key: "candidate",
-    prompt: `recent public mentions, news articles, and social media posts about "Hon. Stephen Mule", the Member of Parliament for Makueni Constituency in Machakos County, Kenya`,
+    prompt: `recent public mentions, news articles, and social media posts about "Prof. Philip Kaloki", the Member of Parliament for Makueni County, Kenya`,
   },
   {
     key: "issues",
-    prompt: `recent trending local issues, public concerns, development news, and hot topics among residents of Makueni Constituency and Machakos County, Kenya`,
+    prompt: `recent trending local issues, public concerns, development news, and hot topics among residents of Makueni County and Makueni County, Kenya`,
   },
   {
     key: "opponent",
-    prompt: `recent political activity, statements, or campaigns by rival politicians and opponents in Makueni Constituency and Machakos County, Kenya`,
+    prompt: `recent political activity, statements, or campaigns by rival politicians and opponents in Makueni County and Makueni County, Kenya`,
   },
 ] as const;
 
@@ -43,7 +43,7 @@ Return ONLY a JSON array (no prose, no markdown code fences) of up to 3 objects.
 - "summary": a concise one-line summary, max 90 characters
 - "source": the publication or platform name (e.g. "People Daily", "X/Twitter", "Facebook")
 - "url": the direct source URL
-- "sentiment": one of "positive", "negative", or "neutral" — judged from the perspective of Hon. Stephen Mule's campaign
+- "sentiment": one of "positive", "negative", or "neutral" — judged from the perspective of Prof. Philip Kaloki's campaign
 - "topic": a short 2-4 word topic tag
 - "date": the publication date if known (e.g. "2026-05-26"), otherwise an empty string
 

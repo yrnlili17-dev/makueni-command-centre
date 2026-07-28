@@ -150,7 +150,7 @@ function SmsConfig({ provider, onSaved }: { provider?: Provider; onSaved: () => 
                 <FieldInput label="API KEY" required type="password" placeholder="AT_API_KEY_..." value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />
                 <FieldInput label="USERNAME" required placeholder="sandbox or your username" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />
                 <div className="col-span-2">
-                  <FieldInput label="SENDER ID (SHORTCODE / ALPHANUMERIC)" placeholder="e.g. MULE or 40100" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />
+                  <FieldInput label="SENDER ID (SHORTCODE / ALPHANUMERIC)" placeholder="e.g. KALOKI or 40100" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />
                   <p className="font-mono text-[9px] text-muted-foreground mt-1">Africa's Talking registered sender ID. Leave blank to use default shared shortcode.</p>
                 </div>
               </div>
@@ -171,7 +171,7 @@ function SmsConfig({ provider, onSaved }: { provider?: Provider; onSaved: () => 
                 <FieldInput label="API KEY" required type="password" placeholder="App xxxxxxxxxxxx" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />
                 <FieldInput label="BASE URL" placeholder="xxxxx.api.infobip.com" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />
                 <div className="col-span-2">
-                  <FieldInput label="SENDER NAME / NUMBER" placeholder="MULE2027" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />
+                  <FieldInput label="SENDER NAME / NUMBER" placeholder="KALOKI2027" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />
                 </div>
               </div>
             )}
@@ -392,8 +392,8 @@ function EmailConfig({ provider, onSaved }: { provider?: Provider; onSaved: () =
                 {providerVal === "ses" && (
                   <FieldInput label="AWS SECRET KEY" required type="password" placeholder="aws_secret_access_key" value={form.apiSecret} onChange={e => setForm(p => ({ ...p, apiSecret: e.target.value }))} />
                 )}
-                <FieldInput label="FROM EMAIL" required type="email" placeholder="campaign@mule2027.ke" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
-                <FieldInput label="FROM NAME" placeholder="Hon. Stephen Mule Campaign" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
+                <FieldInput label="FROM EMAIL" required type="email" placeholder="campaign@kaloki2027.ke" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
+                <FieldInput label="FROM NAME" placeholder="Prof. Philip Kaloki Campaign" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
               </div>
             )}
 
@@ -402,8 +402,8 @@ function EmailConfig({ provider, onSaved }: { provider?: Provider; onSaved: () =
                 <div className="col-span-2">
                   <FieldInput label="MANDRILL / MAILCHIMP API KEY" required type="password" placeholder="md-xxxxxxxxxxxxxxxxxxxxxxxx" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />
                 </div>
-                <FieldInput label="FROM EMAIL" required type="email" placeholder="campaign@mule2027.ke" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
-                <FieldInput label="FROM NAME" placeholder="Hon. Stephen Mule Campaign" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
+                <FieldInput label="FROM EMAIL" required type="email" placeholder="campaign@kaloki2027.ke" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
+                <FieldInput label="FROM NAME" placeholder="Prof. Philip Kaloki Campaign" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
               </div>
             )}
 
@@ -411,10 +411,10 @@ function EmailConfig({ provider, onSaved }: { provider?: Provider; onSaved: () =
               <div className="grid grid-cols-2 gap-3">
                 <FieldInput label="SMTP HOST" required placeholder="smtp.gmail.com" value={form.smtpHost} onChange={e => setForm(p => ({ ...p, smtpHost: e.target.value }))} />
                 <FieldInput label="PORT" required placeholder="587" value={form.smtpPort} onChange={e => setForm(p => ({ ...p, smtpPort: e.target.value }))} />
-                <FieldInput label="SMTP USERNAME" required placeholder="campaign@mule2027.ke" value={form.smtpUser} onChange={e => setForm(p => ({ ...p, smtpUser: e.target.value }))} />
+                <FieldInput label="SMTP USERNAME" required placeholder="campaign@kaloki2027.ke" value={form.smtpUser} onChange={e => setForm(p => ({ ...p, smtpUser: e.target.value }))} />
                 <FieldInput label="SMTP PASSWORD" required type="password" placeholder="app_password_here" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />
-                <FieldInput label="FROM EMAIL" required type="email" placeholder="campaign@mule2027.ke" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
-                <FieldInput label="FROM NAME" placeholder="Hon. Stephen Mule Campaign" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
+                <FieldInput label="FROM EMAIL" required type="email" placeholder="campaign@kaloki2027.ke" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
+                <FieldInput label="FROM NAME" placeholder="Prof. Philip Kaloki Campaign" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
               </div>
             )}
 
@@ -601,10 +601,10 @@ export default function Messaging() {
         <div>
           <h1 className="text-xl font-bold tracking-widest flex items-center gap-3">
             <MessageSquare className="w-5 h-5 text-primary" />
-            MESSAGING
+            CAMPAIGN COMMUNICATIONS HUB
           </h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-1 tracking-widest">
-            MULTI-CHANNEL BROADCAST — SMS · WHATSAPP · EMAIL
+            PROF. PHILIP KALOKI 2027 · SMS · WHATSAPP · EMAIL
           </p>
         </div>
 

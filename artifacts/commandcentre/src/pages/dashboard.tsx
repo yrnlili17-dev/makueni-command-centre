@@ -86,7 +86,7 @@ export default function Dashboard() {
         </div>
       ) : null}
 
-      {/* Candidate Profile + Constituency Intel */}
+      {/* Candidate Profile + County Intel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-card border border-border">
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
@@ -96,10 +96,10 @@ export default function Dashboard() {
           <div className="p-4 space-y-2.5">
             <div className="flex items-start justify-between mb-1">
               <div>
-                <p className="font-bold text-sm tracking-wide">HON. STEPHEN MUTINDA MULE</p>
-                <p className="font-mono text-[10px] text-primary tracking-widest mt-0.5">MWANAMULE · MATUNGULU MNA</p>
+                <p className="font-bold text-sm tracking-wide">PROF. PHILIP KALOKI</p>
+                <p className="font-mono text-[10px] text-primary tracking-widest mt-0.5">MAKUENI GOVERNOR 2027</p>
               </div>
-              <span className="font-mono text-[9px] border border-primary/30 px-2 py-0.5 text-primary shrink-0">WIPER PATRIOTIC FRONT</span>
+              <span className="font-mono text-[9px] border border-primary/30 px-2 py-0.5 text-primary shrink-0">DEVELOPMENT · INTEGRITY · PROSPERITY</span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
               {[
@@ -109,7 +109,7 @@ export default function Dashboard() {
                 ["EXPERIENCE", "15 Years Leadership"],
                 ["EDUCATION", "Degree"],
                 ["CONTACT", "0725 988 683"],
-                ["WARD", "Makueni West"],
+                ["COUNTY", "Makueni"],
                 ["TARGET WIN", "85%+"],
               ].map(([k, v]) => (
                 <div key={k}>
@@ -121,10 +121,10 @@ export default function Dashboard() {
             <div className="pt-2 border-t border-border space-y-1">
               <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">SOCIAL MEDIA</p>
               {[
-                ["FACEBOOK", "Hon. Stephen Mutinda Mule"],
-                ["FB PAGE", "Hon. Dr. Stephen Mutinda Mule MP Makueni"],
-                ["TWITTER/X", "Stephen Mule1"],
-                ["TIKTOK", "@hon.dr.stephenmule(Mwanamule)"],
+                ["FACEBOOK", "Prof. Philip Kaloki"],
+                ["FB PAGE", "Prof. Philip Kaloki for Makueni Governor"],
+                ["POSITION", "Makueni Governor 2027"],
+                ["TIKTOK", "@hon.dr.stephenmule(Kaloki 2027)"],
               ].map(([p, h]) => (
                 <div key={p} className="flex items-start gap-2">
                   <span className="font-mono text-[8px] text-muted-foreground w-16 shrink-0 mt-0.5">{p}</span>
@@ -138,7 +138,7 @@ export default function Dashboard() {
         <div className="bg-card border border-border">
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <Building2 className="w-4 h-4 text-primary" />
-            <span className="font-mono text-xs tracking-widest">CONSTITUENCY_INTEL</span>
+            <span className="font-mono text-xs tracking-widest">COUNTY_INTEL</span>
           </div>
           <div className="p-4 space-y-3">
             <div className="grid grid-cols-3 gap-2">

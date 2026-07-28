@@ -5,7 +5,7 @@ import {
   Download, ChevronRight, Link, Wifi, WifiOff, BarChart2, Filter,
 } from "lucide-react";
 
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+const WARDS = ["Tulimani", "Mbooni", "Kithungo/Kitundu", "Kisau/Kiteta", "Kako/Waia", "Kalawa", "Kiima Kiu/Kalanzoni", "Mukaa", "Kasikeu", "Kee", "Kilungu", "Ilima", "Ukia", "Wote", "Muvau/Kikumini", "Mavindini", "Kitise/Kithuki", "Kathonzweni", "Nzaui/Kilili/Kalamba", "Mbitini", "Makindu", "Nguumo", "Kikumbulyu North", "Kikumbulyu South", "Nguu/Masumba", "Emali/Mulala", "Masongaleni", "Mtito Andei", "Thange", "Ivingoni/Nzambani"];
 const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 const API = `${BASE_URL}/api/voter-registry`;
 
@@ -432,7 +432,7 @@ function CaptureTab() {
               </Select>
               <Input label="SUB-COUNTY" placeholder="Makueni" value={form.subCounty ?? ""} onChange={e => setForm(p => ({ ...p, subCounty: e.target.value }))} />
               <div className="col-span-2">
-                <Input label="POLLING STATION" placeholder="Tala Primary School" value={form.pollingStation ?? ""} onChange={e => setForm(p => ({ ...p, pollingStation: e.target.value }))} />
+                <Input label="POLLING STATION" placeholder="Wote Primary School" value={form.pollingStation ?? ""} onChange={e => setForm(p => ({ ...p, pollingStation: e.target.value }))} />
               </div>
               <Input label="STATION CODE" placeholder="TAL-001" value={form.pollingStationCode ?? ""} onChange={e => setForm(p => ({ ...p, pollingStationCode: e.target.value }))} />
               <Input label="STREAM" placeholder="1" value={form.stream ?? ""} onChange={e => setForm(p => ({ ...p, stream: e.target.value }))} />
@@ -643,7 +643,7 @@ function RegistryApiTab() {
               <option value="">All Wards</option>
               {WARDS.map(w => <option key={w}>{w}</option>)}
             </Select>
-            <Input label="POLLING STATION (OPTIONAL)" value={syncOpts.pollingStation} onChange={e => setSyncOpts(p => ({ ...p, pollingStation: e.target.value }))} placeholder="Tala Primary" />
+            <Input label="POLLING STATION (OPTIONAL)" value={syncOpts.pollingStation} onChange={e => setSyncOpts(p => ({ ...p, pollingStation: e.target.value }))} placeholder="Wote Primary" />
             <Input label="RECORD LIMIT" type="number" value={syncOpts.limit} onChange={e => setSyncOpts(p => ({ ...p, limit: e.target.value }))} placeholder="500" />
           </div>
 
@@ -898,14 +898,14 @@ export default function VotersDb() {
         <div>
           <h1 className="text-xl font-bold tracking-widest flex items-center gap-3">
             <Database className="w-5 h-5 text-primary" />
-            CONSTITUENT DATABASE
+            MAKUENI VOTER INTELLIGENCE CENTRE
           </h1>
           <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">
-            VOTER REGISTRY MANAGEMENT — MATUNGULU CONSTITUENCY · IEBC INTEGRATION
+            COUNTYWIDE VOTER REGISTRY MANAGEMENT · DATA REVIEW · IEBC INTEGRATION
           </p>
         </div>
         <div className="font-mono text-[10px] text-muted-foreground border border-border px-3 py-1.5 bg-card">
-          MATUNGULU — 5 WARDS · 165 POLLING STATIONS
+          MAKUENI COUNTY · 6 SUB-COUNTIES · 30 WARDS
         </div>
       </div>
 

@@ -82,7 +82,7 @@ export default function SocialListening() {
             <Radio className="w-5 h-5 text-primary" /> SOCIAL LISTENING
           </h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5 tracking-wider">
-            AI WEB-SCAN · MENTIONS · SENTIMENT · TRENDING ISSUES · MATUNGULU
+            AI WEB-SCAN · MENTIONS · SENTIMENT · TRENDING ISSUES · MAKUENI COUNTY
           </p>
         </div>
         <button
@@ -144,7 +144,7 @@ export default function SocialListening() {
             <Search className="w-8 h-8 mx-auto text-muted-foreground/50" />
             <p className="font-mono text-xs text-muted-foreground">NO MENTIONS YET</p>
             <p className="font-mono text-[10px] text-muted-foreground/70 max-w-md mx-auto">
-              Press RUN SCAN to search the public web for the latest mentions of Hon. Mule,
+              Press RUN SCAN to search the public web for the latest mentions of the candidate,
               trending local issues, and opponent activity. A scan takes about 30 seconds.
             </p>
           </div>

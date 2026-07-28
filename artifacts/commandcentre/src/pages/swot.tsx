@@ -226,7 +226,7 @@ export default function Swot() {
   function exportMarkdown() {
     if (!data) return;
     const sections = (["strengths", "weaknesses", "opportunities", "threats"] as Quadrant[]);
-    let md = `# SWOT Analysis — Hon. Stephen Mule (Mwanamule)\n`;
+    let md = `# SWOT Analysis — Prof. Philip Kaloki (Kaloki 2027)\n`;
     md += `**Generated:** ${new Date(data.generatedAt).toLocaleString("en-KE")}\n\n`;
     for (const q of sections) {
       md += `## ${QUADRANT_META[q].label}\n\n`;
@@ -256,7 +256,7 @@ export default function Swot() {
             STRATEGIC SWOT ANALYSIS
           </h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
-            AI-POWERED POLITICAL ASSESSMENT · HON. STEPHEN MULE · MATUNGULU MNA · ELECTION 09 AUG 2027
+            AI-POWERED POLITICAL ASSESSMENT · PROF. PHILIP KALOKI · MAKUENI GOVERNOR 2027 · ELECTION 09 AUG 2027
           </p>
         </div>
         <div className="flex items-center gap-2">
