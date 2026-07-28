@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "KEZxjeK2smnh9WzBdkkAP"
+uri = "file://exports/kaiti-constituency-poll-raw-data.csv"
+type = "table"
+title = "Kaiti Constituency Poll — Raw Response Data (738 responses)"

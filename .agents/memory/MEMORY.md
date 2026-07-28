@@ -1,0 +1,8 @@
+- [Streamlit/Python artifacts](streamlit-python-artifact.md) — no createArtifact python type; hand-author artifact.toml (cp + verify), workflow CWD is the artifact dir, serve under --server.baseUrlPath.
+- [AI proxy token ceiling](ai-token-ceiling.md) — prod caps output at ~350 tokens/call; split bulk generation into parallel single-quadrant calls of ≤4 items.
+- [Social link previews](social-link-previews.md) — static SPA can't inject per-page OG tags; route share links through the dynamic API server instead.
+- [Drizzle push is interactive](drizzle-push-interactive.md) — `db run push` blocks on rename prompts; use idempotent boot DDL (`ensureXTable` in seed.ts) + direct psql for dev.
+- [Two poll systems](two-poll-systems.md) — commandcentre `opinion_polls` ("Matungulu polls") and insights `insight_polls` are separate and don't sync; how to bridge them.
+- [Generated OpenAPI type drift](openapi-type-drift.md) — API returns fields missing from Orval types; fix with local Ex-type extensions, and rerun tsc until fully clean (incremental cache hides errors).
+- [Seeding production data](seeding-production-data.md) — prod DB is separate + agent-read-only; seed only via the live `.replit.app` write API; use segment `manualSize` + `/send` for stats.
+- [Public write endpoints](public-write-endpoints.md) — admin API has NO auth; any public DB-writing route must carry its own rate-limit + dedupe inline.
