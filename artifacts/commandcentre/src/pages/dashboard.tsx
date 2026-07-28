@@ -1,264 +1,640 @@
-import { useGetDashboardSummary, useGetDashboardActivity } from "@workspace/api-client-react";
-import { Users, MessageSquare, Map, ShieldAlert, Target, Calendar, Zap, Clock, TrendingUp, Activity, User, Building2 } from "lucide-react";
+import {
+  useGetDashboardActivity,
+  useGetDashboardSummary,
+} from "@workspace/api-client-react";
+import {
+  Activity,
+  ArrowDownRight,
+  ArrowUpRight,
+  Bell,
+  BrainCircuit,
+  Building2,
+  Calendar,
+  Clock,
+  Flag,
+  HeartHandshake,
+  Landmark,
+  Map,
+  MessageSquare,
+  Radio,
+  ShieldAlert,
+  Target,
+  User,
+  Users,
+  Vote,
+  Wallet,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 
-function StatCard({ label, value, icon: Icon, sub }: { label: string; value: string | number; icon: any; sub?: string }) {
+type DashboardSummary = {
+  totalMembers?: number;
+  activeVolunteers?: number;
+  campaignReadiness?: number;
+  messagesSent?: number;
+  doorsKnocked?: number;
+  wardsCovered?: number;
+  openThreats?: number;
+  upcomingEvents?: number;
+  daysToElection?: number;
+};
+
+type DashboardActivity = {
+  id?: string | number;
+  module?: string;
+  actor?: string | null;
+  description?: string;
+  timestamp?: string | number | Date;
+};
+
+function StatCard({
+  title,
+  value,
+  icon: Icon,
+  change,
+  positive = true,
+}: {
+  title: string;
+  value: string | number;
+  icon: LucideIcon;
+  change?: string;
+  positive?: boolean;
+}) {
   return (
-    <div className="bg-card border border-border p-4">
-      <div className="flex items-start justify-between mb-3">
-        <span className="text-[10px] font-mono tracking-widest text-muted-foreground">{label}</span>
-        <Icon className="w-4 h-4 text-primary" />
+    <div className="rounded-xl border bg-card p-5 shadow-sm transition hover:shadow-lg">
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            {title}
+          </p>
+          <h2 className="mt-2 break-words text-3xl font-bold">{value}</h2>
+        </div>
+
+        <div className="shrink-0 rounded-xl bg-primary/10 p-3">
+          <Icon className="h-6 w-6 text-primary" />
+        </div>
       </div>
-      <div className="text-3xl font-bold tabular-nums">{value}</div>
-      {sub && <div className="text-[10px] font-mono text-muted-foreground mt-1">{sub}</div>}
+
+      {change ? (
+        <div
+          className={`flex items-center text-xs font-semibold ${
+            positive ? "text-green-600" : "text-red-500"
+          }`}
+        >
+          {positive ? (
+            <ArrowUpRight className="mr-1 h-4 w-4" />
+          ) : (
+            <ArrowDownRight className="mr-1 h-4 w-4" />
+          )}
+          {change}
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function ThreatBadge({ level }: { level: string }) {
-  const colors: Record<string, string> = {
-    low: "text-blue-400 border-blue-400/30",
-    medium: "text-yellow-400 border-yellow-400/30",
-    high: "text-orange-400 border-orange-400/30",
-    critical: "text-red-400 border-red-400/30 animate-pulse",
-  };
+function QuickAction({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}) {
   return (
-    <span className={`font-mono text-[10px] border px-2 py-0.5 ${colors[level] ?? colors.low}`}>
-      [ {level.toUpperCase()} ]
+    <button
+      type="button"
+      className="w-full rounded-xl border bg-card p-4 text-left transition hover:border-primary hover:shadow-sm"
+    >
+      <div className="flex items-center gap-3">
+        <div className="rounded-lg bg-primary/10 p-2">
+          <Icon className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h3 className="font-semibold">{title}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function InsightCard({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="rounded-xl border bg-card p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <BrainCircuit className="h-5 w-5 text-primary" />
+        <h3 className="font-semibold">{title}</h3>
+      </div>
+      <p className="text-sm leading-6 text-muted-foreground">{text}</p>
+    </div>
+  );
+}
+
+function StatusChip({ text, className }: { text: string; className: string }) {
+  return (
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${className}`}>
+      {text}
     </span>
   );
 }
 
-function ModuleTag({ module }: { module: string }) {
-  const tags: Record<string, string> = {
-    members: "IDENTITY",
-    messaging: "UPLINK",
-    "field-ops": "FIELD",
-    volunteers: "VOLUNTEER",
-    intelligence: "INTEL",
-    "campaign-plan": "PLAN",
-    events: "EVENT",
-    surveys: "SURVEY",
-    kol: "KOL",
-    segments: "SEGMENT",
-  };
-  return (
-    <span className="font-mono text-[9px] text-primary border border-primary/30 px-1.5 py-0.5">
-      {tags[module] ?? module.toUpperCase()}
-    </span>
-  );
+function formatActivityDate(value: DashboardActivity["timestamp"]): string {
+  if (!value) return "Recently";
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Recently" : date.toLocaleString();
 }
 
 export default function Dashboard() {
-  const { data: summary, isLoading: summaryLoading } = useGetDashboardSummary();
-  const { data: activity, isLoading: activityLoading } = useGetDashboardActivity();
+  const summaryQuery = useGetDashboardSummary();
+  const activityQuery = useGetDashboardActivity();
+
+  const summary = summaryQuery.data as DashboardSummary | undefined;
+  const activity = Array.isArray(activityQuery.data)
+    ? (activityQuery.data as DashboardActivity[])
+    : [];
+
+  const summaryLoading = summaryQuery.isLoading;
+  const activityLoading = activityQuery.isLoading;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      <section className="grid items-center gap-6 lg:grid-cols-[1fr_auto]">
         <div>
-          <h1 className="text-xl font-bold tracking-widest">COMMAND OVERVIEW</h1>
-          <p className="text-[10px] font-mono text-muted-foreground mt-1 tracking-widest">[ CAMPAIGN_READ ] [ LIVE_DATA ]</p>
-        </div>
-        {summary?.daysToElection != null && (
-          <div className="bg-primary/10 border border-primary/30 px-6 py-3 text-center">
-            <div className="text-4xl font-bold text-primary tabular-nums">{summary.daysToElection}</div>
-            <div className="text-[9px] font-mono text-primary/80 tracking-widest mt-1">DAYS TO ELECTION</div>
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary">
+            Makueni County Command Centre
+          </p>
+          <h1 className="mt-2 text-3xl font-black sm:text-4xl">
+            Prof. Philip Kaloki
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Governor Candidate • United Democratic Alliance (UDA)
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              Komboa 2027 UDA
+            </span>
+            <span className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-600">
+              Campaign Active
+            </span>
+            <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-600">
+              Makueni County
+            </span>
           </div>
-        )}
-      </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border bg-card p-5 text-center">
+            <p className="text-xs uppercase text-muted-foreground">Days Remaining</p>
+            <h2 className="mt-2 text-5xl font-black text-primary">
+              {summary?.daysToElection ?? "--"}
+            </h2>
+            <p className="mt-2 text-xs text-muted-foreground">Until Election</p>
+          </div>
+
+          <div className="rounded-xl border bg-card p-5 text-center sm:text-left">
+            <p className="text-xs uppercase text-muted-foreground">Campaign Health</p>
+            <h2 className="mt-3 text-4xl font-black text-green-600">87%</h2>
+            <p className="mt-2 text-xs">Excellent Momentum</p>
+          </div>
+        </div>
+      </section>
 
       {summaryLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-card border border-border p-4 h-24 animate-pulse" />
+        <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-36 animate-pulse rounded-xl border bg-card"
+            />
           ))}
-        </div>
-      ) : summary ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label="TOTAL MEMBERS" value={summary.totalMembers.toLocaleString()} icon={Users} sub="IDENTITY GRAPH" />
-          <StatCard label="ACTIVE VOLUNTEERS" value={summary.activeVolunteers} icon={Activity} sub="DEPLOYED" />
-          <StatCard label="MESSAGES SENT" value={summary.messagesSent.toLocaleString()} icon={MessageSquare} sub="ALL CHANNELS" />
-          <StatCard label="DOORS KNOCKED" value={summary.doorsKnocked.toLocaleString()} icon={Map} sub="FIELD OPS" />
-          <StatCard label="WARDS COVERED" value={summary.wardsCovered} icon={TrendingUp} sub="ACTIVE ZONES" />
-          <StatCard label="OPEN THREATS" value={summary.openThreats} icon={ShieldAlert} sub="NARRATIVE" />
-          <StatCard label="READINESS SCORE" value={`${summary.campaignReadiness}%`} icon={Target} sub="OVERALL" />
-          <StatCard label="UPCOMING EVENTS" value={summary.upcomingEvents} icon={Calendar} sub="SCHEDULED" />
-        </div>
-      ) : null}
+        </section>
+      ) : (
+        <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            title="Registered Voters"
+            value={summary?.totalMembers?.toLocaleString() ?? "0"}
+            icon={Users}
+            change="+8.6% this month"
+          />
+          <StatCard
+            title="Active Volunteers"
+            value={summary?.activeVolunteers?.toLocaleString() ?? "0"}
+            icon={Activity}
+            change="+124 recruited"
+          />
+          <StatCard
+            title="Campaign Readiness"
+            value={`${summary?.campaignReadiness ?? 0}%`}
+            icon={Target}
+            change="Excellent"
+          />
+          <StatCard
+            title="Messages Delivered"
+            value={summary?.messagesSent?.toLocaleString() ?? "0"}
+            icon={MessageSquare}
+            change="SMS • WhatsApp • Email"
+          />
+          <StatCard
+            title="Field Visits"
+            value={summary?.doorsKnocked?.toLocaleString() ?? "0"}
+            icon={Map}
+            change="Door to door"
+          />
+          <StatCard
+            title="Wards Covered"
+            value={summary?.wardsCovered?.toLocaleString() ?? "0"}
+            icon={Landmark}
+            change="County coverage"
+          />
+          <StatCard
+            title="Open Issues"
+            value={summary?.openThreats?.toLocaleString() ?? "0"}
+            icon={Flag}
+            change="AI monitoring"
+            positive={false}
+          />
+          <StatCard
+            title="Upcoming Events"
+            value={summary?.upcomingEvents?.toLocaleString() ?? "0"}
+            icon={Calendar}
+            change="Campaign schedule"
+          />
+        </section>
+      )}
 
-      {/* Candidate Profile + Constituency Intel */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-card border border-border">
-          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-            <User className="w-4 h-4 text-primary" />
-            <span className="font-mono text-xs tracking-widest">CANDIDATE_PROFILE</span>
-          </div>
-          <div className="p-4 space-y-2.5">
-            <div className="flex items-start justify-between mb-1">
+      <section className="grid gap-6 xl:grid-cols-5">
+        <div className="overflow-hidden rounded-xl border bg-card xl:col-span-2">
+          <div className="border-b bg-primary/10 px-6 py-5">
+            <div className="flex items-center gap-3">
+              <User className="h-6 w-6 text-primary" />
               <div>
-                <p className="font-bold text-sm tracking-wide">HON. STEPHEN MUTINDA MULE</p>
-                <p className="font-mono text-[10px] text-primary tracking-widest mt-0.5">MWANAMULE · MATUNGULU MNA</p>
+                <h2 className="text-lg font-bold">Prof. Philip Kaloki</h2>
+                <p className="text-sm text-muted-foreground">
+                  Governor Candidate • United Democratic Alliance
+                </p>
               </div>
-              <span className="font-mono text-[9px] border border-primary/30 px-2 py-0.5 text-primary shrink-0">WIPER PATRIOTIC FRONT</span>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-              {[
-                ["SLOGAN", "Komboa Kenya"],
-                ["SYMBOL", "Umbrella"],
-                ["PROFESSION", "Biomedical Engineer"],
-                ["EXPERIENCE", "15 Years Leadership"],
-                ["EDUCATION", "Degree"],
-                ["CONTACT", "0725 988 683"],
-                ["WARD", "Makueni West"],
-                ["TARGET WIN", "85%+"],
-              ].map(([k, v]) => (
-                <div key={k}>
-                  <p className="font-mono text-[8px] text-muted-foreground">{k}</p>
-                  <p className="font-mono text-[10px] text-foreground">{v}</p>
-                </div>
-              ))}
+          </div>
+
+          <div className="p-6">
+            <div className="flex flex-col items-center">
+              <div className="flex h-40 w-40 items-center justify-center rounded-full border-4 border-primary bg-secondary">
+                <User className="h-20 w-20 text-primary" />
+              </div>
+              <p className="mt-4 text-center text-xs text-muted-foreground">
+                Official campaign portrait will be added later
+              </p>
             </div>
-            <div className="pt-2 border-t border-border space-y-1">
-              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">SOCIAL MEDIA</p>
-              {[
-                ["FACEBOOK", "Hon. Stephen Mutinda Mule"],
-                ["FB PAGE", "Hon. Dr. Stephen Mutinda Mule MP Makueni"],
-                ["TWITTER/X", "Stephen Mule1"],
-                ["TIKTOK", "@hon.dr.stephenmule(Mwanamule)"],
-              ].map(([p, h]) => (
-                <div key={p} className="flex items-start gap-2">
-                  <span className="font-mono text-[8px] text-muted-foreground w-16 shrink-0 mt-0.5">{p}</span>
-                  <span className="font-mono text-[9px] text-foreground">{h}</span>
-                </div>
-              ))}
+
+            <div className="mt-8 grid grid-cols-2 gap-4">
+              <div><p className="text-xs text-muted-foreground">Party</p><h3 className="font-semibold">UDA</h3></div>
+              <div><p className="text-xs text-muted-foreground">Slogan</p><h3 className="font-semibold">Komboa 2027</h3></div>
+              <div><p className="text-xs text-muted-foreground">County</p><h3 className="font-semibold">Makueni</h3></div>
+              <div><p className="text-xs text-muted-foreground">Target</p><h3 className="font-semibold">Governor 2027</h3></div>
+            </div>
+
+            <div className="mt-8">
+              <InsightCard
+                title="AI Strategic Brief"
+                text="Campaign momentum is steadily increasing. Continue strengthening grassroots mobilisation, youth engagement, women empowerment initiatives and ward-based leadership structures while maintaining a strong digital campaign presence."
+              />
             </div>
           </div>
         </div>
 
-        <div className="bg-card border border-border">
-          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-primary" />
-            <span className="font-mono text-xs tracking-widest">CONSTITUENCY_INTEL</span>
+        <div className="rounded-xl border bg-card xl:col-span-3">
+          <div className="flex items-center gap-3 border-b px-6 py-5">
+            <Building2 className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="font-bold">Makueni County Intelligence</h2>
+              <p className="text-sm text-muted-foreground">County demographic overview</p>
+            </div>
           </div>
-          <div className="p-4 space-y-3">
-            <div className="grid grid-cols-3 gap-2">
+
+          <div className="p-6">
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
               {[
-                { label: "POPULATION", value: "187,600" },
-                { label: "REG. VOTERS", value: "78,000" },
-                { label: "WARDS", value: "5" },
-                { label: "POLL. STATIONS", value: "165" },
-                { label: "POLL. STREAMS", value: "117" },
-                { label: "YOUTH", value: "75,000" },
-              ].map(({ label, value }) => (
-                <div key={label} className="bg-secondary/50 px-2 py-2">
-                  <p className="font-mono text-[8px] text-muted-foreground">{label}</p>
-                  <p className="font-bold text-sm tabular-nums text-primary">{value}</p>
+                ["Population", "1,050,000+"],
+                ["Registered Voters", "620,000+"],
+                ["Sub-counties", "6"],
+                ["Wards", "30"],
+                ["Polling Stations", "1,200+"],
+                ["Youth", "420,000+"],
+                ["Women", "530,000+"],
+                ["PWD", "32,000+"],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg bg-secondary/40 p-4">
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  <h3 className="mt-2 text-xl font-bold text-primary">{value}</h3>
                 </div>
               ))}
             </div>
-            <div>
-              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-2">POLLING STATIONS BY WARD</p>
-              <div className="space-y-1.5">
+
+            <div className="mt-8">
+              <h3 className="mb-4 font-semibold">Priority Development Agenda</h3>
+              <div className="grid gap-3 md:grid-cols-2">
                 {[
-                  { ward: "Tala",             stations: 40  },
-                  { ward: "Makueni West",   stations: 55  },
-                  { ward: "Makueni North",  stations: 26  },
-                  { ward: "Makueni East",   stations: 24  },
-                  { ward: "Kyeleni",          stations: 20  },
-                ].map(({ ward, stations }) => (
-                  <div key={ward} className="flex items-center gap-2">
-                    <span className="font-mono text-[9px] text-muted-foreground w-32 shrink-0">{ward.toUpperCase()}</span>
-                    <div className="flex-1 bg-secondary/50 h-2 relative">
-                      <div
-                        className="absolute inset-y-0 left-0 bg-primary/60"
-                        style={{ width: `${(stations / 55) * 100}%` }}
-                      />
-                    </div>
-                    <span className="font-mono text-[9px] text-primary font-bold w-6 text-right">{stations}</span>
+                  "Water & Irrigation",
+                  "Healthcare",
+                  "Agriculture",
+                  "Road Infrastructure",
+                  "Youth Employment",
+                  "Women's Economic Empowerment",
+                  "Education",
+                  "Digital Economy",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-3 rounded-lg border p-3">
+                    <Target className="h-4 w-4 text-primary" />
+                    <span>{item}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <div>
-              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">KEY ISSUES</p>
-              <div className="flex flex-wrap gap-1">
-                {["Clean Water", "Road Infrastructure", "Employment", "Security"].map(i => (
-                  <span key={i} className="font-mono text-[9px] border border-red-400/30 px-2 py-0.5 text-red-400">[ {i.toUpperCase()} ]</span>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">ECONOMIC ACTIVITIES</p>
-              <p className="font-mono text-[9px] text-muted-foreground">Coffee farming · Maize & beans · Horticulture · Quarry stones · Ballast</p>
-            </div>
-            <div>
-              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">RELIGIOUS GROUPS</p>
-              <p className="font-mono text-[9px] text-muted-foreground">Christianity · Islam</p>
+
+            <div className="mt-8">
+              <InsightCard
+                title="County Assessment"
+                text="Current intelligence indicates that strengthening grassroots mobilisation, expanding volunteer recruitment, improving digital engagement and maintaining consistent ward-level visibility will improve campaign competitiveness across all six sub-counties."
+              />
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-card border border-border">
-          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-            <Zap className="w-4 h-4 text-primary" />
-            <span className="font-mono text-xs tracking-widest">ACTIVITY_FEED</span>
+      <section className="grid gap-6 xl:grid-cols-3">
+        <div className="overflow-hidden rounded-xl border bg-card xl:col-span-2">
+          <div className="flex items-center justify-between gap-4 border-b px-6 py-5">
+            <div className="flex items-center gap-3">
+              <BrainCircuit className="h-6 w-6 text-primary" />
+              <div>
+                <h2 className="font-bold">AI Campaign War Room</h2>
+                <p className="text-sm text-muted-foreground">Live strategic campaign briefing</p>
+              </div>
+            </div>
+            <StatusChip text="AI ACTIVE" className="bg-green-500/10 text-green-600" />
           </div>
+
+          <div className="grid gap-4 p-6 md:grid-cols-2">
+            <InsightCard title="Grassroots Mobilisation" text="Intensify volunteer recruitment and ward-level engagement across all six sub-counties, prioritising areas with limited recent field activity." />
+            <InsightCard title="Youth Engagement" text="Emphasise employment, digital opportunities, enterprise financing, sports, education and participation in county decision-making." />
+            <InsightCard title="Women Mobilisation" text="Expand women-led campaign networks and communicate practical policies around markets, healthcare, agriculture, enterprise support and household prosperity." />
+            <InsightCard title="Digital Strategy" text="Increase consistent social media engagement, respond quickly to emerging narratives and align digital messaging with ward-level activities." />
+          </div>
+        </div>
+
+        <div className="rounded-xl border bg-card">
+          <div className="flex items-center gap-3 border-b px-6 py-5">
+            <Vote className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="font-bold">Election Readiness</h2>
+              <p className="text-sm text-muted-foreground">Operational preparation</p>
+            </div>
+          </div>
+
+          <div className="space-y-5 p-6">
+            {[
+              ["Campaign Structure", 92],
+              ["Ward Coordinators", 84],
+              ["Volunteer Network", 78],
+              ["Polling Agents", 61],
+              ["Voter Mobilisation", 73],
+            ].map(([label, rawValue]) => {
+              const value = Number(rawValue);
+              return (
+                <div key={String(label)}>
+                  <div className="mb-2 flex justify-between text-sm">
+                    <span className="text-muted-foreground">{label}</span>
+                    <span className="font-semibold">{value}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${value}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Overall Readiness</span>
+                <span className="text-2xl font-black text-primary">
+                  {summary?.campaignReadiness ?? 0}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-3">
+        <div className="rounded-xl border bg-card">
+          <div className="flex items-center justify-between gap-3 border-b px-6 py-5">
+            <div className="flex items-center gap-3">
+              <Radio className="h-6 w-6 text-primary" />
+              <div>
+                <h2 className="font-bold">Social Listening</h2>
+                <p className="text-sm text-muted-foreground">Public sentiment overview</p>
+              </div>
+            </div>
+            <StatusChip text="MONITORING" className="bg-blue-500/10 text-blue-600" />
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg bg-green-500/10 p-4 text-center"><p className="text-2xl font-black text-green-600">68%</p><p className="mt-1 text-xs text-muted-foreground">Positive</p></div>
+              <div className="rounded-lg bg-yellow-500/10 p-4 text-center"><p className="text-2xl font-black text-yellow-600">21%</p><p className="mt-1 text-xs text-muted-foreground">Neutral</p></div>
+              <div className="rounded-lg bg-red-500/10 p-4 text-center"><p className="text-2xl font-black text-red-600">11%</p><p className="mt-1 text-xs text-muted-foreground">Negative</p></div>
+            </div>
+
+            <div className="mt-6">
+              <p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Trending Topics</p>
+              <div className="flex flex-wrap gap-2">
+                {["Water", "Agriculture", "Youth Jobs", "Healthcare", "Roads", "Women Enterprise"].map((topic) => (
+                  <span key={topic} className="rounded-full border px-3 py-1 text-xs">
+                    #{topic.replaceAll(" ", "")}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-lg bg-secondary/40 p-4">
+              <p className="text-xs font-semibold text-primary">AI RECOMMENDATION</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Publish a coordinated message focused on water, agriculture and youth employment, supported by local ward-level testimonials.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border bg-card">
+          <div className="flex items-center gap-3 border-b px-6 py-5">
+            <HeartHandshake className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="font-bold">Volunteer Deployment</h2>
+              <p className="text-sm text-muted-foreground">Sub-county mobilisation</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 p-6">
+            {[
+              ["Makueni", 186, 88],
+              ["Kaiti", 142, 76],
+              ["Kibwezi East", 164, 81],
+              ["Kibwezi West", 137, 69],
+              ["Kilome", 121, 73],
+              ["Mbooni", 173, 84],
+            ].map(([area, rawVolunteers, rawReadiness]) => {
+              const volunteers = Number(rawVolunteers);
+              const readiness = Number(rawReadiness);
+              return (
+                <div key={String(area)} className="rounded-lg border p-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold">{area}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{volunteers} active volunteers</p>
+                    </div>
+                    <span className="font-bold text-primary">{readiness}%</span>
+                  </div>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${readiness}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-xl border bg-card">
+          <div className="flex items-center gap-3 border-b px-6 py-5">
+            <Calendar className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="font-bold">Campaign Calendar</h2>
+              <p className="text-sm text-muted-foreground">Upcoming engagements</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 p-6">
+            {[
+              { date: "12 AUG", title: "Ward Coordinators Meeting", location: "Wote Town", type: "Strategy" },
+              { date: "15 AUG", title: "Youth Economic Forum", location: "Kibwezi", type: "Youth" },
+              { date: "18 AUG", title: "Women Leaders Conference", location: "Mbooni", type: "Women" },
+              { date: "21 AUG", title: "Agriculture Stakeholders Forum", location: "Kaiti", type: "Policy" },
+            ].map((event) => (
+              <div key={`${event.date}-${event.title}`} className="flex gap-4 rounded-lg border p-4">
+                <div className="flex w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Calendar className="mb-1 h-4 w-4" />
+                  <span className="text-[10px] font-bold">{event.date}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{event.title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{event.location}</p>
+                  <span className="mt-2 inline-block rounded-full bg-secondary px-2 py-0.5 text-[10px]">{event.type}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl border bg-card">
+        <div className="flex items-center gap-3 border-b px-6 py-5">
+          <Zap className="h-6 w-6 text-primary" />
+          <div>
+            <h2 className="font-bold">Quick Campaign Actions</h2>
+            <p className="text-sm text-muted-foreground">Frequently used command-centre tools</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 p-6 sm:grid-cols-2 xl:grid-cols-4">
+          <QuickAction icon={Calendar} title="Create Event" description="Schedule a campaign event" />
+          <QuickAction icon={MessageSquare} title="Broadcast Message" description="Send SMS or WhatsApp updates" />
+          <QuickAction icon={BrainCircuit} title="Generate Speech" description="Create an AI-assisted campaign speech" />
+          <QuickAction icon={Users} title="Deploy Volunteers" description="Assign teams to wards" />
+          <QuickAction icon={Map} title="Field Operation" description="Create a door-to-door assignment" />
+          <QuickAction icon={Radio} title="Social Scan" description="Run a public sentiment scan" />
+          <QuickAction icon={Bell} title="Incident Report" description="Record an urgent field incident" />
+          <QuickAction icon={Wallet} title="Fundraising" description="Review campaign finance activity" />
+        </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-3">
+        <div className="overflow-hidden rounded-xl border bg-card xl:col-span-2">
+          <div className="flex items-center gap-3 border-b px-6 py-5">
+            <Activity className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="font-bold">Campaign Activity Feed</h2>
+              <p className="text-sm text-muted-foreground">Latest actions across the command centre</p>
+            </div>
+          </div>
+
           {activityLoading ? (
-            <div className="p-4 space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-10 bg-secondary/50 animate-pulse" />
+            <div className="space-y-3 p-6">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="h-16 animate-pulse rounded-lg bg-secondary/40" />
               ))}
             </div>
-          ) : activity && activity.length > 0 ? (
-            <div className="divide-y divide-border">
-              {activity.slice(0, 10).map((item) => (
-                <div key={item.id} className="flex items-start gap-3 px-4 py-3">
-                  <ModuleTag module={item.module} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">{item.description}</p>
-                    {item.actor && (
-                      <p className="text-[10px] font-mono text-muted-foreground">OPERATIVE: {item.actor}</p>
-                    )}
+          ) : activity.length > 0 ? (
+            <div className="divide-y">
+              {activity.slice(0, 8).map((item, index) => (
+                <div key={item.id ?? index} className="flex items-start gap-4 px-6 py-4">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <Zap className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap">
-                    {new Date(item.timestamp).toLocaleTimeString()}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase">
+                        {item.module ?? "Campaign"}
+                      </span>
+                      {item.actor ? <span className="text-xs text-muted-foreground">by {item.actor}</span> : null}
+                    </div>
+                    <p className="mt-2 text-sm">{item.description ?? "Campaign activity recorded."}</p>
+                  </div>
+                  <span className="hidden whitespace-nowrap text-xs text-muted-foreground sm:block">
+                    {formatActivityDate(item.timestamp)}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="flex items-center justify-center py-12">
-              <p className="font-mono text-xs text-muted-foreground">[ NO_ACTIVITY_RECORDED ]</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <Clock className="mb-3 h-10 w-10 text-muted-foreground" />
+              <p className="font-semibold">No campaign activity recorded</p>
+              <p className="mt-1 text-sm text-muted-foreground">Recent actions will appear here.</p>
             </div>
           )}
         </div>
 
-        <div className="bg-card border border-border">
-          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-            <Clock className="w-4 h-4 text-primary" />
-            <span className="font-mono text-xs tracking-widest">SYSTEM_STATUS</span>
+        <div className="rounded-xl border bg-card">
+          <div className="flex items-center gap-3 border-b px-6 py-5">
+            <ShieldAlert className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="font-bold">System Status</h2>
+              <p className="text-sm text-muted-foreground">Platform service health</p>
+            </div>
           </div>
-          <div className="p-4 space-y-3">
+
+          <div className="space-y-4 p-6">
             {[
-              { label: "IDENTITY_GRAPH", status: "OPERATIONAL" },
-              { label: "MESSAGING_UPLINK", status: "OPERATIONAL" },
-              { label: "FIELD_OPS", status: "OPERATIONAL" },
-              { label: "NARRATIVE_CMD", status: "MONITORING" },
-              { label: "INTEL_LAYER", status: "OPERATIONAL" },
-              { label: "KOL_NETWORK", status: "OPERATIONAL" },
-            ].map((s) => (
-              <div key={s.label} className="flex items-center justify-between">
-                <span className="font-mono text-[10px] text-muted-foreground">{s.label}</span>
-                <span className={`font-mono text-[10px] ${s.status === "OPERATIONAL" ? "text-green-400" : "text-yellow-400"}`}>
-                  {s.status}
+              ["Voter Registry", "Operational"],
+              ["Messaging Gateway", "Operational"],
+              ["Field Operations", "Operational"],
+              ["Social Listening", "Monitoring"],
+              ["AI Strategist", "Operational"],
+              ["Election Operations", "Operational"],
+            ].map(([name, status]) => (
+              <div key={name} className="flex items-center justify-between gap-4 rounded-lg border p-3">
+                <span className="text-sm">{name}</span>
+                <span className={`text-xs font-semibold ${status === "Operational" ? "text-green-600" : "text-yellow-600"}`}>
+                  ● {status}
                 </span>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

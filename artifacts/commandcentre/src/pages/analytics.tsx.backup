@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import {
   TrendingUp, MessageSquare, Map, Activity, Star, Zap,
-  Users, RefreshCw, ChevronUp, ChevronDown, Minus,
-  BarChart2, ShieldCheck, AlertTriangle
+  Users, RefreshCw, Download, ChevronUp, ChevronDown, Minus,
+  BarChart2, Globe, ShieldCheck, Trophy, AlertTriangle, Clock, Check
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -49,10 +50,10 @@ function pct(num: number, den: number) {
 
 function Stat({ label, value, sub, color = "text-foreground", trend }: { label: string; value: string | number; sub?: string; color?: string; trend?: "up" | "down" | "flat" }) {
   return (
-    <div className="border border-border bg-card/70 p-4 transition-colors hover:border-primary/30">
-      <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+    <div className="bg-card border border-border p-4">
+      <p className="font-mono text-[9px] text-muted-foreground mb-1">{label}</p>
       <div className="flex items-end gap-2">
-        <p className={`text-2xl font-bold tracking-tight md:text-3xl ${color}`}>{value}</p>
+        <p className={`text-2xl font-bold ${color}`}>{value}</p>
         {trend === "up" && <ChevronUp className="w-4 h-4 text-green-400 mb-1" />}
         {trend === "down" && <ChevronDown className="w-4 h-4 text-red-400 mb-1" />}
         {trend === "flat" && <Minus className="w-4 h-4 text-muted-foreground mb-1" />}
@@ -64,11 +65,11 @@ function Stat({ label, value, sub, color = "text-foreground", trend }: { label: 
 
 function Panel({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`min-w-0 border border-border bg-card/70 ${className ?? ""}`}>
-      <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-        <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{title}</p>
+    <div className={`bg-card border border-border ${className ?? ""}`}>
+      <div className="px-4 py-3 border-b border-border/60">
+        <p className="font-mono text-[10px] tracking-widest text-muted-foreground">{title}</p>
       </div>
-      <div className="min-w-0 overflow-hidden p-4">{children}</div>
+      <div className="p-4">{children}</div>
     </div>
   );
 }
@@ -86,7 +87,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border px-3 py-2 shadow-lg">
-      {label && <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{label}</p>}
+      {label && <p className="font-mono text-[9px] text-muted-foreground mb-1">{label}</p>}
       {payload.map((p: any, i: number) => (
         <p key={i} className="font-mono text-[10px]" style={{ color: p.color ?? p.fill ?? "#fff" }}>
           {p.name}: {typeof p.value === "number" && p.value >= 1000 ? fmt(p.value) : p.value}
@@ -132,40 +133,40 @@ export default function Analytics() {
   ];
 
   return (
-    <div className="space-y-5 pb-8">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col gap-4 border border-border bg-card/40 p-4 sm:flex-row sm:items-center sm:justify-between md:p-5">
+      <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center border border-primary/30 bg-primary/10"><BarChart2 className="h-5 w-5 text-primary" /></div><div><p className="font-mono text-[9px] uppercase tracking-[0.22em] text-primary">Campaign Intelligence</p><h1 className="text-xl font-bold tracking-widest md:text-2xl">ANALYTICS COMMAND CENTRE</h1></div></div>
-          <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground sm:ml-14">Prof. Philip Kaloki 2027 · Growth · Messaging · Field · Sentiment · Influence · Insights</p>
+          <h1 className="text-xl font-bold tracking-widest">ANALYTICS HUB</h1>
+          <p className="text-[10px] font-mono text-muted-foreground mt-0.5">GROWTH · MESSAGING · FIELD · SENTIMENT · KOLS · INSIGHTS</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={reload} disabled={loading} className="flex items-center justify-center gap-2 border border-border bg-background/60 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-60">
+          <button onClick={reload} disabled={loading} className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs hover:bg-secondary disabled:opacity-60">
             <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> REFRESH
           </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-2 gap-2 border border-border bg-card/30 p-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="flex gap-1 flex-wrap">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center justify-center gap-2 border px-3 py-2.5 font-mono text-[9px] uppercase tracking-[0.14em] transition-colors ${tab === t.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"}`}>
+            className={`flex items-center gap-1.5 font-mono text-[10px] border px-4 py-2 transition-colors ${tab === t.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
             {t.icon} {t.label}
           </button>
         ))}
       </div>
 
       {loading && !d && (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-4 gap-3">
           {[...Array(8)].map((_, i) => <div key={i} className="animate-pulse bg-card border border-border h-24" />)}
         </div>
       )}
 
       {/* ─── GROWTH ─── */}
       {tab === "growth" && d && (
-        <div className="space-y-5 pb-8">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="space-y-4">
+          <div className="grid grid-cols-5 gap-3">
             <Stat label="TOTAL MEMBERS" value={fmt(d.totals.total)} color="text-foreground" />
             <Stat label="ACTIVE" value={fmt(d.totals.active)} sub={`${pct(d.totals.active, d.totals.total)}% of total`} color="text-green-400" />
             <Stat label="SMS CONSENT" value={fmt(d.totals.smsConsent)} sub={`${pct(d.totals.smsConsent, d.totals.total)}% opt-in`} color="text-blue-400" />
@@ -173,10 +174,10 @@ export default function Analytics() {
             <Stat label="EMAIL" value={fmt(d.totals.emailConsent)} sub={`${pct(d.totals.emailConsent, d.totals.total)}% opt-in`} color="text-cyan-400" />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-2 gap-4">
             <Panel title="MEMBER GROWTH OVER TIME">
               {d.monthly.length === 0 ? <EmptyChart /> : (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={d.monthly}>
                     <defs>
                       <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
@@ -196,7 +197,7 @@ export default function Analytics() {
 
             <Panel title="MEMBERS BY WARD">
               {d.byWard.length === 0 ? <EmptyChart /> : (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={d.byWard} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e2229" horizontal={false} />
                     <XAxis type="number" tick={{ fontFamily: "monospace", fontSize: 9, fill: "#6b7280" }} />
@@ -213,8 +214,8 @@ export default function Analytics() {
 
             <Panel title="SUPPORT LEVEL BREAKDOWN">
               {d.bySupportLevel.length === 0 ? <EmptyChart /> : (
-                <div className="flex flex-col items-center gap-5 sm:flex-row sm:gap-6">
-                  <ResponsiveContainer width="100%" height={180}>
+                <div className="flex items-center gap-6">
+                  <ResponsiveContainer width="50%" height={180}>
                     <PieChart>
                       <Pie data={d.bySupportLevel} dataKey="count" nameKey="level" cx="50%" cy="50%" innerRadius={50} outerRadius={80} strokeWidth={0}>
                         {d.bySupportLevel.map((_: any, i: number) => <Cell key={i} fill={PIE_PALETTE[i % PIE_PALETTE.length]} />)}
@@ -270,8 +271,8 @@ export default function Analytics() {
 
       {/* ─── MESSAGING ─── */}
       {tab === "messaging" && d && (
-        <div className="space-y-5 pb-8">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+        <div className="space-y-4">
+          <div className="grid grid-cols-6 gap-3">
             <Stat label="CAMPAIGNS" value={d.totals.campaigns} />
             <Stat label="SENT" value={d.totals.sent} sub={`${pct(d.totals.sent, d.totals.campaigns)}% of total`} color="text-blue-400" />
             <Stat label="RECIPIENTS" value={fmt(d.totals.recipients)} color="text-foreground" />
@@ -280,10 +281,10 @@ export default function Analytics() {
             <Stat label="CLICKED" value={fmt(d.totals.clicked)} sub={`${pct(d.totals.clicked, d.totals.delivered)}% CTR`} color="text-orange-400" />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-2 gap-4">
             <Panel title="CAMPAIGNS OVER TIME — RECIPIENTS">
               {d.monthly.length === 0 ? <EmptyChart /> : (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={d.monthly}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e2229" />
                     <XAxis dataKey="month" tick={{ fontFamily: "monospace", fontSize: 9, fill: "#6b7280" }} />
@@ -329,8 +330,8 @@ export default function Analytics() {
 
             <Panel title="CAMPAIGN STATUS DISTRIBUTION">
               {d.byStatus.length === 0 ? <EmptyChart /> : (
-                <div className="flex flex-col items-center gap-5 sm:flex-row sm:gap-6">
-                  <ResponsiveContainer width="100%" height={180}>
+                <div className="flex items-center gap-6">
+                  <ResponsiveContainer width="50%" height={180}>
                     <PieChart>
                       <Pie data={d.byStatus} dataKey="count" nameKey="status" cx="50%" cy="50%" innerRadius={45} outerRadius={75} strokeWidth={0}>
                         {d.byStatus.map((_: any, i: number) => <Cell key={i} fill={PIE_PALETTE[i % PIE_PALETTE.length]} />)}
@@ -355,7 +356,7 @@ export default function Analytics() {
 
             <Panel title="RECENT CAMPAIGNS">
               {d.recent.length === 0 ? <EmptyChart /> : (
-                <div className="max-h-[240px] space-y-2 overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-[200px] overflow-y-auto">
                   {d.recent.map((c: any) => {
                     const rate = c.recipientCount > 0 ? pct(c.deliveredCount, c.recipientCount) : 0;
                     return (
@@ -380,15 +381,15 @@ export default function Analytics() {
 
       {/* ─── FIELD ─── */}
       {tab === "field" && d && (
-        <div className="space-y-5 pb-8">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="space-y-4">
+          <div className="grid grid-cols-4 gap-3">
             <Stat label="CANVASS SESSIONS" value={d.sessions.total} sub={`${d.sessions.completed} completed`} />
             <Stat label="DOORS COVERAGE" value={`${d.sessions.coveragePct}%`} sub={`${fmt(d.sessions.doorsCompleted)} / ${fmt(d.sessions.doorsTarget)} doors`} color={d.sessions.coveragePct > 70 ? "text-green-400" : d.sessions.coveragePct > 40 ? "text-yellow-400" : "text-red-400"} />
             <Stat label="VOLUNTEERS" value={d.volunteers.total} sub={`${d.volunteers.active} active · ${fmt(d.volunteers.totalHours)} hours`} color="text-blue-400" />
             <Stat label="DOORS KNOCKED" value={fmt(d.volunteers.totalDoors)} sub="Total by volunteers" color="text-orange-400" />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-2 gap-4">
             <Panel title="CANVASS COVERAGE BY WARD">
               {d.byWard.length === 0 ? <EmptyChart /> : (
                 <div className="space-y-3">
@@ -412,8 +413,8 @@ export default function Analytics() {
 
             <Panel title="DOOR KNOCK OUTCOMES">
               {d.visits.total === 0 ? <EmptyChart /> : (
-                <div className="flex flex-col items-center gap-5 sm:flex-row sm:gap-6">
-                  <ResponsiveContainer width="100%" height={180}>
+                <div className="flex items-center gap-6">
+                  <ResponsiveContainer width="50%" height={180}>
                     <PieChart>
                       <Pie cx="50%" cy="50%" innerRadius={45} outerRadius={75} strokeWidth={0}
                         data={[
@@ -450,7 +451,7 @@ export default function Analytics() {
 
             <Panel title="VOLUNTEERS BY WARD">
               {d.volByWard.length === 0 ? <EmptyChart /> : (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={d.volByWard} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e2229" horizontal={false} />
                     <XAxis type="number" tick={{ fontFamily: "monospace", fontSize: 9, fill: "#6b7280" }} />
@@ -466,8 +467,8 @@ export default function Analytics() {
 
             <Panel title="VOLUNTEERS BY ROLE">
               {d.volByRole.length === 0 ? <EmptyChart /> : (
-                <div className="flex flex-col items-center gap-5 sm:flex-row sm:gap-6">
-                  <ResponsiveContainer width="100%" height={180}>
+                <div className="flex items-center gap-6">
+                  <ResponsiveContainer width="50%" height={180}>
                     <PieChart>
                       <Pie data={d.volByRole} dataKey="count" nameKey="role" cx="50%" cy="50%" innerRadius={45} outerRadius={75} strokeWidth={0}>
                         {d.volByRole.map((_: any, i: number) => <Cell key={i} fill={PIE_PALETTE[i % PIE_PALETTE.length]} />)}
@@ -489,7 +490,7 @@ export default function Analytics() {
           </div>
 
           {/* Field issues bar */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-3 gap-3">
             <Stat label="FIELD ISSUES REPORTED" value={d.issues.total} />
             <Stat label="OPEN ISSUES" value={d.issues.open} color={d.issues.open > 0 ? "text-yellow-400" : "text-green-400"} />
             <Stat label="CRITICAL ISSUES" value={d.issues.critical} color={d.issues.critical > 0 ? "text-red-400" : "text-green-400"} />
@@ -499,8 +500,8 @@ export default function Analytics() {
 
       {/* ─── SENTIMENT ─── */}
       {tab === "sentiment" && d && (
-        <div className="space-y-5 pb-8">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="space-y-4">
+          <div className="grid grid-cols-5 gap-3">
             <Stat label="OPINION POLLS" value={d.polls.total} sub={`${d.polls.active} active`} />
             <Stat label="TOTAL VOTES" value={fmt(d.polls.votes)} color="text-primary" />
             <Stat label="ISSUES TRACKED" value={d.issues.total} sub={`${d.issues.open} open`} />
@@ -508,10 +509,10 @@ export default function Analytics() {
             <Stat label="HIGH PRIORITY" value={d.issues.high} color={d.issues.high > 0 ? "text-orange-400" : "text-green-400"} />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-2 gap-4">
             <Panel title="POLL PARTICIPATION BY WARD">
               {d.votesByWard.length === 0 ? <EmptyChart /> : (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={d.votesByWard}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e2229" />
                     <XAxis dataKey="ward" tick={{ fontFamily: "monospace", fontSize: 9, fill: "#6b7280" }} />
@@ -527,7 +528,7 @@ export default function Analytics() {
 
             <Panel title="VOTER DEMOGRAPHICS">
               {d.votesByGender.length === 0 && d.votesByAge.length === 0 ? <EmptyChart /> : (
-                <div className="space-y-5 pb-8">
+                <div className="space-y-4">
                   {d.votesByGender.length > 0 && (
                     <div>
                       <p className="font-mono text-[9px] text-muted-foreground mb-2">BY GENDER</p>
@@ -566,7 +567,7 @@ export default function Analytics() {
 
             <Panel title="TOPICAL ISSUES BY SECTOR">
               {d.issuesByCategory.length === 0 ? <EmptyChart /> : (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={d.issuesByCategory} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e2229" horizontal={false} />
                     <XAxis type="number" tick={{ fontFamily: "monospace", fontSize: 9, fill: "#6b7280" }} />
@@ -628,8 +629,8 @@ export default function Analytics() {
 
       {/* ─── KOLs ─── */}
       {tab === "kols" && d && (
-        <div className="space-y-5 pb-8">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="space-y-4">
+          <div className="grid grid-cols-5 gap-3">
             <Stat label="TOTAL KOLs" value={d.totals.total} />
             <Stat label="TOTAL REACH" value={fmt(d.totals.followers)} sub="Combined followers" color="text-blue-400" />
             <Stat label="AVG INFLUENCE" value={d.totals.avgInfluence} sub="Out of 100" color="text-yellow-400" />
@@ -637,10 +638,10 @@ export default function Analytics() {
             <Stat label="OPPOSED" value={d.totals.opposed} sub={`${pct(d.totals.opposed, d.totals.total)}% opposed`} color={d.totals.opposed > 0 ? "text-red-400" : "text-muted-foreground"} />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-2 gap-4">
             <Panel title="REACH BY TIER">
               {d.byTier.length === 0 ? <EmptyChart /> : (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={d.byTier}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e2229" />
                     <XAxis dataKey="tier" tick={{ fontFamily: "monospace", fontSize: 9, fill: "#6b7280" }} />
@@ -655,8 +656,8 @@ export default function Analytics() {
 
             <Panel title="KOL ALIGNMENT BREAKDOWN">
               {d.byAlignment.length === 0 ? <EmptyChart /> : (
-                <div className="flex flex-col items-center gap-5 sm:flex-row sm:gap-6">
-                  <ResponsiveContainer width="100%" height={180}>
+                <div className="flex items-center gap-6">
+                  <ResponsiveContainer width="50%" height={180}>
                     <PieChart>
                       <Pie data={d.byAlignment} dataKey="count" nameKey="alignment" cx="50%" cy="50%" innerRadius={45} outerRadius={75} strokeWidth={0}>
                         {d.byAlignment.map((r: any) => (
@@ -708,7 +709,7 @@ export default function Analytics() {
 
             <Panel title="TOP 10 KOLs BY INFLUENCE SCORE">
               {d.topKOLs.length === 0 ? <EmptyChart /> : (
-                <div className="max-h-[240px] space-y-1.5 overflow-y-auto pr-1">
+                <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
                   {d.topKOLs.map((k: any, i: number) => (
                     <div key={k.id} className="flex items-center gap-3 py-1.5 border-b border-border/30">
                       <span className="font-mono text-[9px] text-muted-foreground w-4 shrink-0">{String(i + 1).padStart(2, "0")}</span>
@@ -732,21 +733,21 @@ export default function Analytics() {
 
       {/* ─── INSIGHTS ─── */}
       {tab === "insights" && d && (
-        <div className="space-y-5 pb-8">
-          <div className="border border-primary/25 bg-card/70 p-4 md:p-5">
-            <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="space-y-4">
+          <div className="bg-card border border-primary/20 p-4">
+            <div className="flex items-center gap-2 mb-3">
               <Zap className="w-4 h-4 text-primary" />
               <span className="font-mono text-[10px] tracking-widest text-primary">CAMPAIGN COMMAND SUMMARY</span>
-              <span className="w-full font-mono text-[9px] text-muted-foreground sm:ml-auto sm:w-auto">{new Date().toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}</span>
+              <span className="ml-auto font-mono text-[9px] text-muted-foreground">{new Date().toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}</span>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-4 gap-3">
               {[
                 { label: "MEMBER BASE", value: fmt(d.members.total), sub: `${d.members.active} active`, color: "text-foreground", icon: <Users className="w-4 h-4 text-primary" /> },
                 { label: "FIELD COVERAGE", value: `${d.field.coveragePct}%`, sub: `${fmt(d.field.doorsCompleted)} doors done`, color: d.field.coveragePct > 60 ? "text-green-400" : d.field.coveragePct > 30 ? "text-yellow-400" : "text-red-400", icon: <Map className="w-4 h-4 text-blue-400" /> },
                 { label: "MSG DELIVERY", value: `${d.messaging.deliveryRate}%`, sub: `${fmt(d.messaging.delivered)} delivered`, color: d.messaging.deliveryRate > 80 ? "text-green-400" : d.messaging.deliveryRate > 50 ? "text-yellow-400" : "text-red-400", icon: <MessageSquare className="w-4 h-4 text-cyan-400" /> },
                 { label: "KOL ALIGNMENT", value: `${d.kols.alignedPct}%`, sub: `${fmt(d.kols.followers)} total reach`, color: d.kols.alignedPct > 60 ? "text-green-400" : d.kols.alignedPct > 30 ? "text-yellow-400" : "text-red-400", icon: <Star className="w-4 h-4 text-yellow-400" /> },
               ].map(({ label, value, sub, color, icon }) => (
-                <div key={label} className="flex items-start gap-3 border border-border bg-background/40 p-3">
+                <div key={label} className="border border-border p-3 flex items-start gap-3">
                   <div className="p-2 bg-secondary">{icon}</div>
                   <div>
                     <p className="font-mono text-[9px] text-muted-foreground">{label}</p>
@@ -759,7 +760,7 @@ export default function Analytics() {
           </div>
 
           {/* Full module scorecard */}
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-2 gap-4">
             <Panel title="MODULE PERFORMANCE SCORECARD">
               <div className="space-y-3">
                 {[
@@ -859,7 +860,7 @@ export default function Analytics() {
           </div>
 
           {/* Finance summary */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-4 gap-3">
             <Stat label="DONATIONS RECEIVED" value={fmt(d.finance.totalRaised)} sub={`${d.finance.donations} transactions`} color="text-teal-400" />
             <Stat label="POLL PARTICIPATION" value={fmt(d.sentiment.votes)} sub={`${d.sentiment.polls} polls active`} color="text-purple-400" />
             <Stat label="LEGISLATIVE RECORDS" value={d.credentials.records} sub={`${d.credentials.passed} passed`} color="text-orange-400" />
