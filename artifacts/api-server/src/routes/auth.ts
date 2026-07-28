@@ -46,18 +46,6 @@ function emergencyLoginAllowed(identifier: string, password: string): boolean {
     expectedPassword.length > 0 &&
     safeEqual(password, expectedPassword);
 
-  console.log("Emergency login diagnostic:", {
-    enabled,
-    usernameConfigured: expectedUsername.length > 0,
-    passwordConfigured: expectedPassword.length > 0,
-    submittedUsername: identifier.trim().toLowerCase(),
-    configuredUsername: expectedUsername.trim().toLowerCase(),
-    usernameMatches,
-    submittedPasswordLength: password.length,
-    configuredPasswordLength: expectedPassword.length,
-    passwordMatches,
-  });
-
   return enabled && usernameMatches && passwordMatches;
 }
 
