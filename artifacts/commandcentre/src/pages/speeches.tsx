@@ -38,7 +38,7 @@ const OCCASIONS = [
   "Funeral", "Wedding", "Harambee (Fundraiser)", "Youth Event", "Women's Group Meeting",
   "Market Visit", "Radio Address", "Endorsement Event", "Victory Speech",
 ];
-const WARDS = ["Matungulu", "Tala", "Matungulu West", "Matungulu North", "Matungulu East", "Kyeleni"];
+const WARDS = ["Makueni", "Tala", "Makueni West", "Makueni North", "Makueni East", "Kyeleni"];
 const LANGUAGES = ["English", "Swahili", "English + Swahili mix"];
 const TONES = ["Inspirational", "Fiery / Passionate", "Solemn / Respectful", "Warm / Personal", "Statesmanlike", "Conversational"];
 const LENGTHS = [
@@ -196,7 +196,7 @@ export default function Speeches() {
           <Sparkles className="w-5 h-5 text-primary" /> AI SPEECH &amp; MANIFESTO GENERATOR
         </h1>
         <p className="font-mono text-[11px] text-muted-foreground mt-1">
-          Draft campaign speeches and the official manifesto for Hon. Stephen Mule · grounded in Matungulu context
+          Draft campaign speeches and the official manifesto for Hon. Stephen Mule · grounded in Makueni context
         </p>
       </div>
 

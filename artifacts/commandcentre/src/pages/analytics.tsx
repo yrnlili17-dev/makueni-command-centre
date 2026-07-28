@@ -26,8 +26,8 @@ const COLORS = {
 };
 const PIE_PALETTE = [COLORS.primary, COLORS.blue, COLORS.green, COLORS.yellow, COLORS.purple, COLORS.orange, COLORS.cyan, COLORS.pink, COLORS.teal, COLORS.indigo];
 const WARD_COLORS: Record<string, string> = {
-  "Tala": COLORS.primary, "Matungulu North": COLORS.blue,
-  "Matungulu West": COLORS.green, "Matungulu East": COLORS.yellow, "Kyeleni": COLORS.purple,
+  "Tala": COLORS.primary, "Makueni North": COLORS.blue,
+  "Makueni West": COLORS.green, "Makueni East": COLORS.yellow, "Kyeleni": COLORS.purple,
 };
 
 type Tab = "growth" | "messaging" | "field" | "sentiment" | "kols" | "insights";

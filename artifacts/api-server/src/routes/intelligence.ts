@@ -39,7 +39,7 @@ async function openAiAnalyze(content: string, platform: string): Promise<{ threa
       model: "gpt-5-mini",
       max_completion_tokens: 500,
       messages: [
-        { role: "system", content: `You are an AI political campaign intelligence analyst for Hon. Stephen Mule, MNA for Matungulu constituency, Kenya. Analyze social media and news content for threats and sentiment. Respond with valid JSON only.` },
+        { role: "system", content: `You are an AI political campaign intelligence analyst for Hon. Stephen Mule, MNA for Makueni constituency, Kenya. Analyze social media and news content for threats and sentiment. Respond with valid JSON only.` },
         { role: "user", content: `Analyze this ${platform} post about Hon. Mule:\n\n"${content}"\n\nRespond with JSON: { "threatLevel": "normal"|"elevated"|"high"|"critical", "sentiment": "positive"|"neutral"|"negative", "sentimentScore": 0-100, "aiSummary": "2-sentence analysis", "suggestedResponse": "1-2 sentence counter-narrative if needed, else empty string" }` },
       ],
     });
@@ -64,13 +64,13 @@ async function openAiGenerateResponse(content: string, platform: string, threatL
       model: "gpt-5-mini",
       max_completion_tokens: 300,
       messages: [
-        { role: "system", content: `You are a professional communications officer for Hon. Stephen Mule, MNA for Matungulu constituency, Kenya. Craft professional, factual counter-narratives for ${platform}. Be concise, firm, and dignified. Do not be aggressive.` },
+        { role: "system", content: `You are a professional communications officer for Hon. Stephen Mule, MNA for Makueni constituency, Kenya. Craft professional, factual counter-narratives for ${platform}. Be concise, firm, and dignified. Do not be aggressive.` },
         { role: "user", content: `Draft a ${platform} counter-narrative response to this ${threatLevel}-level threat:\n\n"${content}"\n\nWrite only the response text, no preamble.` },
       ],
     });
     return response.choices[0]?.message?.content?.trim() ?? "";
   } catch {
-    return `Hon. Stephen Mule, MNA for Matungulu, remains committed to serving the people of Matungulu constituency with integrity and dedication.`;
+    return `Hon. Stephen Mule, MNA for Makueni, remains committed to serving the people of Makueni constituency with integrity and dedication.`;
   }
 }
 
@@ -186,7 +186,7 @@ const CHAR_LIMITS: Record<string, number> = {
   "TikTok Caption": 150,
 };
 
-const CANDIDATE_CTX = `Hon. Stephen Mutinda Mule (Mwanamule), MNA for Matungulu Constituency (Tala, Matungulu West, Matungulu North, Matungulu East, Kyeleni). Biomedical Engineer. Wiper Patriotic Front, "Komboa Kenya" campaign. 78,000 registered voters, election August 9 2027. His team: Campaign Manager John Kyalo, Comms Fiddellis Wambua.`;
+const CANDIDATE_CTX = `Hon. Stephen Mutinda Mule (Mwanamule), MNA for Makueni Constituency (Tala, Makueni West, Makueni North, Makueni East, Kyeleni). Biomedical Engineer. Wiper Patriotic Front, "Komboa Kenya" campaign. 78,000 registered voters, election August 9 2027. His team: Campaign Manager John Kyalo, Comms Fiddellis Wambua.`;
 
 router.post("/ai-draft-rebuttal", async (req, res) => {
   const { attack, platform = "Twitter/X", urgency = "planned" } = req.body as {
@@ -196,12 +196,12 @@ router.post("/ai-draft-rebuttal", async (req, res) => {
 
   const charLimit = CHAR_LIMITS[platform] ?? 400;
 
-  const BASE = `Senior comms officer for ${CANDIDATE_CTX}. ${urgency === "live" ? "LIVE URGENT" : "Planned"} rebuttal for ${platform} (max ${charLimit} chars). Never name opponents. Stay dignified. Kenya political language. Include one Matungulu reference. Output ONLY raw JSON, no markdown.`;
+  const BASE = `Senior comms officer for ${CANDIDATE_CTX}. ${urgency === "live" ? "LIVE URGENT" : "Planned"} rebuttal for ${platform} (max ${charLimit} chars). Never name opponents. Stay dignified. Kenya political language. Include one Makueni reference. Output ONLY raw JSON, no markdown.`;
 
   const ATTACK_SNIPPET = attack.substring(0, 400);
 
   const VARIATIONS = [
-    { tone: "FACTUAL COUNTER", angle: "Cite specific Matungulu achievements/data to disprove the claim.", schema: `{"tone":"FACTUAL COUNTER","angle":"string","content":"string"}` },
+    { tone: "FACTUAL COUNTER", angle: "Cite specific Makueni achievements/data to disprove the claim.", schema: `{"tone":"FACTUAL COUNTER","angle":"string","content":"string"}` },
     { tone: "FIRM DENIAL",     angle: "Direct, authoritative, dignified denial with brief rationale. No aggression.", schema: `{"tone":"FIRM DENIAL","angle":"string","content":"string"}` },
     { tone: "BRIDGE & PIVOT",  angle: "Acknowledge voter frustration, pivot to positive vision and commitment.", schema: `{"tone":"BRIDGE & PIVOT","angle":"string","content":"string"}` },
   ];
@@ -304,18 +304,18 @@ router.post("/platform-integrations", async (req, res) => {
 // ─── Scan Engine ─────────────────────────────────────────────────────────────
 
 const SIMULATED_MENTIONS: Array<{ platform: string; author: string; content: string; engagementCount: number }> = [
-  { platform: "Twitter/X", author: "@MatunguluVoter", content: "Hon. Mule has done absolutely nothing for Tala ward. The road from Tala to Matungulu town is still impassable during rains. We voted for development not silence!", engagementCount: 847 },
-  { platform: "Facebook", author: "Matungulu Community Group", content: "Stephen Mule was at the Kyeleni borehole opening today. Finally water for our people! This is the leadership we needed. Hongera Mheshimiwa!", engagementCount: 1243 },
-  { platform: "Twitter/X", author: "@NairobiEye", content: "Rumours circulating that MNA Mule received corrupt funds from contractor Ndungu for the Matungulu East roads tender. Need answers Mheshimiwa!", engagementCount: 2891 },
-  { platform: "News", author: "The Star Kenya", content: "Matungulu MNA Stephen Mule today launched bursary applications for 500 students from the constituency. CDF allocation of KSh 45M earmarked for education.", engagementCount: 412 },
+  { platform: "Twitter/X", author: "@MakueniVoter", content: "Hon. Mule has done absolutely nothing for Tala ward. The road from Tala to Makueni town is still impassable during rains. We voted for development not silence!", engagementCount: 847 },
+  { platform: "Facebook", author: "Makueni Community Group", content: "Stephen Mule was at the Kyeleni borehole opening today. Finally water for our people! This is the leadership we needed. Hongera Mheshimiwa!", engagementCount: 1243 },
+  { platform: "Twitter/X", author: "@NairobiEye", content: "Rumours circulating that MNA Mule received corrupt funds from contractor Ndungu for the Makueni East roads tender. Need answers Mheshimiwa!", engagementCount: 2891 },
+  { platform: "News", author: "The Star Kenya", content: "Makueni MNA Stephen Mule today launched bursary applications for 500 students from the constituency. CDF allocation of KSh 45M earmarked for education.", engagementCount: 412 },
   { platform: "Facebook", author: "Kyeleni Ward Rep", content: "Hon. Mule is failing us. The CDF projects he promised — health centre, market — are years behind. Our people deserve better representation!", engagementCount: 563 },
-  { platform: "Twitter/X", author: "@KenyaPolitics254", content: "Matungulu North residents block road demanding MNA Mule address their water crisis. 6 months since he promised a solution. #AccountabilityKE", engagementCount: 1567 },
-  { platform: "News", author: "Daily Nation", content: "Hon. Stephen Mule joins MPs rallying behind Affordable Housing Bill during Matungulu public participation forum.", engagementCount: 289 },
-  { platform: "Facebook", author: "Youth For Mule", content: "Mheshimiwa Mule just visited our football pitch in Matungulu West. Promised to fund the youth team's uniforms and tournament. Real grassroots leader!", engagementCount: 731 },
+  { platform: "Twitter/X", author: "@KenyaPolitics254", content: "Makueni North residents block road demanding MNA Mule address their water crisis. 6 months since he promised a solution. #AccountabilityKE", engagementCount: 1567 },
+  { platform: "News", author: "Daily Nation", content: "Hon. Stephen Mule joins MPs rallying behind Affordable Housing Bill during Makueni public participation forum.", engagementCount: 289 },
+  { platform: "Facebook", author: "Youth For Mule", content: "Mheshimiwa Mule just visited our football pitch in Makueni West. Promised to fund the youth team's uniforms and tournament. Real grassroots leader!", engagementCount: 731 },
 ];
 
 router.post("/scan", async (req, res) => {
-  const { platform = "all", query = "Mule Matungulu" } = req.body;
+  const { platform = "all", query = "Mule Makueni" } = req.body;
   const [scan] = await db.insert(narrativeScansTable).values({ platform, query, status: "running" }).returning();
   (async () => {
     try {

@@ -109,7 +109,7 @@ export default function Dashboard() {
                 ["EXPERIENCE", "15 Years Leadership"],
                 ["EDUCATION", "Degree"],
                 ["CONTACT", "0725 988 683"],
-                ["WARD", "Matungulu West"],
+                ["WARD", "Makueni West"],
                 ["TARGET WIN", "85%+"],
               ].map(([k, v]) => (
                 <div key={k}>
@@ -122,7 +122,7 @@ export default function Dashboard() {
               <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">SOCIAL MEDIA</p>
               {[
                 ["FACEBOOK", "Hon. Stephen Mutinda Mule"],
-                ["FB PAGE", "Hon. Dr. Stephen Mutinda Mule MP Matungulu"],
+                ["FB PAGE", "Hon. Dr. Stephen Mutinda Mule MP Makueni"],
                 ["TWITTER/X", "Stephen Mule1"],
                 ["TIKTOK", "@hon.dr.stephenmule(Mwanamule)"],
               ].map(([p, h]) => (
@@ -161,9 +161,9 @@ export default function Dashboard() {
               <div className="space-y-1.5">
                 {[
                   { ward: "Tala",             stations: 40  },
-                  { ward: "Matungulu West",   stations: 55  },
-                  { ward: "Matungulu North",  stations: 26  },
-                  { ward: "Matungulu East",   stations: 24  },
+                  { ward: "Makueni West",   stations: 55  },
+                  { ward: "Makueni North",  stations: 26  },
+                  { ward: "Makueni East",   stations: 24  },
                   { ward: "Kyeleni",          stations: 20  },
                 ].map(({ ward, stations }) => (
                   <div key={ward} className="flex items-center gap-2">

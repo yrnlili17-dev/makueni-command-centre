@@ -50,7 +50,7 @@ type Tab = "donors" | "donations" | "campaigns" | "pledges" | "pipeline" | "insi
 const BASE = import.meta.env.BASE_URL;
 
 const CHANNELS = ["cash", "mpesa", "bank", "cheque", "online"] as const;
-const WARDS = ["Tala", "Matungulu North", "Matungulu West", "Matungulu East", "Kyeleni"];
+const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
 
 function fmt(n: number | null | undefined) { return `KES ${(n ?? 0).toLocaleString()}`; }
 function pct(a: number, b: number) { if (!b) return 0; return Math.min(100, Math.round((a / b) * 100)); }

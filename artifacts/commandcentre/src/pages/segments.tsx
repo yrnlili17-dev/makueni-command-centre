@@ -253,7 +253,7 @@ export default function Segments() {
                 <label className="text-[10px] font-mono text-muted-foreground">WARD</label>
                 <select value={form._ward ?? ""} onChange={e => setForm(p => ({ ...p, _ward: e.target.value }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
                   <option value="">ALL WARDS</option>
-                  {["Tala","Matungulu West","Matungulu North","Matungulu East","Kyeleni"].map(w => <option key={w} value={w}>{w}</option>)}
+                  {["Tala","Makueni West","Makueni North","Makueni East","Kyeleni"].map(w => <option key={w} value={w}>{w}</option>)}
                 </select>
               </div>
             )}
@@ -291,7 +291,7 @@ export default function Segments() {
                   <label className="text-[10px] font-mono text-muted-foreground">WARD FILTER</label>
                   <select value={form._ward ?? ""} onChange={e => setForm(p => ({ ...p, _ward: e.target.value }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
                     <option value="">ALL WARDS</option>
-                    {["Tala","Matungulu West","Matungulu North","Matungulu East","Kyeleni"].map(w => <option key={w} value={w}>{w}</option>)}
+                    {["Tala","Makueni West","Makueni North","Makueni East","Kyeleni"].map(w => <option key={w} value={w}>{w}</option>)}
                   </select>
                 </div>
                 {segmentType === "behavioral" && (

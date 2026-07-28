@@ -13,7 +13,7 @@ const RECORD_CATEGORIES = ["agriculture", "education", "health", "infrastructure
 const RECORD_STATUSES = ["passed", "pending", "defeated", "withdrawn", "in_committee", "enacted"] as const;
 const ACH_CATEGORIES = ["infrastructure", "education", "health", "water", "security", "youth", "women", "agriculture", "environment", "governance", "economy", "housing"];
 const ACH_STATUSES = ["completed", "ongoing", "planned"] as const;
-const WARDS = ["Tala", "Matungulu North", "Matungulu West", "Matungulu East", "Kyeleni"];
+const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
 const RESEARCH_TOPICS = ["Infrastructure Development", "Education Policy", "Health Services", "Water & Sanitation", "Youth Employment", "Women Empowerment", "Agriculture", "Security", "Devolution", "Fiscal Policy", "Environment", "Housing"];
 
 type Tab = "overview" | "records" | "achievements" | "research";
@@ -574,7 +574,7 @@ export default function Credentials() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-mono text-muted-foreground">BENEFICIARIES</label>
-                    <input value={recordForm.beneficiaries ?? ""} onChange={e => setRecordForm(p => ({ ...p, beneficiaries: e.target.value }))} placeholder="e.g. 50,000 farmers in Matungulu" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+                    <input value={recordForm.beneficiaries ?? ""} onChange={e => setRecordForm(p => ({ ...p, beneficiaries: e.target.value }))} placeholder="e.g. 50,000 farmers in Makueni" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-mono text-muted-foreground">PARLIAMENTARY SESSION</label>
@@ -891,7 +891,7 @@ export default function Credentials() {
                 <div className="flex items-center gap-2 mb-1">
                   <Sparkles className="w-4 h-4 text-primary" />
                   <span className="font-mono text-[10px] tracking-widest text-primary">AI RESEARCH ASSISTANT</span>
-                  <span className="ml-auto font-mono text-[9px] text-muted-foreground">Powered by AI · Matungulu constituency context</span>
+                  <span className="ml-auto font-mono text-[9px] text-muted-foreground">Powered by AI · Makueni constituency context</span>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
@@ -906,7 +906,7 @@ export default function Credentials() {
                       value={researchQuery}
                       onChange={e => setResearchQuery(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); runResearch(); } }}
-                      placeholder="e.g. What legislation can improve water access in rural Matungulu?"
+                      placeholder="e.g. What legislation can improve water access in rural Makueni?"
                       className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary"
                     />
                   </div>
@@ -986,7 +986,7 @@ export default function Credentials() {
                 <div className="bg-card border border-border flex flex-col items-center justify-center py-16 gap-3">
                   <Search className="w-8 h-8 text-muted-foreground" />
                   <p className="font-mono text-xs text-muted-foreground">[ ENTER A QUERY TO BEGIN RESEARCH ]</p>
-                  <p className="font-mono text-[10px] text-muted-foreground/60 max-w-sm text-center">AI research provides legislative context, talking points, benchmarks, and source recommendations relevant to Matungulu Constituency</p>
+                  <p className="font-mono text-[10px] text-muted-foreground/60 max-w-sm text-center">AI research provides legislative context, talking points, benchmarks, and source recommendations relevant to Makueni Constituency</p>
                 </div>
               )}
             </div>

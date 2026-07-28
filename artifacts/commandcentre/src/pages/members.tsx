@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, Trash2, Edit2, X, Check } from "lucide-react";
 
 const SUPPORT_LEVELS = ["strong_supporter", "supporter", "undecided", "soft_opponent", "opponent"];
-const WARDS = ["Tala", "Matungulu North", "Matungulu East", "Kyeleni", "Matungulu West"];
+const WARDS = ["Tala", "Makueni North", "Makueni East", "Kyeleni", "Makueni West"];
 const STATUSES = ["active", "inactive", "deceased"];
 
 function SupportBadge({ level }: { level?: string | null }) {

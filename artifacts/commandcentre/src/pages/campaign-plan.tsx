@@ -438,7 +438,7 @@ export default function CampaignPlan() {
         {/* Print header (only visible when printing) */}
         <div className="hidden print:block mb-6">
           <h1 className="text-2xl font-bold">MAKUENI COMMAND CENTRE — CAMPAIGN PLAN</h1>
-          <p className="text-sm">Hon. Stephen Mule · Matungulu Constituency · Generated {new Date().toLocaleString("en-KE")}</p>
+          <p className="text-sm">Hon. Stephen Mule · Makueni Constituency · Generated {new Date().toLocaleString("en-KE")}</p>
         </div>
 
         {/* Stats bar */}
@@ -614,7 +614,7 @@ export default function CampaignPlan() {
             {/* Vision & Mission */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { label: "VISION", text: "To be a good people's representative, efficient legislator and do oversight duties effectively. Empower the people of Matungulu through education and socioeconomic activities." },
+                { label: "VISION", text: "To be a good people's representative, efficient legislator and do oversight duties effectively. Empower the people of Makueni through education and socioeconomic activities." },
                 { label: "MISSION", text: "To provide high level competence in protecting the will of the people. Prioritizing education, water, road infrastructure and security for all constituents." },
               ].map(({ label, text }) => (
                 <div key={label} className="bg-card border border-border p-4">

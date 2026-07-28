@@ -33,7 +33,7 @@ const CANDIDATES = [
   { name: "Lucy Ndunda Muema", party: "Wiper" },
 ];
 
-const WARDS = ["Tala", "Matungulu North", "Matungulu West", "Matungulu East", "Kyeleni"];
+const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
 
 const STATUS_STYLE: Record<string, string> = {
   pending: "text-muted-foreground border-muted-foreground/30",

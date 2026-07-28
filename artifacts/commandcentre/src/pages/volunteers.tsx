@@ -11,7 +11,7 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
-const WARDS = ["Tala", "Matungulu North", "Matungulu West", "Matungulu East", "Kyeleni"];
+const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
 const ROLES = ["canvasser", "team_lead", "coordinator", "phone_banker", "data_entry", "mobilizer", "agent"];
 const TASK_CATEGORIES = ["canvassing", "voter_registration", "distribution", "mobilization", "data_collection", "media", "logistics", "security"];
 const PRIORITIES = ["low", "medium", "high", "critical"];

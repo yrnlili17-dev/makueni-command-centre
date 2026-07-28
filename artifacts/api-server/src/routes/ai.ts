@@ -4,18 +4,18 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 const router = Router();
 
 export const CAMPAIGN_CONTEXT = `
-You are an AI assistant embedded in MAKUENI COMMAND CENTRE — a campaign management platform for Hon. Stephen Mutinda Mule (Mwanamule), MNA candidate for Matungulu Constituency, Machakos County, Kenya.
+You are an AI assistant embedded in MAKUENI COMMAND CENTRE — a campaign management platform for Hon. Stephen Mutinda Mule (Mwanamule), MNA candidate for Makueni Constituency, Machakos County, Kenya.
 
 CANDIDATE PROFILE:
 - Full Name: Hon. Stephen Mutinda Mule (Mwanamule)
 - Party: Wiper Patriotic Front | Slogan: "Komboa Kenya" | Symbol: Umbrella
 - Profession: Biomedical Engineer | Experience: 15 years leadership
-- Home Ward: Matungulu West | Contact: 0725 988 683
+- Home Ward: Makueni West | Contact: 0725 988 683
 - Target: 85%+ vote share
 
 CONSTITUENCY:
 - Population: 187,600 | Registered Voters: 78,000
-- 5 Wards: Tala (40 stations), Matungulu West (55 stations), Matungulu North (26 stations), Matungulu East (24 stations), Kyeleni (20 stations)
+- 5 Wards: Tala (40 stations), Makueni West (55 stations), Makueni North (26 stations), Makueni East (24 stations), Kyeleni (20 stations)
 - Total Polling Stations: 165
 - Youth 18-35: 75,000 | Women: 88,800
 - Key Issues: Clean water, road infrastructure, youth employment, security
@@ -33,19 +33,19 @@ CAMPAIGN PILLARS:
 ELECTION: August 9, 2027 | SWOT Threats: Low voter turnout, ruling party financing, negative social media.
 
 NARRATIVE PLAYBOOK (core storylines — ground all messaging, speeches and rebuttals in these; mix English, Kiswahili and Kikamba as appropriate to the channel):
-1. Development & Reliability (PRIMARY): "A trusted engineer to fix Matungulu's basics — water, roads, jobs." Links his biomedical-engineer credibility to concrete delivery. e.g. "Mwanamule: Mhandisi wa Maendeleo, Komboa Matungulu." / "Under the Umbrella, Matungulu Must Move Forward."
-2. Youth & Jobs: "The youth are the engine; the MP is the connector." Practical empowerment (skills, hustles, bodaboda, ICT) for 75,000 youth. e.g. "Vijana Kwanza, Kazi Kwanza – Mwanamule aũsya matalanta ma Matungulu."
-3. Water & Roads (issue-specific): "No more excuses on water and roads." e.g. "Maji, Barabara, Kazi – Mwanamule Delivers for Matungulu."
-4. Integrity & Oversight: "A serious MP who fights for Matungulu's share in Nairobi — not a holiday MP." e.g. "Sauti ya Matungulu Bungeni, Mlinzi wa Fedha za Wenyeji." / "Maendeleo Bila Ulaghai."
-5. Local Pride & Homegrown Leadership: "One of us — knows our roads, churches, quarries." Home-ward advantage (Matungulu West). e.g. "From Matungulu, For Matungulu – Mwanamule Under the Umbrella."
+1. Development & Reliability (PRIMARY): "A trusted engineer to fix Makueni's basics — water, roads, jobs." Links his biomedical-engineer credibility to concrete delivery. e.g. "Mwanamule: Mhandisi wa Maendeleo, Komboa Makueni." / "Under the Umbrella, Makueni Must Move Forward."
+2. Youth & Jobs: "The youth are the engine; the MP is the connector." Practical empowerment (skills, hustles, bodaboda, ICT) for 75,000 youth. e.g. "Vijana Kwanza, Kazi Kwanza – Mwanamule aũsya matalanta ma Makueni."
+3. Water & Roads (issue-specific): "No more excuses on water and roads." e.g. "Maji, Barabara, Kazi – Mwanamule Delivers for Makueni."
+4. Integrity & Oversight: "A serious MP who fights for Makueni's share in Nairobi — not a holiday MP." e.g. "Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." / "Maendeleo Bila Ulaghai."
+5. Local Pride & Homegrown Leadership: "One of us — knows our roads, churches, quarries." Home-ward advantage (Makueni West). e.g. "From Makueni, For Makueni – Mwanamule Under the Umbrella."
 
-LOCALIZATION: Tala → markets, youth, bodaboda, security. Matungulu West/North/East → water, coffee prices, roads, bursaries. Kyeleni → water, feeder roads, security, quarry safety. Posters/billboards: short bilingual lines (top "Komboa Kenya", bottom "Komboa Matungulu na Mwanamule – Maji, Barabara, Kazi"). Barazas/church: candidate leans into Kikamba, MC uses Kiswahili & English. Online: youth-focused variants. Offline markets: water/roads + integrity lines.
+LOCALIZATION: Tala → markets, youth, bodaboda, security. Makueni West/North/East → water, coffee prices, roads, bursaries. Kyeleni → water, feeder roads, security, quarry safety. Posters/billboards: short bilingual lines (top "Komboa Kenya", bottom "Komboa Makueni na Mwanamule – Maji, Barabara, Kazi"). Barazas/church: candidate leans into Kikamba, MC uses Kiswahili & English. Online: youth-focused variants. Offline markets: water/roads + integrity lines.
 
-Respond concisely, professionally and strategically. Use Kenya-specific political context. Always frame advice for Matungulu constituency and the candidate's strengths.
+Respond concisely, professionally and strategically. Use Kenya-specific political context. Always frame advice for Makueni constituency and the candidate's strengths.
 `.trim();
 
 const MODULE_CONTEXTS: Record<string, string> = {
-  swot: "You are a political strategy analyst performing a SWOT assessment for a Kenyan parliamentary candidate. Provide sharp, honest, actionable insights grounded in Matungulu constituency realities.",
+  swot: "You are a political strategy analyst performing a SWOT assessment for a Kenyan parliamentary candidate. Provide sharp, honest, actionable insights grounded in Makueni constituency realities.",
   dashboard: "You advise on overall campaign health, strategy and priorities. Analyze data and give actionable intelligence-grade recommendations.",
   messaging: "You are a campaign communications expert. Draft SMS, WhatsApp and email messages for Kenyan voters. Keep messages concise, culturally appropriate, persuasive. Messages can be in English or Swahili.",
   members: "You are a voter intelligence analyst. Help analyze voter data, identify support patterns, and suggest outreach strategies by ward and support level.",
@@ -53,12 +53,12 @@ const MODULE_CONTEXTS: Record<string, string> = {
   "field-ops": "You are a field operations commander. Help plan door-to-door campaigns, canvassing routes, and ground game coordination across 165 polling stations.",
   volunteers: "You are a volunteer management expert. Help recruit, train, motivate and deploy campaign volunteers effectively across all wards.",
   surveys: "You are a political research analyst. Help design surveys, interpret results and extract actionable voter intelligence.",
-  events: "You are a campaign events planner. Help organize political rallies, barazas, community meetings and fundraisers appropriate for Matungulu.",
+  events: "You are a campaign events planner. Help organize political rallies, barazas, community meetings and fundraisers appropriate for Makueni.",
   intelligence: "You are a political intelligence and narrative analyst. Analyze threats, craft counter-narratives and protect the candidate's reputation on social media and in the field.",
   "campaign-plan": "You are a campaign strategy director. Help plan milestones, assess readiness gaps, and keep the campaign on track toward the August 2027 election.",
-  kol: "You are a political influence strategist. Help identify and engage key opinion leaders — chiefs, religious leaders, teachers, business people — in Matungulu.",
+  kol: "You are a political influence strategist. Help identify and engage key opinion leaders — chiefs, religious leaders, teachers, business people — in Makueni.",
   fundraising: "You are a political finance strategist. Help plan harambees, fundraising activities, budget management and financial compliance.",
-  "election-day": "You are an election day operations expert. Help plan polling agent deployment (165 stations), GOTV operations and result tallying for Matungulu.",
+  "election-day": "You are an election day operations expert. Help plan polling agent deployment (165 stations), GOTV operations and result tallying for Makueni.",
   credentials: "You are a legislative research assistant for the National Assembly. Help research bills, policies and document the candidate's legislative record and achievements.",
   analytics: "You are a campaign analytics expert. Interpret data trends and provide insights to improve campaign performance.",
   admin: "You are a campaign systems administrator. Help manage settings, user access and data integrity.",
@@ -72,7 +72,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
     "Draft a campaign status update for the team",
   ],
   messaging: [
-    "Draft an SMS urging voters to register in Matungulu",
+    "Draft an SMS urging voters to register in Makueni",
     "Write a WhatsApp message announcing a baraza in Tala",
     "Create a fundraising appeal message in Swahili",
     "Draft a youth empowerment campaign message",
@@ -85,7 +85,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
   segments: [
     "Define the top voter segments we should target",
     "How do we reach the 75,000 youth voters effectively?",
-    "What messaging works for women voters in Matungulu?",
+    "What messaging works for women voters in Makueni?",
   ],
   "field-ops": [
     "Plan a 2-week door-to-door campaign across all 5 wards",
@@ -118,7 +118,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
     "Create a 6-month countdown plan to election day",
   ],
   kol: [
-    "Who are the key opinion leaders we should engage in Matungulu?",
+    "Who are the key opinion leaders we should engage in Makueni?",
     "How do we approach chiefs and village elders for endorsements?",
     "Draft a KOL engagement strategy for religious leaders",
   ],
@@ -135,12 +135,12 @@ const QUICK_PROMPTS: Record<string, string[]> = {
   swot: [
     "What are Stephen Mule's 3 strongest political assets?",
     "What weaknesses could opponents exploit most effectively?",
-    "What political opportunities exist in Matungulu right now?",
+    "What political opportunities exist in Makueni right now?",
     "What are the top threats to winning in August 2027?",
     "How do we turn our weaknesses into strengths before election day?",
   ],
   credentials: [
-    "Research water access legislation relevant to Matungulu",
+    "Research water access legislation relevant to Makueni",
     "Suggest 3 private member bills Stephen Mule could sponsor",
     "Summarize the CDF Act and how to maximize it",
   ],
@@ -177,7 +177,7 @@ Return ONLY a raw JSON object with no markdown, no code fences, no explanation �
       "domain": "domain name",
       "item": "specific, actionable checklist item",
       "weight": "low|medium|high",
-      "notes": "optional one-line context note relevant to Matungulu"
+      "notes": "optional one-line context note relevant to Makueni"
     }
   ]
 }
@@ -192,11 +192,11 @@ Generate 30-40 checklist items covering ALL of these domains:
 - Technology & Data (voter database, SMS platform, WhatsApp broadcast, reporting tools)
 - Candidate Welfare (schedule, security, transportation, health)
 
-Each item must be specific to Matungulu Constituency and Hon. Stephen Mule's campaign. Assign weight "high" to critical pre-election requirements, "medium" to important items, "low" to nice-to-haves.`,
+Each item must be specific to Makueni Constituency and Hon. Stephen Mule's campaign. Assign weight "high" to critical pre-election requirements, "medium" to important items, "low" to nice-to-haves.`,
         },
         {
           role: "user",
-          content: "Generate a comprehensive candidate readiness checklist for the Matungulu campaign based on the candidate profile and constituency information provided.",
+          content: "Generate a comprehensive candidate readiness checklist for the Makueni campaign based on the candidate profile and constituency information provided.",
         },
       ],
     });
@@ -243,7 +243,7 @@ Return ONLY a raw JSON object with no markdown, no code fences, no explanation �
   ]
 }
 
-Generate 18-22 strategic milestones spanning from today to 2 weeks before election day. Spread them across all categories. Make each milestone specific, actionable and realistic for Matungulu Constituency. Assign owners from the campaign team.`,
+Generate 18-22 strategic milestones spanning from today to 2 weeks before election day. Spread them across all categories. Make each milestone specific, actionable and realistic for Makueni Constituency. Assign owners from the campaign team.`,
         },
         {
           role: "user",
@@ -281,9 +281,9 @@ router.post("/generate-swot", async (req, res) => {
   }
 
   const prompts = {
-    strengths: makePrompt("strengths", "Real political assets: biomedical engineer background, Wiper ticket, local Matungulu roots, legislative record, community trust."),
+    strengths: makePrompt("strengths", "Real political assets: biomedical engineer background, Wiper ticket, local Makueni roots, legislative record, community trust."),
     weaknesses: makePrompt("weaknesses", "Honest vulnerabilities a challenger would exploit: funding gap, incumbency fatigue, limited digital presence, name recognition outside home ward."),
-    opportunities: makePrompt("opportunities", "Kenya/Matungulu 2027 context: devolution funds, youth bulge, diaspora vote, infrastructure momentum, Wiper Ukambani coalition."),
+    opportunities: makePrompt("opportunities", "Kenya/Makueni 2027 context: devolution funds, youth bulge, diaspora vote, infrastructure momentum, Wiper Ukambani coalition."),
     threats: makePrompt("threats", "Concrete threats: well-funded ruling-party opponent, voter apathy, negative social media attacks, low GOTV in remote stations, split opposition vote."),
   };
 

@@ -5,7 +5,7 @@ import {
   Download, ChevronRight, Link, Wifi, WifiOff, BarChart2, Filter,
 } from "lucide-react";
 
-const WARDS = ["Tala", "Matungulu North", "Matungulu West", "Matungulu East", "Kyeleni"];
+const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
 const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 const API = `${BASE_URL}/api/voter-registry`;
 
@@ -430,7 +430,7 @@ function CaptureTab() {
                 <option value="">— Ward —</option>
                 {WARDS.map(w => <option key={w}>{w}</option>)}
               </Select>
-              <Input label="SUB-COUNTY" placeholder="Matungulu" value={form.subCounty ?? ""} onChange={e => setForm(p => ({ ...p, subCounty: e.target.value }))} />
+              <Input label="SUB-COUNTY" placeholder="Makueni" value={form.subCounty ?? ""} onChange={e => setForm(p => ({ ...p, subCounty: e.target.value }))} />
               <div className="col-span-2">
                 <Input label="POLLING STATION" placeholder="Tala Primary School" value={form.pollingStation ?? ""} onChange={e => setForm(p => ({ ...p, pollingStation: e.target.value }))} />
               </div>
@@ -617,7 +617,7 @@ function RegistryApiTab() {
               <div className="font-mono text-[9px] text-muted-foreground">Obtain from IEBC Integration Portal · Keep this key confidential</div>
             </div>
             <Input label="BASE URL" value={form.baseUrl} onChange={e => setForm(p => ({ ...p, baseUrl: e.target.value }))} placeholder="https://api.iebc.or.ke/v1" />
-            <Input label="CLIENT ID" value={form.clientId} onChange={e => setForm(p => ({ ...p, clientId: e.target.value }))} placeholder="matungulu-campaign-001" />
+            <Input label="CLIENT ID" value={form.clientId} onChange={e => setForm(p => ({ ...p, clientId: e.target.value }))} placeholder="makueni-campaign-001" />
             <Input label="NOTES" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Integration contact, expiry date etc." />
             <div className="flex gap-2">
               <button type="submit" disabled={savingCreds} className="bg-primary text-white font-mono text-[10px] tracking-widest px-4 py-2 hover:bg-primary/90 disabled:opacity-50">SAVE CREDENTIALS</button>

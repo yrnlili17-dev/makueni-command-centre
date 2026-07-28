@@ -242,7 +242,7 @@ router.get("/daily-report", async (req, res) => {
   });
 
   // ward breakdown
-  const wardBreakdown = ["Tala", "Matungulu North", "Matungulu West", "Matungulu East", "Kyeleni"].map(ward => {
+  const wardBreakdown = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"].map(ward => {
     const wardVols = volunteers.filter(v => v.ward === ward);
     const wardTasks = allTasks.filter(t => wardVols.some(v => v.id === t.volunteerId));
     const wardLogs = todayLogs.filter(l => wardVols.some(v => v.id === l.volunteerId));

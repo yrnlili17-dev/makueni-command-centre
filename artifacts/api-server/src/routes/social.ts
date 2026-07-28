@@ -24,15 +24,15 @@ const idParamSchema = z.object({ id: z.coerce.number().int().positive() });
 const SCAN_CATEGORIES = [
   {
     key: "candidate",
-    prompt: `recent public mentions, news articles, and social media posts about "Hon. Stephen Mule", the Member of Parliament for Matungulu Constituency in Machakos County, Kenya`,
+    prompt: `recent public mentions, news articles, and social media posts about "Hon. Stephen Mule", the Member of Parliament for Makueni Constituency in Machakos County, Kenya`,
   },
   {
     key: "issues",
-    prompt: `recent trending local issues, public concerns, development news, and hot topics among residents of Matungulu Constituency and Machakos County, Kenya`,
+    prompt: `recent trending local issues, public concerns, development news, and hot topics among residents of Makueni Constituency and Machakos County, Kenya`,
   },
   {
     key: "opponent",
-    prompt: `recent political activity, statements, or campaigns by rival politicians and opponents in Matungulu Constituency and Machakos County, Kenya`,
+    prompt: `recent political activity, statements, or campaigns by rival politicians and opponents in Makueni Constituency and Machakos County, Kenya`,
   },
 ] as const;
 

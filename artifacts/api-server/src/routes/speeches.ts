@@ -54,7 +54,7 @@ const LENGTH_WORDS: Record<string, number> = {
 const speechSchema = z.object({
   occasion: z.string().min(1).max(120),
   audience: z.string().max(200).optional().default(""),
-  ward: z.string().max(60).optional().default("Matungulu"),
+  ward: z.string().max(60).optional().default("Makueni"),
   language: z.string().max(40).optional().default("English"),
   tone: z.string().max(40).optional().default("Inspirational"),
   keyPoints: z.string().max(1200).optional().default(""),
@@ -80,9 +80,9 @@ router.post("/generate", async (req, res) => {
 
 You are the head speechwriter for Hon. Stephen Mule. Write in a ${tone.toLowerCase()} tone.
 Language: ${language} (if "Swahili" write in Swahili; if a mix, blend naturally as Kenyan politicians do).
-Occasion: ${occasion}. Audience: ${audience || "the people of Matungulu"}. Ward focus: ${ward}.
+Occasion: ${occasion}. Audience: ${audience || "the people of Makueni"}. Ward focus: ${ward}.
 Write ONLY the speech prose for the requested part — no headings, no stage directions, no markdown, no labels.
-Keep it authentic to Kenyan / Ukambani political rhetoric and grounded in Matungulu realities.`;
+Keep it authentic to Kenyan / Ukambani political rhetoric and grounded in Makueni realities.`;
 
   const pointsLine = keyPoints ? `\nWeave in these key points where relevant: ${keyPoints}` : "";
 
@@ -97,7 +97,7 @@ Keep it authentic to Kenyan / Ukambani political rhetoric and grounded in Matung
       ),
       generateSection(
         base,
-        `Write the MAIN BODY of the speech (~${words} words): the core message and vision, drawing on the campaign pillars and Matungulu's real issues (water, roads, youth jobs, security).${pointsLine}`,
+        `Write the MAIN BODY of the speech (~${words} words): the core message and vision, drawing on the campaign pillars and Makueni's real issues (water, roads, youth jobs, security).${pointsLine}`,
         700,
       ),
       generateSection(
@@ -118,7 +118,7 @@ Keep it authentic to Kenyan / Ukambani political rhetoric and grounded in Matung
     return;
   }
 
-  const title = `${occasion}${ward && ward !== "Matungulu" ? ` — ${ward}` : ""}`;
+  const title = `${occasion}${ward && ward !== "Makueni" ? ` — ${ward}` : ""}`;
   res.json({ title, body: [opening, body, close].join("\n\n") });
 });
 
@@ -139,7 +139,7 @@ const PILLARS = [
   },
   {
     key: "Constitutional Mandate",
-    hint: "legislation, parliamentary oversight, faithful representation, maximizing CDF/NG-CDF for Matungulu.",
+    hint: "legislation, parliamentary oversight, faithful representation, maximizing CDF/NG-CDF for Makueni.",
   },
   {
     key: "Local Patronage & Accessibility",
@@ -165,7 +165,7 @@ router.post("/manifesto", async (req, res) => {
 
 You are drafting the official manifesto for Hon. Stephen Mule. Tone: ${tone.toLowerCase()}, credible and specific.
 Language: ${language}. Write ONLY the prose for the requested section — no headings, no markdown, no labels, no bullet symbols other than plain lines.
-Make commitments concrete and grounded in Matungulu Constituency realities.`;
+Make commitments concrete and grounded in Makueni Constituency realities.`;
 
   const issuesLine = priorityIssues ? ` Emphasize these priority issues: ${priorityIssues}.` : "";
 
@@ -174,7 +174,7 @@ Make commitments concrete and grounded in Matungulu Constituency realities.`;
   sectionCalls.push(
     generateSection(
       base,
-      `Write the PREAMBLE / VISION (~180 words): who Hon. Stephen Mule is, his covenant with the people of Matungulu, and the vision for the constituency toward the August 2027 election.${issuesLine}`,
+      `Write the PREAMBLE / VISION (~180 words): who Hon. Stephen Mule is, his covenant with the people of Makueni, and the vision for the constituency toward the August 2027 election.${issuesLine}`,
       520,
     ).then((text) => ({ heading: "PREAMBLE & VISION", text })),
   );
@@ -214,7 +214,7 @@ Make commitments concrete and grounded in Matungulu Constituency realities.`;
   }
 
   const body = sections.map((s) => `## ${s.heading}\n\n${s.text}`).join("\n\n");
-  res.json({ title: "Manifesto — Hon. Stephen Mule (Matungulu 2027)", body });
+  res.json({ title: "Manifesto — Hon. Stephen Mule (Makueni 2027)", body });
 });
 
 // ---- Saved document library (CRUD) ----

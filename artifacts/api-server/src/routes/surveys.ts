@@ -58,7 +58,7 @@ router.get("/polls/:id/results", async (req, res) => {
   const opts = poll.options as Array<{ label: string; votes: number }>;
   const total = poll.totalVotes;
 
-  const wards = ["Tala", "Matungulu North", "Matungulu West", "Matungulu East", "Kyeleni"];
+  const wards = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
   const wardBreakdown = wards.map(ward => {
     const wardVotes = votes.filter(v => v.ward === ward);
     const optCounts = opts.map((_, idx) => wardVotes.filter(v => v.optionIndex === idx).length);

@@ -14,7 +14,7 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
-const WARDS = ["Tala", "Matungulu West", "Matungulu North", "Matungulu East", "Kyeleni"];
+const WARDS = ["Tala", "Makueni West", "Makueni North", "Makueni East", "Kyeleni"];
 const OUTCOMES = ["support", "oppose", "undecided", "not_home", "refused"] as const;
 
 const SESSION_TYPES = [
@@ -41,7 +41,7 @@ const PLAYBOOK = [
   {
     key: "door-to-door", label: "DOOR-TO-DOOR CANVASS", icon: Home, color: "#DB143C",
     tagline: "Foundation of voter ID and persuasion",
-    why: "Identifies supporters, undecideds and opponents at household level. Data feeds GOTV lists. 40+ doors per volunteer per day in rural Matungulu.",
+    why: "Identifies supporters, undecideds and opponents at household level. Data feeds GOTV lists. 40+ doors per volunteer per day in rural Makueni.",
     tip: "Use the 3-knock rule. Record outcome immediately. Prioritise undecideds for follow-up.",
   },
   {
@@ -59,7 +59,7 @@ const PLAYBOOK = [
   {
     key: "chama-meeting", label: "CHAMA & WOMEN'S GROUPS", icon: Users, color: "#EC4899",
     tagline: "Organised networks with GOTV muscle",
-    why: "Matungulu has 300+ registered chamas. Women vote at higher rates than men. A chama pledge means 10–30 organised voters who also mobilise neighbours.",
+    why: "Makueni has 300+ registered chamas. Women vote at higher rates than men. A chama pledge means 10–30 organised voters who also mobilise neighbours.",
     tip: "Offer table-banking support or group registration assistance as goodwill. Pledge bursaries.",
   },
   {
@@ -101,8 +101,8 @@ const STATUS_CLS: Record<string, string> = {
 };
 
 const WARD_VOTERS: Record<string, number> = {
-  "Tala": 19000, "Matungulu West": 26000,
-  "Matungulu North": 15000, "Matungulu East": 12000, "Kyeleni": 10000,
+  "Tala": 19000, "Makueni West": 26000,
+  "Makueni North": 15000, "Makueni East": 12000, "Kyeleni": 10000,
 };
 
 function TypeBadge({ type }: { type: string }) {

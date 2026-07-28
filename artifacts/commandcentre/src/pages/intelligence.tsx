@@ -44,12 +44,12 @@ const NARRATIVE_PLAYBOOK = [
   {
     tag: "PRIMARY",
     title: "Development & Reliability",
-    core: "A trusted engineer to fix Matungulu's basics — water, roads, jobs.",
+    core: "A trusted engineer to fix Makueni's basics — water, roads, jobs.",
     lines: [
-      { lang: "EN", text: "Mwanamule: Mhandisi wa Maendeleo, Komboa Matungulu." },
-      { lang: "EN", text: "Under the Umbrella, Matungulu Must Move Forward." },
-      { lang: "SW/KAM", text: "Mwanamule, Mhandisi wa Kweli – Tũkomboe Matungulu, tũtwe na maji, njia na kasi ya kazi." },
-      { lang: "KAM", text: "Mwanamule: Mũtumia wa nesa, twambie Matungulu ĩĩsye mbele." },
+      { lang: "EN", text: "Mwanamule: Mhandisi wa Maendeleo, Komboa Makueni." },
+      { lang: "EN", text: "Under the Umbrella, Makueni Must Move Forward." },
+      { lang: "SW/KAM", text: "Mwanamule, Mhandisi wa Kweli – Tũkomboe Makueni, tũtwe na maji, njia na kasi ya kazi." },
+      { lang: "KAM", text: "Mwanamule: Mũtumia wa nesa, twambie Makueni ĩĩsye mbele." },
     ],
     why: "Links his biomedical engineer credibility to fixing water, roads, health — concrete issues every ward feels.",
   },
@@ -58,8 +58,8 @@ const NARRATIVE_PLAYBOOK = [
     title: "Youth & Jobs",
     core: "The youth are the engine; the MP is the connector.",
     lines: [
-      { lang: "EN", text: "Mwanamule: Empowering Youth, Building Matungulu's Future." },
-      { lang: "SW/KAM", text: "Vijana Kwanza, Kazi Kwanza – Mwanamule aũsya matalanta ma Matungulu." },
+      { lang: "EN", text: "Mwanamule: Empowering Youth, Building Makueni's Future." },
+      { lang: "SW/KAM", text: "Vijana Kwanza, Kazi Kwanza – Mwanamule aũsya matalanta ma Makueni." },
       { lang: "SW/KAM", text: "Mwanamule na Vijana: Tũsye na Kazi, Siyo Ahadi Tupu." },
     ],
     why: "Speaks to 75,000 youth; keeps it about practical empowerment (skills, hustles, bodaboda, ICT).",
@@ -69,8 +69,8 @@ const NARRATIVE_PLAYBOOK = [
     title: "Water & Roads",
     core: "No more excuses on water and roads.",
     lines: [
-      { lang: "EN", text: "Maji, Barabara, Kazi – Mwanamule Delivers for Matungulu." },
-      { lang: "SW/KAM", text: "Maji kwa Boma, Barabara kwa Soko – Mwanamule Atũnge Matungulu." },
+      { lang: "EN", text: "Maji, Barabara, Kazi – Mwanamule Delivers for Makueni." },
+      { lang: "SW/KAM", text: "Maji kwa Boma, Barabara kwa Soko – Mwanamule Atũnge Makueni." },
       { lang: "KAM", text: "Tũtandĩkĩe na Maji na Barabara – Mũtumia ni Mwanamule." },
     ],
     why: "Directly matches top grievances: clean water and infrastructure.",
@@ -78,11 +78,11 @@ const NARRATIVE_PLAYBOOK = [
   {
     tag: "INTEGRITY",
     title: "Integrity & Oversight",
-    core: "A serious MP who fights for Matungulu's share in Nairobi.",
+    core: "A serious MP who fights for Makueni's share in Nairobi.",
     lines: [
-      { lang: "EN", text: "Your Voice in Nairobi, Your Defender in Matungulu." },
+      { lang: "EN", text: "Your Voice in Nairobi, Your Defender in Makueni." },
       { lang: "EN", text: "Mwanamule: Maendeleo Bila Ulaghai." },
-      { lang: "SW/KAM", text: "Mwanamule: Sauti ya Matungulu Bungeni, Mlinzi wa Fedha za Wenyeji." },
+      { lang: "SW/KAM", text: "Mwanamule: Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." },
       { lang: "SW/KAM", text: "Maendeleo na Ukweli – Sio Siasa za Porojo." },
     ],
     why: "Distinguishes him from 'holiday MPs'; ties to constitutional mandate pillar.",
@@ -92,24 +92,24 @@ const NARRATIVE_PLAYBOOK = [
     title: "Homegrown Leadership",
     core: "One of us, who knows our roads, our churches, our quarries.",
     lines: [
-      { lang: "EN", text: "From Matungulu, For Matungulu – Mwanamule Under the Umbrella." },
-      { lang: "SW/KAM", text: "Mwanamule wa Kitũi kya Matungulu – Twĩtwe na Mũtumia ĩtũ." },
-      { lang: "KAM", text: "Mwanamule: Mwana wa Matungulu, Mwana wa Kila Kijiji." },
+      { lang: "EN", text: "From Makueni, For Makueni – Mwanamule Under the Umbrella." },
+      { lang: "SW/KAM", text: "Mwanamule wa Kitũi kya Makueni – Twĩtwe na Mũtumia ĩtũ." },
+      { lang: "KAM", text: "Mwanamule: Mwana wa Makueni, Mwana wa Kila Kijiji." },
     ],
-    why: "Taps into local patronage and home-ward advantage (Matungulu West).",
+    why: "Taps into local patronage and home-ward advantage (Makueni West).",
   },
 ] as const;
 
 const PLAYBOOK_WARDS = [
   { ward: "Tala", focus: "Markets, youth, bodaboda, security" },
-  { ward: "Matungulu West / North / East", focus: "Water, coffee prices, roads, bursaries" },
+  { ward: "Makueni West / North / East", focus: "Water, coffee prices, roads, bursaries" },
   { ward: "Kyeleni", focus: "Water, feeder roads, security, quarry safety" },
 ] as const;
 
 const PLAYBOOK_CHANNELS = [
-  { channel: "Posters / Billboards", guidance: "Short bilingual lines. Top: \"Komboa Kenya\" · Bottom: \"Komboa Matungulu na Mwanamule – Maji, Barabara, Kazi.\"" },
+  { channel: "Posters / Billboards", guidance: "Short bilingual lines. Top: \"Komboa Kenya\" · Bottom: \"Komboa Makueni na Mwanamule – Maji, Barabara, Kazi.\"" },
   { channel: "Barazas / Church", guidance: "Candidate leans into Kikamba versions; MC uses Kiswahili and English." },
-  { channel: "Online", guidance: "Youth variant: \"Vijana Kwanza, Kazi Kwanza – Mwanamule Matungulu 2027.\"" },
+  { channel: "Online", guidance: "Youth variant: \"Vijana Kwanza, Kazi Kwanza – Mwanamule Makueni 2027.\"" },
   { channel: "Offline (markets)", guidance: "Water / roads + integrity lines." },
 ] as const;
 
@@ -670,14 +670,14 @@ export default function Intelligence() {
       {/* ── AI REBUTTAL CENTER ── */}
       {tab === "rebuttal" && (() => {
         const ATTACK_TEMPLATES = [
-          { label: "CDF Misused", text: "Hon. Mule has misused CDF funds meant for Matungulu projects. Where did the money go? No accountability whatsoever!" },
-          { label: "Roads Not Built", text: "Mule promised to tarmac the Tala–Matungulu road in 2022. It is now 2026 and the road is still a muddy mess. Empty promises!" },
-          { label: "Water Crisis Ignored", text: "Matungulu North residents are still fetching water from rivers. Our MNA has done NOTHING about the water crisis despite 4 years in office." },
-          { label: "Parliament Absentee", text: "Mule has one of the worst parliamentary attendance records. He takes his salary but skips debates that affect Matungulu." },
-          { label: "Corruption Allegation", text: "Sources confirm Hon. Mule received kickbacks from the Matungulu East roads contractor. This must be investigated immediately!" },
-          { label: "Nepotism Claim", text: "All tenders in Matungulu constituency go to Mule's relatives and close allies. This is corruption and must stop." },
-          { label: "Youth Jobs Failure", text: "Mule promised 5,000 jobs for Matungulu youth. Three years later, youth unemployment in the constituency is worse than ever." },
-          { label: "Health Neglect", text: "Matungulu West dispensary has had no doctor for 8 months. Our MNA is busy with politics while people die from treatable diseases." },
+          { label: "CDF Misused", text: "Hon. Mule has misused CDF funds meant for Makueni projects. Where did the money go? No accountability whatsoever!" },
+          { label: "Roads Not Built", text: "Mule promised to tarmac the Tala–Makueni road in 2022. It is now 2026 and the road is still a muddy mess. Empty promises!" },
+          { label: "Water Crisis Ignored", text: "Makueni North residents are still fetching water from rivers. Our MNA has done NOTHING about the water crisis despite 4 years in office." },
+          { label: "Parliament Absentee", text: "Mule has one of the worst parliamentary attendance records. He takes his salary but skips debates that affect Makueni." },
+          { label: "Corruption Allegation", text: "Sources confirm Hon. Mule received kickbacks from the Makueni East roads contractor. This must be investigated immediately!" },
+          { label: "Nepotism Claim", text: "All tenders in Makueni constituency go to Mule's relatives and close allies. This is corruption and must stop." },
+          { label: "Youth Jobs Failure", text: "Mule promised 5,000 jobs for Makueni youth. Three years later, youth unemployment in the constituency is worse than ever." },
+          { label: "Health Neglect", text: "Makueni West dispensary has had no doctor for 8 months. Our MNA is busy with politics while people die from treatable diseases." },
         ];
 
         const PLATFORMS = ["Twitter/X", "Facebook", "WhatsApp", "Press Statement", "Baraza Speech", "SMS", "TikTok Caption"];
@@ -975,7 +975,7 @@ export default function Intelligence() {
                 fields: [
                   { key: "rssUrl", label: "GOOGLE ALERTS RSS URL", placeholder: "https://www.google.com/alerts/feeds/…" },
                 ],
-                hint: "Set up a Google Alert for 'Stephen Mule' or 'Matungulu MNA', then paste the RSS feed URL here."
+                hint: "Set up a Google Alert for 'Stephen Mule' or 'Makueni MNA', then paste the RSS feed URL here."
               },
               {
                 key: "news_rss", label: "NEWS MEDIA RSS", icon: <Newspaper className="w-4 h-4 text-yellow-400" />,
