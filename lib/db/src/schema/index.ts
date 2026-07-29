@@ -31,3 +31,4 @@ export * from "./documents";
 export * from "./command-centre";
 
 export * from "./smart-assist";
+export * from "./final-release";

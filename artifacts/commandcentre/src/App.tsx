@@ -31,6 +31,9 @@ import Admin from "@/pages/admin";
 import Governance from "@/pages/governance";
 import Analytics from "@/pages/analytics";
 import Strategist from "@/pages/strategist";
+import WarRoom from "@/pages/war-room";
+import ProductionCentre from "@/pages/production-centre";
+import PublicCampaign from "@/pages/public-campaign";
 import SmartAssist from "@/pages/smart-assist";
 import DataCentre from "@/pages/data-centre";
 import GisCentre from "@/pages/gis-centre";
@@ -95,6 +98,8 @@ function ProtectedRoutes() {
         <Route path="/smart-assist">{() => <Guarded module="social-listening" component={SmartAssist} />}</Route>
         <Route path="/data-centre">{() => <Guarded module="constituents" component={DataCentre} />}</Route>
         <Route path="/gis-centre">{() => <Guarded module="analytics" component={GisCentre} />}</Route>
+        <Route path="/war-room">{() => <Guarded module="election-day" component={WarRoom} />}</Route>
+        <Route path="/production-centre">{() => <Guarded module="admin" component={ProductionCentre} />}</Route>
         <Route path="/strategist">{() => <Guarded module="analytics" component={Strategist} />}</Route>
         <Route path="/members">{() => <Guarded module="voters" component={Members} />}</Route>
         <Route path="/segments">{() => <Guarded module="segmentation" component={Segments} />}</Route>
@@ -128,6 +133,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Login} />
       <Route path="/login" component={Login} />
+      <Route path="/campaign" component={PublicCampaign} />
       <Route path="/:rest*" component={ProtectedRoutes} />
     </Switch>
   );

@@ -48,6 +48,7 @@ const navGroups = [
   ]},
   { title: "ELECTION DAY", items: [
     { href: "/election-day", label: "ELECTION DAY OPS", icon: Vote },
+      { href: "/war-room", label: "ELECTION WAR ROOM", icon: Vote },
     { href: "/turnout", label: "TURNOUT FORECAST", icon: TrendingUp },
   ]},
   { title: "ADMINISTRATION", items: [
@@ -55,6 +56,7 @@ const navGroups = [
     { href: "/credentials", label: "CREDENTIALS HUB", icon: Award },
     { href: "/governance", label: "APPROVALS & DOCUMENTS", icon: FolderLock },
     { href: "/admin", label: "SYSTEM ADMIN", icon: Settings },
+      { href: "/production-centre", label: "PRODUCTION CENTRE", icon: Settings },
   ]},
 ];
 
@@ -70,8 +72,10 @@ const NAV_PERM: Record<string, string> = {
   "/voters-db": "constituents", "/segments": "segmentation", "/messaging": "messaging", "/field-ops": "field-ops",
   "/volunteers": "volunteers", "/surveys": "intelligence", "/events": "events", "/intelligence": "narrative",
   "/social-listening": "social-listening", "/swot": "intelligence", "/campaign-plan": "campaign-plan", "/kol": "kol",
-  "/speeches": "speeches", "/fundraising": "finance", "/election-day": "election-day", "/turnout": "election-day",
+  "/speeches": "speeches", "/fundraising": "finance", "/election-day": "election-day",
+  "/war-room": "election-day", "/turnout": "election-day",
   "/credentials": "credentials", "/analytics": "analytics", "/governance": "approvals", "/admin": "admin",
+  "/production-centre": "admin",
 };
 
 const PATH_MODULE: Record<string, string> = {
@@ -80,8 +84,10 @@ const PATH_MODULE: Record<string, string> = {
   "/voters-db": "voters-db", "/segments": "segments", "/messaging": "messaging", "/field-ops": "field-ops",
   "/volunteers": "volunteers", "/surveys": "surveys", "/events": "events", "/intelligence": "intelligence",
   "/social-listening": "social-listening", "/swot": "swot", "/campaign-plan": "campaign-plan", "/kol": "kol",
-  "/speeches": "speeches", "/fundraising": "fundraising", "/election-day": "election-day", "/turnout": "turnout",
+  "/speeches": "speeches", "/fundraising": "fundraising", "/election-day": "election-day",
+  "/war-room": "war-room", "/turnout": "turnout",
   "/credentials": "credentials", "/analytics": "analytics", "/governance": "governance", "/admin": "admin",
+  "/production-centre": "production-centre",
 };
 
 const mobileNav = [
