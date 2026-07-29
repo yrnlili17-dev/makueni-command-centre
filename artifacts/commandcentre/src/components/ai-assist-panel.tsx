@@ -141,7 +141,7 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
       <button
         onClick={() => setOpen(v => !v)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 font-mono text-xs font-bold tracking-widest border transition-all shadow-lg",
+          "fixed bottom-20 right-3 z-[55] flex items-center gap-2 border px-3 py-2.5 font-mono text-[11px] font-bold tracking-widest shadow-lg transition-all sm:bottom-6 sm:right-6 sm:px-4 sm:text-xs",
           open
             ? "bg-primary text-primary-foreground border-primary"
             : "bg-card text-primary border-primary/50 hover:bg-primary/10"
@@ -154,7 +154,7 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-20 right-6 z-50 w-[420px] max-h-[70vh] flex flex-col bg-card border border-primary/30 shadow-2xl">
+        <div className="fixed inset-x-2 bottom-20 z-[80] flex max-h-[72dvh] flex-col border border-primary/30 bg-card shadow-2xl sm:inset-x-auto sm:bottom-20 sm:right-6 sm:w-[420px]">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5 shrink-0">
             <div className="flex items-center gap-2">

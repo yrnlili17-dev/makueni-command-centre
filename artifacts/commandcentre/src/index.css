@@ -209,3 +209,105 @@ body{background:radial-gradient(circle at 15% 0%,rgba(219,20,60,.16),transparent
 @media(min-width:640px) and (max-width:1023px){main .grid-cols-4,main .grid-cols-5,main .grid-cols-6,main .grid-cols-7,main .grid-cols-8,main .grid-cols-9,main .grid-cols-10,main .grid-cols-11,main .grid-cols-12{grid-template-columns:repeat(2,minmax(0,1fr))}table{min-width:760px}}
 @media(min-width:1024px){.bg-card:hover,[class*="bg-card"]:hover{transform:translateY(-2px)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Phase 7: device-compatible UI/UX modernization */
+html { -webkit-text-size-adjust: 100%; }
+body { min-width: 320px; }
+.touch-target { min-width: 44px; min-height: 44px; }
+.responsive-content { width: 100%; min-width: 0; }
+.responsive-content > * { min-width: 0; max-width: 100%; }
+.responsive-content pre,
+.responsive-content code { max-width: 100%; overflow-wrap: anywhere; }
+.responsive-content input,
+.responsive-content select,
+.responsive-content textarea { max-width: 100%; }
+
+@media (max-width: 1023px) {
+  .responsive-content .sticky { position: static; }
+  .responsive-content [class*="min-w-["] { min-width: 0 !important; }
+  .responsive-content [class*="w-["] { max-width: 100%; }
+}
+
+@media (max-width: 767px) {
+  html { font-size: 100%; }
+  body { background-attachment: fixed; }
+
+  .responsive-content { padding-left: .75rem; padding-right: .75rem; }
+  .responsive-content .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+
+  .responsive-content h1 { font-size: clamp(1.25rem, 6vw, 1.65rem); line-height: 1.2; }
+  .responsive-content h2 { font-size: clamp(1.05rem, 5vw, 1.35rem); line-height: 1.25; }
+
+  .responsive-content .flex.items-center.justify-between,
+  .responsive-content .flex.items-start.justify-between {
+    gap: .75rem;
+    flex-wrap: wrap;
+  }
+
+  .responsive-content .grid,
+  .responsive-content [class*="grid-cols-"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .responsive-content [class*="col-span-"] { grid-column: auto !important; }
+  .responsive-content [class*="row-span-"] { grid-row: auto !important; }
+
+  .responsive-content .p-8 { padding: 1rem !important; }
+  .responsive-content .p-6 { padding: .875rem !important; }
+  .responsive-content .p-5 { padding: .875rem !important; }
+  .responsive-content .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .responsive-content .px-6 { padding-left: .875rem !important; padding-right: .875rem !important; }
+  .responsive-content .gap-8 { gap: 1rem !important; }
+  .responsive-content .gap-6 { gap: .875rem !important; }
+
+  .responsive-content button,
+  .responsive-content [role="button"],
+  .responsive-content input,
+  .responsive-content select { min-height: 44px; }
+
+  .responsive-content [role="tablist"] {
+    display: flex;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+  .responsive-content [role="tablist"]::-webkit-scrollbar { display: none; }
+  .responsive-content [role="tab"] { flex: 0 0 auto; }
+
+  .responsive-content .overflow-x-auto {
+    width: 100%;
+    border: 1px solid hsl(var(--border));
+    -webkit-overflow-scrolling: touch;
+  }
+  .responsive-content table { min-width: 640px; font-size: .78rem; }
+
+  [role="dialog"] {
+    width: calc(100vw - 1rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    max-height: 90dvh !important;
+    margin: .5rem;
+  }
+
+  .recharts-responsive-container { min-height: 240px; }
+  .mobile-bottom-nav { box-shadow: 0 -12px 35px rgba(0,0,0,.38); }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .responsive-content [class*="grid-cols-3"],
+  .responsive-content [class*="grid-cols-4"],
+  .responsive-content [class*="grid-cols-5"],
+  .responsive-content [class*="grid-cols-6"],
+  .responsive-content [class*="grid-cols-7"],
+  .responsive-content [class*="grid-cols-8"],
+  .responsive-content [class*="grid-cols-9"],
+  .responsive-content [class*="grid-cols-10"],
+  .responsive-content [class*="grid-cols-11"],
+  .responsive-content [class*="grid-cols-12"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@supports (padding: max(0px)) {
+  .mobile-bottom-nav { padding-left: max(.25rem, env(safe-area-inset-left)); padding-right: max(.25rem, env(safe-area-inset-right)); }
+}
