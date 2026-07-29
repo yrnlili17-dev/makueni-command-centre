@@ -31,6 +31,9 @@ import Admin from "@/pages/admin";
 import Governance from "@/pages/governance";
 import Analytics from "@/pages/analytics";
 import Strategist from "@/pages/strategist";
+import SmartAssist from "@/pages/smart-assist";
+import DataCentre from "@/pages/data-centre";
+import GisCentre from "@/pages/gis-centre";
 import ExecutiveCommand from "@/pages/executive-command";
 import OperationsHub from "@/pages/operations-hub";
 import CommunicationsHub from "@/pages/communications-hub";
@@ -89,6 +92,9 @@ function ProtectedRoutes() {
         <Route path="/communications-hub">{() => <Guarded module="messaging" component={CommunicationsHub} />}</Route>
         <Route path="/reports-hub">{() => <Guarded module="analytics" component={ReportsHub} />}</Route>
         <Route path="/dashboard">{() => <Guarded module="dashboard" component={Dashboard} />}</Route>
+        <Route path="/smart-assist">{() => <Guarded module="social-listening" component={SmartAssist} />}</Route>
+        <Route path="/data-centre">{() => <Guarded module="constituents" component={DataCentre} />}</Route>
+        <Route path="/gis-centre">{() => <Guarded module="analytics" component={GisCentre} />}</Route>
         <Route path="/strategist">{() => <Guarded module="analytics" component={Strategist} />}</Route>
         <Route path="/members">{() => <Guarded module="voters" component={Members} />}</Route>
         <Route path="/segments">{() => <Guarded module="segmentation" component={Segments} />}</Route>

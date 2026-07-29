@@ -26,6 +26,7 @@ import socialRouter from "./social";
 import diRouter from "./di";
 import strategistRouter from "./strategist";
 import authRouter from "./auth";
+import smartAssistRouter from "./smart-assist";
 import approvalsRouter from "./approvals";
 import contactsRouter from "./contacts";
 import integrationsRouter from "./integrations";
@@ -37,6 +38,7 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use("/auth", authRouter);
+router.use("/smart-assist", smartAssistRouter);
 router.use("/approvals", approvalsRouter);
 router.use("/contacts", contactsRouter);
 router.use("/integrations", integrationsRouter);

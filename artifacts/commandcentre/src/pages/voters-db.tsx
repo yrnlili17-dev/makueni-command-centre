@@ -350,10 +350,21 @@ function CaptureTab() {
 
     try {
       const text = await file.text();
-      const lines = text.split("\n").filter(l => l.trim());
-      if (lines.length < 2) { alert("CSV must have at least a header row and one data row"); return; }
+      const parseCsv = (input: string): string[][] => {
+        const matrix: string[][] = []; let row: string[] = []; let cell = ""; let quoted = false;
+        for (let i = 0; i < input.length; i++) {
+          const c = input[i]!;
+          if (c === '"') { if (quoted && input[i + 1] === '"') { cell += '"'; i++; } else quoted = !quoted; }
+          else if (c === "," && !quoted) { row.push(cell); cell = ""; }
+          else if ((c === "\n" || c === "\r") && !quoted) { if (c === "\r" && input[i + 1] === "\n") i++; row.push(cell); if (row.some(v => v.trim())) matrix.push(row); row = []; cell = ""; }
+          else cell += c;
+        }
+        row.push(cell); if (row.some(v => v.trim())) matrix.push(row); return matrix;
+      };
+      const matrix = parseCsv(text);
+      if (matrix.length < 2) { alert("CSV must have at least a header row and one data row"); return; }
 
-      const headers = lines[0]!.split(",").map(h => h.trim().toLowerCase().replace(/[^a-z_]/g, "_"));
+      const headers = matrix[0]!.map(h => h.replace(/^\uFEFF/, "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""));
 
       const fieldMap: Record<string, string> = {
         "full_name": "fullName", "name": "fullName", "fullname": "fullName",
@@ -369,8 +380,8 @@ function CaptureTab() {
         "stream": "stream",
       };
 
-      const records = lines.slice(1).map(line => {
-        const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+      const records = matrix.slice(1).map(cols => {
+        cols = cols.map(c => c.trim());
         const record: Record<string, string> = {};
         headers.forEach((h, i) => {
           const mapped = fieldMap[h] ?? h;
@@ -385,10 +396,11 @@ function CaptureTab() {
         body: JSON.stringify({ records, batchName: `FILE-${file.name.replace(/[^a-z0-9]/gi, "_")}-${Date.now()}` }),
       });
       const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || "Upload failed");
       setUploadResult(result);
     } catch (err) {
       console.error(err);
-      alert("Error parsing CSV file");
+      alert(err instanceof Error ? err.message : "Error parsing CSV file");
     } finally {
       setUploadLoading(false);
       if (fileRef.current) fileRef.current.value = "";

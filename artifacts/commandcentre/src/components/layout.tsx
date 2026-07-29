@@ -16,13 +16,15 @@ const navGroups = [
     { href: "/dashboard", label: "COMMAND OVERVIEW", icon: LayoutDashboard },
     { href: "/executive-command", label: "EXECUTIVE COMMAND", icon: Command },
     { href: "/reports-hub", label: "EXECUTIVE REPORTS", icon: FileBarChart },
-    { href: "/strategist", label: "AI CHIEF STRATEGIST", icon: BrainCircuit },
+    { href: "/smart-assist", label: "SMART ASSIST", icon: BrainCircuit },
+      { href: "/strategist", label: "AI CHIEF STRATEGIST", icon: BrainCircuit },
     { href: "/analytics", label: "ANALYTICS HUB", icon: BarChart2 },
     { href: "/campaign-plan", label: "CAMPAIGN COUNTDOWN", icon: Target },
   ]},
   { title: "VOTER DATA", items: [
     { href: "/members", label: "VOTERS", icon: Users },
     { href: "/voters-db", label: "CONSTITUENT DATABASE", icon: Database },
+      { href: "/data-centre", label: "DATA MANAGEMENT CENTRE", icon: Database },
     { href: "/segments", label: "SEGMENTATION", icon: PieChart },
   ]},
   { title: "OUTREACH & MESSAGING", items: [
@@ -41,6 +43,7 @@ const navGroups = [
     { href: "/surveys", label: "INTELLIGENCE GATHERING", icon: FileText },
     { href: "/intelligence", label: "NARRATIVE COMMAND", icon: ShieldAlert },
     { href: "/social-listening", label: "SOCIAL LISTENING", icon: Radio },
+      { href: "/gis-centre", label: "GIS & COVERAGE", icon: Map },
     { href: "/swot", label: "SWOT ANALYSIS", icon: Crosshair },
   ]},
   { title: "ELECTION DAY", items: [
@@ -57,7 +60,13 @@ const navGroups = [
 
 const NAV_PERM: Record<string, string> = {
   "/executive-command": "dashboard", "/operations-hub": "field-ops", "/communications-hub": "messaging",
-  "/reports-hub": "analytics", "/dashboard": "dashboard", "/strategist": "analytics", "/members": "voters",
+  "/reports-hub": "analytics", "/dashboard": "dashboard", "/strategist": "analytics",
+  "/smart-assist": "smart-assist",
+  "/data-centre": "data-centre",
+  "/gis-centre": "gis-centre",
+  "/smart-assist": "social-listening",
+  "/data-centre": "constituents",
+  "/gis-centre": "analytics", "/members": "voters",
   "/voters-db": "constituents", "/segments": "segmentation", "/messaging": "messaging", "/field-ops": "field-ops",
   "/volunteers": "volunteers", "/surveys": "intelligence", "/events": "events", "/intelligence": "narrative",
   "/social-listening": "social-listening", "/swot": "intelligence", "/campaign-plan": "campaign-plan", "/kol": "kol",
