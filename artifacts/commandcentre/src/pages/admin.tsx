@@ -13,7 +13,7 @@ const BASE = import.meta.env.BASE_URL;
 const MODULES = [
   "dashboard", "analytics", "voters", "constituents", "segmentation", "messaging", "speeches",
   "field-ops", "volunteers", "intelligence", "social-listening", "events", "narrative",
-  "campaign-plan", "kol", "finance", "election-day", "credentials", "admin",
+  "campaign-plan", "kol", "finance", "election-day", "credentials", "admin", "approvals", "documents", "geography",
 ];
 const MODULE_LABELS: Record<string, string> = {
   "dashboard": "COMMAND OVERVIEW", "analytics": "ANALYTICS HUB", "voters": "VOTERS", "constituents": "CONSTITUENT DB",
@@ -21,7 +21,7 @@ const MODULE_LABELS: Record<string, string> = {
   "volunteers": "VOLUNTEER CMD", "intelligence": "INTEL GATHERING", "social-listening": "SOCIAL LISTENING", "events": "EVENT LOGISTICS",
   "narrative": "NARRATIVE CMD", "campaign-plan": "CAMPAIGN COUNTDOWN", "kol": "KOL INFLUENCE",
   "finance": "FINANCE OPS", "election-day": "ELECTION DAY OPS", "credentials": "CREDENTIALS HUB",
-  "admin": "SYSTEM ADMIN",
+  "admin": "SYSTEM ADMIN", "approvals": "APPROVAL WORKFLOW", "documents": "DOCUMENT CONTROL", "geography": "GEOGRAPHY",
 };
 const PERMISSION_LEVELS = ["none", "read", "write"] as const;
 type PermLevel = typeof PERMISSION_LEVELS[number];

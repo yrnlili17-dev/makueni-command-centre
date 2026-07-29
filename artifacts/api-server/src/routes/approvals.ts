@@ -2,7 +2,7 @@ import { Router } from "express";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { and, desc, eq } from "drizzle-orm";
-import { db, approvalRequestsTable, approvalEventsTable, auditLogsTable } from "@workspace/db";
+import { db, approvalRequestsTable, approvalEventsTable, auditLogsTable, documentsTable } from "@workspace/db";
 import { requireAuth, requireActionPermission } from "../lib/auth";
 
 const router = Router();
@@ -27,6 +27,10 @@ async function review(req:any,res:any,status:"approved"|"rejected"|"returned") {
   const [updated]=await db.update(approvalRequestsTable).set({status,reviewedById:u.id,reviewedByEmail:u.email,reviewComment:req.body?.comment,reviewedAt:new Date(),updatedAt:new Date()}).where(eq(approvalRequestsTable.id,id)).returning();
   await db.insert(approvalEventsTable).values({requestId:id,event:status,actorId:u.id,actorEmail:u.email,comment:req.body?.comment});
   await db.insert(auditLogsTable).values({userEmail:u.email,userName:u.name,action:`Approval ${status}: ${current.title}`,module:"approvals",details:`Token ${current.token}`,severity:status==="rejected"?"warning":"info"});
+  if (current.module === "documents" && current.action === "publish") {
+    const documentStatus = status === "approved" ? "active" : status === "rejected" ? "rejected" : "pending_approval";
+    await db.update(documentsTable).set({ status: documentStatus, updatedAt: new Date() }).where(eq(documentsTable.approvalRequestId, current.id));
+  }
   res.json(updated);
 }
 router.post("/:id/approve",requireActionPermission("approvals","approve"),(req,res)=>review(req,res,"approved"));

@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { 
   Activity, Users, PieChart, MessageSquare, 
   Map, UserPlus, FileText, Calendar, 
-  ShieldAlert, Target, Star, Shield, LayoutDashboard, LogOut, Banknote, Vote, Database, Award, Settings, BarChart2, Crosshair, Radio, TrendingUp, Mic, BrainCircuit
+  ShieldAlert, Target, Star, Shield, LayoutDashboard, LogOut, Banknote, Vote, Database, Award, Settings, BarChart2, Crosshair, Radio, TrendingUp, Mic, BrainCircuit, FolderLock
 } from "lucide-react";
 import brandIcon from "@assets/brand-icon.png";
 
@@ -65,6 +65,7 @@ const navGroups = [
     items: [
       { href: "/fundraising", label: "FINANCE OPS", icon: Banknote },
       { href: "/credentials", label: "CREDENTIALS HUB", icon: Award },
+      { href: "/governance", label: "APPROVALS & DOCUMENTS", icon: FolderLock },
       { href: "/admin", label: "SYSTEM ADMIN", icon: Settings },
     ],
   },
@@ -93,6 +94,7 @@ const NAV_PERM: Record<string, string> = {
   "/turnout": "election-day",
   "/credentials": "credentials",
   "/analytics": "analytics",
+  "/governance": "approvals",
   "/admin": "admin",
 };
 
@@ -118,6 +120,7 @@ const PATH_MODULE: Record<string, string> = {
   "/turnout": "turnout",
   "/credentials": "credentials",
   "/analytics": "analytics",
+  "/governance": "governance",
   "/admin": "admin",
 };
 

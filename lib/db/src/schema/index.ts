@@ -26,3 +26,4 @@ export * from "./strategist";
 export * from "./governance";
 
 export * from "./user-sessions";
+export * from "./documents";

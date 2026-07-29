@@ -28,6 +28,7 @@ import Speeches from "@/pages/speeches";
 import VotersDb from "@/pages/voters-db";
 import Credentials from "@/pages/credentials";
 import Admin from "@/pages/admin";
+import Governance from "@/pages/governance";
 import Analytics from "@/pages/analytics";
 import Strategist from "@/pages/strategist";
 import { Layout } from "@/components/layout";
@@ -100,6 +101,7 @@ function ProtectedRoutes() {
         <Route path="/voters-db">{() => <Guarded module="constituents" component={VotersDb} />}</Route>
         <Route path="/credentials">{() => <Guarded module="credentials" component={Credentials} />}</Route>
         <Route path="/analytics">{() => <Guarded module="analytics" component={Analytics} />}</Route>
+        <Route path="/governance">{() => <Guarded module="approvals" component={Governance} />}</Route>
         <Route path="/admin">{() => <Guarded module="admin" component={Admin} />}</Route>
         <Route component={NotFound} />
       </Switch>

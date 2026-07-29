@@ -30,6 +30,7 @@ import approvalsRouter from "./approvals";
 import contactsRouter from "./contacts";
 import integrationsRouter from "./integrations";
 import geographyRouter from "./geography";
+import documentsRouter from "./documents";
 
 const router: IRouter = Router();
 
@@ -39,6 +40,7 @@ router.use("/approvals", approvalsRouter);
 router.use("/contacts", contactsRouter);
 router.use("/integrations", integrationsRouter);
 router.use("/geography", geographyRouter);
+router.use("/documents", documentsRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/members", membersRouter);
 router.use("/segments", segmentsRouter);
