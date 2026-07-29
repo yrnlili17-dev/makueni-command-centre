@@ -11,7 +11,7 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+const WARDS = ['Tulimani', 'Mbooni', 'Kithungo/Kitundu', 'Kisau/Kiteta', 'Kako/Waia', 'Kalawa', 'Kiima Kiu/Kalanzoni', 'Mukaa', 'Kasikeu', 'Kee', 'Kilungu', 'Ilima', 'Ukia', 'Nzaui/Kilili/Kalamba', 'Muvau/Kikumini', 'Kathonzweni', 'Mavindini', 'Kitise/Kithuki', 'Wote', 'Mbitini', 'Makindu', 'Kikumbulyu North', 'Kikumbulyu South', 'Nguumo', 'Nguu/Masumba', 'Emali/Mulala', 'Masongaleni', 'Mtito Andei', 'Thange', 'Ivingoni/Nzambani'];
 const ROLES = ["canvasser", "team_lead", "coordinator", "phone_banker", "data_entry", "mobilizer", "agent"];
 const TASK_CATEGORIES = ["canvassing", "voter_registration", "distribution", "mobilization", "data_collection", "media", "logistics", "security"];
 const PRIORITIES = ["low", "medium", "high", "critical"];
@@ -410,7 +410,7 @@ export default function Volunteers() {
                 </div>
                 <div className="col-span-2 space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground">TASK TITLE *</label>
-                  <input value={taskForm.title ?? ""} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Canvass Tala Market, 200 doors" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+                  <input value={taskForm.title ?? ""} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Canvass Wote Market, 200 doors" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground">DUE DATE</label>

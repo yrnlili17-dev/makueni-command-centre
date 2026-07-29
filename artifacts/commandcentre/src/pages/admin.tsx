@@ -357,7 +357,7 @@ export default function Admin() {
                   </div>
                   <div className="col-span-2 space-y-1">
                     <label className="text-[10px] font-mono text-muted-foreground">NOTES / DEPARTMENT</label>
-                    <input value={inviteForm.notes ?? ""} onChange={e => setInviteForm(p => ({ ...p, notes: e.target.value }))} placeholder="e.g. Tala Ward Field Coordinator" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+                    <input value={inviteForm.notes ?? ""} onChange={e => setInviteForm(p => ({ ...p, notes: e.target.value }))} placeholder="e.g. Wote Ward Field Coordinator" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
                   </div>
                   <div className="col-span-4 bg-yellow-500/10 border border-yellow-500/20 px-3 py-2 flex items-start gap-2">
                     <AlertTriangle className="w-3 h-3 text-yellow-400 shrink-0 mt-0.5" />

@@ -13,7 +13,7 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+const WARDS = ['Tulimani', 'Mbooni', 'Kithungo/Kitundu', 'Kisau/Kiteta', 'Kako/Waia', 'Kalawa', 'Kiima Kiu/Kalanzoni', 'Mukaa', 'Kasikeu', 'Kee', 'Kilungu', 'Ilima', 'Ukia', 'Nzaui/Kilili/Kalamba', 'Muvau/Kikumini', 'Kathonzweni', 'Mavindini', 'Kitise/Kithuki', 'Wote', 'Mbitini', 'Makindu', 'Kikumbulyu North', 'Kikumbulyu South', 'Nguumo', 'Nguu/Masumba', 'Emali/Mulala', 'Masongaleni', 'Mtito Andei', 'Thange', 'Ivingoni/Nzambani'];
 const POLL_CATEGORIES = ["general", "leadership", "development", "security", "economy", "health", "education", "infrastructure", "water"];
 const ISSUE_CATEGORIES = ["infrastructure", "water", "health", "education", "security", "land", "economy", "governance", "environment", "youth", "women", "other"];
 const URGENCIES = ["low", "medium", "high", "critical"] as const;
@@ -486,7 +486,7 @@ export default function Surveys() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2 space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground">ISSUE TITLE *</label>
-                  <input value={issueForm.title ?? ""} onChange={e => setIssueForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Tala–Makueni road impassable during rains" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+                  <input value={issueForm.title ?? ""} onChange={e => setIssueForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Wote–Mavindini road impassable during rains" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground">URGENCY *</label>

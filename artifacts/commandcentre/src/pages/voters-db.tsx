@@ -5,7 +5,7 @@ import {
   Download, ChevronRight, Link, Wifi, WifiOff, BarChart2, Filter,
 } from "lucide-react";
 
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+const WARDS = ['Tulimani', 'Mbooni', 'Kithungo/Kitundu', 'Kisau/Kiteta', 'Kako/Waia', 'Kalawa', 'Kiima Kiu/Kalanzoni', 'Mukaa', 'Kasikeu', 'Kee', 'Kilungu', 'Ilima', 'Ukia', 'Nzaui/Kilili/Kalamba', 'Muvau/Kikumini', 'Kathonzweni', 'Mavindini', 'Kitise/Kithuki', 'Wote', 'Mbitini', 'Makindu', 'Kikumbulyu North', 'Kikumbulyu South', 'Nguumo', 'Nguu/Masumba', 'Emali/Mulala', 'Masongaleni', 'Mtito Andei', 'Thange', 'Ivingoni/Nzambani'];
 const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 const API = `${BASE_URL}/api/voter-registry`;
 
@@ -432,7 +432,7 @@ function CaptureTab() {
               </Select>
               <Input label="SUB-COUNTY" placeholder="Makueni" value={form.subCounty ?? ""} onChange={e => setForm(p => ({ ...p, subCounty: e.target.value }))} />
               <div className="col-span-2">
-                <Input label="POLLING STATION" placeholder="Tala Primary School" value={form.pollingStation ?? ""} onChange={e => setForm(p => ({ ...p, pollingStation: e.target.value }))} />
+                <Input label="POLLING STATION" placeholder="Wote Township Primary School" value={form.pollingStation ?? ""} onChange={e => setForm(p => ({ ...p, pollingStation: e.target.value }))} />
               </div>
               <Input label="STATION CODE" placeholder="TAL-001" value={form.pollingStationCode ?? ""} onChange={e => setForm(p => ({ ...p, pollingStationCode: e.target.value }))} />
               <Input label="STREAM" placeholder="1" value={form.stream ?? ""} onChange={e => setForm(p => ({ ...p, stream: e.target.value }))} />
@@ -643,7 +643,7 @@ function RegistryApiTab() {
               <option value="">All Wards</option>
               {WARDS.map(w => <option key={w}>{w}</option>)}
             </Select>
-            <Input label="POLLING STATION (OPTIONAL)" value={syncOpts.pollingStation} onChange={e => setSyncOpts(p => ({ ...p, pollingStation: e.target.value }))} placeholder="Tala Primary" />
+            <Input label="POLLING STATION (OPTIONAL)" value={syncOpts.pollingStation} onChange={e => setSyncOpts(p => ({ ...p, pollingStation: e.target.value }))} placeholder="Wote Township Primary" />
             <Input label="RECORD LIMIT" type="number" value={syncOpts.limit} onChange={e => setSyncOpts(p => ({ ...p, limit: e.target.value }))} placeholder="500" />
           </div>
 

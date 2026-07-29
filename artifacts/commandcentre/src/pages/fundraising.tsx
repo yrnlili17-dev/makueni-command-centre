@@ -50,7 +50,7 @@ type Tab = "donors" | "donations" | "campaigns" | "pledges" | "pipeline" | "insi
 const BASE = import.meta.env.BASE_URL;
 
 const CHANNELS = ["cash", "mpesa", "bank", "cheque", "online"] as const;
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+const WARDS = ['Tulimani', 'Mbooni', 'Kithungo/Kitundu', 'Kisau/Kiteta', 'Kako/Waia', 'Kalawa', 'Kiima Kiu/Kalanzoni', 'Mukaa', 'Kasikeu', 'Kee', 'Kilungu', 'Ilima', 'Ukia', 'Nzaui/Kilili/Kalamba', 'Muvau/Kikumini', 'Kathonzweni', 'Mavindini', 'Kitise/Kithuki', 'Wote', 'Mbitini', 'Makindu', 'Kikumbulyu North', 'Kikumbulyu South', 'Nguumo', 'Nguu/Masumba', 'Emali/Mulala', 'Masongaleni', 'Mtito Andei', 'Thange', 'Ivingoni/Nzambani'];
 
 function fmt(n: number | null | undefined) { return `KES ${(n ?? 0).toLocaleString()}`; }
 function pct(a: number, b: number) { if (!b) return 0; return Math.min(100, Math.round((a / b) * 100)); }
@@ -901,7 +901,7 @@ function ReconciliationTab() {
 // ── PAYMENT SETUP TAB ────────────────────────────────────────────────────────
 function PaymentSetupTab() {
   const [mpesa, setMpesa] = useState({ paybill: "123456", account: "KALOKI2027", shortcode: "400200", tillNumber: "" });
-  const [bank, setBank] = useState({ bank: "Kenya Commercial Bank", branch: "Tala Branch", account: "1234567890", swift: "KCBLKENX" });
+  const [bank, setBank] = useState({ bank: "Kenya Commercial Bank", branch: "Wote Branch", account: "1234567890", swift: "KCBLKENX" });
   const [saved, setSaved] = useState(false);
 
   function handleSave(e: React.FormEvent) {
@@ -944,7 +944,7 @@ function PaymentSetupTab() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="BANK NAME" value={bank.bank} onChange={e => setBank(p => ({ ...p, bank: e.target.value }))} placeholder="Kenya Commercial Bank" />
-            <Input label="BRANCH" value={bank.branch} onChange={e => setBank(p => ({ ...p, branch: e.target.value }))} placeholder="Tala Branch" />
+            <Input label="BRANCH" value={bank.branch} onChange={e => setBank(p => ({ ...p, branch: e.target.value }))} placeholder="Wote Branch" />
             <Input label="ACCOUNT NUMBER" value={bank.account} onChange={e => setBank(p => ({ ...p, account: e.target.value }))} placeholder="1234567890" />
             <Input label="SWIFT CODE" value={bank.swift} onChange={e => setBank(p => ({ ...p, swift: e.target.value }))} placeholder="KCBLKENX" />
           </div>

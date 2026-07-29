@@ -14,7 +14,7 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
-const WARDS = ["Tala", "Makueni West", "Makueni North", "Makueni East", "Kyeleni"];
+const WARDS = ['Tulimani', 'Mbooni', 'Kithungo/Kitundu', 'Kisau/Kiteta', 'Kako/Waia', 'Kalawa', 'Kiima Kiu/Kalanzoni', 'Mukaa', 'Kasikeu', 'Kee', 'Kilungu', 'Ilima', 'Ukia', 'Nzaui/Kilili/Kalamba', 'Muvau/Kikumini', 'Kathonzweni', 'Mavindini', 'Kitise/Kithuki', 'Wote', 'Mbitini', 'Makindu', 'Kikumbulyu North', 'Kikumbulyu South', 'Nguumo', 'Nguu/Masumba', 'Emali/Mulala', 'Masongaleni', 'Mtito Andei', 'Thange', 'Ivingoni/Nzambani'];
 const OUTCOMES = ["support", "oppose", "undecided", "not_home", "refused"] as const;
 
 const SESSION_TYPES = [
@@ -36,7 +36,7 @@ const PLAYBOOK = [
     key: "baraza", label: "COMMUNITY BARAZA", icon: Megaphone, color: "#3B82F6",
     tagline: "Most powerful tool in rural Kenya",
     why: "Face-to-face with 50–300 residents at once. Chiefs endorse, crowds question, votes crystallise. A good baraza moves 10–15% of undecideds.",
-    tip: "Hold at market days (Mon/Thu/Sat in Tala). Always bring the candidate.",
+    tip: "Hold at market days (on scheduled market days in Wote). Always bring the candidate.",
   },
   {
     key: "door-to-door", label: "DOOR-TO-DOOR CANVASS", icon: Home, color: "#DB143C",
@@ -47,7 +47,7 @@ const PLAYBOOK = [
   {
     key: "market-blitz", label: "MARKET DAY BLITZ", icon: ShoppingBag, color: "#F97316",
     tagline: "High-density contact in hours",
-    why: "Tala market (Mon/Thu/Sat) draws 600–1,200 people. Branded tent + music + merchandise = 300+ contacts per session with minimal travel.",
+    why: "Wote market (Mon/Thu/Sat) draws 600–1,200 people. Branded tent + music + merchandise = 300+ contacts per session with minimal travel.",
     tip: "Arrive by 7 AM before crowds peak. Branded umbrellas and wristbands drive visibility.",
   },
   {
@@ -101,8 +101,8 @@ const STATUS_CLS: Record<string, string> = {
 };
 
 const WARD_VOTERS: Record<string, number> = {
-  "Tala": 19000, "Makueni West": 26000,
-  "Makueni North": 15000, "Makueni East": 12000, "Kyeleni": 10000,
+  "Wote": 19000, "Makindu": 26000,
+  "Tulimani": 15000, "Mavindini": 12000, "Mtito Andei": 10000,
 };
 
 function TypeBadge({ type }: { type: string }) {
@@ -266,7 +266,7 @@ export default function FieldOps() {
             </div>
             <div className="col-span-2 space-y-1">
               <label className="text-[10px] font-mono text-muted-foreground">SESSION NAME *</label>
-              <input required value={sessionForm.name ?? ""} onChange={e => setSessionForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Tala Market Friday Baraza" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+              <input required value={sessionForm.name ?? ""} onChange={e => setSessionForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Wote Market Friday Baraza" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-mono text-muted-foreground">VOLUNTEERS</label>
