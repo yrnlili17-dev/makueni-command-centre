@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { TrendingUp, Users, Vote, Megaphone, Save, RotateCcw, Target } from "lucide-react";
+import {
+  TrendingUp,
+  Users,
+  Vote,
+  Megaphone,
+  Save,
+  RotateCcw,
+  Target,
+} from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 const API = `${BASE}api/turnout`;
@@ -51,12 +59,28 @@ interface Prediction {
 
 const fmt = (n: number) => n.toLocaleString();
 
-function StatCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
+function StatCard({
+  label,
+  value,
+  sub,
+  accent,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: string;
+}) {
   return (
     <div className="bg-card border border-border p-4">
-      <div className="font-mono text-[10px] text-muted-foreground mb-2 tracking-widest">{label}</div>
+      <div className="font-mono text-[10px] text-muted-foreground mb-2 tracking-widest">
+        {label}
+      </div>
       <div className={`text-2xl font-bold ${accent ?? ""}`}>{value}</div>
-      {sub && <div className="text-[10px] font-mono text-muted-foreground mt-1">{sub}</div>}
+      {sub && (
+        <div className="text-[10px] font-mono text-muted-foreground mt-1">
+          {sub}
+        </div>
+      )}
     </div>
   );
 }
@@ -64,7 +88,9 @@ function StatCard({ label, value, sub, accent }: { label: string; value: string;
 export default function Turnout() {
   const qc = useQueryClient();
   const [turnoutDelta, setTurnoutDelta] = useState(0);
-  const [edits, setEdits] = useState<Record<string, { turnout: number; support: number }>>({});
+  const [edits, setEdits] = useState<
+    Record<string, { turnout: number; support: number }>
+  >({});
 
   const { data, isLoading, error } = useQuery<Prediction>({
     queryKey: ["turnout-prediction", turnoutDelta],
@@ -78,7 +104,11 @@ export default function Turnout() {
     setEdits((prev) => {
       const next = { ...prev };
       for (const w of data.wards) {
-        if (!next[w.ward]) next[w.ward] = { turnout: w.expectedTurnoutRate, support: w.supportShare };
+        if (!next[w.ward])
+          next[w.ward] = {
+            turnout: w.expectedTurnoutRate,
+            support: w.supportShare,
+          };
       }
       return next;
     });
@@ -111,10 +141,12 @@ export default function Turnout() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-wider flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" /> VOTER TURNOUT FORECAST
+            <TrendingUp className="w-5 h-5 text-primary" /> VOTER TURNOUT
+            FORECAST
           </h1>
           <p className="font-mono text-[11px] text-muted-foreground mt-1">
-            Ward-level projection · registered voters × expected turnout × support · Prof. Philip Kaloki
+            Ward-level projection · registered voters × expected turnout ×
+            support · Prof. Philip Kaloki
           </p>
         </div>
         <button
@@ -127,8 +159,16 @@ export default function Turnout() {
         </button>
       </div>
 
-      {isLoading && <div className="p-8 font-mono text-xs text-muted-foreground">LOADING FORECAST...</div>}
-      {error && <div className="p-8 font-mono text-xs text-red-400">FAILED TO LOAD FORECAST.</div>}
+      {isLoading && (
+        <div className="p-8 font-mono text-xs text-muted-foreground">
+          LOADING FORECAST...
+        </div>
+      )}
+      {error && (
+        <div className="p-8 font-mono text-xs text-red-400">
+          FAILED TO LOAD FORECAST.
+        </div>
+      )}
 
       {data && (
         <>
@@ -171,7 +211,9 @@ export default function Turnout() {
               </button>
             </div>
             <div className="flex items-center gap-4">
-              <span className="font-mono text-[10px] text-muted-foreground w-10">-20pp</span>
+              <span className="font-mono text-[10px] text-muted-foreground w-10">
+                -20pp
+              </span>
               <input
                 type="range"
                 min={-20}
@@ -181,10 +223,16 @@ export default function Turnout() {
                 onChange={(e) => setTurnoutDelta(parseInt(e.target.value))}
                 className="flex-1 accent-primary"
               />
-              <span className="font-mono text-[10px] text-muted-foreground w-10 text-right">+20pp</span>
+              <span className="font-mono text-[10px] text-muted-foreground w-10 text-right">
+                +20pp
+              </span>
               <span
                 className={`font-mono text-sm font-bold w-16 text-right ${
-                  turnoutDelta > 0 ? "text-green-400" : turnoutDelta < 0 ? "text-red-400" : "text-foreground"
+                  turnoutDelta > 0
+                    ? "text-green-400"
+                    : turnoutDelta < 0
+                      ? "text-red-400"
+                      : "text-foreground"
                 }`}
               >
                 {turnoutDelta > 0 ? "+" : ""}
@@ -192,7 +240,8 @@ export default function Turnout() {
               </span>
             </div>
             <p className="font-mono text-[10px] text-muted-foreground mt-2">
-              Model a constituency-wide turnout change on top of your saved ward assumptions. Does not overwrite saved values.
+              Model a constituency-wide turnout change on top of your saved ward
+              assumptions. Does not overwrite saved values.
             </p>
           </div>
 
@@ -217,29 +266,42 @@ export default function Turnout() {
                 </thead>
                 <tbody>
                   {data.wards.map((w) => {
-                    const e = edits[w.ward] ?? { turnout: w.expectedTurnoutRate, support: w.supportShare };
+                    const e = edits[w.ward] ?? {
+                      turnout: w.expectedTurnoutRate,
+                      support: w.supportShare,
+                    };
                     const isTopPriority = w.gotvRank <= 2;
                     return (
-                      <tr key={w.ward} className="border-b border-border/50 hover:bg-secondary/30">
+                      <tr
+                        key={w.ward}
+                        className="border-b border-border/50 hover:bg-secondary/30"
+                      >
                         <td className="p-3 font-medium">
                           <div className="flex items-center gap-2">
                             {w.ward}
                             {isTopPriority && (
                               <span className="flex items-center gap-1 font-mono text-[9px] text-yellow-400 border border-yellow-400/30 px-1 py-0.5">
-                                <Megaphone className="w-2.5 h-2.5" /> GOTV #{w.gotvRank}
+                                <Megaphone className="w-2.5 h-2.5" /> GOTV #
+                                {w.gotvRank}
                               </span>
                             )}
                           </div>
-                          <div className="font-mono text-[10px] text-muted-foreground">{w.stations} STATIONS</div>
+                          <div className="font-mono text-[10px] text-muted-foreground">
+                            {w.stations} STATIONS
+                          </div>
                         </td>
-                        <td className="p-3 text-right font-mono">{fmt(w.registered)}</td>
+                        <td className="p-3 text-right font-mono">
+                          {fmt(w.registered)}
+                        </td>
                         <td className="p-3 text-center">
                           <input
                             type="number"
                             min={0}
                             max={100}
                             value={e.turnout}
-                            onChange={(ev) => setEdit(w.ward, "turnout", ev.target.value)}
+                            onChange={(ev) =>
+                              setEdit(w.ward, "turnout", ev.target.value)
+                            }
                             className="w-16 bg-secondary border border-border text-center font-mono text-xs py-1"
                           />
                         </td>
@@ -249,16 +311,26 @@ export default function Turnout() {
                             min={0}
                             max={100}
                             value={e.support}
-                            onChange={(ev) => setEdit(w.ward, "support", ev.target.value)}
+                            onChange={(ev) =>
+                              setEdit(w.ward, "support", ev.target.value)
+                            }
                             className="w-16 bg-secondary border border-border text-center font-mono text-xs py-1"
                           />
                         </td>
-                        <td className="p-3 text-right font-mono">{fmt(w.predictedVotes)}</td>
-                        <td className="p-3 text-right font-mono text-green-400">{fmt(w.predictedMuleVotes)}</td>
-                        <td className="p-3 text-right font-mono text-yellow-400">+{fmt(w.gotvUpside)}</td>
+                        <td className="p-3 text-right font-mono">
+                          {fmt(w.predictedVotes)}
+                        </td>
+                        <td className="p-3 text-right font-mono text-green-400">
+                          {fmt(w.predictedMuleVotes)}
+                        </td>
+                        <td className="p-3 text-right font-mono text-yellow-400">
+                          +{fmt(w.gotvUpside)}
+                        </td>
                         {hasTally && (
                           <td className="p-3 text-right font-mono text-muted-foreground">
-                            {w.reportingStations > 0 ? `${w.actualTurnoutRate}%` : "—"}
+                            {w.reportingStations > 0
+                              ? `${w.actualTurnoutRate}%`
+                              : "—"}
                           </td>
                         )}
                       </tr>
@@ -268,11 +340,21 @@ export default function Turnout() {
                 <tfoot>
                   <tr className="font-mono text-xs border-t border-border bg-secondary/20">
                     <td className="p-3 font-bold tracking-wider">TOTAL</td>
-                    <td className="p-3 text-right font-bold">{fmt(data.totals.registered)}</td>
-                    <td className="p-3 text-center font-bold">{data.totals.predictedTurnoutRate}%</td>
-                    <td className="p-3 text-center font-bold">{data.totals.predictedMuleShare}%</td>
-                    <td className="p-3 text-right font-bold">{fmt(data.totals.predictedVotes)}</td>
-                    <td className="p-3 text-right font-bold text-green-400">{fmt(data.totals.predictedMuleVotes)}</td>
+                    <td className="p-3 text-right font-bold">
+                      {fmt(data.totals.registered)}
+                    </td>
+                    <td className="p-3 text-center font-bold">
+                      {data.totals.predictedTurnoutRate}%
+                    </td>
+                    <td className="p-3 text-center font-bold">
+                      {data.totals.predictedMuleShare}%
+                    </td>
+                    <td className="p-3 text-right font-bold">
+                      {fmt(data.totals.predictedVotes)}
+                    </td>
+                    <td className="p-3 text-right font-bold text-green-400">
+                      {fmt(data.totals.predictedMuleVotes)}
+                    </td>
                     <td className="p-3 text-right font-bold text-yellow-400">
                       +{fmt(data.wards.reduce((s, w) => s + w.gotvUpside, 0))}
                     </td>
@@ -287,22 +369,37 @@ export default function Turnout() {
             <div className="bg-card border border-border p-4 flex items-start gap-3">
               <Users className="w-4 h-4 text-primary mt-0.5 shrink-0" />
               <div>
-                <div className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">REGISTERED BASE</div>
-                <p className="text-xs text-muted-foreground">Denominators come from live polling-station registration counts.</p>
+                <div className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">
+                  REGISTERED BASE
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Denominators come from live polling-station registration
+                  counts.
+                </p>
               </div>
             </div>
             <div className="bg-card border border-border p-4 flex items-start gap-3">
               <Vote className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
               <div>
-                <div className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">SUPPORT SHARE</div>
-                <p className="text-xs text-muted-foreground">Set your best ward-level estimate for Kaloki; defaults to {data.defaults.support}%.</p>
+                <div className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">
+                  SUPPORT SHARE
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Set your best ward-level estimate for Kaloki; defaults to{" "}
+                  {data.defaults.support}%.
+                </p>
               </div>
             </div>
             <div className="bg-card border border-border p-4 flex items-start gap-3">
               <Megaphone className="w-4 h-4 text-yellow-400 mt-0.5 shrink-0" />
               <div>
-                <div className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">GOTV UPSIDE</div>
-                <p className="text-xs text-muted-foreground">Supporters not projected to vote — the mobilization opportunity per ward.</p>
+                <div className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">
+                  GOTV UPSIDE
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Supporters not projected to vote — the mobilization
+                  opportunity per ward.
+                </p>
               </div>
             </div>
           </div>

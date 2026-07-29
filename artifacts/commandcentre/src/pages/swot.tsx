@@ -1,8 +1,19 @@
 import { useState } from "react";
 import {
-  TrendingUp, TrendingDown, Target, AlertTriangle,
-  RefreshCw, Bot, Download, Clock, ChevronDown, ChevronUp,
-  Zap, Shield, Eye, Crosshair
+  TrendingUp,
+  TrendingDown,
+  Target,
+  AlertTriangle,
+  RefreshCw,
+  Bot,
+  Download,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Zap,
+  Shield,
+  Eye,
+  Crosshair,
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -30,8 +41,8 @@ function impactColor(impact: Impact) {
   return impact === "high"
     ? "text-red-400 border-red-400/40 bg-red-500/5"
     : impact === "medium"
-    ? "text-yellow-400 border-yellow-400/40 bg-yellow-400/5"
-    : "text-blue-400 border-blue-400/30 bg-blue-400/5";
+      ? "text-yellow-400 border-yellow-400/40 bg-yellow-400/5"
+      : "text-blue-400 border-blue-400/30 bg-blue-400/5";
 }
 
 function categoryColor(cat: string) {
@@ -48,15 +59,18 @@ function categoryColor(cat: string) {
   return map[cat] ?? "text-muted-foreground";
 }
 
-const QUADRANT_META: Record<Quadrant, {
-  label: string;
-  short: string;
-  icon: React.ReactNode;
-  accent: string;
-  border: string;
-  bg: string;
-  headerBg: string;
-}> = {
+const QUADRANT_META: Record<
+  Quadrant,
+  {
+    label: string;
+    short: string;
+    icon: React.ReactNode;
+    accent: string;
+    border: string;
+    bg: string;
+    headerBg: string;
+  }
+> = {
   strengths: {
     label: "STRENGTHS",
     short: "S",
@@ -95,7 +109,15 @@ const QUADRANT_META: Record<Quadrant, {
   },
 };
 
-function SwotCard({ item, quadrant, index }: { item: SwotItem; quadrant: Quadrant; index: number }) {
+function SwotCard({
+  item,
+  quadrant,
+  index,
+}: {
+  item: SwotItem;
+  quadrant: Quadrant;
+  index: number;
+}) {
   const [expanded, setExpanded] = useState(false);
   const meta = QUADRANT_META[quadrant];
 
@@ -103,36 +125,55 @@ function SwotCard({ item, quadrant, index }: { item: SwotItem; quadrant: Quadran
     <div className={`border ${meta.border} bg-card transition-all`}>
       <button
         className="w-full text-left p-3 flex items-start gap-3"
-        onClick={() => setExpanded(v => !v)}
+        onClick={() => setExpanded((v) => !v)}
       >
-        <span className={`font-mono text-[10px] border ${meta.border} ${meta.accent} px-1.5 py-0.5 shrink-0 mt-0.5`}>
-          {meta.short}{String(index + 1).padStart(2, "0")}
+        <span
+          className={`font-mono text-[10px] border ${meta.border} ${meta.accent} px-1.5 py-0.5 shrink-0 mt-0.5`}
+        >
+          {meta.short}
+          {String(index + 1).padStart(2, "0")}
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-xs font-semibold text-foreground">{item.title}</span>
-            <span className={`font-mono text-[9px] border px-1.5 py-0.5 ${impactColor(item.impact)}`}>
+            <span className="font-mono text-xs font-semibold text-foreground">
+              {item.title}
+            </span>
+            <span
+              className={`font-mono text-[9px] border px-1.5 py-0.5 ${impactColor(item.impact)}`}
+            >
               {item.impact.toUpperCase()}
             </span>
-            <span className={`font-mono text-[9px] ${categoryColor(item.category)}`}>
+            <span
+              className={`font-mono text-[9px] ${categoryColor(item.category)}`}
+            >
               [{item.category.toUpperCase()}]
             </span>
           </div>
           {!expanded && (
-            <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">{item.detail}</p>
+            <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+              {item.detail}
+            </p>
           )}
         </div>
         <span className="text-muted-foreground shrink-0 mt-0.5">
-          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          {expanded ? (
+            <ChevronUp className="w-3 h-3" />
+          ) : (
+            <ChevronDown className="w-3 h-3" />
+          )}
         </span>
       </button>
 
       {expanded && (
         <div className="px-3 pb-3 space-y-2 border-t border-border/40 pt-2">
-          <p className="text-xs text-muted-foreground leading-relaxed">{item.detail}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {item.detail}
+          </p>
           <div className="flex items-start gap-2">
             <Zap className={`w-3 h-3 mt-0.5 shrink-0 ${meta.accent}`} />
-            <p className="text-[11px] font-mono text-foreground/80 leading-relaxed">{item.action}</p>
+            <p className="text-[11px] font-mono text-foreground/80 leading-relaxed">
+              {item.action}
+            </p>
           </div>
         </div>
       )}
@@ -140,16 +181,26 @@ function SwotCard({ item, quadrant, index }: { item: SwotItem; quadrant: Quadran
   );
 }
 
-function QuadrantPanel({ quadrant, items }: { quadrant: Quadrant; items: SwotItem[] }) {
+function QuadrantPanel({
+  quadrant,
+  items,
+}: {
+  quadrant: Quadrant;
+  items: SwotItem[];
+}) {
   const meta = QUADRANT_META[quadrant];
-  const highCount = items.filter(i => i.impact === "high").length;
+  const highCount = items.filter((i) => i.impact === "high").length;
 
   return (
     <div className={`border ${meta.border} flex flex-col`}>
-      <div className={`${meta.headerBg} border-b ${meta.border} px-4 py-3 flex items-center justify-between`}>
+      <div
+        className={`${meta.headerBg} border-b ${meta.border} px-4 py-3 flex items-center justify-between`}
+      >
         <div className="flex items-center gap-2">
           <span className={meta.accent}>{meta.icon}</span>
-          <span className={`font-mono text-xs font-bold tracking-widest ${meta.accent}`}>
+          <span
+            className={`font-mono text-xs font-bold tracking-widest ${meta.accent}`}
+          >
             {meta.label}
           </span>
         </div>
@@ -159,7 +210,9 @@ function QuadrantPanel({ quadrant, items }: { quadrant: Quadrant; items: SwotIte
               {highCount} HIGH
             </span>
           )}
-          <span className="font-mono text-[9px] text-muted-foreground">{items.length} ITEMS</span>
+          <span className="font-mono text-[9px] text-muted-foreground">
+            {items.length} ITEMS
+          </span>
         </div>
       </div>
       <div className="flex-1 space-y-1 p-2">
@@ -168,7 +221,9 @@ function QuadrantPanel({ quadrant, items }: { quadrant: Quadrant; items: SwotIte
         ))}
         {items.length === 0 && (
           <div className="flex items-center justify-center h-32">
-            <p className="font-mono text-[10px] text-muted-foreground">NO DATA</p>
+            <p className="font-mono text-[10px] text-muted-foreground">
+              NO DATA
+            </p>
           </div>
         )}
       </div>
@@ -177,19 +232,44 @@ function QuadrantPanel({ quadrant, items }: { quadrant: Quadrant; items: SwotIte
 }
 
 function SummaryBar({ data }: { data: SwotData }) {
-  const all = [...data.strengths, ...data.weaknesses, ...data.opportunities, ...data.threats];
-  const high = all.filter(i => i.impact === "high").length;
-  const med = all.filter(i => i.impact === "medium").length;
-  const low = all.filter(i => i.impact === "low").length;
+  const all = [
+    ...data.strengths,
+    ...data.weaknesses,
+    ...data.opportunities,
+    ...data.threats,
+  ];
+  const high = all.filter((i) => i.impact === "high").length;
+  const med = all.filter((i) => i.impact === "medium").length;
+  const low = all.filter((i) => i.impact === "low").length;
 
   return (
     <div className="grid grid-cols-7 gap-2">
       {[
-        { label: "STRENGTHS", value: data.strengths.length, color: "text-green-400" },
-        { label: "WEAKNESSES", value: data.weaknesses.length, color: "text-red-400" },
-        { label: "OPPORTUNITIES", value: data.opportunities.length, color: "text-blue-400" },
-        { label: "THREATS", value: data.threats.length, color: "text-orange-400" },
-        { label: "HIGH IMPACT", value: high, color: high > 0 ? "text-red-400" : "text-muted-foreground" },
+        {
+          label: "STRENGTHS",
+          value: data.strengths.length,
+          color: "text-green-400",
+        },
+        {
+          label: "WEAKNESSES",
+          value: data.weaknesses.length,
+          color: "text-red-400",
+        },
+        {
+          label: "OPPORTUNITIES",
+          value: data.opportunities.length,
+          color: "text-blue-400",
+        },
+        {
+          label: "THREATS",
+          value: data.threats.length,
+          color: "text-orange-400",
+        },
+        {
+          label: "HIGH IMPACT",
+          value: high,
+          color: high > 0 ? "text-red-400" : "text-muted-foreground",
+        },
         { label: "MED IMPACT", value: med, color: "text-yellow-400" },
         { label: "LOW IMPACT", value: low, color: "text-muted-foreground" },
       ].map(({ label, value, color }) => (
@@ -212,7 +292,9 @@ export default function Swot() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${BASE}api/ai/generate-swot`, { method: "POST" });
+      const res = await fetch(`${BASE}api/ai/generate-swot`, {
+        method: "POST",
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Unknown error");
       setData(json);
@@ -225,7 +307,12 @@ export default function Swot() {
 
   function exportMarkdown() {
     if (!data) return;
-    const sections = (["strengths", "weaknesses", "opportunities", "threats"] as Quadrant[]);
+    const sections = [
+      "strengths",
+      "weaknesses",
+      "opportunities",
+      "threats",
+    ] as Quadrant[];
     let md = `# SWOT Analysis — Prof. Philip Kaloki (Prof. Kaloki)\n`;
     md += `**Generated:** ${new Date(data.generatedAt).toLocaleString("en-KE")}\n\n`;
     for (const q of sections) {
@@ -247,7 +334,6 @@ export default function Swot() {
 
   return (
     <div className="space-y-4">
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -256,7 +342,8 @@ export default function Swot() {
             STRATEGIC SWOT ANALYSIS
           </h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
-            AI-POWERED POLITICAL ASSESSMENT · PROF. PHILIP KALOKI · MAKUENI GUBERNATORIAL CAMPAIGN · ELECTION 09 AUG 2027
+            AI-POWERED POLITICAL ASSESSMENT · PROF. PHILIP KALOKI · MAKUENI
+            GUBERNATORIAL CAMPAIGN · ELECTION 09 AUG 2027
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -274,11 +361,17 @@ export default function Swot() {
             className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 font-mono text-xs hover:bg-primary/90 disabled:opacity-60"
           >
             {loading ? (
-              <><RefreshCw className="w-3 h-3 animate-spin" /> ANALYSING…</>
+              <>
+                <RefreshCw className="w-3 h-3 animate-spin" /> ANALYSING…
+              </>
             ) : data ? (
-              <><RefreshCw className="w-3 h-3" /> REGENERATE</>
+              <>
+                <RefreshCw className="w-3 h-3" /> REGENERATE
+              </>
             ) : (
-              <><Bot className="w-3 h-3" /> RUN AI ANALYSIS</>
+              <>
+                <Bot className="w-3 h-3" /> RUN AI ANALYSIS
+              </>
             )}
           </button>
         </div>
@@ -289,7 +382,9 @@ export default function Swot() {
         <div className="bg-card border border-primary/40 p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-2 h-2 bg-primary animate-pulse" />
-            <span className="font-mono text-xs text-primary tracking-widest">AI ANALYSIS IN PROGRESS</span>
+            <span className="font-mono text-xs text-primary tracking-widest">
+              AI ANALYSIS IN PROGRESS
+            </span>
           </div>
           <div className="space-y-2">
             {[
@@ -300,8 +395,13 @@ export default function Swot() {
               "Compiling SWOT matrix with actionable recommendations…",
             ].map((step, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="w-1.5 h-1.5 bg-primary/50 animate-pulse" style={{ animationDelay: `${i * 300}ms` }} />
-                <span className="font-mono text-[10px] text-muted-foreground">{step}</span>
+                <div
+                  className="w-1.5 h-1.5 bg-primary/50 animate-pulse"
+                  style={{ animationDelay: `${i * 300}ms` }}
+                />
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {step}
+                </span>
               </div>
             ))}
           </div>
@@ -313,7 +413,10 @@ export default function Swot() {
         <div className="bg-red-500/10 border border-red-500/40 px-4 py-3 flex items-center gap-3">
           <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
           <span className="font-mono text-xs text-red-400">{error}</span>
-          <button onClick={generate} className="ml-auto font-mono text-[10px] border border-red-500/40 px-3 py-1 text-red-400 hover:bg-red-500/10">
+          <button
+            onClick={generate}
+            className="ml-auto font-mono text-[10px] border border-red-500/40 px-3 py-1 text-red-400 hover:bg-red-500/10"
+          >
             RETRY
           </button>
         </div>
@@ -326,23 +429,47 @@ export default function Swot() {
             <Crosshair className="w-8 h-8 text-muted-foreground" />
           </div>
           <div className="text-center space-y-1">
-            <p className="font-mono text-sm font-bold tracking-widest">AWAITING ANALYSIS DIRECTIVE</p>
+            <p className="font-mono text-sm font-bold tracking-widest">
+              AWAITING ANALYSIS DIRECTIVE
+            </p>
             <p className="font-mono text-[10px] text-muted-foreground">
-              AI will assess 20 strategic factors across Strengths · Weaknesses · Opportunities · Threats
+              AI will assess 20 strategic factors across Strengths · Weaknesses
+              · Opportunities · Threats
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3 mt-2 max-w-md w-full">
             {[
-              { icon: <TrendingUp className="w-3 h-3 text-green-400" />, label: "5 STRENGTHS", desc: "Political assets & advantages" },
-              { icon: <TrendingDown className="w-3 h-3 text-red-400" />, label: "5 WEAKNESSES", desc: "Vulnerabilities to address" },
-              { icon: <Target className="w-3 h-3 text-blue-400" />, label: "5 OPPORTUNITIES", desc: "Strategic leverage points" },
-              { icon: <AlertTriangle className="w-3 h-3 text-orange-400" />, label: "5 THREATS", desc: "Risks to neutralise" },
+              {
+                icon: <TrendingUp className="w-3 h-3 text-green-400" />,
+                label: "5 STRENGTHS",
+                desc: "Political assets & advantages",
+              },
+              {
+                icon: <TrendingDown className="w-3 h-3 text-red-400" />,
+                label: "5 WEAKNESSES",
+                desc: "Vulnerabilities to address",
+              },
+              {
+                icon: <Target className="w-3 h-3 text-blue-400" />,
+                label: "5 OPPORTUNITIES",
+                desc: "Strategic leverage points",
+              },
+              {
+                icon: <AlertTriangle className="w-3 h-3 text-orange-400" />,
+                label: "5 THREATS",
+                desc: "Risks to neutralise",
+              },
             ].map(({ icon, label, desc }) => (
-              <div key={label} className="bg-secondary border border-border p-3 flex items-start gap-2">
+              <div
+                key={label}
+                className="bg-secondary border border-border p-3 flex items-start gap-2"
+              >
                 {icon}
                 <div>
                   <p className="font-mono text-[10px] font-bold">{label}</p>
-                  <p className="font-mono text-[9px] text-muted-foreground">{desc}</p>
+                  <p className="font-mono text-[9px] text-muted-foreground">
+                    {desc}
+                  </p>
                 </div>
               </div>
             ))}
@@ -364,12 +491,18 @@ export default function Swot() {
             <div className="flex items-center gap-2 text-muted-foreground">
               <Clock className="w-3 h-3" />
               <span className="font-mono text-[10px]">
-                LAST ANALYSED: {new Date(data.generatedAt).toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" })}
+                LAST ANALYSED:{" "}
+                {new Date(data.generatedAt).toLocaleString("en-KE", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
               </span>
-              <span className="font-mono text-[9px] border border-green-500/30 text-green-400 px-1.5 py-0.5">[ AI_COMPLETE ]</span>
+              <span className="font-mono text-[9px] border border-green-500/30 text-green-400 px-1.5 py-0.5">
+                [ AI_COMPLETE ]
+              </span>
             </div>
             <div className="flex gap-1">
-              {(["grid", "list"] as const).map(v => (
+              {(["grid", "list"] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => setActiveTab(v)}
@@ -389,7 +522,10 @@ export default function Swot() {
             <div className="grid grid-cols-2 gap-3">
               <QuadrantPanel quadrant="strengths" items={data.strengths} />
               <QuadrantPanel quadrant="weaknesses" items={data.weaknesses} />
-              <QuadrantPanel quadrant="opportunities" items={data.opportunities} />
+              <QuadrantPanel
+                quadrant="opportunities"
+                items={data.opportunities}
+              />
               <QuadrantPanel quadrant="threats" items={data.threats} />
             </div>
           )}
@@ -397,37 +533,67 @@ export default function Swot() {
           {/* List view: all 4 stacked */}
           {activeTab === "list" && (
             <div className="space-y-3">
-              {(["strengths", "weaknesses", "opportunities", "threats"] as Quadrant[]).map(q => (
+              {(
+                [
+                  "strengths",
+                  "weaknesses",
+                  "opportunities",
+                  "threats",
+                ] as Quadrant[]
+              ).map((q) => (
                 <div key={q} className={`border ${QUADRANT_META[q].border}`}>
-                  <div className={`${QUADRANT_META[q].headerBg} border-b ${QUADRANT_META[q].border} px-4 py-2 flex items-center gap-2`}>
-                    <span className={QUADRANT_META[q].accent}>{QUADRANT_META[q].icon}</span>
-                    <span className={`font-mono text-xs font-bold tracking-widest ${QUADRANT_META[q].accent}`}>
+                  <div
+                    className={`${QUADRANT_META[q].headerBg} border-b ${QUADRANT_META[q].border} px-4 py-2 flex items-center gap-2`}
+                  >
+                    <span className={QUADRANT_META[q].accent}>
+                      {QUADRANT_META[q].icon}
+                    </span>
+                    <span
+                      className={`font-mono text-xs font-bold tracking-widest ${QUADRANT_META[q].accent}`}
+                    >
                       {QUADRANT_META[q].label}
                     </span>
-                    <span className="font-mono text-[9px] text-muted-foreground ml-auto">{data[q].length} ITEMS</span>
+                    <span className="font-mono text-[9px] text-muted-foreground ml-auto">
+                      {data[q].length} ITEMS
+                    </span>
                   </div>
                   <div className="divide-y divide-border/40">
                     {data[q].map((item, i) => (
                       <div key={i} className="p-4 flex gap-4">
                         <div className="shrink-0 text-center">
-                          <span className={`font-mono text-[10px] border ${QUADRANT_META[q].border} ${QUADRANT_META[q].accent} px-1.5 py-0.5`}>
-                            {QUADRANT_META[q].short}{String(i + 1).padStart(2, "0")}
+                          <span
+                            className={`font-mono text-[10px] border ${QUADRANT_META[q].border} ${QUADRANT_META[q].accent} px-1.5 py-0.5`}
+                          >
+                            {QUADRANT_META[q].short}
+                            {String(i + 1).padStart(2, "0")}
                           </span>
                         </div>
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-xs font-semibold">{item.title}</span>
-                            <span className={`font-mono text-[9px] border px-1.5 py-0.5 ${impactColor(item.impact)}`}>
+                            <span className="font-mono text-xs font-semibold">
+                              {item.title}
+                            </span>
+                            <span
+                              className={`font-mono text-[9px] border px-1.5 py-0.5 ${impactColor(item.impact)}`}
+                            >
                               {item.impact.toUpperCase()}
                             </span>
-                            <span className={`font-mono text-[9px] ${categoryColor(item.category)}`}>
+                            <span
+                              className={`font-mono text-[9px] ${categoryColor(item.category)}`}
+                            >
                               [{item.category.toUpperCase()}]
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground leading-relaxed">{item.detail}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {item.detail}
+                          </p>
                           <div className="flex items-start gap-2">
-                            <Zap className={`w-3 h-3 mt-0.5 shrink-0 ${QUADRANT_META[q].accent}`} />
-                            <p className="font-mono text-[10px] text-foreground/80">{item.action}</p>
+                            <Zap
+                              className={`w-3 h-3 mt-0.5 shrink-0 ${QUADRANT_META[q].accent}`}
+                            />
+                            <p className="font-mono text-[10px] text-foreground/80">
+                              {item.action}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -442,30 +608,56 @@ export default function Swot() {
           <div className="border border-primary/30 bg-primary/5">
             <div className="border-b border-primary/30 px-4 py-2 flex items-center gap-2">
               <Shield className="w-3.5 h-3.5 text-primary" />
-              <span className="font-mono text-xs font-bold tracking-widest text-primary">COMMAND PRIORITIES — HIGH IMPACT ITEMS</span>
+              <span className="font-mono text-xs font-bold tracking-widest text-primary">
+                COMMAND PRIORITIES — HIGH IMPACT ITEMS
+              </span>
             </div>
             <div className="divide-y divide-border/30">
-              {(["strengths", "weaknesses", "opportunities", "threats"] as Quadrant[])
-                .flatMap(q => data[q].filter(i => i.impact === "high").map(i => ({ ...i, quadrant: q })))
+              {(
+                [
+                  "strengths",
+                  "weaknesses",
+                  "opportunities",
+                  "threats",
+                ] as Quadrant[]
+              )
+                .flatMap((q) =>
+                  data[q]
+                    .filter((i) => i.impact === "high")
+                    .map((i) => ({ ...i, quadrant: q })),
+                )
                 .map((item, i) => {
                   const meta = QUADRANT_META[item.quadrant as Quadrant];
                   return (
                     <div key={i} className="px-4 py-3 flex items-start gap-3">
-                      <span className={`font-mono text-[9px] border ${meta.border} ${meta.accent} px-1.5 py-0.5 shrink-0`}>
+                      <span
+                        className={`font-mono text-[9px] border ${meta.border} ${meta.accent} px-1.5 py-0.5 shrink-0`}
+                      >
                         {meta.short} {item.impact.toUpperCase()}
                       </span>
                       <div className="flex-1">
-                        <p className="font-mono text-xs font-semibold">{item.title}</p>
+                        <p className="font-mono text-xs font-semibold">
+                          {item.title}
+                        </p>
                         <div className="flex items-center gap-1.5 mt-1">
                           <Eye className="w-3 h-3 text-primary shrink-0" />
-                          <p className="font-mono text-[10px] text-muted-foreground">{item.action}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">
+                            {item.action}
+                          </p>
                         </div>
                       </div>
                     </div>
                   );
                 })}
-              {(["strengths", "weaknesses", "opportunities", "threats"] as Quadrant[])
-                .flatMap(q => data[q].filter(i => i.impact === "high")).length === 0 && (
+              {(
+                [
+                  "strengths",
+                  "weaknesses",
+                  "opportunities",
+                  "threats",
+                ] as Quadrant[]
+              ).flatMap((q) => data[q].filter((i) => i.impact === "high"))
+                .length === 0 && (
                 <div className="px-4 py-6 text-center font-mono text-[10px] text-muted-foreground">
                   NO HIGH-IMPACT ITEMS IDENTIFIED
                 </div>

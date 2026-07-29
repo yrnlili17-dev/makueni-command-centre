@@ -1,7 +1,16 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Mic, ScrollText, Library, Sparkles, Copy, Check, Download, Save, Trash2, RotateCcw,
+  Mic,
+  ScrollText,
+  Library,
+  Sparkles,
+  Copy,
+  Check,
+  Download,
+  Save,
+  Trash2,
+  RotateCcw,
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL ?? "/";
@@ -34,13 +43,37 @@ interface GeneratedDocument {
 }
 
 const OCCASIONS = [
-  "Campaign Rally", "Baraza (Public Forum)", "Campaign Launch", "Church Service",
-  "Funeral", "Wedding", "Harambee (Fundraiser)", "Youth Event", "Women's Group Meeting",
-  "Market Visit", "Radio Address", "Endorsement Event", "Victory Speech",
+  "Campaign Rally",
+  "Baraza (Public Forum)",
+  "Campaign Launch",
+  "Church Service",
+  "Funeral",
+  "Wedding",
+  "Harambee (Fundraiser)",
+  "Youth Event",
+  "Women's Group Meeting",
+  "Market Visit",
+  "Radio Address",
+  "Endorsement Event",
+  "Victory Speech",
 ];
-const WARDS = ["Makueni", "Tala", "Makueni West", "Makueni North", "Makueni East", "Kyeleni"];
+const WARDS = [
+  "Makueni",
+  "Tala",
+  "Makueni West",
+  "Makueni North",
+  "Makueni East",
+  "Kyeleni",
+];
 const LANGUAGES = ["English", "Swahili", "English + Swahili mix"];
-const TONES = ["Inspirational", "Fiery / Passionate", "Solemn / Respectful", "Warm / Personal", "Statesmanlike", "Conversational"];
+const TONES = [
+  "Inspirational",
+  "Fiery / Passionate",
+  "Solemn / Respectful",
+  "Warm / Personal",
+  "Statesmanlike",
+  "Conversational",
+];
 const LENGTHS = [
   { value: "short", label: "SHORT · ~2 MIN" },
   { value: "medium", label: "MEDIUM · ~5 MIN" },
@@ -49,23 +82,44 @@ const LENGTHS = [
 
 type Tab = "speech" | "manifesto" | "library";
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="block font-mono text-[10px] text-muted-foreground tracking-widest mb-1.5">{label}</label>
+      <label className="block font-mono text-[10px] text-muted-foreground tracking-widest mb-1.5">
+        {label}
+      </label>
       {children}
     </div>
   );
 }
 
-const inputCls = "w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary";
+const inputCls =
+  "w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary";
 
 function OutputPanel({
-  title, body, meta, onSave, saving, saved,
+  title,
+  body,
+  meta,
+  onSave,
+  saving,
+  saved,
 }: {
   title: string;
   body: string;
-  meta: { docType: string; occasion?: string; audience?: string; ward?: string; language: string; tone?: string };
+  meta: {
+    docType: string;
+    occasion?: string;
+    audience?: string;
+    ward?: string;
+    language: string;
+    tone?: string;
+  };
   onSave: () => void;
   saving: boolean;
   saved: boolean;
@@ -88,12 +142,26 @@ function OutputPanel({
   return (
     <div className="bg-card border border-border">
       <div className="flex items-center justify-between p-3 border-b border-border">
-        <span className="font-mono text-[10px] text-primary tracking-widest truncate">{title}</span>
+        <span className="font-mono text-[10px] text-primary tracking-widest truncate">
+          {title}
+        </span>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={copy} className="text-muted-foreground hover:text-foreground" title="Copy">
-            {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+          <button
+            onClick={copy}
+            className="text-muted-foreground hover:text-foreground"
+            title="Copy"
+          >
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-green-400" />
+            ) : (
+              <Copy className="w-3.5 h-3.5" />
+            )}
           </button>
-          <button onClick={download} className="text-muted-foreground hover:text-foreground" title="Download .txt">
+          <button
+            onClick={download}
+            className="text-muted-foreground hover:text-foreground"
+            title="Download .txt"
+          >
             <Download className="w-3.5 h-3.5" />
           </button>
           <button
@@ -107,7 +175,9 @@ function OutputPanel({
         </div>
       </div>
       <div className="p-4 max-h-[55vh] overflow-y-auto">
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{body}</pre>
+        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+          {body}
+        </pre>
       </div>
     </div>
   );
@@ -131,7 +201,11 @@ export default function Speeches() {
   const [mTone, setMTone] = useState("Statesmanlike");
   const [priorityIssues, setPriorityIssues] = useState("");
 
-  const [output, setOutput] = useState<{ title: string; body: string; docType: string } | null>(null);
+  const [output, setOutput] = useState<{
+    title: string;
+    body: string;
+    docType: string;
+  } | null>(null);
   const [savedId, setSavedId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -139,10 +213,23 @@ export default function Speeches() {
     mutationFn: () =>
       api("/generate", {
         method: "POST",
-        body: JSON.stringify({ occasion, audience, ward, language: sLanguage, tone, keyPoints, length }),
+        body: JSON.stringify({
+          occasion,
+          audience,
+          ward,
+          language: sLanguage,
+          tone,
+          keyPoints,
+          length,
+        }),
       }),
-    onMutate: () => { setError(null); setSavedId(null); setOutput(null); },
-    onSuccess: (d) => setOutput({ title: d.title, body: d.body, docType: "speech" }),
+    onMutate: () => {
+      setError(null);
+      setSavedId(null);
+      setOutput(null);
+    },
+    onSuccess: (d) =>
+      setOutput({ title: d.title, body: d.body, docType: "speech" }),
     onError: (e: Error) => setError(e.message),
   });
 
@@ -150,10 +237,19 @@ export default function Speeches() {
     mutationFn: () =>
       api("/manifesto", {
         method: "POST",
-        body: JSON.stringify({ language: mLanguage, tone: mTone, priorityIssues }),
+        body: JSON.stringify({
+          language: mLanguage,
+          tone: mTone,
+          priorityIssues,
+        }),
       }),
-    onMutate: () => { setError(null); setSavedId(null); setOutput(null); },
-    onSuccess: (d) => setOutput({ title: d.title, body: d.body, docType: "manifesto" }),
+    onMutate: () => {
+      setError(null);
+      setSavedId(null);
+      setOutput(null);
+    },
+    onSuccess: (d) =>
+      setOutput({ title: d.title, body: d.body, docType: "manifesto" }),
     onError: (e: Error) => setError(e.message),
   });
 
@@ -172,7 +268,10 @@ export default function Speeches() {
           body: output!.body,
         }),
       }),
-    onSuccess: (d) => { setSavedId(d.document.id); qc.invalidateQueries({ queryKey: ["speech-docs"] }); },
+    onSuccess: (d) => {
+      setSavedId(d.document.id);
+      qc.invalidateQueries({ queryKey: ["speech-docs"] });
+    },
     onError: (e: Error) => setError(e.message),
   });
 
@@ -193,36 +292,48 @@ export default function Speeches() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold tracking-wider flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" /> AI SPEECH &amp; MANIFESTO GENERATOR
+          <Sparkles className="w-5 h-5 text-primary" /> AI SPEECH &amp;
+          MANIFESTO GENERATOR
         </h1>
         <p className="font-mono text-[11px] text-muted-foreground mt-1">
-          Draft campaign speeches and the official manifesto for Prof. Philip Kaloki · grounded in Makueni context
+          Draft campaign speeches and the official manifesto for Prof. Philip
+          Kaloki · grounded in Makueni context
         </p>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border">
-        {([
-          ["speech", "SPEECH WRITER", Mic],
-          ["manifesto", "MANIFESTO BUILDER", ScrollText],
-          ["library", "SAVED LIBRARY", Library],
-        ] as [Tab, string, typeof Mic][]).map(([t, label, Icon]) => (
+        {(
+          [
+            ["speech", "SPEECH WRITER", Mic],
+            ["manifesto", "MANIFESTO BUILDER", ScrollText],
+            ["library", "SAVED LIBRARY", Library],
+          ] as [Tab, string, typeof Mic][]
+        ).map(([t, label, Icon]) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`flex items-center gap-2 px-4 py-2.5 font-mono text-[11px] tracking-widest border-b-2 -mb-px transition-colors ${
-              tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              tab === t
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             <Icon className="w-3.5 h-3.5" /> {label}
             {t === "library" && docs.length > 0 && (
-              <span className="text-[9px] bg-secondary px-1.5 py-0.5">{docs.length}</span>
+              <span className="text-[9px] bg-secondary px-1.5 py-0.5">
+                {docs.length}
+              </span>
             )}
           </button>
         ))}
       </div>
 
-      {error && <div className="bg-red-500/10 border border-red-500/30 p-3 font-mono text-xs text-red-400">{error}</div>}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 p-3 font-mono text-xs text-red-400">
+          {error}
+        </div>
+      )}
 
       {/* SPEECH TAB */}
       {tab === "speech" && (
@@ -230,28 +341,57 @@ export default function Speeches() {
           <div className="bg-card border border-border p-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <Field label="OCCASION">
-                <select value={occasion} onChange={(e) => setOccasion(e.target.value)} className={inputCls}>
-                  {OCCASIONS.map((o) => <option key={o}>{o}</option>)}
+                <select
+                  value={occasion}
+                  onChange={(e) => setOccasion(e.target.value)}
+                  className={inputCls}
+                >
+                  {OCCASIONS.map((o) => (
+                    <option key={o}>{o}</option>
+                  ))}
                 </select>
               </Field>
               <Field label="WARD FOCUS">
-                <select value={ward} onChange={(e) => setWard(e.target.value)} className={inputCls}>
-                  {WARDS.map((w) => <option key={w}>{w}</option>)}
+                <select
+                  value={ward}
+                  onChange={(e) => setWard(e.target.value)}
+                  className={inputCls}
+                >
+                  {WARDS.map((w) => (
+                    <option key={w}>{w}</option>
+                  ))}
                 </select>
               </Field>
             </div>
             <Field label="AUDIENCE (optional)">
-              <input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="e.g. youth, farmers, church congregation" className={inputCls} />
+              <input
+                value={audience}
+                onChange={(e) => setAudience(e.target.value)}
+                placeholder="e.g. youth, farmers, church congregation"
+                className={inputCls}
+              />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="LANGUAGE">
-                <select value={sLanguage} onChange={(e) => setSLanguage(e.target.value)} className={inputCls}>
-                  {LANGUAGES.map((l) => <option key={l}>{l}</option>)}
+                <select
+                  value={sLanguage}
+                  onChange={(e) => setSLanguage(e.target.value)}
+                  className={inputCls}
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l}>{l}</option>
+                  ))}
                 </select>
               </Field>
               <Field label="TONE">
-                <select value={tone} onChange={(e) => setTone(e.target.value)} className={inputCls}>
-                  {TONES.map((t) => <option key={t}>{t}</option>)}
+                <select
+                  value={tone}
+                  onChange={(e) => setTone(e.target.value)}
+                  className={inputCls}
+                >
+                  {TONES.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
                 </select>
               </Field>
             </div>
@@ -262,7 +402,9 @@ export default function Speeches() {
                     key={l.value}
                     onClick={() => setLength(l.value)}
                     className={`px-2 py-2 font-mono text-[9px] tracking-wider border ${
-                      length === l.value ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground"
+                      length === l.value
+                        ? "border-primary text-primary bg-primary/10"
+                        : "border-border text-muted-foreground"
                     }`}
                   >
                     {l.label}
@@ -271,9 +413,13 @@ export default function Speeches() {
               </div>
             </Field>
             <Field label="KEY POINTS (optional)">
-              <textarea value={keyPoints} onChange={(e) => setKeyPoints(e.target.value)} rows={4}
+              <textarea
+                value={keyPoints}
+                onChange={(e) => setKeyPoints(e.target.value)}
+                rows={4}
                 placeholder="Bullet the specific promises, achievements or themes to include..."
-                className={`${inputCls} resize-none`} />
+                className={`${inputCls} resize-none`}
+              />
             </Field>
             <button
               onClick={() => speechMut.mutate()}
@@ -286,13 +432,29 @@ export default function Speeches() {
           </div>
 
           <div>
-            {generating && <GeneratingCard label="Composing speech section by section..." />}
-            {!generating && output?.docType === "speech" && (
-              <OutputPanel title={output.title} body={output.body}
-                meta={{ docType: "speech", occasion, audience, ward, language: sLanguage, tone }}
-                onSave={() => saveMut.mutate()} saving={saveMut.isPending} saved={savedId !== null} />
+            {generating && (
+              <GeneratingCard label="Composing speech section by section..." />
             )}
-            {!generating && !output && <EmptyOutput label="Configure the speech and hit generate." />}
+            {!generating && output?.docType === "speech" && (
+              <OutputPanel
+                title={output.title}
+                body={output.body}
+                meta={{
+                  docType: "speech",
+                  occasion,
+                  audience,
+                  ward,
+                  language: sLanguage,
+                  tone,
+                }}
+                onSave={() => saveMut.mutate()}
+                saving={saveMut.isPending}
+                saved={savedId !== null}
+              />
+            )}
+            {!generating && !output && (
+              <EmptyOutput label="Configure the speech and hit generate." />
+            )}
           </div>
         </div>
       )}
@@ -303,24 +465,41 @@ export default function Speeches() {
           <div className="bg-card border border-border p-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <Field label="LANGUAGE">
-                <select value={mLanguage} onChange={(e) => setMLanguage(e.target.value)} className={inputCls}>
-                  {LANGUAGES.map((l) => <option key={l}>{l}</option>)}
+                <select
+                  value={mLanguage}
+                  onChange={(e) => setMLanguage(e.target.value)}
+                  className={inputCls}
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l}>{l}</option>
+                  ))}
                 </select>
               </Field>
               <Field label="TONE">
-                <select value={mTone} onChange={(e) => setMTone(e.target.value)} className={inputCls}>
-                  {TONES.map((t) => <option key={t}>{t}</option>)}
+                <select
+                  value={mTone}
+                  onChange={(e) => setMTone(e.target.value)}
+                  className={inputCls}
+                >
+                  {TONES.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
                 </select>
               </Field>
             </div>
             <Field label="PRIORITY ISSUES (optional)">
-              <textarea value={priorityIssues} onChange={(e) => setPriorityIssues(e.target.value)} rows={4}
+              <textarea
+                value={priorityIssues}
+                onChange={(e) => setPriorityIssues(e.target.value)}
+                rows={4}
                 placeholder="Any specific issues to emphasize across the manifesto..."
-                className={`${inputCls} resize-none`} />
+                className={`${inputCls} resize-none`}
+              />
             </Field>
             <div className="bg-secondary/40 border border-border p-3 font-mono text-[10px] text-muted-foreground leading-relaxed">
-              Builds a full manifesto around the 4 campaign pillars: grassroots empowerment, infrastructure,
-              constitutional mandate, and local accessibility — plus a vision preamble and closing pledge.
+              Builds a full manifesto around the 4 campaign pillars: grassroots
+              empowerment, infrastructure, constitutional mandate, and local
+              accessibility — plus a vision preamble and closing pledge.
             </div>
             <button
               onClick={() => manifestoMut.mutate()}
@@ -328,18 +507,33 @@ export default function Speeches() {
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground font-mono text-xs tracking-widest disabled:opacity-50"
             >
               <ScrollText className="w-4 h-4" />
-              {manifestoMut.isPending ? "BUILDING MANIFESTO..." : "GENERATE MANIFESTO"}
+              {manifestoMut.isPending
+                ? "BUILDING MANIFESTO..."
+                : "GENERATE MANIFESTO"}
             </button>
           </div>
 
           <div>
-            {generating && <GeneratingCard label="Drafting all manifesto sections in parallel..." />}
-            {!generating && output?.docType === "manifesto" && (
-              <OutputPanel title={output.title} body={output.body}
-                meta={{ docType: "manifesto", language: mLanguage, tone: mTone }}
-                onSave={() => saveMut.mutate()} saving={saveMut.isPending} saved={savedId !== null} />
+            {generating && (
+              <GeneratingCard label="Drafting all manifesto sections in parallel..." />
             )}
-            {!generating && !output && <EmptyOutput label="Set your preferences and build the manifesto." />}
+            {!generating && output?.docType === "manifesto" && (
+              <OutputPanel
+                title={output.title}
+                body={output.body}
+                meta={{
+                  docType: "manifesto",
+                  language: mLanguage,
+                  tone: mTone,
+                }}
+                onSave={() => saveMut.mutate()}
+                saving={saveMut.isPending}
+                saved={savedId !== null}
+              />
+            )}
+            {!generating && !output && (
+              <EmptyOutput label="Set your preferences and build the manifesto." />
+            )}
           </div>
         </div>
       )}
@@ -349,10 +543,18 @@ export default function Speeches() {
         <div className="space-y-3">
           {docs.length === 0 && (
             <div className="bg-card border border-border p-8 text-center font-mono text-xs text-muted-foreground">
-              No saved documents yet. Generate a speech or manifesto and save it here.
+              No saved documents yet. Generate a speech or manifesto and save it
+              here.
             </div>
           )}
-          {docs.map((d) => <LibraryItem key={d.id} doc={d} onDelete={() => deleteMut.mutate(d.id)} deleting={deleteMut.isPending} />)}
+          {docs.map((d) => (
+            <LibraryItem
+              key={d.id}
+              doc={d}
+              onDelete={() => deleteMut.mutate(d.id)}
+              deleting={deleteMut.isPending}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -363,9 +565,18 @@ function GeneratingCard({ label }: { label: string }) {
   return (
     <div className="bg-card border border-border p-8 flex flex-col items-center justify-center gap-3 min-h-[200px]">
       <div className="flex gap-1">
-        <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-        <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-        <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+        <span
+          className="w-2 h-2 bg-primary rounded-full animate-bounce"
+          style={{ animationDelay: "0ms" }}
+        />
+        <span
+          className="w-2 h-2 bg-primary rounded-full animate-bounce"
+          style={{ animationDelay: "150ms" }}
+        />
+        <span
+          className="w-2 h-2 bg-primary rounded-full animate-bounce"
+          style={{ animationDelay: "300ms" }}
+        />
       </div>
       <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
     </div>
@@ -381,7 +592,15 @@ function EmptyOutput({ label }: { label: string }) {
   );
 }
 
-function LibraryItem({ doc, onDelete, deleting }: { doc: GeneratedDocument; onDelete: () => void; deleting: boolean }) {
+function LibraryItem({
+  doc,
+  onDelete,
+  deleting,
+}: {
+  doc: GeneratedDocument;
+  onDelete: () => void;
+  deleting: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const copy = () => {
@@ -392,31 +611,60 @@ function LibraryItem({ doc, onDelete, deleting }: { doc: GeneratedDocument; onDe
   return (
     <div className="bg-card border border-border">
       <div className="flex items-center justify-between p-3">
-        <button onClick={() => setExpanded((v) => !v)} className="flex items-center gap-3 text-left min-w-0 flex-1">
-          <span className={`font-mono text-[9px] px-1.5 py-0.5 border shrink-0 ${
-            doc.docType === "manifesto" ? "text-yellow-400 border-yellow-400/30" : "text-primary border-primary/30"
-          }`}>
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="flex items-center gap-3 text-left min-w-0 flex-1"
+        >
+          <span
+            className={`font-mono text-[9px] px-1.5 py-0.5 border shrink-0 ${
+              doc.docType === "manifesto"
+                ? "text-yellow-400 border-yellow-400/30"
+                : "text-primary border-primary/30"
+            }`}
+          >
             {doc.docType.toUpperCase()}
           </span>
           <div className="min-w-0">
             <div className="text-sm font-medium truncate">{doc.title}</div>
             <div className="font-mono text-[10px] text-muted-foreground">
-              {[doc.language, doc.tone, doc.ward, new Date(doc.createdAt).toLocaleDateString()].filter(Boolean).join(" · ")}
+              {[
+                doc.language,
+                doc.tone,
+                doc.ward,
+                new Date(doc.createdAt).toLocaleDateString(),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </div>
           </div>
         </button>
         <div className="flex items-center gap-2 shrink-0 pl-3">
-          <button onClick={copy} className="text-muted-foreground hover:text-foreground" title="Copy">
-            {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+          <button
+            onClick={copy}
+            className="text-muted-foreground hover:text-foreground"
+            title="Copy"
+          >
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-green-400" />
+            ) : (
+              <Copy className="w-3.5 h-3.5" />
+            )}
           </button>
-          <button onClick={onDelete} disabled={deleting} className="text-muted-foreground hover:text-red-400 disabled:opacity-50" title="Delete">
+          <button
+            onClick={onDelete}
+            disabled={deleting}
+            className="text-muted-foreground hover:text-red-400 disabled:opacity-50"
+            title="Delete"
+          >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
       {expanded && (
         <div className="p-4 border-t border-border max-h-[50vh] overflow-y-auto">
-          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{doc.body}</pre>
+          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+            {doc.body}
+          </pre>
         </div>
       )}
     </div>
