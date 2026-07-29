@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -49,7 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const login = useCallback(async (identifier: string, password: string) => {
     const res = await fetch(`${BASE}api/auth/login`, {
@@ -68,18 +77,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    try { await fetch(`${BASE}api/auth/logout`, { method: "POST", credentials: "include" }); } catch { /* ignore */ }
+    try {
+      await fetch(`${BASE}api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      /* ignore */
+    }
     setUser(null);
     setPermissions({});
   }, []);
 
-  const can = useCallback((module: string, level: PermLevel = "read") => {
-    const have = permissions[module] ?? "none";
-    return level === "read" ? have === "read" || have === "write" : have === "write";
-  }, [permissions]);
+  const can = useCallback(
+    (module: string, level: PermLevel = "read") => {
+      const normalizedRole = user?.role
+        ?.trim()
+        .toLowerCase()
+        .replace(/[\s-]+/g, "_");
+
+      // Super Admin must always retain full access.
+      if (normalizedRole === "super_admin") {
+        return true;
+      }
+
+      const have = permissions[module] ?? "none";
+
+      return level === "read"
+        ? have === "read" || have === "write"
+        : have === "write";
+    },
+    [permissions, user?.role],
+  );
 
   return (
-    <AuthContext.Provider value={{ user, permissions, loading, login, logout, refresh, can }}>
+    <AuthContext.Provider
+      value={{ user, permissions, loading, login, logout, refresh, can }}
+    >
       {children}
     </AuthContext.Provider>
   );
