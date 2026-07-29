@@ -1,0 +1,440 @@
+/*
+ * Makueni Command Centre
+ * Enterprise Glow and Responsive Layout
+ */
+
+/* -------------------------------------------------
+   Global layout safety
+-------------------------------------------------- */
+
+html {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  background:
+    radial-gradient(
+      circle at 12% 0%,
+      rgba(124, 58, 237, 0.12),
+      transparent 32rem
+    ),
+    radial-gradient(
+      circle at 94% 10%,
+      rgba(14, 165, 233, 0.09),
+      transparent 28rem
+    ),
+    hsl(var(--background));
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+  font: inherit;
+}
+
+/* -------------------------------------------------
+   Enterprise glow
+-------------------------------------------------- */
+
+.bg-card,
+[class*="bg-card"] {
+  position: relative;
+  border-color: rgba(148, 163, 184, 0.16);
+  box-shadow:
+    0 14px 34px rgba(2, 6, 23, 0.22),
+    0 0 0 1px rgba(148, 163, 184, 0.03);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.bg-card:hover,
+[class*="bg-card"]:hover {
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow:
+    0 18px 44px rgba(2, 6, 23, 0.34),
+    0 0 28px rgba(124, 58, 237, 0.08);
+}
+
+.border-primary,
+[class*="border-primary"] {
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.12),
+    0 0 24px rgba(124, 58, 237, 0.08);
+}
+
+.text-primary,
+[class*="text-primary"] {
+  text-shadow: 0 0 18px rgba(139, 92, 246, 0.2);
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+button:not(:disabled):hover,
+[role="button"]:not([aria-disabled="true"]):hover {
+  box-shadow: 0 8px 22px rgba(2, 6, 23, 0.2);
+}
+
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  transform: translateY(1px) scale(0.99);
+}
+
+/* -------------------------------------------------
+   Focus visibility and accessibility
+-------------------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid rgba(139, 92, 246, 0.95);
+  outline-offset: 3px;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(139, 92, 246, 0.72);
+  box-shadow:
+    0 0 0 3px rgba(139, 92, 246, 0.13),
+    0 0 22px rgba(124, 58, 237, 0.08);
+}
+
+/* -------------------------------------------------
+   Tables
+-------------------------------------------------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.overflow-x-auto,
+[class*="overflow-x-auto"] {
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+table th,
+table td {
+  vertical-align: middle;
+}
+
+table th {
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------
+   Dialogs, dropdowns and popovers
+-------------------------------------------------- */
+
+[role="dialog"] {
+  max-width: min(94vw, 72rem);
+  max-height: 92vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+[data-radix-popper-content-wrapper] {
+  max-width: calc(100vw - 1rem);
+}
+
+/* -------------------------------------------------
+   Charts
+-------------------------------------------------- */
+
+.recharts-responsive-container,
+.recharts-wrapper,
+.recharts-surface {
+  max-width: 100% !important;
+}
+
+.recharts-wrapper {
+  overflow: hidden;
+}
+
+/* -------------------------------------------------
+   Mobile: up to 639px
+-------------------------------------------------- */
+
+@media (max-width: 639px) {
+  body {
+    background:
+      radial-gradient(
+        circle at 50% 0%,
+        rgba(124, 58, 237, 0.1),
+        transparent 22rem
+      ),
+      hsl(var(--background));
+  }
+
+  main {
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  main > div,
+  main > section {
+    min-width: 0;
+  }
+
+  /* Reduce excessive desktop page spacing */
+  main .p-8 {
+    padding: 1rem;
+  }
+
+  main .p-6 {
+    padding: 0.875rem;
+  }
+
+  main .px-8 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  main .px-6 {
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+  }
+
+  main .py-8 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  main .gap-8 {
+    gap: 1rem;
+  }
+
+  main .gap-6 {
+    gap: 0.875rem;
+  }
+
+  /* Collapse common dashboard grids */
+  main .grid-cols-2,
+  main .grid-cols-3,
+  main .grid-cols-4,
+  main .grid-cols-5,
+  main .grid-cols-6,
+  main .grid-cols-7,
+  main .grid-cols-8,
+  main .grid-cols-9,
+  main .grid-cols-10,
+  main .grid-cols-11,
+  main .grid-cols-12 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Let flex toolbars wrap instead of overflowing */
+  main .flex {
+    min-width: 0;
+  }
+
+  main .flex-wrap {
+    row-gap: 0.625rem;
+  }
+
+  h1 {
+    font-size: clamp(1.25rem, 7vw, 1.75rem);
+    line-height: 1.18;
+  }
+
+  h2 {
+    font-size: clamp(1.05rem, 5.5vw, 1.4rem);
+  }
+
+  h3 {
+    font-size: clamp(0.95rem, 4.8vw, 1.15rem);
+  }
+
+  p,
+  td,
+  th,
+  label {
+    overflow-wrap: anywhere;
+  }
+
+  button,
+  [role="button"],
+  input,
+  select {
+    min-height: 42px;
+  }
+
+  textarea {
+    min-height: 96px;
+  }
+
+  /* Mobile tables remain readable */
+  table {
+    min-width: 680px;
+  }
+
+  table th,
+  table td {
+    padding: 0.7rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  /* Mobile dialogs */
+  [role="dialog"] {
+    width: calc(100vw - 1rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100dvh - 1rem);
+    margin: 0.5rem;
+    border-radius: 0.75rem;
+  }
+
+  /* Prevent long badges and status labels overflowing */
+  [class*="badge"],
+  [class*="Badge"] {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Tabs scroll horizontally on smaller displays */
+  [role="tablist"] {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [role="tab"] {
+    flex: 0 0 auto;
+    min-height: 42px;
+    white-space: nowrap;
+  }
+
+  .bg-card:hover,
+  [class*="bg-card"]:hover {
+    transform: none;
+  }
+}
+
+/* -------------------------------------------------
+   Tablet: 640px to 1023px
+-------------------------------------------------- */
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  main .p-8 {
+    padding: 1.5rem;
+  }
+
+  main .px-8 {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  main .grid-cols-4,
+  main .grid-cols-5,
+  main .grid-cols-6,
+  main .grid-cols-7,
+  main .grid-cols-8,
+  main .grid-cols-9,
+  main .grid-cols-10,
+  main .grid-cols-11,
+  main .grid-cols-12 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  table {
+    min-width: 760px;
+  }
+
+  button,
+  [role="button"],
+  input,
+  select {
+    min-height: 40px;
+  }
+
+  [role="dialog"] {
+    width: min(92vw, 48rem);
+  }
+}
+
+/* -------------------------------------------------
+   Desktop enhancements
+-------------------------------------------------- */
+
+@media (min-width: 1024px) {
+  .bg-card:hover,
+  [class*="bg-card"]:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* -------------------------------------------------
+   Small-height mobile screens
+-------------------------------------------------- */
+
+@media (max-height: 650px) and (max-width: 900px) {
+  [role="dialog"] {
+    max-height: 96vh;
+  }
+}
+
+/* -------------------------------------------------
+   Reduced motion preference
+-------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
