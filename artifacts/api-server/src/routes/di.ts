@@ -181,7 +181,7 @@ interface WardForecast {
   turnoutRate: number;
   supportShare: number;
   predictedVotes: number;
-  predictedMuleVotes: number;
+  predictedCandidateVotes: number;
   gotvUpside: number;
 }
 
@@ -200,9 +200,9 @@ async function computeForecast(): Promise<WardForecast[]> {
     const turnoutRate = a?.expectedTurnoutRate ?? 65;
     const supportShare = a?.muleSupportShare ?? 50;
     const predictedVotes = Math.round((s.registered * turnoutRate) / 100);
-    const predictedMuleVotes = Math.round((predictedVotes * supportShare) / 100);
+    const predictedCandidateVotes = Math.round((predictedVotes * supportShare) / 100);
     const gotvUpside = Math.round((s.registered * (supportShare / 100) * (1 - turnoutRate / 100)));
-    return { ward: s.ward, registered: s.registered, turnoutRate, supportShare, predictedVotes, predictedMuleVotes, gotvUpside };
+    return { ward: s.ward, registered: s.registered, turnoutRate, supportShare, predictedVotes, predictedCandidateVotes, gotvUpside };
   });
 }
 
@@ -212,12 +212,12 @@ async function aggTurnoutForecast(): Promise<AggregateResult> {
     ward: f.ward,
     registered: f.registered,
     predictedVotes: f.predictedVotes,
-    predictedMuleVotes: f.predictedMuleVotes,
+    predictedCandidateVotes: f.predictedCandidateVotes,
   }));
   return {
     chartType: "bar",
     chartData,
-    chartMeta: { xKey: "ward", yKeys: ["registered", "predictedVotes", "predictedMuleVotes"], valueLabel: "Voters" },
+    chartMeta: { xKey: "ward", yKeys: ["registered", "predictedVotes", "predictedCandidateVotes"], valueLabel: "Voters" },
   };
 }
 

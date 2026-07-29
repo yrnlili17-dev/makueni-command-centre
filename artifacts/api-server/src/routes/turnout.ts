@@ -42,7 +42,7 @@ router.get("/prediction", async (req, res) => {
     .select({
       ward: pollingStationsTable.ward,
       totalVotes: sql<number>`coalesce(sum(${tallyResultsTable.votes}), 0)`,
-      muleVotes: sql<number>`coalesce(sum(case when ${tallyResultsTable.candidateName} = ${PRINCIPAL} then ${tallyResultsTable.votes} else 0 end), 0)`,
+      candidateVotes: sql<number>`coalesce(sum(case when ${tallyResultsTable.candidateName} = ${PRINCIPAL} then ${tallyResultsTable.votes} else 0 end), 0)`,
       reporting: sql<number>`count(distinct ${tallyResultsTable.stationCode})`,
     })
     .from(pollingStationsTable)
@@ -58,14 +58,14 @@ router.get("/prediction", async (req, res) => {
     const turnoutRate = clamp(baseTurnout + turnoutDelta);
     const supportShare = clamp(baseSupport + supportDelta);
     const predictedVotes = Math.round((registered * turnoutRate) / 100);
-    const predictedMuleVotes = Math.round((predictedVotes * supportShare) / 100);
+    const predictedCandidateVotes = Math.round((predictedVotes * supportShare) / 100);
     // Mobilization upside: expected supporters who are NOT projected to vote.
     // High values flag where GOTV effort converts to the most extra votes.
     const gotvUpside = Math.round(registered * (supportShare / 100) * (1 - turnoutRate / 100));
 
     const act = actMap.get(w.ward);
     const actualVotesCast = Number(act?.totalVotes ?? 0);
-    const actualMuleVotes = Number(act?.muleVotes ?? 0);
+    const actualCandidateVotes = Number(act?.candidateVotes ?? 0);
     const reportingStations = Number(act?.reporting ?? 0);
 
     return {
@@ -77,10 +77,10 @@ router.get("/prediction", async (req, res) => {
       turnoutRate,
       effectiveSupportShare: supportShare,
       predictedVotes,
-      predictedMuleVotes,
+      predictedCandidateVotes,
       gotvUpside,
       actualVotesCast,
-      actualMuleVotes,
+      actualCandidateVotes,
       actualTurnoutRate: registered ? Math.round((actualVotesCast / registered) * 100) : 0,
       reportingStations,
     };
@@ -97,7 +97,7 @@ router.get("/prediction", async (req, res) => {
 
   const totalRegistered = wardsOut.reduce((s, w) => s + w.registered, 0);
   const totalPredictedVotes = wardsOut.reduce((s, w) => s + w.predictedVotes, 0);
-  const totalMuleVotes = wardsOut.reduce((s, w) => s + w.predictedMuleVotes, 0);
+  const totalCandidateVotes = wardsOut.reduce((s, w) => s + w.predictedCandidateVotes, 0);
   const topGotv = [...wardsOut].sort((a, b) => b.gotvUpside - a.gotvUpside)[0];
 
   res.json({
@@ -109,8 +109,8 @@ router.get("/prediction", async (req, res) => {
       registered: totalRegistered,
       predictedVotes: totalPredictedVotes,
       predictedTurnoutRate: totalRegistered ? Math.round((totalPredictedVotes / totalRegistered) * 100) : 0,
-      predictedMuleVotes: totalMuleVotes,
-      predictedMuleShare: totalPredictedVotes ? Math.round((totalMuleVotes / totalPredictedVotes) * 100) : 0,
+      predictedCandidateVotes: totalCandidateVotes,
+      predictedCandidateShare: totalPredictedVotes ? Math.round((totalCandidateVotes / totalPredictedVotes) * 100) : 0,
       topGotvWard: topGotv?.ward ?? null,
       topGotvUpside: topGotv?.gotvUpside ?? 0,
     },

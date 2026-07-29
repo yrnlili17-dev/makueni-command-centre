@@ -117,8 +117,8 @@ CANDIDATE: Prof. Philip Kaloki (Prof. Kaloki)
 ROLE: Member of the National Assembly, Makueni Constituency, Makueni County, Kenya
 PARTY: Wiper Democratic Movement (Patriotic Front) | Symbol: Umbrella | Slogan: "Komboa Kenya"
 PROFESSION: Biomedical Engineer (15+ years) | Entrepreneur | Community leader
-HOME WARD: Makueni West
-CONSTITUENCY: 78,000 registered voters | 5 wards: Tala (19k), Makueni West (26k), Makueni North (15k), Makueni East (12k), Kyeleni (10k) | 165 polling stations
+HOME WARD: Kaiti
+CONSTITUENCY: 78,000 registered voters | 5 wards: Mbooni, Kilome, Kaiti, Makueni, Kibwezi West and Kibwezi East constituencies | 165 polling stations
 KEY LOCAL ISSUES: Water access, rural road rehabilitation, youth unemployment, quality health facilities, agriculture support
 ECONOMIC BASE: Coffee, maize & beans, horticulture, quarry stones, ballast mining
 PARLIAMENTARY TERM: 13th Parliament (2022–2027)
@@ -149,9 +149,9 @@ ${CANDIDATE_BRIEF}
 
 Output ONLY compact raw JSON. No markdown. No extra whitespace. No explanations.
 Schema (strict, all fields required, keep ALL text fields under 120 characters):
-{"achievements":[{"title":"string","description":"string max 120 chars","category":"infrastructure|education|health|water|security|youth|women|agriculture|environment|governance|economy|housing","ward":"Tala|Makueni West|Makueni North|Makueni East|Kyeleni|all","year":"2022|2023|2024|2025|2026","status":"completed|ongoing|planned","impactMetric":"string","impactValue":"string","budget":"number as string","fundingSource":"string","partnerAgencies":["string"],"published":true,"featured":false}]}
+{"achievements":[{"title":"string","description":"string max 120 chars","category":"infrastructure|education|health|water|security|youth|women|agriculture|environment|governance|economy|housing","ward":"official Makueni ward name|all","year":"2022|2023|2024|2025|2026","status":"completed|ongoing|planned","impactMetric":"string","impactValue":"string","budget":"number as string","fundingSource":"string","partnerAgencies":["string"],"published":true,"featured":false}]}
 
-Generate 8 achievements. Cover all 5 wards (min 1 each). Categories: infrastructure, water, health, education, youth, women, agriculture. Vary years 2022–2026. Mark 2 as featured:true. Use real place names: Tala, Mbee, Katangi, Mbuni, Kyeleni, Kangundo.`;
+Generate 8 achievements. Cover all 5 wards (min 1 each). Categories: infrastructure, water, health, education, youth, women, agriculture. Vary years 2022–2026. Mark 2 as featured:true. Use real place names: Wote, Makindu, Kathonzweni, Mbooni, Kasikeu and Mtito Andei.`;
 
     const [recResponse, achResponse] = await Promise.all([
       openai.chat.completions.create({

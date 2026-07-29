@@ -26,11 +26,19 @@ import socialRouter from "./social";
 import diRouter from "./di";
 import strategistRouter from "./strategist";
 import authRouter from "./auth";
+import approvalsRouter from "./approvals";
+import contactsRouter from "./contacts";
+import integrationsRouter from "./integrations";
+import geographyRouter from "./geography";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use("/auth", authRouter);
+router.use("/approvals", approvalsRouter);
+router.use("/contacts", contactsRouter);
+router.use("/integrations", integrationsRouter);
+router.use("/geography", geographyRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/members", membersRouter);
 router.use("/segments", segmentsRouter);

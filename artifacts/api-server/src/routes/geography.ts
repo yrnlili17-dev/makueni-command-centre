@@ -1,0 +1,1 @@
+import { Router } from "express"; import { MAKUENI_GEOGRAPHY } from "../lib/geography"; import { requireAuth } from "../lib/auth"; const r=Router(); r.get("/",requireAuth,(_q,s)=>s.json(MAKUENI_GEOGRAPHY)); export default r;

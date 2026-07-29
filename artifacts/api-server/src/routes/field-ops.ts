@@ -81,7 +81,7 @@ router.get("/coverage", async (req, res) => {
     .groupBy(canvassSessionsTable.ward);
 
   const WARD_VOTERS: Record<string, number> = {
-    "Tala": 19000, "Makueni West": 26000,
+    "Wote/Nziu": 19000, "Kaiti": 26000,
     "Makueni North": 15000, "Makueni East": 12000, "Kyeleni": 10000,
   };
 

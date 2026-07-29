@@ -41,6 +41,13 @@ export function emergencyUser(): AdminUser {
     role: "super_admin",
     status: "active",
     notes: "Temporary emergency database-independent account",
+    geographicLevel: "county",
+    assignedCounty: "Makueni",
+    assignedConstituencies: [],
+    assignedWards: [],
+    assignedPollingCentres: [],
+    assignedPollingStations: [],
+    assignedVillages: [],
     inviteToken: null,
     invitedBy: null,
     lastLoginAt: new Date(),
@@ -196,6 +203,50 @@ export function requirePermission(module: string, level: PermLevel = "read") {
     if (!ok) {
       res.status(403).json({ error: "Insufficient permissions" });
       return;
+    }
+    next();
+  };
+}
+
+
+export function requireActionPermission(module: string, action: string, level: PermLevel = "write") {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const user = req.currentUser ?? (await getSessionUser(req));
+    if (!user) { res.status(401).json({ error: "Not authenticated" }); return; }
+    req.currentUser = user;
+    if (isEmergencySession(req) || user.role === "super_admin" || user.role === "super-admin") { next(); return; }
+    const perms = await permissionsForRole(user.role);
+    const actionPermission = perms[`${module}.${action}`];
+    const modulePermission = perms[module] ?? "none";
+    const have = actionPermission ?? modulePermission;
+    const ok = level === "read" ? have === "read" || have === "write" : have === "write";
+    if (!ok) { res.status(403).json({ error: `Permission denied: ${module}.${action}` }); return; }
+    next();
+  };
+}
+
+export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {
+  const role = req.currentUser?.role;
+  if (isEmergencySession(req) || role === "super_admin" || role === "super-admin") { next(); return; }
+  res.status(403).json({ error: "Super Admin approval required" });
+}
+
+export function enforceGeographicScope(fieldMap: { constituency?: string; ward?: string; pollingCentre?: string; pollingStation?: string; village?: string } = {}) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const user = req.currentUser;
+    if (!user || isEmergencySession(req) || user.role === "super_admin" || user.role === "super-admin" || user.geographicLevel === "county") { next(); return; }
+    const source = { ...req.query, ...req.body, ...req.params } as Record<string, unknown>;
+    const checks: Array<[string | undefined, unknown, unknown]> = [
+      [fieldMap.constituency ?? "constituency", source[fieldMap.constituency ?? "constituency"], user.assignedConstituencies],
+      [fieldMap.ward ?? "ward", source[fieldMap.ward ?? "ward"], user.assignedWards],
+      [fieldMap.pollingCentre ?? "pollingCentre", source[fieldMap.pollingCentre ?? "pollingCentre"], user.assignedPollingCentres],
+      [fieldMap.pollingStation ?? "pollingStation", source[fieldMap.pollingStation ?? "pollingStation"], user.assignedPollingStations],
+      [fieldMap.village ?? "village", source[fieldMap.village ?? "village"], user.assignedVillages],
+    ];
+    for (const [name, value, assigned] of checks) {
+      if (value && Array.isArray(assigned) && assigned.length > 0 && !assigned.includes(String(value))) {
+        res.status(403).json({ error: `Outside assigned geographic scope: ${name}` }); return;
+      }
     }
     next();
   };

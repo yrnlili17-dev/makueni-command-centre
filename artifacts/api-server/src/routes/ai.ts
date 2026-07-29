@@ -10,12 +10,12 @@ CANDIDATE PROFILE:
 - Full Name: Prof. Philip Kaloki (Prof. Kaloki)
 - Party: Wiper Patriotic Front | Slogan: "Komboa Kenya" | Symbol: Umbrella
 - Profession: Biomedical Engineer | Experience: 15 years leadership
-- Home Ward: Makueni West | Contact: 0725 988 683
+- Home Ward: Kaiti | Contact: 0725 988 683
 - Target: 85%+ vote share
 
 CONSTITUENCY:
 - Population: 187,600 | Registered Voters: 78,000
-- 5 Wards: Tala (40 stations), Makueni West (55 stations), Makueni North (26 stations), Makueni East (24 stations), Kyeleni (20 stations)
+- 6 constituencies and 30 official county assembly wards across Mbooni, Kilome, Kaiti, Makueni, Kibwezi West and Kibwezi East
 - Total Polling Stations: 165
 - Youth 18-35: 75,000 | Women: 88,800
 - Key Issues: Clean water, road infrastructure, youth employment, security
@@ -37,9 +37,9 @@ NARRATIVE PLAYBOOK (core storylines — ground all messaging, speeches and rebut
 2. Youth & Jobs: "The youth are the engine; the MP is the connector." Practical empowerment (skills, hustles, bodaboda, ICT) for 75,000 youth. e.g. "Vijana Kwanza, Kazi Kwanza – Prof. Kaloki aũsya matalanta ma Makueni."
 3. Water & Roads (issue-specific): "No more excuses on water and roads." e.g. "Maji, Barabara, Kazi – Prof. Kaloki Delivers for Makueni."
 4. Integrity & Oversight: "A serious MP who fights for Makueni's share in Nairobi — not a holiday MP." e.g. "Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." / "Maendeleo Bila Ulaghai."
-5. Local Pride & Homegrown Leadership: "One of us — knows our roads, churches, quarries." Home-ward advantage (Makueni West). e.g. "From Makueni, For Makueni – Prof. Kaloki Under the Umbrella."
+5. Local Pride & Homegrown Leadership: "One of us — knows our roads, churches, quarries." Home-ward advantage (Kaiti). e.g. "From Makueni, For Makueni – Prof. Kaloki Under the Umbrella."
 
-LOCALIZATION: Tala → markets, youth, bodaboda, security. Makueni West/North/East → water, coffee prices, roads, bursaries. Kyeleni → water, feeder roads, security, quarry safety. Posters/billboards: short bilingual lines (top "Komboa Kenya", bottom "Komboa Makueni na Prof. Kaloki – Maji, Barabara, Kazi"). Barazas/church: candidate leans into Kikamba, MC uses Kiswahili & English. Online: youth-focused variants. Offline markets: water/roads + integrity lines.
+LOCALIZATION: Mbooni and Kilome → agriculture, roads and water. Kaiti and Makueni → markets, health, youth and urban services. Kibwezi East and West → water, livestock, irrigation, transport and climate resilience. Posters/billboards: short bilingual lines (top "Komboa Kenya", bottom "Komboa Makueni na Prof. Kaloki – Maji, Barabara, Kazi"). Barazas/church: candidate leans into Kikamba, MC uses Kiswahili & English. Online: youth-focused variants. Offline markets: water/roads + integrity lines.
 
 Respond concisely, professionally and strategically. Use Kenya-specific political context. Always frame advice for Makueni constituency and the candidate's strengths.
 `.trim();
@@ -73,7 +73,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
   ],
   messaging: [
     "Draft an SMS urging voters to register in Makueni",
-    "Write a WhatsApp message announcing a baraza in Tala",
+    "Write a WhatsApp message announcing a baraza in Wote/Nziu",
     "Create a fundraising appeal message in Swahili",
     "Draft a youth empowerment campaign message",
   ],
@@ -103,7 +103,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
     "How do we analyze survey results for ward-level insights?",
   ],
   events: [
-    "Plan a rally in Tala for 500 attendees",
+    "Plan a rally in Wote/Nziu for 500 attendees",
     "What makes a successful baraza in rural Makueni?",
     "Suggest 5 community event ideas for youth engagement",
   ],

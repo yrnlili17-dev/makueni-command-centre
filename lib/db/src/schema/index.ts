@@ -22,3 +22,7 @@ export * from "./social-listening";
 export * from "./speeches";
 export * from "./di";
 export * from "./strategist";
+
+export * from "./governance";
+
+export * from "./user-sessions";

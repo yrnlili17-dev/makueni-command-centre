@@ -10,6 +10,7 @@ import {
   generatePassword,
   hashPassword,
   sanitizeUser,
+  requireActionPermission,
 } from "../lib/auth";
 import { ensureSeeded } from "../lib/seed";
 
@@ -44,17 +45,24 @@ const createUserSchema = z.object({
   role: z.string().min(1).default("viewer"),
   phone: z.string().optional(),
   notes: z.string().optional(),
+  geographicLevel: z.enum(["county","constituency","ward","polling_centre","polling_station","village"]).default("county"),
+  assignedCounty: z.string().default("Makueni"),
+  assignedConstituencies: z.array(z.string()).default([]),
+  assignedWards: z.array(z.string()).default([]),
+  assignedPollingCentres: z.array(z.string()).default([]),
+  assignedPollingStations: z.array(z.string()).default([]),
+  assignedVillages: z.array(z.string()).default([]),
 });
 
 // Admin creates a user; the system generates a username + password to share.
-router.post("/users", requirePermission("admin", "write"), async (req, res) => {
+router.post("/users", requireActionPermission("admin", "users.create"), async (req, res) => {
   await ensureSeeded();
   const parsed = createUserSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid input" });
     return;
   }
-  const { name, email, role, phone, notes } = parsed.data;
+  const { name, email, role, phone, notes, geographicLevel, assignedCounty, assignedConstituencies, assignedWards, assignedPollingCentres, assignedPollingStations, assignedVillages } = parsed.data;
 
   const existing = await db.select().from(adminUsersTable).where(eq(adminUsersTable.email, email));
   if (existing.length > 0) { res.status(409).json({ error: "A user with this email already exists" }); return; }
@@ -64,7 +72,7 @@ router.post("/users", requirePermission("admin", "write"), async (req, res) => {
   const passwordHash = await hashPassword(password);
 
   const [user] = await db.insert(adminUsersTable).values({
-    name, email, username, passwordHash, phone, notes, role,
+    name, email, username, passwordHash, phone, notes, role, geographicLevel, assignedCounty, assignedConstituencies, assignedWards, assignedPollingCentres, assignedPollingStations, assignedVillages,
     status: "active", invitedBy: actor(req).email,
   }).returning();
 
@@ -74,7 +82,7 @@ router.post("/users", requirePermission("admin", "write"), async (req, res) => {
 });
 
 // Regenerate a user's password and return the new one once.
-router.post("/users/:id/reset-password", requirePermission("admin", "write"), async (req, res) => {
+router.post("/users/:id/reset-password", requireActionPermission("admin", "users.reset_password"), async (req, res) => {
   const password = generatePassword();
   const passwordHash = await hashPassword(password);
   const [user] = await db.update(adminUsersTable)
@@ -86,10 +94,10 @@ router.post("/users/:id/reset-password", requirePermission("admin", "write"), as
   res.json({ user: sanitizeUser(user), username: user.username, password });
 });
 
-router.patch("/users/:id", requirePermission("admin", "write"), async (req, res) => {
+router.patch("/users/:id", requireActionPermission("admin", "users.update"), async (req, res) => {
   const targetId = parseInt(String(req.params.id));
   const updates: Record<string, unknown> = { updatedAt: new Date() };
-  const fields = ["name", "email", "phone", "role", "status", "notes"];
+  const fields = ["name", "email", "phone", "role", "status", "notes", "geographicLevel", "assignedCounty", "assignedConstituencies", "assignedWards", "assignedPollingCentres", "assignedPollingStations", "assignedVillages"];
   fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
 
   // Never allow the last active super-admin to be suspended, deactivated, or demoted.
@@ -116,7 +124,7 @@ router.patch("/users/:id", requirePermission("admin", "write"), async (req, res)
   res.json(sanitizeUser(user));
 });
 
-router.delete("/users/:id", requirePermission("admin", "write"), async (req, res) => {
+router.delete("/users/:id", requireActionPermission("admin", "users.delete"), async (req, res) => {
   const id = parseInt(String(req.params.id));
   const [user] = await db.select().from(adminUsersTable).where(eq(adminUsersTable.id, id));
   if (user && user.id === req.currentUser?.id) { res.status(400).json({ error: "You cannot delete your own account" }); return; }
@@ -144,7 +152,7 @@ router.get("/roles", async (_req, res) => {
   res.json(roles);
 });
 
-router.post("/roles", requirePermission("admin", "write"), async (req, res) => {
+router.post("/roles", requireActionPermission("admin", "roles.create"), async (req, res) => {
   const { name, description = "", color = "#6b7280", permissions = {} } = req.body;
   if (!name) { res.status(400).json({ error: "name required" }); return; }
   const [role] = await db.insert(adminRolesTable).values({ name, description, color, permissions }).returning();
@@ -152,7 +160,7 @@ router.post("/roles", requirePermission("admin", "write"), async (req, res) => {
   res.status(201).json(role);
 });
 
-router.patch("/roles/:id", requirePermission("admin", "write"), async (req, res) => {
+router.patch("/roles/:id", requireActionPermission("admin", "roles.update"), async (req, res) => {
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   const fields = ["name", "description", "color", "permissions"];
   fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
@@ -162,7 +170,7 @@ router.patch("/roles/:id", requirePermission("admin", "write"), async (req, res)
   res.json(role);
 });
 
-router.delete("/roles/:id", requirePermission("admin", "write"), async (req, res) => {
+router.delete("/roles/:id", requireActionPermission("admin", "roles.delete"), async (req, res) => {
   const [role] = await db.select().from(adminRolesTable).where(eq(adminRolesTable.id, parseInt(String(req.params.id))));
   if (role?.isSystem) { res.status(403).json({ error: "Cannot delete system roles" }); return; }
   if (role) await logAudit(actor(req).email, actor(req).name, `Deleted role: ${role.name}`, "admin", undefined, "warning");
@@ -190,7 +198,7 @@ router.get("/config", async (_req, res) => {
   res.json(configs);
 });
 
-router.patch("/config/:id", requirePermission("admin", "write"), async (req, res) => {
+router.patch("/config/:id", requireActionPermission("admin", "config.update"), async (req, res) => {
   const { value } = req.body;
   if (value === undefined) { res.status(400).json({ error: "value required" }); return; }
   const [cfg] = await db.update(systemConfigTable).set({ value, updatedBy: actor(req).email, updatedAt: new Date() }).where(eq(systemConfigTable.id, parseInt(String(req.params.id)))).returning();

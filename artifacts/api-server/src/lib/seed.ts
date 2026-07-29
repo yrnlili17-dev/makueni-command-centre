@@ -247,7 +247,7 @@ export async function seedDefaultConfig(): Promise<void> {
     { key: "candidate.party", value: "", category: "campaign", description: "Political party affiliation" },
     { key: "campaign.election_date", value: "2027-08-10", category: "campaign", description: "Target election date (YYYY-MM-DD)" },
     { key: "campaign.slogan", value: "", category: "campaign", description: "Campaign slogan displayed on reports and exports" },
-    { key: "campaign.headquarters", value: "Tala, Makueni Constituency", category: "campaign", description: "Campaign HQ address" },
+    { key: "campaign.headquarters", value: "Wote, Makueni County", category: "campaign", description: "Campaign HQ address" },
     { key: "campaign.contact_email", value: "", category: "campaign", description: "Primary campaign contact email" },
     { key: "campaign.contact_phone", value: "", category: "campaign", description: "Primary campaign contact phone" },
     { key: "security.session_timeout_hours", value: "24", category: "security", description: "How long a session remains active (hours)" },
