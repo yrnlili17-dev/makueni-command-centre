@@ -27,13 +27,13 @@ import { Vote, AlertTriangle, CheckCircle, Clock, Radio, Shield, Send, List, Bar
 type Tab = "warroom" | "submit" | "stations" | "events" | "verification" | "workqueue" | "publish";
 
 const CANDIDATES = [
-  { name: "Prof. Philip Kaloki", party: "Campaign" },
+  { name: "Hon. Stephen Mule", party: "ODM" },
   { name: "Hon. Julius Malombe", party: "UDA" },
   { name: "George Mutisya Mwangi", party: "Independent" },
   { name: "Lucy Ndunda Muema", party: "Wiper" },
 ];
 
-const WARDS = ["Tulimani", "Mbooni", "Kithungo/Kitundu", "Kisau/Kiteta", "Kako/Waia", "Kalawa", "Kiima Kiu/Kalanzoni", "Mukaa", "Kasikeu", "Kee", "Kilungu", "Ilima", "Ukia", "Wote", "Muvau/Kikumini", "Mavindini", "Kitise/Kithuki", "Kathonzweni", "Nzaui/Kilili/Kalamba", "Mbitini", "Makindu", "Nguumo", "Kikumbulyu North", "Kikumbulyu South", "Nguu/Masumba", "Emali/Mulala", "Masongaleni", "Mtito Andei", "Thange", "Ivingoni/Nzambani"];
+const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
 
 const STATUS_STYLE: Record<string, string> = {
   pending: "text-muted-foreground border-muted-foreground/30",
@@ -122,7 +122,7 @@ function WarRoomTab() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {isLeading && <span className="text-yellow-400 font-mono text-[10px]">▶ LEADING</span>}
-                    <span className={`font-semibold text-sm ${(c.candidateName ?? "").includes("Philip Kaloki") ? "text-primary" : ""}`}>{c.candidateName}</span>
+                    <span className={`font-semibold text-sm ${(c.candidateName ?? "").includes("Stephen Mule") ? "text-primary" : ""}`}>{c.candidateName}</span>
                     <span className="font-mono text-[10px] text-muted-foreground">{c.party}</span>
                   </div>
                   <div className="flex items-center gap-4">
@@ -135,7 +135,7 @@ function WarRoomTab() {
                 </div>
                 <div className="w-full h-2 bg-secondary">
                   <div
-                    className={`h-full ${(c.candidateName ?? "").includes("Philip Kaloki") ? "bg-primary" : "bg-muted-foreground/40"}`}
+                    className={`h-full ${(c.candidateName ?? "").includes("Stephen Mule") ? "bg-primary" : "bg-muted-foreground/40"}`}
                     style={{ width: `${share}%` }}
                   />
                 </div>
@@ -247,7 +247,7 @@ function SubmitResultsTab() {
           {CANDIDATES.map(c => (
             <div key={c.name} className="flex items-center gap-4">
               <div className="flex-1">
-                <div className={`text-xs font-semibold ${c.name.includes("Philip Kaloki") ? "text-primary" : ""}`}>{c.name}</div>
+                <div className={`text-xs font-semibold ${c.name.includes("Stephen Mule") ? "text-primary" : ""}`}>{c.name}</div>
                 <div className="font-mono text-[10px] text-muted-foreground">{c.party}</div>
               </div>
               <input
@@ -522,7 +522,7 @@ function VerificationTab() {
               </thead>
               <tbody>
                 {results.sort((a, b) => b.votes - a.votes).map(r => (
-                  <tr key={r.id} className={r.candidateName.includes("Philip Kaloki") ? "text-primary" : ""}>
+                  <tr key={r.id} className={r.candidateName.includes("Stephen Mule") ? "text-primary" : ""}>
                     <td className="py-1 font-semibold">{r.candidateName}</td>
                     <td className="py-1 text-muted-foreground">{r.party}</td>
                     <td className="py-1 text-right font-mono font-bold">{fmt(r.votes)}</td>
@@ -650,7 +650,7 @@ function PublishResultsTab() {
           {winner && (
             <div className="border border-primary/30 bg-primary/5 p-6 text-center">
               <div className="font-mono text-[10px] text-muted-foreground mb-2 tracking-widest">LEADING CANDIDATE</div>
-              <div className={`text-2xl font-bold ${(winner.candidateName ?? "").includes("Philip Kaloki") ? "text-primary" : ""}`}>{winner.candidateName}</div>
+              <div className={`text-2xl font-bold ${(winner.candidateName ?? "").includes("Stephen Mule") ? "text-primary" : ""}`}>{winner.candidateName}</div>
               <div className="font-mono text-sm text-muted-foreground">{winner.party}</div>
               <div className="text-4xl font-bold mt-3">{fmt(winner.totalVotes ?? 0)}</div>
               <div className="font-mono text-[10px] text-muted-foreground mt-1">{pct(winner.totalVotes ?? 0, grandTotal)}% OF VERIFIED VOTES</div>
@@ -674,7 +674,7 @@ function PublishResultsTab() {
               <tbody>
                 {pub.totals.map((c, i) => (
                   <tr key={c.candidateName} className={`border-b border-border/50 ${i === 0 ? "bg-primary/5" : ""}`}>
-                    <td className={`px-4 py-3 font-semibold ${(c.candidateName ?? "").includes("Philip Kaloki") ? "text-primary" : ""}`}>
+                    <td className={`px-4 py-3 font-semibold ${(c.candidateName ?? "").includes("Stephen Mule") ? "text-primary" : ""}`}>
                       {i === 0 && <span className="text-yellow-400 mr-2">▶</span>}{c.candidateName}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{c.party}</td>
@@ -722,7 +722,7 @@ export default function ElectionDay() {
             <Vote className="w-5 h-5 text-primary" />
             ELECTION DAY OPS
           </h1>
-          <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">COUNTYWIDE VOTES TALLYING · VERIFICATION · TRANSMISSION</p>
+          <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">VOTES TALLYING & TRANSMISSION — MAKUENI COUNTY</p>
         </div>
         {summary && (
           <div className="flex items-center gap-4 font-mono text-[10px]">

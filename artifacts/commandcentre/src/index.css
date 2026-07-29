@@ -146,3 +146,54 @@
 
 /* Tighten mono tracking at small sizes for readability */
 .font-mono { letter-spacing: 0.04em; }
+
+/* Enterprise modernization layer — shared by every command-centre page */
+@layer components {
+  .enterprise-page {
+    @apply mx-auto w-full max-w-[1800px] space-y-6;
+  }
+
+  .enterprise-panel {
+    @apply border border-border/80 bg-card/80 shadow-[0_18px_60px_rgba(0,0,0,0.22)] backdrop-blur-sm;
+  }
+
+  .enterprise-readonly-banner {
+    @apply mb-4 flex items-center gap-2 border border-amber-400/30 bg-amber-400/10 px-3 py-2 font-mono text-[10px] tracking-wider text-amber-300;
+  }
+
+  .enterprise-kicker {
+    @apply font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary;
+  }
+
+  .enterprise-title {
+    @apply text-2xl font-semibold tracking-tight text-foreground md:text-3xl;
+  }
+
+  .enterprise-grid {
+    @apply grid gap-4 sm:grid-cols-2 xl:grid-cols-4;
+  }
+
+  .enterprise-stat {
+    @apply border border-border/80 bg-card/70 p-4 transition-colors hover:border-primary/40;
+  }
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 12% 10%, hsl(var(--primary) / 0.08), transparent 25rem),
+    linear-gradient(hsl(var(--border) / 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.10) 1px, transparent 1px);
+  background-size: auto, 32px 32px, 32px 32px;
+}
+
+button, a, input, select, textarea {
+  outline-offset: 3px;
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+}
+
+@media (max-width: 1023px) {
+  html { font-size: 100%; }
+}

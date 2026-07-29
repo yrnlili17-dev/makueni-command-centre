@@ -50,7 +50,7 @@ type Tab = "donors" | "donations" | "campaigns" | "pledges" | "pipeline" | "insi
 const BASE = import.meta.env.BASE_URL;
 
 const CHANNELS = ["cash", "mpesa", "bank", "cheque", "online"] as const;
-const WARDS = ["Tulimani", "Mbooni", "Kithungo/Kitundu", "Kisau/Kiteta", "Kako/Waia", "Kalawa", "Kiima Kiu/Kalanzoni", "Mukaa", "Kasikeu", "Kee", "Kilungu", "Ilima", "Ukia", "Wote", "Muvau/Kikumini", "Mavindini", "Kitise/Kithuki", "Kathonzweni", "Nzaui/Kilili/Kalamba", "Mbitini", "Makindu", "Nguumo", "Kikumbulyu North", "Kikumbulyu South", "Nguu/Masumba", "Emali/Mulala", "Masongaleni", "Mtito Andei", "Thange", "Ivingoni/Nzambani"];
+const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
 
 function fmt(n: number | null | undefined) { return `KES ${(n ?? 0).toLocaleString()}`; }
 function pct(a: number, b: number) { if (!b) return 0; return Math.min(100, Math.round((a / b) * 100)); }
@@ -900,8 +900,8 @@ function ReconciliationTab() {
 
 // ── PAYMENT SETUP TAB ────────────────────────────────────────────────────────
 function PaymentSetupTab() {
-  const [mpesa, setMpesa] = useState({ paybill: "123456", account: "KALOKI2027", shortcode: "400200", tillNumber: "" });
-  const [bank, setBank] = useState({ bank: "Kenya Commercial Bank", branch: "Wote Branch", account: "1234567890", swift: "KCBLKENX" });
+  const [mpesa, setMpesa] = useState({ paybill: "123456", account: "MULE2027", shortcode: "400200", tillNumber: "" });
+  const [bank, setBank] = useState({ bank: "Kenya Commercial Bank", branch: "Tala Branch", account: "1234567890", swift: "KCBLKENX" });
   const [saved, setSaved] = useState(false);
 
   function handleSave(e: React.FormEvent) {
@@ -928,7 +928,7 @@ function PaymentSetupTab() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="PAYBILL NUMBER" value={mpesa.paybill} onChange={e => setMpesa(p => ({ ...p, paybill: e.target.value }))} placeholder="123456" />
-            <Input label="ACCOUNT NUMBER" value={mpesa.account} onChange={e => setMpesa(p => ({ ...p, account: e.target.value }))} placeholder="KALOKI2027" />
+            <Input label="ACCOUNT NUMBER" value={mpesa.account} onChange={e => setMpesa(p => ({ ...p, account: e.target.value }))} placeholder="MULE2027" />
             <Input label="SHORTCODE (TILL)" value={mpesa.shortcode} onChange={e => setMpesa(p => ({ ...p, shortcode: e.target.value }))} placeholder="400200" />
             <Input label="TILL NUMBER (OPTIONAL)" value={mpesa.tillNumber} onChange={e => setMpesa(p => ({ ...p, tillNumber: e.target.value }))} placeholder="—" />
           </div>
@@ -944,7 +944,7 @@ function PaymentSetupTab() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="BANK NAME" value={bank.bank} onChange={e => setBank(p => ({ ...p, bank: e.target.value }))} placeholder="Kenya Commercial Bank" />
-            <Input label="BRANCH" value={bank.branch} onChange={e => setBank(p => ({ ...p, branch: e.target.value }))} placeholder="Wote Branch" />
+            <Input label="BRANCH" value={bank.branch} onChange={e => setBank(p => ({ ...p, branch: e.target.value }))} placeholder="Tala Branch" />
             <Input label="ACCOUNT NUMBER" value={bank.account} onChange={e => setBank(p => ({ ...p, account: e.target.value }))} placeholder="1234567890" />
             <Input label="SWIFT CODE" value={bank.swift} onChange={e => setBank(p => ({ ...p, swift: e.target.value }))} placeholder="KCBLKENX" />
           </div>
@@ -957,7 +957,7 @@ function PaymentSetupTab() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="PAYPAL EMAIL" placeholder="fundraising@stephenmule.com" />
-            <Input label="WESTERN UNION REFERENCE" placeholder="KALOKI2027 KE" />
+            <Input label="WESTERN UNION REFERENCE" placeholder="MULE2027 KE" />
           </div>
           <div className="bg-secondary border border-border p-3 font-mono text-[10px] text-muted-foreground">
             For international wire transfers: SWIFT {bank.swift} · {bank.bank} · Acc {bank.account}
@@ -1180,7 +1180,7 @@ export default function Fundraising() {
             <Banknote className="w-5 h-5 text-primary" />
             FINANCE OPS
           </h1>
-          <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">PROF. PHILIP KALOKI 2027 · CAMPAIGN FUNDRAISING COMMAND</p>
+          <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">CAMPAIGN FUNDRAISING COMMAND — HON. STEPHEN MULE</p>
         </div>
         {summary && (
           <div className="grid grid-cols-4 gap-3 text-center">

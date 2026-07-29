@@ -11,14 +11,14 @@ import {
 const BASE = import.meta.env.BASE_URL;
 
 const MODULES = [
-  "dashboard", "voters", "constituents", "segmentation", "messaging",
-  "field-ops", "volunteers", "intelligence", "events", "narrative",
+  "dashboard", "analytics", "voters", "constituents", "segmentation", "messaging", "speeches",
+  "field-ops", "volunteers", "intelligence", "social-listening", "events", "narrative",
   "campaign-plan", "kol", "finance", "election-day", "credentials", "admin",
 ];
 const MODULE_LABELS: Record<string, string> = {
-  "dashboard": "COMMAND OVERVIEW", "voters": "VOTERS", "constituents": "CONSTITUENT DB",
-  "segmentation": "SEGMENTATION", "messaging": "MESSAGING", "field-ops": "FIELD OPERATIONS",
-  "volunteers": "VOLUNTEER CMD", "intelligence": "INTEL GATHERING", "events": "EVENT LOGISTICS",
+  "dashboard": "COMMAND OVERVIEW", "analytics": "ANALYTICS HUB", "voters": "VOTERS", "constituents": "CONSTITUENT DB",
+  "segmentation": "SEGMENTATION", "messaging": "MESSAGING", "speeches": "SPEECH & MANIFESTO", "field-ops": "FIELD OPERATIONS",
+  "volunteers": "VOLUNTEER CMD", "intelligence": "INTEL GATHERING", "social-listening": "SOCIAL LISTENING", "events": "EVENT LOGISTICS",
   "narrative": "NARRATIVE CMD", "campaign-plan": "CAMPAIGN COUNTDOWN", "kol": "KOL INFLUENCE",
   "finance": "FINANCE OPS", "election-day": "ELECTION DAY OPS", "credentials": "CREDENTIALS HUB",
   "admin": "SYSTEM ADMIN",
@@ -342,7 +342,7 @@ export default function Admin() {
                   </div>
                   <div className="col-span-2 space-y-1">
                     <label className="text-[10px] font-mono text-muted-foreground">EMAIL ADDRESS *</label>
-                    <input type="email" value={inviteForm.email ?? ""} onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))} placeholder="e.g. john@kaloki2027.ke" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+                    <input type="email" value={inviteForm.email ?? ""} onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))} placeholder="e.g. john@mule2027.ke" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-mono text-muted-foreground">PHONE</label>

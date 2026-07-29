@@ -113,8 +113,8 @@ router.get("/summary", async (req, res) => {
 // ─── AI Auto-Populate ─────────────────────────────────────────────────────────
 
 const CANDIDATE_BRIEF = `
-CANDIDATE: Prof. Philip Kaloki
-ROLE: gubernatorial candidate, Makueni County, Makueni County, Kenya
+CANDIDATE: Hon. Stephen Mutinda Mule (Mwanamule)
+ROLE: Member of the National Assembly, Makueni Constituency, Machakos County, Kenya
 PARTY: Wiper Democratic Movement (Patriotic Front) | Symbol: Umbrella | Slogan: "Komboa Kenya"
 PROFESSION: Biomedical Engineer (15+ years) | Entrepreneur | Community leader
 HOME WARD: Makueni West
@@ -132,7 +132,7 @@ router.post("/ai-populate", async (req, res) => {
 
   try {
     // Run both AI calls in parallel — strict compact schema to stay within token budget
-    const RECORDS_PROMPT = `You are a database builder for a Kenyan gubernatorial candidate credentials system.
+    const RECORDS_PROMPT = `You are a database builder for a Kenyan MNA credentials system.
 
 ${CANDIDATE_BRIEF}
 
@@ -143,7 +143,7 @@ Schema (strict, all fields required, keep ALL text fields under 120 characters):
 Generate 8 records in this order: 2 bills, 2 motions, 1 question, 1 statement, 1 committee, 1 petition.
 Dates between 2022-09-20 and ${today}. Mark 2 as featured:true. Use KeNHA, WaSREB, NHIF where relevant.`;
 
-    const ACHIEVEMENTS_PROMPT = `You are a database builder for a Kenyan gubernatorial candidate achievements system.
+    const ACHIEVEMENTS_PROMPT = `You are a database builder for a Kenyan MNA achievements system.
 
 ${CANDIDATE_BRIEF}
 
@@ -256,7 +256,7 @@ router.post("/research", async (req, res) => {
   let aiGenerated = false;
 
   try {
-    const systemPrompt = `You are a legislative research assistant for Prof. Philip Kaloki, gubernatorial candidate for Makueni County, Kenya.
+    const systemPrompt = `You are a legislative research assistant for Hon. Stephen Mule, Member of the National Assembly for Makueni Constituency, Kenya.
 Your role is to help research legislative topics, provide context on Kenya's parliamentary procedures, compare with regional and national benchmarks, and suggest talking points that strengthen the candidate's credentials.
 Always provide structured, factual responses with clear sections.`;
 
@@ -266,7 +266,7 @@ Query: ${query}
 
 Please provide:
 1. A concise research summary (3-5 paragraphs)
-2. Key talking points (bullet list of 5-7 points) that the gubernatorial candidate can use
+2. Key talking points (bullet list of 5-7 points) that the MNA can use
 3. Relevant benchmarks or comparisons (how does Makueni/Machakos compare nationally?)
 4. Suggested legislation or motions related to this topic
 5. Evidence sources to cite
@@ -294,7 +294,7 @@ Format your response with clear section headers using **bold** for headers.`;
   } catch (_) { /* fall through to template */ }
 
   if (!aiGenerated) {
-    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni County and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Makueni County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. Makueni County, as part of Makueni County, receives equitable share allocations directed towards ${topic}-related development.\n\n**Key Recommendations**\n\nFor Prof. Philip Kaloki to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
+    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni Constituency and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Machakos County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. Makueni Constituency, as part of Machakos County, receives equitable share allocations directed towards ${topic}-related development.\n\n**Key Recommendations**\n\nFor Hon. Stephen Mule to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
     keyPoints = [
       `Makueni's ${topic} needs align with national development priorities`,
       `Constitutional mandate under Chapter Eleven supports county action on ${topic}`,
@@ -307,8 +307,8 @@ Format your response with clear section headers using **bold** for headers.`;
       { title: "Constitution of Kenya, 2010", type: "Legal", relevance: "Fourth Schedule — Division of Functions" },
       { title: "National Assembly Standing Orders", type: "Procedure", relevance: "Bill sponsorship and motion process" },
       { title: "CDF Act 2013 (Amended 2016)", type: "Legislation", relevance: "Constituency development fund mandate" },
-      { title: "Makueni County CIDP", type: "Planning", relevance: "County integrated development plan" },
-      { title: "Kenya National Bureau of Statistics", type: "Data", relevance: "Makueni County demographics" },
+      { title: "Machakos County CIDP", type: "Planning", relevance: "County integrated development plan" },
+      { title: "Kenya National Bureau of Statistics", type: "Data", relevance: "Makueni constituency demographics" },
     ];
   }
 

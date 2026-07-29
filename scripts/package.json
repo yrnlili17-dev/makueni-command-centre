@@ -7,8 +7,7 @@
     "hello": "tsx ./src/hello.ts",
     "seed": "tsx ./src/seed.ts",
     "import-makueni-insights": "tsx ./src/import-makueni-insights.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "import-makueni-contacts": "tsx ./src/import-makueni-contacts.ts"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@workspace/db": "workspace:*",

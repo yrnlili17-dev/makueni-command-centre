@@ -78,7 +78,7 @@ router.post("/generate", async (req, res) => {
 
   const base = `${CAMPAIGN_CONTEXT}
 
-You are the head speechwriter for Prof. Philip Kaloki. Write in a ${tone.toLowerCase()} tone.
+You are the head speechwriter for Hon. Stephen Mule. Write in a ${tone.toLowerCase()} tone.
 Language: ${language} (if "Swahili" write in Swahili; if a mix, blend naturally as Kenyan politicians do).
 Occasion: ${occasion}. Audience: ${audience || "the people of Makueni"}. Ward focus: ${ward}.
 Write ONLY the speech prose for the requested part — no headings, no stage directions, no markdown, no labels.
@@ -102,7 +102,7 @@ Keep it authentic to Kenyan / Ukambani political rhetoric and grounded in Makuen
       ),
       generateSection(
         base,
-        `Write the CLOSING of the speech (~${Math.round(words * 0.4)} words): a rousing call to action, unity, and a strong appeal to vote for Prof. Philip Kaloki under the Wiper "Komboa Kenya" banner. End with an uplifting rallying line.`,
+        `Write the CLOSING of the speech (~${Math.round(words * 0.4)} words): a rousing call to action, unity, and a strong appeal to vote for Hon. Stephen Mule under the Wiper "Komboa Kenya" banner. End with an uplifting rallying line.`,
         480,
       ),
     ]);
@@ -163,9 +163,9 @@ router.post("/manifesto", async (req, res) => {
 
   const base = `${CAMPAIGN_CONTEXT}
 
-You are drafting the official manifesto for Prof. Philip Kaloki. Tone: ${tone.toLowerCase()}, credible and specific.
+You are drafting the official manifesto for Hon. Stephen Mule. Tone: ${tone.toLowerCase()}, credible and specific.
 Language: ${language}. Write ONLY the prose for the requested section — no headings, no markdown, no labels, no bullet symbols other than plain lines.
-Make commitments concrete and grounded in Makueni County realities.`;
+Make commitments concrete and grounded in Makueni Constituency realities.`;
 
   const issuesLine = priorityIssues ? ` Emphasize these priority issues: ${priorityIssues}.` : "";
 
@@ -174,7 +174,7 @@ Make commitments concrete and grounded in Makueni County realities.`;
   sectionCalls.push(
     generateSection(
       base,
-      `Write the PREAMBLE / VISION (~180 words): who Prof. Philip Kaloki is, his covenant with the people of Makueni, and the vision for the county toward the August 2027 election.${issuesLine}`,
+      `Write the PREAMBLE / VISION (~180 words): who Hon. Stephen Mule is, his covenant with the people of Makueni, and the vision for the constituency toward the August 2027 election.${issuesLine}`,
       520,
     ).then((text) => ({ heading: "PREAMBLE & VISION", text })),
   );
@@ -194,7 +194,7 @@ Make commitments concrete and grounded in Makueni County realities.`;
       base,
       `Write the CLOSING PLEDGE (~140 words): a personal pledge of accountability and service, a unifying message across all 5 wards, and a call to vote under the Wiper "Komboa Kenya" banner (symbol: Umbrella).`,
       460,
-    ).then((text) => ({ heading: "OUR PLEDGE TO MAKUENI COUNTY", text })),
+    ).then((text) => ({ heading: "OUR PLEDGE TO MATUNGULU", text })),
   );
 
   genInFlight = true;
@@ -214,7 +214,7 @@ Make commitments concrete and grounded in Makueni County realities.`;
   }
 
   const body = sections.map((s) => `## ${s.heading}\n\n${s.text}`).join("\n\n");
-  res.json({ title: "Manifesto — Prof. Philip Kaloki (Makueni 2027)", body });
+  res.json({ title: "Manifesto — Hon. Stephen Mule (Makueni 2027)", body });
 });
 
 // ---- Saved document library (CRUD) ----

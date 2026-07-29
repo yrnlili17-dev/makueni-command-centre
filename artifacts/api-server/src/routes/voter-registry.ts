@@ -117,19 +117,13 @@ router.post("/upload", async (req, res) => {
   for (const r of records) {
     if (!r.fullName) continue;
 
-    // Check duplicates across all stable identifiers so repeat uploads stay idempotent.
-    const duplicateChecks = [];
-    if (r.nationalId) duplicateChecks.push(eq(voterRegistryTable.nationalId, r.nationalId));
-    if (r.voterNumber) duplicateChecks.push(eq(voterRegistryTable.voterNumber, r.voterNumber));
-    if (r.phone) duplicateChecks.push(eq(voterRegistryTable.phone, r.phone));
-    const [existing] = duplicateChecks.length
-      ? await db.select({ id: voterRegistryTable.id })
-          .from(voterRegistryTable)
-          .where(or(...duplicateChecks))
-          .limit(1)
-      : [];
-    const isDup = !!existing;
-    if (isDup) dupCount++;
+    // Check for duplicate by nationalId or voterNumber
+    let isDup = false;
+    if (r.nationalId) {
+      const [existing] = await db.select({ id: voterRegistryTable.id })
+        .from(voterRegistryTable).where(eq(voterRegistryTable.nationalId, r.nationalId));
+      if (existing) { isDup = true; dupCount++; }
+    }
 
     if (!isDup) {
       await db.insert(voterRegistryTable).values({

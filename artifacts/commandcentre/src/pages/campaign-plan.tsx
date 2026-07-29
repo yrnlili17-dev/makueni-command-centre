@@ -308,8 +308,8 @@ export default function CampaignPlan() {
     const report = await apiFetch("/report");
     const lines: string[] = [
       "═══════════════════════════════════════════════════════",
-      "  KALOKI 2027 COMMAND CENTRE — CAMPAIGN PLAN REPORT",
-      "  PROF. PHILIP KALOKI — MAKUENI COUNTY",
+      "  MAKUENI COMMAND CENTRE — CAMPAIGN PLAN REPORT",
+      "  HON. STEPHEN MULE — MAKUENI COUNTY",
       "═══════════════════════════════════════════════════════",
       `  Generated: ${new Date().toLocaleString("en-KE")}`,
       `  Election Date: ${report.electionDate ?? "Not set"}`,
@@ -416,7 +416,7 @@ export default function CampaignPlan() {
         <div className="flex items-center justify-between no-print">
           <div>
             <h1 className="text-xl font-bold tracking-widest">CAMPAIGN COUNTDOWN</h1>
-            <p className="text-[10px] font-mono text-muted-foreground mt-0.5">PROF. PHILIP KALOKI 2027 · MISSION PLANNING · MILESTONES · READINESS</p>
+            <p className="text-[10px] font-mono text-muted-foreground mt-0.5">MISSION PLANNING · MILESTONES · READINESS · MAKUENI COUNTY</p>
           </div>
           <div className="flex gap-2">
             <button onClick={handlePrint} className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs hover:bg-secondary"><Printer className="w-3 h-3" /> PRINT</button>
@@ -437,8 +437,8 @@ export default function CampaignPlan() {
 
         {/* Print header (only visible when printing) */}
         <div className="hidden print:block mb-6">
-          <h1 className="text-2xl font-bold">KALOKI 2027 COMMAND CENTRE — CAMPAIGN PLAN</h1>
-          <p className="text-sm">Prof. Philip Kaloki · Makueni County · Generated {new Date().toLocaleString("en-KE")}</p>
+          <h1 className="text-2xl font-bold">MAKUENI COMMAND CENTRE — CAMPAIGN PLAN</h1>
+          <p className="text-sm">Hon. Stephen Mule · Makueni Constituency · Generated {new Date().toLocaleString("en-KE")}</p>
         </div>
 
         {/* Stats bar */}

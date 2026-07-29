@@ -193,7 +193,7 @@ async function seedMessaging(segments: any[]) {
       name: "Masaa ya Thamani — Launch Broadcast",
       channel: "sms",
       status: "sent",
-      messageBody: "Mheshimiwa Prof. Philip Kaloki anakuomba ushiriki kwenye mkutano mkuu wa Tala siku ya Ijumaa saa tatu usiku. Pamoja tunaweza! Piga kura Kaloki 2027.",
+      messageBody: "Mheshimiwa Stephen Mule anakuomba ushiriki kwenye mkutano mkuu wa Tala siku ya Ijumaa saa tatu usiku. Pamoja tunaweza! Piga kura Mule 2027.",
       segmentId: segments[0]!.id,
       recipientCount: 36,
       deliveredCount: 33,
@@ -205,7 +205,7 @@ async function seedMessaging(segments: any[]) {
       name: "Makueni Development Manifesto — WhatsApp",
       channel: "whatsapp",
       status: "sent",
-      messageBody: "🇰🇪 Prof. Philip Kaloki's 2027 Manifesto: Roads, Water, Jobs. Download your copy at kaloki2027.ke. Share with your neighbours!",
+      messageBody: "🇰🇪 Hon. Stephen Mule's 2027 Manifesto: Roads, Water, Jobs. Download your copy at mule2027.ke. Share with your neighbours!",
       segmentId: segments[3]!.id,
       recipientCount: 71,
       deliveredCount: 68,
@@ -229,7 +229,7 @@ async function seedMessaging(segments: any[]) {
       name: "Manifesto Email Blast",
       channel: "email",
       status: "sent",
-      messageBody: "Dear Supporter, Thank you for your continued support for Prof. Philip Kaloki. As we approach 2027, our development agenda for Makueni is clear...",
+      messageBody: "Dear Supporter, Thank you for your continued support for Hon. Stephen Mule. As we approach 2027, our development agenda for Makueni is clear...",
       segmentId: null,
       recipientCount: 48,
       deliveredCount: 45,
@@ -241,7 +241,7 @@ async function seedMessaging(segments: any[]) {
       name: "GOTV Final Push — SMS Blast",
       channel: "sms",
       status: "draft",
-      messageBody: "LEO NI SIKU YA KUPIGA KURA. Nenda polling station yako SASA HIVI. Piga kura Prof. Philip Kaloki — Nafasi ya 01. Mpiganieni kila mmoja!",
+      messageBody: "LEO NI SIKU YA KUPIGA KURA. Nenda polling station yako SASA HIVI. Piga kura Stephen Mule — Nafasi ya 01. Mpiganieni kila mmoja!",
       segmentId: segments[5]!.id,
       recipientCount: 0,
       deliveredCount: 0,
@@ -252,7 +252,7 @@ async function seedMessaging(segments: any[]) {
       name: "Undecided Persuasion — WhatsApp",
       channel: "whatsapp",
       status: "scheduled",
-      messageBody: "Prof. Philip Kaloki amewaletea barabara ya Tala–Makueni. Miradi mingine inakuja 2027. Jiunge nasi leo.",
+      messageBody: "Stephen Mule amewaletea barabara ya Tala–Makueni. Miradi mingine inakuja 2027. Jiunge nasi leo.",
       segmentId: segments[1]!.id,
       recipientCount: 14,
       deliveredCount: 0,
@@ -356,7 +356,7 @@ async function seedSurveys() {
     questions: [
       { id: "q1", text: "What is the most important issue in Makueni?", type: "single_choice", options: ["Roads & Infrastructure", "Water Access", "Youth Employment", "Education", "Healthcare", "Security"], order: 1 },
       { id: "q2", text: "How would you rate the current MP's performance?", type: "rating", options: ["1","2","3","4","5"], order: 2 },
-      { id: "q3", text: "Will you vote for Prof. Philip Kaloki in 2027?", type: "single_choice", options: ["Definitely Yes", "Probably Yes", "Undecided", "Probably No", "Definitely No"], order: 3 },
+      { id: "q3", text: "Will you vote for Hon. Stephen Mule in 2027?", type: "single_choice", options: ["Definitely Yes", "Probably Yes", "Undecided", "Probably No", "Definitely No"], order: 3 },
       { id: "q4", text: "Any additional comments or requests?", type: "text", options: [], order: 4 },
     ],
     responseCount: 0,
@@ -393,7 +393,7 @@ async function seedEvents() {
     { title: "Tala Ward Rally", type: "rally", location: "Tala Social Hall", ward: "Tala", startDate: daysAgo(20).toISOString().slice(0,10), status: "completed", attendeeCount: 312, maxAttendees: 400, description: "Main launch rally for Makueni 2027 campaign" },
     { title: "Makueni North Townhall", type: "townhall", location: "Kyumbi Primary School Grounds", ward: "Makueni North", startDate: daysAgo(12).toISOString().slice(0,10), status: "completed", attendeeCount: 184, maxAttendees: 250, description: "Community Q&A session with Hon. Mule" },
     { title: "Women's Empowerment Forum — Kyeleni", type: "community", location: "Kyeleni SDA Church Hall", ward: "Kyeleni", startDate: daysAgo(6).toISOString().slice(0,10), status: "completed", attendeeCount: 97, maxAttendees: 120, description: "Women's forum — bursary distribution" },
-    { title: "Youth Jobs Fair — Makueni East", type: "community", location: "Yatta Junction Market Square", ward: "Makueni East", startDate: daysAgo(2).toISOString().slice(0,10), status: "completed", attendeeCount: 228, maxAttendees: 300, description: "Youth employment linkage event with Makueni County" },
+    { title: "Youth Jobs Fair — Makueni East", type: "community", location: "Yatta Junction Market Square", ward: "Makueni East", startDate: daysAgo(2).toISOString().slice(0,10), status: "completed", attendeeCount: 228, maxAttendees: 300, description: "Youth employment linkage event with Machakos County" },
     { title: "Volunteer Training & Briefing", type: "training", location: "Tala Resource Centre", ward: "Tala", startDate: daysFromNow(4), status: "scheduled", attendeeCount: 0, maxAttendees: 40, description: "GOTV training for all ward teams" },
     { title: "Makueni West Townhall", type: "townhall", location: "Makueni West Chief's Camp", ward: "Makueni West", startDate: daysFromNow(9), status: "scheduled", attendeeCount: 0, maxAttendees: 200, description: "Community forum — roads and water agenda" },
     { title: "Manifesto Launch — Constituency Wide", type: "rally", location: "Tala Stadium", ward: "Tala", startDate: daysFromNow(18), status: "scheduled", attendeeCount: 0, maxAttendees: 2000, description: "Full manifesto launch — all five wards" },
@@ -629,7 +629,7 @@ async function seedElectionDay() {
   console.log("Seeding election day data...");
 
   const CANDIDATES = [
-    { name: "Prof. Philip Kaloki", party: "Independent" },
+    { name: "Hon. Stephen Mule", party: "ODM" },
     { name: "Hon. Julius Malombe", party: "UDA" },
     { name: "George Mutisya Mwangi", party: "Independent" },
     { name: "Lucy Ndunda Muema", party: "Wiper" },
@@ -682,7 +682,7 @@ async function seedElectionDay() {
 
   // Submit results for 8 stations (2 per ward for 4 of 5 wards)
   const voteShares: Record<string, number[]> = {
-    "Prof. Philip Kaloki": [0.44, 0.47, 0.41, 0.49, 0.43, 0.46, 0.38, 0.45],
+    "Hon. Stephen Mule": [0.44, 0.47, 0.41, 0.49, 0.43, 0.46, 0.38, 0.45],
     "Hon. Julius Malombe": [0.28, 0.26, 0.31, 0.25, 0.29, 0.27, 0.34, 0.28],
     "George Mutisya Mwangi": [0.18, 0.16, 0.17, 0.15, 0.19, 0.17, 0.18, 0.17],
     "Lucy Ndunda Muema": [0.10, 0.11, 0.11, 0.11, 0.09, 0.10, 0.10, 0.10],
@@ -737,7 +737,7 @@ async function seedElectionDay() {
 }
 
 async function main() {
-  console.log("\n=== COMMANDCENTRE OS — SEED: HON. STEPHEN MULE, MAKUENI COUNTY ===\n");
+  console.log("\n=== COMMANDCENTRE OS — SEED: HON. STEPHEN MULE, MATUNGULU ===\n");
   await clearAll();
   const members = await seedMembers();
   const segments = await seedSegments();

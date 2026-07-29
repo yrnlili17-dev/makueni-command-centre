@@ -149,7 +149,7 @@ export async function ensureDiTables(): Promise<void> {
   if (builtin.rows.length === 0) {
     const inserted = await db.execute(sql`
       INSERT INTO "di_datasets" ("name", "sector", "description", "source_type")
-      VALUES ('Makueni Campaign', 'Politics & Campaigns', 'Built-in live campaign telemetry: voters, polls, canvassing, fundraising, volunteers and social listening for the Makueni County operation.', 'builtin')
+      VALUES ('Makueni Campaign', 'Politics & Campaigns', 'Built-in live campaign telemetry: voters, polls, canvassing, fundraising, volunteers and social listening for the Makueni constituency operation.', 'builtin')
       RETURNING id
     `);
     builtinId = (inserted.rows[0] as { id: number }).id;
@@ -242,12 +242,12 @@ export async function seedDefaultConfig(): Promise<void> {
   if (existing.length > 0) return;
 
   const defaults = [
-    { key: "candidate.name", value: "Prof. Philip Kaloki", category: "campaign", description: "Candidate's full name displayed across the system" },
-    { key: "candidate.title", value: "gubernatorial candidate — Makueni County", category: "campaign", description: "Candidate's title and constituency label" },
+    { key: "candidate.name", value: "Hon. Stephen Mule", category: "campaign", description: "Candidate's full name displayed across the system" },
+    { key: "candidate.title", value: "MNA — Makueni Constituency", category: "campaign", description: "Candidate's title and constituency label" },
     { key: "candidate.party", value: "", category: "campaign", description: "Political party affiliation" },
     { key: "campaign.election_date", value: "2027-08-10", category: "campaign", description: "Target election date (YYYY-MM-DD)" },
     { key: "campaign.slogan", value: "", category: "campaign", description: "Campaign slogan displayed on reports and exports" },
-    { key: "campaign.headquarters", value: "Tala, Makueni County", category: "campaign", description: "Campaign HQ address" },
+    { key: "campaign.headquarters", value: "Tala, Makueni Constituency", category: "campaign", description: "Campaign HQ address" },
     { key: "campaign.contact_email", value: "", category: "campaign", description: "Primary campaign contact email" },
     { key: "campaign.contact_phone", value: "", category: "campaign", description: "Primary campaign contact phone" },
     { key: "security.session_timeout_hours", value: "24", category: "security", description: "How long a session remains active (hours)" },

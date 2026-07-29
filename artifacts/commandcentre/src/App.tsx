@@ -79,27 +79,27 @@ function ProtectedRoutes() {
   return (
     <Layout>
       <Switch>
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/strategist" component={Strategist} />
-        <Route path="/members" component={Members} />
-        <Route path="/segments" component={Segments} />
-        <Route path="/messaging" component={Messaging} />
-        <Route path="/field-ops" component={FieldOps} />
-        <Route path="/volunteers" component={Volunteers} />
-        <Route path="/surveys" component={Surveys} />
-        <Route path="/events" component={Events} />
-        <Route path="/intelligence" component={Intelligence} />
-        <Route path="/social-listening" component={SocialListening} />
-        <Route path="/swot" component={Swot} />
-        <Route path="/campaign-plan" component={CampaignPlan} />
-        <Route path="/kol" component={KOL} />
-        <Route path="/fundraising" component={Fundraising} />
-        <Route path="/election-day" component={ElectionDay} />
-        <Route path="/turnout" component={Turnout} />
-        <Route path="/speeches" component={Speeches} />
-        <Route path="/voters-db" component={VotersDb} />
-        <Route path="/credentials" component={Credentials} />
-        <Route path="/analytics" component={Analytics} />
+        <Route path="/dashboard">{() => <Guarded module="dashboard" component={Dashboard} />}</Route>
+        <Route path="/strategist">{() => <Guarded module="analytics" component={Strategist} />}</Route>
+        <Route path="/members">{() => <Guarded module="voters" component={Members} />}</Route>
+        <Route path="/segments">{() => <Guarded module="segmentation" component={Segments} />}</Route>
+        <Route path="/messaging">{() => <Guarded module="messaging" component={Messaging} />}</Route>
+        <Route path="/field-ops">{() => <Guarded module="field-ops" component={FieldOps} />}</Route>
+        <Route path="/volunteers">{() => <Guarded module="volunteers" component={Volunteers} />}</Route>
+        <Route path="/surveys">{() => <Guarded module="intelligence" component={Surveys} />}</Route>
+        <Route path="/events">{() => <Guarded module="events" component={Events} />}</Route>
+        <Route path="/intelligence">{() => <Guarded module="narrative" component={Intelligence} />}</Route>
+        <Route path="/social-listening">{() => <Guarded module="social-listening" component={SocialListening} />}</Route>
+        <Route path="/swot">{() => <Guarded module="intelligence" component={Swot} />}</Route>
+        <Route path="/campaign-plan">{() => <Guarded module="campaign-plan" component={CampaignPlan} />}</Route>
+        <Route path="/kol">{() => <Guarded module="kol" component={KOL} />}</Route>
+        <Route path="/fundraising">{() => <Guarded module="finance" component={Fundraising} />}</Route>
+        <Route path="/election-day">{() => <Guarded module="election-day" component={ElectionDay} />}</Route>
+        <Route path="/turnout">{() => <Guarded module="election-day" component={Turnout} />}</Route>
+        <Route path="/speeches">{() => <Guarded module="speeches" component={Speeches} />}</Route>
+        <Route path="/voters-db">{() => <Guarded module="constituents" component={VotersDb} />}</Route>
+        <Route path="/credentials">{() => <Guarded module="credentials" component={Credentials} />}</Route>
+        <Route path="/analytics">{() => <Guarded module="analytics" component={Analytics} />}</Route>
         <Route path="/admin">{() => <Guarded module="admin" component={Admin} />}</Route>
         <Route component={NotFound} />
       </Switch>
