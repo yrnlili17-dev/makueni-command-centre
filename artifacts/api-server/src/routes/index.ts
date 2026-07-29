@@ -31,6 +31,7 @@ import contactsRouter from "./contacts";
 import integrationsRouter from "./integrations";
 import geographyRouter from "./geography";
 import documentsRouter from "./documents";
+import commandCentreRouter from "./command-centre";
 
 const router: IRouter = Router();
 
@@ -41,6 +42,7 @@ router.use("/contacts", contactsRouter);
 router.use("/integrations", integrationsRouter);
 router.use("/geography", geographyRouter);
 router.use("/documents", documentsRouter);
+router.use("/command-centre", commandCentreRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/members", membersRouter);
 router.use("/segments", segmentsRouter);

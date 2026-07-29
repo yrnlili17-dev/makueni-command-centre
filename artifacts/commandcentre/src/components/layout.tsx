@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { AiAssistPanel } from "@/components/ai-assist-panel";
 import { useAuth } from "@/lib/auth";
 import { 
-  Activity, Users, PieChart, MessageSquare, 
+  Activity, Users, PieChart, MessageSquare, Command, ClipboardList, Megaphone, FileBarChart, 
   Map, UserPlus, FileText, Calendar, 
   ShieldAlert, Target, Star, Shield, LayoutDashboard, LogOut, Banknote, Vote, Database, Award, Settings, BarChart2, Crosshair, Radio, TrendingUp, Mic, BrainCircuit, FolderLock
 } from "lucide-react";
@@ -15,6 +15,8 @@ const navGroups = [
     title: "COMMAND",
     items: [
       { href: "/dashboard", label: "COMMAND OVERVIEW", icon: LayoutDashboard },
+      { href: "/executive-command", label: "EXECUTIVE COMMAND", icon: Command },
+      { href: "/reports-hub", label: "EXECUTIVE REPORTS", icon: FileBarChart },
       { href: "/strategist", label: "AI CHIEF STRATEGIST", icon: BrainCircuit },
       { href: "/analytics", label: "ANALYTICS HUB", icon: BarChart2 },
       { href: "/campaign-plan", label: "CAMPAIGN COUNTDOWN", icon: Target },
@@ -32,6 +34,7 @@ const navGroups = [
     title: "OUTREACH & MESSAGING",
     items: [
       { href: "/messaging", label: "MESSAGING", icon: MessageSquare },
+      { href: "/communications-hub", label: "COMMUNICATIONS HUB", icon: Megaphone },
       { href: "/speeches", label: "SPEECH & MANIFESTO", icon: Mic },
       { href: "/events", label: "EVENT LOGISTICS", icon: Calendar },
       { href: "/kol", label: "KOL INFLUENCE", icon: Star },
@@ -41,6 +44,7 @@ const navGroups = [
     title: "FIELD OPERATIONS",
     items: [
       { href: "/field-ops", label: "FIELD OPERATIONS", icon: Map },
+      { href: "/operations-hub", label: "OPERATIONS HUB", icon: ClipboardList },
       { href: "/volunteers", label: "VOLUNTEER COMMAND", icon: UserPlus },
     ],
   },
@@ -73,6 +77,10 @@ const navGroups = [
 
 // Maps a nav href to its backend permission module key (see admin MODULES list).
 const NAV_PERM: Record<string, string> = {
+  "/executive-command": "dashboard",
+  "/operations-hub": "field-ops",
+  "/communications-hub": "messaging",
+  "/reports-hub": "analytics",
   "/dashboard": "dashboard",
   "/strategist": "analytics",
   "/members": "voters",
@@ -99,6 +107,10 @@ const NAV_PERM: Record<string, string> = {
 };
 
 const PATH_MODULE: Record<string, string> = {
+  "/executive-command": "executive-command",
+  "/operations-hub": "operations-hub",
+  "/communications-hub": "communications-hub",
+  "/reports-hub": "reports-hub",
   "/dashboard": "dashboard",
   "/strategist": "analytics",
   "/members": "members",

@@ -27,3 +27,5 @@ export * from "./governance";
 
 export * from "./user-sessions";
 export * from "./documents";
+
+export * from "./command-centre";

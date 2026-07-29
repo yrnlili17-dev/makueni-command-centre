@@ -31,6 +31,10 @@ import Admin from "@/pages/admin";
 import Governance from "@/pages/governance";
 import Analytics from "@/pages/analytics";
 import Strategist from "@/pages/strategist";
+import ExecutiveCommand from "@/pages/executive-command";
+import OperationsHub from "@/pages/operations-hub";
+import CommunicationsHub from "@/pages/communications-hub";
+import ReportsHub from "@/pages/reports-hub";
 import { Layout } from "@/components/layout";
 
 const queryClient = new QueryClient({
@@ -80,6 +84,10 @@ function ProtectedRoutes() {
   return (
     <Layout>
       <Switch>
+        <Route path="/executive-command">{() => <Guarded module="dashboard" component={ExecutiveCommand} />}</Route>
+        <Route path="/operations-hub">{() => <Guarded module="field-ops" component={OperationsHub} />}</Route>
+        <Route path="/communications-hub">{() => <Guarded module="messaging" component={CommunicationsHub} />}</Route>
+        <Route path="/reports-hub">{() => <Guarded module="analytics" component={ReportsHub} />}</Route>
         <Route path="/dashboard">{() => <Guarded module="dashboard" component={Dashboard} />}</Route>
         <Route path="/strategist">{() => <Guarded module="analytics" component={Strategist} />}</Route>
         <Route path="/members">{() => <Guarded module="voters" component={Members} />}</Route>
