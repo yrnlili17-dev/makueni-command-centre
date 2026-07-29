@@ -98,7 +98,7 @@ const INTENTS: Record<string, { label: string; description: string }> = {
   },
   turnout_forecast: {
     label: "Turnout Forecast",
-    description: "Predicted voter turnout, predicted votes and predicted Mule votes per ward based on registered voters and assumptions",
+    description: "Predicted voter turnout, predicted votes and predicted Kaloki votes per ward based on registered voters and assumptions",
   },
   gotv_priority: {
     label: "GOTV Priority",

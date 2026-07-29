@@ -46,10 +46,10 @@ const NARRATIVE_PLAYBOOK = [
     title: "Development & Reliability",
     core: "A trusted engineer to fix Makueni's basics — water, roads, jobs.",
     lines: [
-      { lang: "EN", text: "Mwanamule: Mhandisi wa Maendeleo, Komboa Makueni." },
+      { lang: "EN", text: "Prof. Kaloki: Mhandisi wa Maendeleo, Komboa Makueni." },
       { lang: "EN", text: "Under the Umbrella, Makueni Must Move Forward." },
-      { lang: "SW/KAM", text: "Mwanamule, Mhandisi wa Kweli – Tũkomboe Makueni, tũtwe na maji, njia na kasi ya kazi." },
-      { lang: "KAM", text: "Mwanamule: Mũtumia wa nesa, twambie Makueni ĩĩsye mbele." },
+      { lang: "SW/KAM", text: "Prof. Kaloki, Mhandisi wa Kweli – Tũkomboe Makueni, tũtwe na maji, njia na kasi ya kazi." },
+      { lang: "KAM", text: "Prof. Kaloki: Mũtumia wa nesa, twambie Makueni ĩĩsye mbele." },
     ],
     why: "Links his biomedical engineer credibility to fixing water, roads, health — concrete issues every ward feels.",
   },
@@ -58,9 +58,9 @@ const NARRATIVE_PLAYBOOK = [
     title: "Youth & Jobs",
     core: "The youth are the engine; the MP is the connector.",
     lines: [
-      { lang: "EN", text: "Mwanamule: Empowering Youth, Building Makueni's Future." },
-      { lang: "SW/KAM", text: "Vijana Kwanza, Kazi Kwanza – Mwanamule aũsya matalanta ma Makueni." },
-      { lang: "SW/KAM", text: "Mwanamule na Vijana: Tũsye na Kazi, Siyo Ahadi Tupu." },
+      { lang: "EN", text: "Prof. Kaloki: Empowering Youth, Building Makueni's Future." },
+      { lang: "SW/KAM", text: "Vijana Kwanza, Kazi Kwanza – Prof. Kaloki aũsya matalanta ma Makueni." },
+      { lang: "SW/KAM", text: "Prof. Kaloki na Vijana: Tũsye na Kazi, Siyo Ahadi Tupu." },
     ],
     why: "Speaks to 75,000 youth; keeps it about practical empowerment (skills, hustles, bodaboda, ICT).",
   },
@@ -69,9 +69,9 @@ const NARRATIVE_PLAYBOOK = [
     title: "Water & Roads",
     core: "No more excuses on water and roads.",
     lines: [
-      { lang: "EN", text: "Maji, Barabara, Kazi – Mwanamule Delivers for Makueni." },
-      { lang: "SW/KAM", text: "Maji kwa Boma, Barabara kwa Soko – Mwanamule Atũnge Makueni." },
-      { lang: "KAM", text: "Tũtandĩkĩe na Maji na Barabara – Mũtumia ni Mwanamule." },
+      { lang: "EN", text: "Maji, Barabara, Kazi – Prof. Kaloki Delivers for Makueni." },
+      { lang: "SW/KAM", text: "Maji kwa Boma, Barabara kwa Soko – Prof. Kaloki Atũnge Makueni." },
+      { lang: "KAM", text: "Tũtandĩkĩe na Maji na Barabara – Mũtumia ni Prof. Kaloki." },
     ],
     why: "Directly matches top grievances: clean water and infrastructure.",
   },
@@ -81,8 +81,8 @@ const NARRATIVE_PLAYBOOK = [
     core: "A serious MP who fights for Makueni's share in Nairobi.",
     lines: [
       { lang: "EN", text: "Your Voice in Nairobi, Your Defender in Makueni." },
-      { lang: "EN", text: "Mwanamule: Maendeleo Bila Ulaghai." },
-      { lang: "SW/KAM", text: "Mwanamule: Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." },
+      { lang: "EN", text: "Prof. Kaloki: Maendeleo Bila Ulaghai." },
+      { lang: "SW/KAM", text: "Prof. Kaloki: Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." },
       { lang: "SW/KAM", text: "Maendeleo na Ukweli – Sio Siasa za Porojo." },
     ],
     why: "Distinguishes him from 'holiday MPs'; ties to constitutional mandate pillar.",
@@ -92,9 +92,9 @@ const NARRATIVE_PLAYBOOK = [
     title: "Homegrown Leadership",
     core: "One of us, who knows our roads, our churches, our quarries.",
     lines: [
-      { lang: "EN", text: "From Makueni, For Makueni – Mwanamule Under the Umbrella." },
-      { lang: "SW/KAM", text: "Mwanamule wa Kitũi kya Makueni – Twĩtwe na Mũtumia ĩtũ." },
-      { lang: "KAM", text: "Mwanamule: Mwana wa Makueni, Mwana wa Kila Kijiji." },
+      { lang: "EN", text: "From Makueni, For Makueni – Prof. Kaloki Under the Umbrella." },
+      { lang: "SW/KAM", text: "Prof. Kaloki wa Kitũi kya Makueni – Twĩtwe na Mũtumia ĩtũ." },
+      { lang: "KAM", text: "Prof. Kaloki: Mwana wa Makueni, Mwana wa Kila Kijiji." },
     ],
     why: "Taps into local patronage and home-ward advantage (Makueni West).",
   },
@@ -107,9 +107,9 @@ const PLAYBOOK_WARDS = [
 ] as const;
 
 const PLAYBOOK_CHANNELS = [
-  { channel: "Posters / Billboards", guidance: "Short bilingual lines. Top: \"Komboa Kenya\" · Bottom: \"Komboa Makueni na Mwanamule – Maji, Barabara, Kazi.\"" },
+  { channel: "Posters / Billboards", guidance: "Short bilingual lines. Top: \"Komboa Kenya\" · Bottom: \"Komboa Makueni na Prof. Kaloki – Maji, Barabara, Kazi.\"" },
   { channel: "Barazas / Church", guidance: "Candidate leans into Kikamba versions; MC uses Kiswahili and English." },
-  { channel: "Online", guidance: "Youth variant: \"Vijana Kwanza, Kazi Kwanza – Mwanamule Makueni 2027.\"" },
+  { channel: "Online", guidance: "Youth variant: \"Vijana Kwanza, Kazi Kwanza – Prof. Kaloki Makueni 2027.\"" },
   { channel: "Offline (markets)", guidance: "Water / roads + integrity lines." },
 ] as const;
 
@@ -362,7 +362,7 @@ export default function Intelligence() {
         <div>
           <h1 className="text-xl font-bold tracking-widest">NARRATIVE COMMAND</h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
-            AI-POWERED SENTIMENT INTELLIGENCE · HON. STEPHEN MULE · MAKUENI GUBERNATORIAL CAMPAIGN
+            AI-POWERED SENTIMENT INTELLIGENCE · PROF. PHILIP KALOKI · MAKUENI GUBERNATORIAL CAMPAIGN
             {score?.aiEnabled ? (
               <span className="ml-3 text-green-400">[ AI_ONLINE ]</span>
             ) : (
@@ -975,7 +975,7 @@ export default function Intelligence() {
                 fields: [
                   { key: "rssUrl", label: "GOOGLE ALERTS RSS URL", placeholder: "https://www.google.com/alerts/feeds/…" },
                 ],
-                hint: "Set up a Google Alert for 'Stephen Mule' or 'Makueni MNA', then paste the RSS feed URL here."
+                hint: "Set up a Google Alert for 'Philip Kaloki' or 'Makueni MNA', then paste the RSS feed URL here."
               },
               {
                 key: "news_rss", label: "NEWS MEDIA RSS", icon: <Newspaper className="w-4 h-4 text-yellow-400" />,
@@ -1110,7 +1110,7 @@ export default function Intelligence() {
           <div className="bg-card border border-border">
             <div className="px-4 py-3 border-b border-border flex items-center gap-2">
               <Shield className="w-3 h-3 text-primary" />
-              <span className="font-mono text-[10px] tracking-widest">SWOT ANALYSIS · HON. STEPHEN MULE · MAKUENI GUBERNATORIAL CAMPAIGN</span>
+              <span className="font-mono text-[10px] tracking-widest">SWOT ANALYSIS · PROF. PHILIP KALOKI · MAKUENI GUBERNATORIAL CAMPAIGN</span>
             </div>
             <div className="grid grid-cols-2 divide-x divide-y divide-border">
               <div className="p-4">

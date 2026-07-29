@@ -342,7 +342,7 @@ export default function Admin() {
                   </div>
                   <div className="col-span-2 space-y-1">
                     <label className="text-[10px] font-mono text-muted-foreground">EMAIL ADDRESS *</label>
-                    <input type="email" value={inviteForm.email ?? ""} onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))} placeholder="e.g. john@mule2027.ke" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+                    <input type="email" value={inviteForm.email ?? ""} onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))} placeholder="e.g. john@kaloki2027.ke" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-mono text-muted-foreground">PHONE</label>

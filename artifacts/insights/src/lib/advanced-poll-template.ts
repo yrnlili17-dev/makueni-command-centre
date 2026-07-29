@@ -15,7 +15,7 @@ export interface PollTemplate {
 // builder before publishing, and mirror any changes in the favorability and
 // second-choice questions below.
 const CANDIDATES = [
-  "Hon. Stephen Mule",
+  "Prof. Philip Kaloki",
   "Munguti",
   "Kamwana",
   "Kathumo",
@@ -48,7 +48,7 @@ const performanceQuestions: TemplateQuestion[] = [
   "job creation for youth",
 ].map((issue) => ({
   type: "single_choice",
-  text: `How would you rate Hon. Stephen Mule's performance on ${issue}?`,
+  text: `How would you rate Prof. Philip Kaloki's performance on ${issue}?`,
   options: [...PERFORMANCE_SCALE],
   required: false,
 }));
@@ -163,7 +163,7 @@ export const ADVANCED_POLL_TEMPLATE: PollTemplate = {
     },
     {
       type: "single_choice",
-      text: "Do you approve or disapprove of the way Hon. Stephen Mule is performing as your Member of National Assembly?",
+      text: "Do you approve or disapprove of the way Prof. Philip Kaloki is performing as your Member of National Assembly?",
       options: [
         "Strongly approve",
         "Somewhat approve",

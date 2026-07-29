@@ -220,7 +220,7 @@ export default function Credentials() {
     const lines: string[] = [
       "═══════════════════════════════════════════════════════════════",
       "  LEGISLATIVE CREDENTIALS HUB",
-      "  HON. STEPHEN MULE — MAKUENI COUNTY, MAKUENI COUNTY",
+      "  PROF. PHILIP KALOKI — MAKUENI COUNTY, MAKUENI COUNTY",
       "═══════════════════════════════════════════════════════════════",
       `  Generated: ${new Date().toLocaleString("en-KE")}`,
       "",
@@ -290,7 +290,7 @@ export default function Credentials() {
         <div className="flex items-start justify-between no-print">
           <div>
             <h1 className="text-xl font-bold tracking-widest">LEGISLATIVE CREDENTIALS HUB</h1>
-            <p className="text-[10px] font-mono text-muted-foreground mt-0.5">RECORD · ORGANISE · PUBLISH · HON. STEPHEN MULE MNA</p>
+            <p className="text-[10px] font-mono text-muted-foreground mt-0.5">RECORD · ORGANISE · PUBLISH · PROF. PHILIP KALOKI MNA</p>
           </div>
           <div className="flex gap-2 flex-wrap justify-end">
             <button onClick={handlePrint} className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs hover:bg-secondary"><Printer className="w-3 h-3" /> PRINT</button>
@@ -322,7 +322,7 @@ export default function Credentials() {
               <div>
                 <p className="font-mono text-xs tracking-wider text-primary font-bold">AI RESEARCH IN PROGRESS</p>
                 <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
-                  Analysing Hon. Stephen Mule's 13th Parliament record · Generating legislative credentials & achievements · This takes 20–40 seconds
+                  Analysing Prof. Philip Kaloki's 13th Parliament record · Generating legislative credentials & achievements · This takes 20–40 seconds
                 </p>
               </div>
             </div>
@@ -413,10 +413,10 @@ export default function Credentials() {
                       <BookOpen className="w-6 h-6 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h2 className="font-bold tracking-wider mb-1">HON. STEPHEN MULE</h2>
+                      <h2 className="font-bold tracking-wider mb-1">PROF. PHILIP KALOKI</h2>
                       <p className="font-mono text-[10px] text-muted-foreground mb-2">MEMBER OF THE NATIONAL ASSEMBLY · MAKUENI COUNTY · MAKUENI COUNTY</p>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        This hub records, organises, and publishes the legislative achievements and development credentials of Hon. Stephen Mule. All records are evidence-backed and ready for campaign use, media release, and public accountability reporting.
+                        This hub records, organises, and publishes the legislative achievements and development credentials of Prof. Philip Kaloki. All records are evidence-backed and ready for campaign use, media release, and public accountability reporting.
                       </p>
                       <div className="flex gap-4 mt-3">
                         <div><p className="text-xl font-bold">{summary?.records?.total ?? 0}</p><p className="font-mono text-[9px] text-muted-foreground">RECORDS</p></div>

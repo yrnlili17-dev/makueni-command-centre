@@ -100,7 +100,7 @@ async function buildLiveDigest(): Promise<string> {
           const row = r as { ward: string; expected_turnout_rate: number; mule_support_share: number; reg: string | number };
           const reg = Number(row.reg);
           const predicted = Math.round((reg * row.expected_turnout_rate * row.mule_support_share) / 10000);
-          return `${row.ward}: ${reg.toLocaleString()} reg, ${row.expected_turnout_rate}% turnout, ${row.mule_support_share}% support → ~${predicted.toLocaleString()} Mule votes`;
+          return `${row.ward}: ${reg.toLocaleString()} reg, ${row.expected_turnout_rate}% turnout, ${row.mule_support_share}% support → ~${predicted.toLocaleString()} Kaloki votes`;
         })
         .join(" | ");
     }

@@ -196,7 +196,7 @@ export default function Speeches() {
           <Sparkles className="w-5 h-5 text-primary" /> AI SPEECH &amp; MANIFESTO GENERATOR
         </h1>
         <p className="font-mono text-[11px] text-muted-foreground mt-1">
-          Draft campaign speeches and the official manifesto for Hon. Stephen Mule · grounded in Makueni context
+          Draft campaign speeches and the official manifesto for Prof. Philip Kaloki · grounded in Makueni context
         </p>
       </div>
 

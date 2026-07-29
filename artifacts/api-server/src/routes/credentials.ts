@@ -113,8 +113,8 @@ router.get("/summary", async (req, res) => {
 // ─── AI Auto-Populate ─────────────────────────────────────────────────────────
 
 const CANDIDATE_BRIEF = `
-CANDIDATE: Hon. Stephen Mutinda Mule (Mwanamule)
-ROLE: Member of the National Assembly, Makueni Constituency, Machakos County, Kenya
+CANDIDATE: Prof. Philip Kaloki (Prof. Kaloki)
+ROLE: Member of the National Assembly, Makueni Constituency, Makueni County, Kenya
 PARTY: Wiper Democratic Movement (Patriotic Front) | Symbol: Umbrella | Slogan: "Komboa Kenya"
 PROFESSION: Biomedical Engineer (15+ years) | Entrepreneur | Community leader
 HOME WARD: Makueni West
@@ -256,7 +256,7 @@ router.post("/research", async (req, res) => {
   let aiGenerated = false;
 
   try {
-    const systemPrompt = `You are a legislative research assistant for Hon. Stephen Mule, Member of the National Assembly for Makueni Constituency, Kenya.
+    const systemPrompt = `You are a legislative research assistant for Prof. Philip Kaloki, Member of the National Assembly for Makueni Constituency, Kenya.
 Your role is to help research legislative topics, provide context on Kenya's parliamentary procedures, compare with regional and national benchmarks, and suggest talking points that strengthen the candidate's credentials.
 Always provide structured, factual responses with clear sections.`;
 
@@ -294,7 +294,7 @@ Format your response with clear section headers using **bold** for headers.`;
   } catch (_) { /* fall through to template */ }
 
   if (!aiGenerated) {
-    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni Constituency and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Machakos County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. Makueni Constituency, as part of Machakos County, receives equitable share allocations directed towards ${topic}-related development.\n\n**Key Recommendations**\n\nFor Hon. Stephen Mule to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
+    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni Constituency and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Makueni County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. Makueni Constituency, as part of Makueni County, receives equitable share allocations directed towards ${topic}-related development.\n\n**Key Recommendations**\n\nFor Prof. Philip Kaloki to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
     keyPoints = [
       `Makueni's ${topic} needs align with national development priorities`,
       `Constitutional mandate under Chapter Eleven supports county action on ${topic}`,
@@ -307,7 +307,7 @@ Format your response with clear section headers using **bold** for headers.`;
       { title: "Constitution of Kenya, 2010", type: "Legal", relevance: "Fourth Schedule — Division of Functions" },
       { title: "National Assembly Standing Orders", type: "Procedure", relevance: "Bill sponsorship and motion process" },
       { title: "CDF Act 2013 (Amended 2016)", type: "Legislation", relevance: "Constituency development fund mandate" },
-      { title: "Machakos County CIDP", type: "Planning", relevance: "County integrated development plan" },
+      { title: "Makueni County CIDP", type: "Planning", relevance: "County integrated development plan" },
       { title: "Kenya National Bureau of Statistics", type: "Data", relevance: "Makueni constituency demographics" },
     ];
   }

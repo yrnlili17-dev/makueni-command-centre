@@ -242,7 +242,7 @@ export async function seedDefaultConfig(): Promise<void> {
   if (existing.length > 0) return;
 
   const defaults = [
-    { key: "candidate.name", value: "Hon. Stephen Mule", category: "campaign", description: "Candidate's full name displayed across the system" },
+    { key: "candidate.name", value: "Prof. Philip Kaloki", category: "campaign", description: "Candidate's full name displayed across the system" },
     { key: "candidate.title", value: "MNA — Makueni Constituency", category: "campaign", description: "Candidate's title and constituency label" },
     { key: "candidate.party", value: "", category: "campaign", description: "Political party affiliation" },
     { key: "campaign.election_date", value: "2027-08-10", category: "campaign", description: "Target election date (YYYY-MM-DD)" },
@@ -273,7 +273,7 @@ export async function seedDefaultConfig(): Promise<void> {
 
 // Bootstrap the initial super-admin so the system is never locked out.
 // Uses the long-standing demo credentials so existing access keeps working.
-const BOOTSTRAP_EMAIL = "demo@mwanamule.ke";
+const BOOTSTRAP_EMAIL = "admin@kaloki2027.ke";
 const BOOTSTRAP_USERNAME = "demo";
 const BOOTSTRAP_PASSWORD = "Komboa2027";
 

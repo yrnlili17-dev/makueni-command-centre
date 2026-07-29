@@ -19,3 +19,17 @@ PORT=5174 BASE_PATH=/ pnpm --filter @workspace/commandcentre build
 ```
 
 The current file-processing environment could not download the pnpm package-manager binary because its internal package registry returned HTTP 404. This is an environment limitation rather than a recorded project source error. The project previously built successfully with Vite in the user's Codespaces environment.
+
+## Final candidate/RBAC verification
+
+Run:
+
+```bash
+grep -RniE --exclude-dir=node_modules --exclude-dir=dist \
+  'Hon\\. Stephen Mule|Stephen Mule|Mwanamule|MULE2027|mule2027|Matungulu|Machakos County' \
+  artifacts lib scripts
+
+grep -nA15 -B3 'const can' artifacts/commandcentre/src/lib/auth.tsx
+```
+
+The first command should return no public-facing legacy campaign references. The second should show the protected `super_admin` bypass.

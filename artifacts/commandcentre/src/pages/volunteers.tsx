@@ -752,7 +752,7 @@ export default function Volunteers() {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h2 className="font-mono text-sm font-bold tracking-widest">CAMPAIGN MANAGER DAILY REPORT</h2>
-                    <p className="font-mono text-[10px] text-muted-foreground">HON. STEPHEN MULE — MAKUENI GUBERNATORIAL CAMPAIGN · DATE: {report.date}</p>
+                    <p className="font-mono text-[10px] text-muted-foreground">PROF. PHILIP KALOKI — MAKUENI GUBERNATORIAL CAMPAIGN · DATE: {report.date}</p>
                   </div>
                   {report.summary.criticalIssues > 0 && (
                     <span className="font-mono text-[10px] text-red-500 border border-red-500/40 px-2 py-1 animate-pulse">⚠ {report.summary.criticalIssues} CRITICAL ISSUE{report.summary.criticalIssues > 1 ? "S" : ""} REQUIRE ATTENTION</span>

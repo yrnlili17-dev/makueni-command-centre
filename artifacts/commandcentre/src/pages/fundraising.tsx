@@ -900,7 +900,7 @@ function ReconciliationTab() {
 
 // ── PAYMENT SETUP TAB ────────────────────────────────────────────────────────
 function PaymentSetupTab() {
-  const [mpesa, setMpesa] = useState({ paybill: "123456", account: "MULE2027", shortcode: "400200", tillNumber: "" });
+  const [mpesa, setMpesa] = useState({ paybill: "123456", account: "KALOKI2027", shortcode: "400200", tillNumber: "" });
   const [bank, setBank] = useState({ bank: "Kenya Commercial Bank", branch: "Tala Branch", account: "1234567890", swift: "KCBLKENX" });
   const [saved, setSaved] = useState(false);
 
@@ -928,7 +928,7 @@ function PaymentSetupTab() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="PAYBILL NUMBER" value={mpesa.paybill} onChange={e => setMpesa(p => ({ ...p, paybill: e.target.value }))} placeholder="123456" />
-            <Input label="ACCOUNT NUMBER" value={mpesa.account} onChange={e => setMpesa(p => ({ ...p, account: e.target.value }))} placeholder="MULE2027" />
+            <Input label="ACCOUNT NUMBER" value={mpesa.account} onChange={e => setMpesa(p => ({ ...p, account: e.target.value }))} placeholder="KALOKI2027" />
             <Input label="SHORTCODE (TILL)" value={mpesa.shortcode} onChange={e => setMpesa(p => ({ ...p, shortcode: e.target.value }))} placeholder="400200" />
             <Input label="TILL NUMBER (OPTIONAL)" value={mpesa.tillNumber} onChange={e => setMpesa(p => ({ ...p, tillNumber: e.target.value }))} placeholder="—" />
           </div>
@@ -956,8 +956,8 @@ function PaymentSetupTab() {
             <div className="font-mono text-[10px] text-cyan-400 tracking-widest font-bold">DIASPORA / ONLINE GIVING</div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="PAYPAL EMAIL" placeholder="fundraising@stephenmule.com" />
-            <Input label="WESTERN UNION REFERENCE" placeholder="MULE2027 KE" />
+            <Input label="PAYPAL EMAIL" placeholder="fundraising@kaloki2027.ke" />
+            <Input label="WESTERN UNION REFERENCE" placeholder="KALOKI2027 KE" />
           </div>
           <div className="bg-secondary border border-border p-3 font-mono text-[10px] text-muted-foreground">
             For international wire transfers: SWIFT {bank.swift} · {bank.bank} · Acc {bank.account}
@@ -1180,7 +1180,7 @@ export default function Fundraising() {
             <Banknote className="w-5 h-5 text-primary" />
             FINANCE OPS
           </h1>
-          <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">CAMPAIGN FUNDRAISING COMMAND — HON. STEPHEN MULE</p>
+          <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">CAMPAIGN FUNDRAISING COMMAND — PROF. PHILIP KALOKI</p>
         </div>
         {summary && (
           <div className="grid grid-cols-4 gap-3 text-center">

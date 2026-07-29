@@ -309,7 +309,7 @@ export default function CampaignPlan() {
     const lines: string[] = [
       "═══════════════════════════════════════════════════════",
       "  MAKUENI COMMAND CENTRE — CAMPAIGN PLAN REPORT",
-      "  HON. STEPHEN MULE — MAKUENI COUNTY",
+      "  PROF. PHILIP KALOKI — MAKUENI COUNTY",
       "═══════════════════════════════════════════════════════",
       `  Generated: ${new Date().toLocaleString("en-KE")}`,
       `  Election Date: ${report.electionDate ?? "Not set"}`,
@@ -438,7 +438,7 @@ export default function CampaignPlan() {
         {/* Print header (only visible when printing) */}
         <div className="hidden print:block mb-6">
           <h1 className="text-2xl font-bold">MAKUENI COMMAND CENTRE — CAMPAIGN PLAN</h1>
-          <p className="text-sm">Hon. Stephen Mule · Makueni Constituency · Generated {new Date().toLocaleString("en-KE")}</p>
+          <p className="text-sm">Prof. Philip Kaloki · Makueni Constituency · Generated {new Date().toLocaleString("en-KE")}</p>
         </div>
 
         {/* Stats bar */}

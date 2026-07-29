@@ -96,8 +96,8 @@ export default function Dashboard() {
           <div className="p-4 space-y-2.5">
             <div className="flex items-start justify-between mb-1">
               <div>
-                <p className="font-bold text-sm tracking-wide">HON. STEPHEN MUTINDA MULE</p>
-                <p className="font-mono text-[10px] text-primary tracking-widest mt-0.5">MWANAMULE · MAKUENI GUBERNATORIAL CAMPAIGN</p>
+                <p className="font-bold text-sm tracking-wide">PROF. PHILIP KALOKI</p>
+                <p className="font-mono text-[10px] text-primary tracking-widest mt-0.5">PROF. KALOKI · MAKUENI GUBERNATORIAL CAMPAIGN</p>
               </div>
               <span className="font-mono text-[9px] border border-primary/30 px-2 py-0.5 text-primary shrink-0">WIPER PATRIOTIC FRONT</span>
             </div>
@@ -121,10 +121,10 @@ export default function Dashboard() {
             <div className="pt-2 border-t border-border space-y-1">
               <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">SOCIAL MEDIA</p>
               {[
-                ["FACEBOOK", "Hon. Stephen Mutinda Mule"],
-                ["FB PAGE", "Hon. Dr. Stephen Mutinda Mule MP Makueni"],
-                ["TWITTER/X", "Stephen Mule1"],
-                ["TIKTOK", "@hon.dr.stephenmule(Mwanamule)"],
+                ["FACEBOOK", "Prof. Philip Kaloki"],
+                ["FB PAGE", "Prof. Philip Kaloki for Governor, Makueni"],
+                ["TWITTER/X", "Philip Kaloki1"],
+                ["TIKTOK", "@profphilipkaloki"],
               ].map(([p, h]) => (
                 <div key={p} className="flex items-start gap-2">
                   <span className="font-mono text-[8px] text-muted-foreground w-16 shrink-0 mt-0.5">{p}</span>

@@ -6,10 +6,10 @@ import { z } from "zod/v4";
 const router = Router();
 
 // The campaign principal whose vote share we forecast.
-const PRINCIPAL = "Hon. Stephen Mule";
+const PRINCIPAL = "Prof. Philip Kaloki";
 
 // Baseline assumptions used for any ward that has no saved override.
-// ~65% reflects recent Machakos County general-election turnout; support is
+// ~65% reflects recent Makueni County general-election turnout; support is
 // intentionally neutral (50%) until the team sets ward-level estimates.
 const DEFAULT_TURNOUT = 65;
 const DEFAULT_SUPPORT = 50;
