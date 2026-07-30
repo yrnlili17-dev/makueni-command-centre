@@ -70,6 +70,7 @@ const NAV_PERM: Record<string, string> = {
   "/volunteers": "volunteers", "/surveys": "intelligence", "/events": "events", "/intelligence": "narrative",
   "/social-listening": "social-listening", "/swot": "intelligence", "/campaign-plan": "campaign-plan", "/kol": "kol",
   "/speeches": "speeches", "/fundraising": "finance", "/election-day": "election-day",
+  "/election-war-room": "election-day",
   "/war-room": "election-day", "/turnout": "election-day",
   "/credentials": "credentials", "/analytics": "analytics", "/governance": "approvals", "/admin": "admin",
   "/production-centre": "admin",

@@ -26,6 +26,7 @@ import socialRouter from "./social";
 import diRouter from "./di";
 import strategistRouter from "./strategist";
 import authRouter from "./auth";
+import electionWarRoomRouter from "./election-war-room";
 import gisIntelligenceRouter from "./gis-intelligence";
 import finalReleaseRouter from "./final-release";
 import smartAssistRouter from "./smart-assist";
@@ -40,6 +41,7 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use("/auth", authRouter);
+router.use("/election-war-room", electionWarRoomRouter);
 router.use("/gis-intelligence", gisIntelligenceRouter);
 router.use("/final-release", finalReleaseRouter);
 router.use("/smart-assist", smartAssistRouter);
