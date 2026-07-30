@@ -4,7 +4,6 @@ import {
   voterRegistryTable,
   membersTable,
   volunteersTable,
-  eventsTable,
 } from "@workspace/db";
 
 export type WardMetric = {
@@ -46,19 +45,8 @@ export async function getWardMetrics(): Promise<WardMetric[]> {
     .from(volunteersTable)
     .groupBy(volunteersTable.ward);
 
-  const eventRows = await db
-    .select({
-      ward: eventsTable.ward,
-      events: count(),
-    })
-    .from(eventsTable)
-    .groupBy(eventsTable.ward);
-
   const volunteersByWard = new Map(
     volunteerRows.map((row) => [row.ward ?? "", Number(row.volunteers)]),
-  );
-  const eventsByWard = new Map(
-    eventRows.map((row) => [row.ward ?? "", Number(row.events)]),
   );
 
   const maxContacts = Math.max(
@@ -72,7 +60,7 @@ export async function getWardMetrics(): Promise<WardMetric[]> {
       const ward = row.ward ?? "Unassigned";
       const contacts = Number(row.contacts);
       const volunteers = volunteersByWard.get(ward) ?? 0;
-      const events = eventsByWard.get(ward) ?? 0;
+      const events = 0;
       const pollingStations = Number(row.pollingStations ?? 0);
 
       const contactScore = Math.min(50, Math.round((contacts / maxContacts) * 50));
