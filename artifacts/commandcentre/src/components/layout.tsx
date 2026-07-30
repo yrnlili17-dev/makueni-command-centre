@@ -63,9 +63,6 @@ const navGroups = [
 const NAV_PERM: Record<string, string> = {
   "/executive-command": "dashboard", "/operations-hub": "field-ops", "/communications-hub": "messaging",
   "/reports-hub": "analytics", "/dashboard": "dashboard", "/strategist": "analytics",
-  "/smart-assist": "smart-assist",
-  "/data-centre": "data-centre",
-  "/gis-centre": "gis-centre",
   "/smart-assist": "social-listening",
   "/data-centre": "constituents",
   "/gis-centre": "analytics", "/members": "voters",
