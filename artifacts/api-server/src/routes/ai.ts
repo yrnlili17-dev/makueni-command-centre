@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { buildPhase16Response } from "../services/smart-assist-engine";
 
 const router = Router();
 
@@ -446,7 +447,7 @@ router.post("/assist", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
-  const content = buildSmartAssistResponse({ message, module, context });
+  const content = await buildPhase16Response({ message, module });
   res.write(`data: ${JSON.stringify({ content })}\n\n`);
   res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
   res.end();
