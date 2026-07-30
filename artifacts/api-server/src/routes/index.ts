@@ -26,6 +26,7 @@ import socialRouter from "./social";
 import diRouter from "./di";
 import strategistRouter from "./strategist";
 import authRouter from "./auth";
+import gisIntelligenceRouter from "./gis-intelligence";
 import finalReleaseRouter from "./final-release";
 import smartAssistRouter from "./smart-assist";
 import approvalsRouter from "./approvals";
@@ -39,6 +40,7 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use("/auth", authRouter);
+router.use("/gis-intelligence", gisIntelligenceRouter);
 router.use("/final-release", finalReleaseRouter);
 router.use("/smart-assist", smartAssistRouter);
 router.use("/approvals", approvalsRouter);
