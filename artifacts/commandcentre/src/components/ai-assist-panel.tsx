@@ -17,10 +17,14 @@ const BASE = import.meta.env.BASE_URL ?? "/";
 
 async function fetchQuickPrompts(module: string): Promise<string[]> {
   try {
-    const r = await fetch(`${BASE}api/ai/quick-prompts?module=${encodeURIComponent(module)}`);
-    if (!r.ok) return [];
-    const data = await r.json();
-    return data.prompts ?? [];
+    const response = await fetch(
+      `${BASE}api/ai/quick-prompts?module=${encodeURIComponent(module)}`,
+    );
+    if (!response.ok) return [];
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) return [];
+    const data = await response.json();
+    return Array.isArray(data.prompts) ? data.prompts : [];
   } catch {
     return [];
   }
@@ -39,95 +43,142 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
 
   useEffect(() => {
     if (open && quickPrompts.length === 0) {
-      fetchQuickPrompts(module).then(setQuickPrompts);
+      void fetchQuickPrompts(module).then(setQuickPrompts);
     }
-  }, [open, module]);
+  }, [open, module, quickPrompts.length]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = useCallback(async (text: string) => {
-    const userMsg = text.trim();
-    if (!userMsg || streaming) return;
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    if (window.matchMedia("(max-width: 639px)").matches) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
 
-    setMessages(prev => [...prev, { role: "user", content: userMsg }]);
+  const sendMessage = useCallback(async (text: string) => {
+    const userMessage = text.trim();
+    if (!userMessage || streaming) return;
+
+    setMessages((current) => [...current, { role: "user", content: userMessage }]);
     setInput("");
     setStreaming(true);
-
-    const assistantIdx = messages.length + 1;
-    setMessages(prev => [...prev, { role: "assistant", content: "", streaming: true }]);
+    setMessages((current) => [
+      ...current,
+      { role: "assistant", content: "", streaming: true },
+    ]);
 
     abortRef.current = new AbortController();
     let fullContent = "";
 
     try {
-      const resp = await fetch(`${BASE}api/ai/assist`, {
+      const response = await fetch(`${BASE}api/ai/assist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ module, context, message: userMsg }),
+        body: JSON.stringify({ module, context, message: userMessage }),
         signal: abortRef.current.signal,
       });
 
-      const contentType = resp.headers.get("content-type") ?? "";
-      if (!resp.ok) throw new Error(`Smart Assist request failed (${resp.status})`);
-      if (!contentType.includes("text/event-stream")) throw new Error("Smart Assist API returned a web page instead of data. Deploy the updated API server.");
-      if (!resp.body) throw new Error("No response body");
-      const reader = resp.body.getReader();
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!response.ok) {
+        throw new Error(`Smart Assist request failed (${response.status}).`);
+      }
+      if (!contentType.includes("text/event-stream")) {
+        throw new Error(
+          "Smart Assist received a web page instead of assistant data. Deploy the updated API server.",
+        );
+      }
+      if (!response.body) throw new Error("Smart Assist returned no response.");
+
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
-        const text = decoder.decode(value);
-        const lines = text.split("\n");
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
+        buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          const dataLine = event
+            .split("\n")
+            .find((line) => line.startsWith("data: "));
+          if (!dataLine) continue;
+
           try {
-            const data = JSON.parse(line.slice(6));
+            const data = JSON.parse(dataLine.slice(6));
             if (data.content) {
-              fullContent += data.content;
-              setMessages(prev => {
-                const updated = [...prev];
-                updated[updated.length - 1] = { role: "assistant", content: fullContent, streaming: true };
+              fullContent += String(data.content);
+              setMessages((current) => {
+                const updated = [...current];
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content: fullContent,
+                  streaming: true,
+                };
                 return updated;
               });
             }
+
             if (data.done || data.error) {
-              const finalContent = data.error ? `⚠ ${data.error}` : fullContent;
-              setMessages(prev => {
-                const updated = [...prev];
-                updated[updated.length - 1] = { role: "assistant", content: finalContent };
+              const finalContent = data.error
+                ? `⚠ ${data.error}`
+                : fullContent || "Smart Assist completed the request.";
+              setMessages((current) => {
+                const updated = [...current];
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content: finalContent,
+                };
                 return updated;
               });
             }
-          } catch { }
+          } catch {
+            // Ignore incomplete individual server-sent events.
+          }
         }
+
+        if (done) break;
       }
-    } catch (err: any) {
-      if (err?.name !== "AbortError") {
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: `⚠ ${err?.message ?? "Connection error. Please retry."}` };
+    } catch (error: unknown) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Connection error. Please retry.";
+        setMessages((current) => {
+          const updated = [...current];
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: `⚠ ${message}`,
+          };
           return updated;
         });
       }
     } finally {
       setStreaming(false);
+      window.setTimeout(() => textareaRef.current?.focus(), 50);
     }
-  }, [module, context, messages.length, streaming]);
+  }, [context, module, streaming]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(input);
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void sendMessage(input);
     }
   };
 
-  const copyMessage = (idx: number, content: string) => {
-    navigator.clipboard.writeText(content);
-    setCopied(idx);
-    setTimeout(() => setCopied(null), 2000);
+  const copyMessage = async (index: number, content: string) => {
+    await navigator.clipboard.writeText(content);
+    setCopied(index);
+    window.setTimeout(() => setCopied(null), 2000);
   };
 
   const clearChat = () => {
@@ -140,129 +191,202 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
 
   return (
     <>
-      {/* Floating trigger button */}
       <button
-        onClick={() => setOpen(v => !v)}
+        type="button"
+        aria-expanded={open}
+        aria-controls="smart-assist-panel"
+        onClick={() => setOpen((current) => !current)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 font-mono text-xs font-bold tracking-widest border transition-all shadow-lg",
+          "fixed z-[70] flex items-center gap-2 border px-3 py-2.5 font-mono text-[11px] font-bold tracking-widest shadow-lg transition-all",
+          "bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3",
+          "sm:bottom-6 sm:right-6 sm:px-4 sm:text-xs",
           open
-            ? "bg-primary text-primary-foreground border-primary"
-            : "bg-card text-primary border-primary/50 hover:bg-primary/10"
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-primary/50 bg-card text-primary hover:bg-primary/10",
         )}
       >
-        <Sparkles className="w-3.5 h-3.5" />
+        <Sparkles className="h-3.5 w-3.5" />
         SMART ASSIST
-        <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
+        <ChevronDown
+          className={cn("h-3 w-3 transition-transform", open && "rotate-180")}
+        />
       </button>
 
-      {/* Panel */}
       {open && (
-        <div className="fixed bottom-20 right-6 z-50 w-[420px] max-h-[70vh] flex flex-col bg-card border border-primary/30 shadow-2xl">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5 shrink-0">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              <span className="font-mono text-xs font-bold tracking-widest text-primary">SMART ASSIST</span>
-              <span className="font-mono text-[9px] text-muted-foreground border border-border px-1.5 py-0.5">[ {moduleLabel} ]</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {messages.length > 0 && (
-                <button onClick={clearChat} className="text-muted-foreground hover:text-foreground transition-colors" title="Clear chat">
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
-              )}
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
+        <>
+          <button
+            type="button"
+            aria-label="Close Smart Assist"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-[71] bg-black/55 backdrop-blur-[1px] sm:hidden"
+          />
 
-          {/* Quick prompts */}
-          {messages.length === 0 && quickPrompts.length > 0 && (
-            <div className="px-3 py-2.5 border-b border-border shrink-0">
-              <p className="font-mono text-[9px] text-muted-foreground tracking-widest mb-2">QUICK PROMPTS</p>
-              <div className="flex flex-col gap-1">
-                {quickPrompts.slice(0, 3).map((p, i) => (
-                  <button
-                    key={i}
-                    onClick={() => sendMessage(p)}
-                    className="text-left font-mono text-[10px] text-muted-foreground hover:text-foreground hover:bg-secondary/50 px-2 py-1.5 border border-transparent hover:border-border transition-all"
-                  >
-                    → {p}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-0">
-            {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Sparkles className="w-6 h-6 text-primary/40 mb-2" />
-                <p className="font-mono text-xs text-muted-foreground">Smart Assist is ready.</p>
-                <p className="font-mono text-[10px] text-muted-foreground/60 mt-1">Ask anything about {moduleLabel.toLowerCase()}.</p>
-              </div>
+          <section
+            id="smart-assist-panel"
+            role="dialog"
+            aria-label="Smart Assist — Chief Strategist"
+            className={cn(
+              "fixed z-[72] flex min-h-0 flex-col overflow-hidden border border-primary/30 bg-card shadow-2xl",
+              "inset-x-2 bottom-[calc(4.25rem+env(safe-area-inset-bottom))]",
+              "h-[min(82dvh,720px)] max-h-[calc(100dvh-5.25rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]",
+              "sm:inset-auto sm:bottom-20 sm:right-6 sm:h-[min(74vh,720px)] sm:w-[min(440px,calc(100vw-3rem))]",
             )}
-            {messages.map((msg, idx) => (
-              <div key={idx} className={cn("flex flex-col gap-1", msg.role === "user" ? "items-end" : "items-start")}>
-                <span className="font-mono text-[8px] text-muted-foreground/60 tracking-widest px-1">
-                  {msg.role === "user" ? "YOU" : "SMART ASSIST"}
+          >
+            <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-primary/5 px-3 py-3 sm:px-4">
+              <div className="flex min-w-0 items-center gap-2">
+                <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+                <span className="truncate font-mono text-[11px] font-bold tracking-widest text-primary sm:text-xs">
+                  SMART ASSIST
                 </span>
-                <div className={cn(
-                  "relative group max-w-[92%] px-3 py-2 text-[11px] leading-relaxed font-sans",
-                  msg.role === "user"
-                    ? "bg-primary/15 border border-primary/30 text-foreground"
-                    : "bg-secondary/60 border border-border text-foreground"
-                )}>
-                  {msg.streaming && msg.content === "" ? (
-                    <span className="flex gap-1">
-                      <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </span>
-                  ) : (
-                    <span className="whitespace-pre-wrap">{msg.content}</span>
-                  )}
-                  {msg.role === "assistant" && !msg.streaming && msg.content && (
+                <span className="hidden max-w-36 truncate border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground min-[390px]:block">
+                  [ {moduleLabel} ]
+                </span>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-1">
+                {messages.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearChat}
+                    className="grid h-9 w-9 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    title="Clear conversation"
+                    aria-label="Clear conversation"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="grid h-9 w-9 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  aria-label="Close Smart Assist"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </header>
+
+            {messages.length === 0 && quickPrompts.length > 0 && (
+              <div className="shrink-0 border-b border-border px-3 py-2.5">
+                <p className="mb-2 font-mono text-[9px] tracking-widest text-muted-foreground">
+                  QUICK ACTIONS
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-col sm:overflow-visible">
+                  {quickPrompts.slice(0, 3).map((prompt) => (
                     <button
-                      onClick={() => copyMessage(idx, msg.content)}
-                      className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                      type="button"
+                      key={prompt}
+                      onClick={() => void sendMessage(prompt)}
+                      className="min-w-[220px] border border-border px-2.5 py-2 text-left font-mono text-[10px] text-muted-foreground transition-all hover:border-primary/50 hover:bg-secondary/50 hover:text-foreground sm:min-w-0"
                     >
-                      {copied === idx ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                      → {prompt}
                     </button>
-                  )}
+                  ))}
                 </div>
               </div>
-            ))}
-            <div ref={bottomRef} />
-          </div>
+            )}
 
-          {/* Input */}
-          <div className="px-3 py-2.5 border-t border-border shrink-0">
-            <div className="flex items-end gap-2">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={streaming}
-                rows={1}
-                placeholder="Ask anything... (Enter to send)"
-                className="flex-1 resize-none bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary placeholder:text-muted-foreground/50 disabled:opacity-50 max-h-24 overflow-y-auto"
-                style={{ fieldSizing: "content" } as any}
-              />
-              <button
-                onClick={() => sendMessage(input)}
-                disabled={streaming || !input.trim()}
-                className="shrink-0 bg-primary text-primary-foreground p-2 hover:bg-primary/90 disabled:opacity-40 transition-colors"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4">
+              {messages.length === 0 && (
+                <div className="flex min-h-52 flex-col items-center justify-center px-4 text-center">
+                  <Sparkles className="mb-3 h-7 w-7 text-primary/50" />
+                  <p className="font-mono text-xs text-foreground">
+                    Smart Assist — Chief Strategist
+                  </p>
+                  <p className="mt-2 max-w-xs font-mono text-[10px] leading-5 text-muted-foreground">
+                    Search campaign contacts, wards and polling stations, review
+                    priorities, or research a public issue.
+                  </p>
+                </div>
+              )}
+
+              {messages.map((message, index) => (
+                <div
+                  key={`${message.role}-${index}`}
+                  className={cn(
+                    "flex min-w-0 flex-col gap-1",
+                    message.role === "user" ? "items-end" : "items-start",
+                  )}
+                >
+                  <span className="px-1 font-mono text-[8px] tracking-widest text-muted-foreground/70">
+                    {message.role === "user" ? "YOU" : "SMART ASSIST"}
+                  </span>
+
+                  <div
+                    className={cn(
+                      "group relative min-w-0 max-w-[94%] overflow-hidden border px-3 py-2.5 text-[12px] leading-5 sm:max-w-[92%]",
+                      message.role === "user"
+                        ? "border-primary/30 bg-primary/15 text-foreground"
+                        : "border-border bg-secondary/60 text-foreground",
+                    )}
+                  >
+                    {message.streaming && message.content === "" ? (
+                      <span className="flex gap-1 py-1">
+                        {[0, 150, 300].map((delay) => (
+                          <span
+                            key={delay}
+                            className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary"
+                            style={{ animationDelay: `${delay}ms` }}
+                          />
+                        ))}
+                      </span>
+                    ) : (
+                      <span className="block whitespace-pre-wrap break-words">
+                        {message.content}
+                      </span>
+                    )}
+
+                    {message.role === "assistant" &&
+                      !message.streaming &&
+                      message.content && (
+                        <button
+                          type="button"
+                          onClick={() => void copyMessage(index, message.content)}
+                          className="absolute right-1 top-1 grid h-7 w-7 place-items-center bg-card/80 text-muted-foreground opacity-100 transition-opacity hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
+                          aria-label="Copy response"
+                        >
+                          {copied === index ? (
+                            <Check className="h-3.5 w-3.5 text-green-400" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      )}
+                  </div>
+                </div>
+              ))}
+              <div ref={bottomRef} />
             </div>
-            <p className="font-mono text-[8px] text-muted-foreground/50 mt-1.5">Shift+Enter for new line · Powered by campaign data and smart search</p>
-          </div>
-        </div>
+
+            <footer className="shrink-0 border-t border-border bg-card px-3 pb-[calc(.65rem+env(safe-area-inset-bottom))] pt-2.5 sm:px-4 sm:pb-3">
+              <div className="flex items-end gap-2">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={streaming}
+                  rows={1}
+                  placeholder="Ask Smart Assist…"
+                  className="max-h-28 min-h-11 flex-1 resize-none overflow-y-auto border border-border bg-secondary px-3 py-3 font-mono text-[12px] outline-none placeholder:text-muted-foreground/60 focus:border-primary disabled:opacity-50"
+                  style={{ fieldSizing: "content" } as React.CSSProperties}
+                />
+                <button
+                  type="button"
+                  onClick={() => void sendMessage(input)}
+                  disabled={streaming || !input.trim()}
+                  className="grid h-11 w-11 shrink-0 place-items-center bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+                  aria-label="Send message"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="mt-1.5 truncate font-mono text-[8px] text-muted-foreground/60">
+                Enter to send · Shift+Enter for a new line · Campaign data and public research
+              </p>
+            </footer>
+          </section>
+        </>
       )}
     </>
   );
