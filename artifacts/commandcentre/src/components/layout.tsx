@@ -73,6 +73,7 @@ const NAV_PERM: Record<string, string> = {
   "/election-war-room": "election-day",
   "/war-room": "election-day", "/turnout": "election-day",
   "/credentials": "credentials", "/analytics": "analytics", "/governance": "approvals", "/admin": "admin",
+  "/production-readiness": "admin",
   "/production-centre": "admin",
 };
 

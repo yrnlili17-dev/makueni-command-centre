@@ -33,6 +33,7 @@ import Analytics from "@/pages/analytics";
 import Strategist from "@/pages/strategist";
 import GisIntelligencePage from "@/pages/gis-intelligence";
 import ElectionWarRoomPage from "@/pages/election-war-room";
+import ProductionReadinessPage from "@/pages/production-readiness";
 import WarRoom from "@/pages/war-room";
 import ProductionCentre from "@/pages/production-centre";
 import PublicCampaign from "@/pages/public-campaign";
@@ -102,6 +103,7 @@ function ProtectedRoutes() {
         <Route path="/gis-centre">{() => <Guarded module="analytics" component={GisCentre} />}</Route>
         <Route path="/war-room">{() => <Guarded module="election-day" component={WarRoom} />}</Route>
         <Route path="/production-centre">{() => <Guarded module="admin" component={ProductionCentre} />}</Route>
+        <Route path="/production-readiness">{() => <Guarded module="admin" component={ProductionReadinessPage} />}</Route>
         <Route path="/election-war-room">{() => <Guarded module="election-day" component={ElectionWarRoomPage} />}</Route>
         <Route path="/gis-intelligence">{() => <Guarded module="analytics" component={GisIntelligencePage} />}</Route>
         <Route path="/strategist">{() => <Guarded module="analytics" component={Strategist} />}</Route>
