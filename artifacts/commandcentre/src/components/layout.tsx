@@ -17,7 +17,7 @@ const navGroups = [
     { href: "/executive-command", label: "EXECUTIVE COMMAND", icon: Command },
     { href: "/reports-hub", label: "EXECUTIVE REPORTS", icon: FileBarChart },
     { href: "/smart-assist", label: "SMART ASSIST", icon: BrainCircuit },
-      { href: "/strategist", label: "AI CHIEF STRATEGIST", icon: BrainCircuit },
+      { href: "/strategist", label: "CHIEF STRATEGIST", icon: BrainCircuit },
     { href: "/analytics", label: "ANALYTICS HUB", icon: BarChart2 },
     { href: "/campaign-plan", label: "CAMPAIGN COUNTDOWN", icon: Target },
   ]},

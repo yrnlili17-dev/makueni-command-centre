@@ -697,7 +697,7 @@ export default function CampaignPlan() {
                 {aiPlanLoading && (
                   <div className="flex flex-col items-center justify-center py-12 gap-3">
                     <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                    <p className="font-mono text-[10px] text-muted-foreground tracking-widest">GENERATING CAMPAIGN PLAN · ACL AI</p>
+                    <p className="font-mono text-[10px] text-muted-foreground tracking-widest">GENERATING CAMPAIGN PLAN · SMART ASSIST</p>
                   </div>
                 )}
 
@@ -969,7 +969,7 @@ export default function CampaignPlan() {
                 {aiReadinessLoading && (
                   <div className="flex flex-col items-center justify-center py-10 gap-3">
                     <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                    <p className="font-mono text-[10px] text-muted-foreground tracking-widest">GENERATING READINESS CHECKLIST · ACL AI</p>
+                    <p className="font-mono text-[10px] text-muted-foreground tracking-widest">GENERATING READINESS CHECKLIST · SMART ASSIST</p>
                     <p className="font-mono text-[9px] text-muted-foreground/60">Analysing candidate profile, constituency data and campaign context…</p>
                   </div>
                 )}

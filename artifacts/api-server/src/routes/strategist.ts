@@ -1,8 +1,7 @@
 import { Router } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, strategistConversations, strategistMessages } from "@workspace/db";
 import { sql, eq, desc, asc } from "drizzle-orm";
-import { CAMPAIGN_CONTEXT } from "./ai";
+import { buildSmartAssistResponse } from "./ai";
 import { requireAuth } from "../lib/auth";
 
 const router = Router();
@@ -11,7 +10,7 @@ const router = Router();
 router.use(requireAuth);
 
 const STRATEGIST_ROLE = `
-ROLE: AI CHIEF STRATEGIST
+ROLE: CHIEF STRATEGIST
 You are the campaign's most senior strategic advisor — the Chief Strategist sitting at the right hand of the candidate and campaign manager. You see the whole board: voters, field operations, money, message, threats and the calendar.
 
 How you operate:
@@ -100,7 +99,7 @@ async function buildLiveDigest(): Promise<string> {
           const row = r as { ward: string; expected_turnout_rate: number; mule_support_share: number; reg: string | number };
           const reg = Number(row.reg);
           const predicted = Math.round((reg * row.expected_turnout_rate * row.mule_support_share) / 10000);
-          return `${row.ward}: ${reg.toLocaleString()} reg, ${row.expected_turnout_rate}% turnout, ${row.mule_support_share}% support → ~${predicted.toLocaleString()} Kaloki votes`;
+          return `${row.ward}: ${reg.toLocaleString()} reg, ${row.expected_turnout_rate}% turnout, ${row.mule_support_share}% support → ~${predicted.toLocaleString()} Mule votes`;
         })
         .join(" | ");
     }
@@ -255,35 +254,12 @@ router.post("/chat", async (req, res) => {
     res.setHeader("Connection", "keep-alive");
     res.write(`data: ${JSON.stringify({ conversationId: convId })}\n\n`);
 
-    let assistantText = "";
-    try {
-      const stream = await openai.chat.completions.create({
-        model: "gpt-5.1",
-        max_completion_tokens: 1536,
-        messages: [
-          { role: "system", content: `${CAMPAIGN_CONTEXT}\n\n${STRATEGIST_ROLE}\n\n${digest}` },
-          ...prior.map((m) => ({
-            role: (m.role === "assistant" ? "assistant" : "user") as "assistant" | "user",
-            content: m.content,
-          })),
-          { role: "user", content: text },
-        ],
-        stream: true,
-      });
-
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content;
-        if (content) {
-          assistantText += content;
-          res.write(`data: ${JSON.stringify({ content })}\n\n`);
-        }
-      }
-    } catch (err) {
-      req.log.error({ err }, "strategist AI stream failed");
-      res.write(`data: ${JSON.stringify({ error: "AI service temporarily unavailable. Please retry." })}\n\n`);
-      res.end();
-      return;
-    }
+    const assistantText = buildSmartAssistResponse({
+      message: text,
+      module: "chief-strategist",
+      liveDigest: digest,
+    });
+    res.write(`data: ${JSON.stringify({ content: assistantText })}\n\n`);
 
     if (assistantText.trim()) {
       await db.insert(strategistMessages).values([
@@ -296,7 +272,7 @@ router.post("/chat", async (req, res) => {
         .where(eq(strategistConversations.id, convId));
       res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     } else {
-      res.write(`data: ${JSON.stringify({ error: "Empty response from AI. Please retry." })}\n\n`);
+      res.write(`data: ${JSON.stringify({ error: "Smart Assist returned an empty response. Please retry." })}\n\n`);
     }
     res.end();
   } catch (err) {

@@ -4,18 +4,18 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 const router = Router();
 
 export const CAMPAIGN_CONTEXT = `
-You are an AI assistant embedded in MAKUENI COMMAND CENTRE — a campaign management platform for Prof. Philip Kaloki (Prof. Kaloki), MNA candidate for Makueni Constituency, Makueni County, Kenya.
+You are an AI assistant embedded in MAKUENI COMMAND CENTRE — a campaign management platform for Hon. Stephen Mutinda Mule (Mwanamule), MNA candidate for Makueni Constituency, Machakos County, Kenya.
 
 CANDIDATE PROFILE:
-- Full Name: Prof. Philip Kaloki (Prof. Kaloki)
+- Full Name: Hon. Stephen Mutinda Mule (Mwanamule)
 - Party: Wiper Patriotic Front | Slogan: "Komboa Kenya" | Symbol: Umbrella
 - Profession: Biomedical Engineer | Experience: 15 years leadership
-- Home Ward: Kaiti | Contact: 0725 988 683
+- Home Ward: Makueni West | Contact: 0725 988 683
 - Target: 85%+ vote share
 
 CONSTITUENCY:
 - Population: 187,600 | Registered Voters: 78,000
-- 6 constituencies and 30 official county assembly wards across Mbooni, Kilome, Kaiti, Makueni, Kibwezi West and Kibwezi East
+- 5 Wards: Tala (40 stations), Makueni West (55 stations), Makueni North (26 stations), Makueni East (24 stations), Kyeleni (20 stations)
 - Total Polling Stations: 165
 - Youth 18-35: 75,000 | Women: 88,800
 - Key Issues: Clean water, road infrastructure, youth employment, security
@@ -33,13 +33,13 @@ CAMPAIGN PILLARS:
 ELECTION: August 9, 2027 | SWOT Threats: Low voter turnout, ruling party financing, negative social media.
 
 NARRATIVE PLAYBOOK (core storylines — ground all messaging, speeches and rebuttals in these; mix English, Kiswahili and Kikamba as appropriate to the channel):
-1. Development & Reliability (PRIMARY): "A trusted engineer to fix Makueni's basics — water, roads, jobs." Links his biomedical-engineer credibility to concrete delivery. e.g. "Prof. Kaloki: Mhandisi wa Maendeleo, Komboa Makueni." / "Under the Umbrella, Makueni Must Move Forward."
-2. Youth & Jobs: "The youth are the engine; the MP is the connector." Practical empowerment (skills, hustles, bodaboda, ICT) for 75,000 youth. e.g. "Vijana Kwanza, Kazi Kwanza – Prof. Kaloki aũsya matalanta ma Makueni."
-3. Water & Roads (issue-specific): "No more excuses on water and roads." e.g. "Maji, Barabara, Kazi – Prof. Kaloki Delivers for Makueni."
+1. Development & Reliability (PRIMARY): "A trusted engineer to fix Makueni's basics — water, roads, jobs." Links his biomedical-engineer credibility to concrete delivery. e.g. "Mwanamule: Mhandisi wa Maendeleo, Komboa Makueni." / "Under the Umbrella, Makueni Must Move Forward."
+2. Youth & Jobs: "The youth are the engine; the MP is the connector." Practical empowerment (skills, hustles, bodaboda, ICT) for 75,000 youth. e.g. "Vijana Kwanza, Kazi Kwanza – Mwanamule aũsya matalanta ma Makueni."
+3. Water & Roads (issue-specific): "No more excuses on water and roads." e.g. "Maji, Barabara, Kazi – Mwanamule Delivers for Makueni."
 4. Integrity & Oversight: "A serious MP who fights for Makueni's share in Nairobi — not a holiday MP." e.g. "Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." / "Maendeleo Bila Ulaghai."
-5. Local Pride & Homegrown Leadership: "One of us — knows our roads, churches, quarries." Home-ward advantage (Kaiti). e.g. "From Makueni, For Makueni – Prof. Kaloki Under the Umbrella."
+5. Local Pride & Homegrown Leadership: "One of us — knows our roads, churches, quarries." Home-ward advantage (Makueni West). e.g. "From Makueni, For Makueni – Mwanamule Under the Umbrella."
 
-LOCALIZATION: Mbooni and Kilome → agriculture, roads and water. Kaiti and Makueni → markets, health, youth and urban services. Kibwezi East and West → water, livestock, irrigation, transport and climate resilience. Posters/billboards: short bilingual lines (top "Komboa Kenya", bottom "Komboa Makueni na Prof. Kaloki – Maji, Barabara, Kazi"). Barazas/church: candidate leans into Kikamba, MC uses Kiswahili & English. Online: youth-focused variants. Offline markets: water/roads + integrity lines.
+LOCALIZATION: Tala → markets, youth, bodaboda, security. Makueni West/North/East → water, coffee prices, roads, bursaries. Kyeleni → water, feeder roads, security, quarry safety. Posters/billboards: short bilingual lines (top "Komboa Kenya", bottom "Komboa Makueni na Mwanamule – Maji, Barabara, Kazi"). Barazas/church: candidate leans into Kikamba, MC uses Kiswahili & English. Online: youth-focused variants. Offline markets: water/roads + integrity lines.
 
 Respond concisely, professionally and strategically. Use Kenya-specific political context. Always frame advice for Makueni constituency and the candidate's strengths.
 `.trim();
@@ -65,6 +65,114 @@ const MODULE_CONTEXTS: Record<string, string> = {
   "voters-db": "You are a constituent database analyst. Help search, analyze and extract insights from the voter registry.",
 };
 
+
+
+export function buildSmartAssistResponse({
+  message,
+  module = "dashboard",
+  context = {},
+  liveDigest,
+}: {
+  message: string;
+  module?: string;
+  context?: Record<string, unknown>;
+  liveDigest?: string;
+}): string {
+  const query = message.trim();
+  const lower = query.toLowerCase();
+  const moduleName = module.replace(/-/g, " ");
+
+  if (/^(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(lower)) {
+    return `Hello! I am Smart Assist. I can help you search campaign information, review ${moduleName}, identify priorities, prepare field actions, and guide you to public research sources. What would you like to work on?`;
+  }
+
+  if (lower.includes("what can you do") || lower === "help" || lower.includes("how can you help")) {
+    return `Smart Assist can help with:
+1. Campaign and constituency information
+2. Contacts, wards and polling-station guidance
+3. Field operations and volunteer planning
+4. Messaging and event preparation
+5. Social-listening research prompts
+6. Chief Strategist recommendations based on available campaign data
+
+Try: “Give me today’s priorities”, “Plan ward outreach”, or “Research water issues in Makueni”.`;
+  }
+
+  if (lower.includes("google") || lower.includes("news") || lower.includes("social listening") || lower.includes("what are people saying") || lower.includes("research")) {
+    const encoded = encodeURIComponent(query.replace(/social listening|research/gi, "").trim() || "Makueni campaign issues");
+    return `SMART RESEARCH
+
+Use these public searches for the latest information:
+• Google News: https://news.google.com/search?q=${encoded}
+• Google Search: https://www.google.com/search?q=${encoded}
+• YouTube: https://www.youtube.com/results?search_query=${encoded}
+• X: https://x.com/search?q=${encoded}&src=typed_query
+
+Save useful findings in a Campaign Workspace and record the source, date, issue, ward and recommended action.`;
+  }
+
+  if (lower.includes("priority") || lower.includes("today") || lower.includes("this week")) {
+    return `CURRENT PRIORITIES FOR ${moduleName.toUpperCase()}
+
+1. Verify the latest ward and polling-station data before making decisions.
+2. Identify the three weakest coverage areas and assign an owner to each.
+3. Convert every major issue into a field action, a message and a measurable target.
+4. Review open incidents, pending approvals and upcoming events.
+5. End the week with a short evidence-based progress report.
+
+Next action: select one ward or issue and I will structure a focused action plan.`;
+  }
+
+  if (lower.includes("water") || lower.includes("road") || lower.includes("youth") || lower.includes("jobs") || lower.includes("health")) {
+    const issue = lower.includes("water") ? "water" : lower.includes("road") ? "roads" : lower.includes("health") ? "healthcare" : "youth employment";
+    return `${issue.toUpperCase()} ACTION FRAMEWORK
+
+• Evidence: gather current field reports, photos, affected locations and resident quotations.
+• Geography: rank wards and polling stations by urgency.
+• Message: explain the problem, the practical intervention and the delivery timeline.
+• Field action: assign a local lead and conduct targeted listening meetings.
+• Measurement: track households reached, commitments recorded and follow-up actions completed.
+
+For public listening, search Google News, YouTube and X using “${issue} Makueni”.`;
+  }
+
+  if (lower.includes("ward") || lower.includes("polling station") || lower.includes("constituency")) {
+    return `GEOGRAPHIC CAMPAIGN CHECK
+
+For the requested area, review:
+• Registered voters and polling stations
+• Contacts and identified supporters
+• Active volunteers and field visits
+• Local issues and incidents
+• Upcoming events and responsible team members
+
+Open the GIS Centre or Constituency Intelligence page, choose the area, then ask me for an outreach or risk plan.`;
+  }
+
+  if (lower.includes("message") || lower.includes("sms") || lower.includes("whatsapp")) {
+    return `MESSAGE DRAFT
+
+Hello. Our campaign team is listening and working with residents to address the issues that matter most in every ward. Please share your priority and join the next community engagement meeting. Together, we can build accountable leadership and practical development.
+
+Before sending: add the exact location, date, contact and approved campaign signature.`;
+  }
+
+  const contextKeys = Object.keys(context);
+  const contextNote = contextKeys.length
+    ? ` I can see module context fields: ${contextKeys.slice(0, 6).join(", ")}.`
+    : "";
+  const digestNote = liveDigest ? `
+
+AVAILABLE CAMPAIGN SNAPSHOT
+${liveDigest}` : "";
+
+  return `SMART ASSIST — ${moduleName.toUpperCase()}
+
+I understood your request as: “${query}”.${contextNote}
+
+I do not require an AI API key. I work with structured campaign guidance, the available system data and public-search links. Ask a more specific question about a ward, issue, message, event, volunteer operation, polling station or campaign priority.${digestNote}`;
+}
+
 const QUICK_PROMPTS: Record<string, string[]> = {
   dashboard: [
     "Summarize our campaign readiness and biggest gaps",
@@ -73,7 +181,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
   ],
   messaging: [
     "Draft an SMS urging voters to register in Makueni",
-    "Write a WhatsApp message announcing a baraza in Wote/Nziu",
+    "Write a WhatsApp message announcing a baraza in Tala",
     "Create a fundraising appeal message in Swahili",
     "Draft a youth empowerment campaign message",
   ],
@@ -103,8 +211,8 @@ const QUICK_PROMPTS: Record<string, string[]> = {
     "How do we analyze survey results for ward-level insights?",
   ],
   events: [
-    "Plan a rally in Wote/Nziu for 500 attendees",
-    "What makes a successful baraza in rural Makueni?",
+    "Plan a rally in Tala for 500 attendees",
+    "What makes a successful baraza in rural Machakos?",
     "Suggest 5 community event ideas for youth engagement",
   ],
   intelligence: [
@@ -133,7 +241,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
     "How do we monitor results and prevent rigging?",
   ],
   swot: [
-    "What are Philip Kaloki's 3 strongest political assets?",
+    "What are Stephen Mule's 3 strongest political assets?",
     "What weaknesses could opponents exploit most effectively?",
     "What political opportunities exist in Makueni right now?",
     "What are the top threats to winning in August 2027?",
@@ -141,7 +249,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
   ],
   credentials: [
     "Research water access legislation relevant to Makueni",
-    "Suggest 3 private member bills Philip Kaloki could sponsor",
+    "Suggest 3 private member bills Stephen Mule could sponsor",
     "Summarize the CDF Act and how to maximize it",
   ],
   analytics: [
@@ -192,7 +300,7 @@ Generate 30-40 checklist items covering ALL of these domains:
 - Technology & Data (voter database, SMS platform, WhatsApp broadcast, reporting tools)
 - Candidate Welfare (schedule, security, transportation, health)
 
-Each item must be specific to Makueni Constituency and Prof. Philip Kaloki's campaign. Assign weight "high" to critical pre-election requirements, "medium" to important items, "low" to nice-to-haves.`,
+Each item must be specific to Makueni Constituency and Hon. Stephen Mule's campaign. Assign weight "high" to critical pre-election requirements, "medium" to important items, "low" to nice-to-haves.`,
         },
         {
           role: "user",
@@ -334,42 +442,13 @@ router.post("/assist", async (req, res) => {
     return;
   }
 
-  const moduleCtx = MODULE_CONTEXTS[module] ?? MODULE_CONTEXTS.dashboard;
-  const contextStr =
-    Object.keys(context).length > 0
-      ? `\n\nCURRENT MODULE DATA:\n${JSON.stringify(context, null, 2)}`
-      : "";
-
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
-  try {
-    const stream = await openai.chat.completions.create({
-      model: "gpt-5.1",
-      max_completion_tokens: 1024,
-      messages: [
-        {
-          role: "system",
-          content: `${CAMPAIGN_CONTEXT}\n\nMODULE: ${module.toUpperCase()}\nROLE: ${moduleCtx}${contextStr}`,
-        },
-        { role: "user", content: message },
-      ],
-      stream: true,
-    });
-
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
-      }
-    }
-    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-  } catch (_err) {
-    res.write(
-      `data: ${JSON.stringify({ error: "AI service temporarily unavailable. Please retry." })}\n\n`
-    );
-  }
+  const content = buildSmartAssistResponse({ message, module, context });
+  res.write(`data: ${JSON.stringify({ content })}\n\n`);
+  res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
   res.end();
 });
 

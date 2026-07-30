@@ -69,6 +69,9 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
         signal: abortRef.current.signal,
       });
 
+      const contentType = resp.headers.get("content-type") ?? "";
+      if (!resp.ok) throw new Error(`Smart Assist request failed (${resp.status})`);
+      if (!contentType.includes("text/event-stream")) throw new Error("Smart Assist API returned a web page instead of data. Deploy the updated API server.");
       if (!resp.body) throw new Error("No response body");
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -105,7 +108,7 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
       if (err?.name !== "AbortError") {
         setMessages(prev => {
           const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: "⚠ Connection error. Please retry." };
+          updated[updated.length - 1] = { role: "assistant", content: `⚠ ${err?.message ?? "Connection error. Please retry."}` };
           return updated;
         });
       }
@@ -141,25 +144,25 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
       <button
         onClick={() => setOpen(v => !v)}
         className={cn(
-          "fixed bottom-20 right-3 z-[55] flex items-center gap-2 border px-3 py-2.5 font-mono text-[11px] font-bold tracking-widest shadow-lg transition-all sm:bottom-6 sm:right-6 sm:px-4 sm:text-xs",
+          "fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 font-mono text-xs font-bold tracking-widest border transition-all shadow-lg",
           open
             ? "bg-primary text-primary-foreground border-primary"
             : "bg-card text-primary border-primary/50 hover:bg-primary/10"
         )}
       >
         <Sparkles className="w-3.5 h-3.5" />
-        AI ASSIST
+        SMART ASSIST
         <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
       </button>
 
       {/* Panel */}
       {open && (
-        <div className="fixed inset-x-2 bottom-20 z-[80] flex max-h-[72dvh] flex-col border border-primary/30 bg-card shadow-2xl sm:inset-x-auto sm:bottom-20 sm:right-6 sm:w-[420px]">
+        <div className="fixed bottom-20 right-6 z-50 w-[420px] max-h-[70vh] flex flex-col bg-card border border-primary/30 shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5 shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-primary" />
-              <span className="font-mono text-xs font-bold tracking-widest text-primary">AI ASSIST</span>
+              <span className="font-mono text-xs font-bold tracking-widest text-primary">SMART ASSIST</span>
               <span className="font-mono text-[9px] text-muted-foreground border border-border px-1.5 py-0.5">[ {moduleLabel} ]</span>
             </div>
             <div className="flex items-center gap-2">
@@ -197,14 +200,14 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Sparkles className="w-6 h-6 text-primary/40 mb-2" />
-                <p className="font-mono text-xs text-muted-foreground">Campaign AI is ready.</p>
+                <p className="font-mono text-xs text-muted-foreground">Smart Assist is ready.</p>
                 <p className="font-mono text-[10px] text-muted-foreground/60 mt-1">Ask anything about {moduleLabel.toLowerCase()}.</p>
               </div>
             )}
             {messages.map((msg, idx) => (
               <div key={idx} className={cn("flex flex-col gap-1", msg.role === "user" ? "items-end" : "items-start")}>
                 <span className="font-mono text-[8px] text-muted-foreground/60 tracking-widest px-1">
-                  {msg.role === "user" ? "YOU" : "ACL AI"}
+                  {msg.role === "user" ? "YOU" : "SMART ASSIST"}
                 </span>
                 <div className={cn(
                   "relative group max-w-[92%] px-3 py-2 text-[11px] leading-relaxed font-sans",
@@ -257,7 +260,7 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
                 <Send className="w-3.5 h-3.5" />
               </button>
             </div>
-            <p className="font-mono text-[8px] text-muted-foreground/50 mt-1.5">Shift+Enter for new line · Powered by ACL AI</p>
+            <p className="font-mono text-[8px] text-muted-foreground/50 mt-1.5">Shift+Enter for new line · Powered by campaign data and smart search</p>
           </div>
         </div>
       )}

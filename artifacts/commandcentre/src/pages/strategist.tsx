@@ -237,7 +237,7 @@ export default function Strategist() {
             <BrainCircuit className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight">AI CHIEF STRATEGIST</h1>
+            <h1 className="text-lg font-bold tracking-tight">CHIEF STRATEGIST</h1>
             <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-widest">
               Senior strategic counsel · grounded in live campaign data
             </p>
