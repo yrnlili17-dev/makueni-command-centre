@@ -6,6 +6,8 @@ import {
 import type { CampaignEventInput } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, X, Check, Trash2, Calendar, MapPin, Users } from "lucide-react";
+import { CAMPAIGN_UI } from "../config/campaign-ui";
+import { CAMPAIGN_OPERATIONS } from "../config/campaign-operations";
 
 const EVENT_TYPES = ["rally", "townhall", "canvass", "fundraiser", "debate", "training", "press_conference", "community"];
 
@@ -33,7 +35,18 @@ export default function Events() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-widest">EVENT LOGISTICS</h1>
+          <h1 className="text-xl font-bold tracking-widest">
+  {CAMPAIGN_UI.commandCentreTitle}
+</h1>
+
+<p className="text-sm text-muted-foreground mt-1">
+  {CAMPAIGN_OPERATIONS.commandCentre}
+</p>
+
+<p className="text-xs text-muted-foreground">
+  {CAMPAIGN_OPERATIONS.constituencies} Constituencies •{" "}
+  {CAMPAIGN_OPERATIONS.wards} Wards
+</p>
           <p className="text-[10px] font-mono text-muted-foreground mt-1">CAMPAIGN EVENT COMMAND</p>
         </div>
         <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 font-mono text-xs hover:bg-primary/90">

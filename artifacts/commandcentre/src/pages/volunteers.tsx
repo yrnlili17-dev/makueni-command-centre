@@ -8,6 +8,8 @@ import {
   ChevronDown, ChevronUp, TrendingUp, Flag, User, Shield, Calendar,
   Link2, Copy, ExternalLink
 } from "lucide-react";
+import { CAMPAIGN_UI } from "../config/campaign-ui";
+import { CAMPAIGN_OPERATIONS } from "../config/campaign-operations";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -196,7 +198,18 @@ export default function Volunteers() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-widest">VOLUNTEER COMMAND</h1>
+          <h1 className="text-xl font-bold tracking-widest">
+  {CAMPAIGN_UI.commandCentreTitle}
+</h1>
+
+<p className="text-sm text-muted-foreground mt-1">
+  {CAMPAIGN_OPERATIONS.commandCentre}
+</p>
+
+<p className="text-xs text-muted-foreground">
+  {CAMPAIGN_OPERATIONS.constituencies} Constituencies •{" "}
+  {CAMPAIGN_OPERATIONS.wards} Wards
+</p>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5">GROUND FORCE MANAGEMENT · MAKUENI COUNTY</p>
         </div>
         {tab === "roster" && (

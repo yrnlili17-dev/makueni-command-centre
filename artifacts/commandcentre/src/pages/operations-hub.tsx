@@ -1,5 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, ClipboardList, MapPin, Plus, Users } from "lucide-react";
+import { CAMPAIGN_UI } from "../config/campaign-ui";
+import { CAMPAIGN_OPERATIONS } from "../config/campaign-operations";
 const BASE=import.meta.env.BASE_URL;
 async function api(path:string, init?:RequestInit){const r=await fetch(`${BASE}api/command-centre${path}`,{headers:{"Content-Type":"application/json"},...init});if(!r.ok)throw new Error(await r.text());return r.json();}
 export default function OperationsHub(){

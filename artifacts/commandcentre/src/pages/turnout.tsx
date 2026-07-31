@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, Users, Vote, Megaphone, Save, RotateCcw, Target } from "lucide-react";
+import { CAMPAIGN_UI } from "../config/campaign-ui";
+import { CAMPAIGN_OPERATIONS } from "../config/campaign-operations";
 
 const BASE = import.meta.env.BASE_URL;
 const API = `${BASE}api/turnout`;
@@ -111,11 +113,18 @@ export default function Turnout() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-wider flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" /> VOTER TURNOUT FORECAST
-          </h1>
-          <p className="font-mono text-[11px] text-muted-foreground mt-1">
-            Ward-level projection · registered voters × expected turnout × support · Prof. Philip Kaloki
-          </p>
+  <TrendingUp className="w-5 h-5 text-primary" />
+  {CAMPAIGN_UI.commandCentreTitle}
+</h1>
+
+<p className="font-mono text-[11px] text-muted-foreground mt-1">
+  {CAMPAIGN_OPERATIONS.commandCentre}
+</p>
+
+<p className="text-xs text-muted-foreground">
+  {CAMPAIGN_OPERATIONS.constituencies} Constituencies •{" "}
+  {CAMPAIGN_OPERATIONS.wards} Wards
+</p>
         </div>
         <button
           onClick={() => saveMutation.mutate()}

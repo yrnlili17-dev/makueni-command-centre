@@ -1,0 +1,1802 @@
+{
+  "summary": {
+    "generatedAt": "2026-07-30T17:52:08.535Z",
+    "frontendFilesScanned": 103,
+    "backendFilesScanned": 47,
+    "pagesFound": 38,
+    "frontendRoutesFound": 39,
+    "navigationPathsFound": 1,
+    "frontendApiCallsFound": 30,
+    "backendRouteDefinitionsFound": 181,
+    "issueCount": 223,
+    "high": 15,
+    "medium": 208,
+    "low": 0
+  },
+  "issues": [
+    {
+      "severity": "high",
+      "category": "non-clickable-button",
+      "file": "artifacts/commandcentre/src/components/layout.tsx",
+      "line": 199,
+      "message": "Button has no onClick handler and is not a submit button.",
+      "evidence": "<button className=\"touch-target grid place-items-center\" aria-label=\"Notifications\">"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button-component",
+      "file": "artifacts/commandcentre/src/components/ui/calendar.tsx",
+      "line": 189,
+      "message": "Button component has no onClick, asChild, submit behavior, or disabled state.",
+      "evidence": "<Button ref={ref} variant=\"ghost\" size=\"icon\" data-day={day.date.toLocaleDateString()} data-selected-single={ modifiers.selected && !modifiers.range_start && !modifiers.range_end && !modifiers.range_middle } data-range-s"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button-component",
+      "file": "artifacts/commandcentre/src/components/ui/input-group.tsx",
+      "line": 107,
+      "message": "Button component has no onClick, asChild, submit behavior, or disabled state.",
+      "evidence": "<Button type={type} data-size={size} variant={variant} className={cn(inputGroupButtonVariants({ size }), className)} {...props} />"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button",
+      "file": "artifacts/commandcentre/src/pages/communications-hub.tsx",
+      "line": 4,
+      "message": "Button has no onClick handler and is not a submit button.",
+      "evidence": "<button className=\"bg-primary text-primary-foreground px-4 py-2 flex gap-2 text-xs font-mono\">"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button",
+      "file": "artifacts/commandcentre/src/pages/election-day.tsx",
+      "line": 690,
+      "message": "Button has no onClick handler and is not a submit button.",
+      "evidence": "<button className=\"w-full border border-primary text-primary font-mono text-xs tracking-widest py-3 hover:bg-primary hover:text-white transition-colors\">"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button-component",
+      "file": "artifacts/commandcentre/src/pages/election-war-room.tsx",
+      "line": 196,
+      "message": "Button component has no onClick, asChild, submit behavior, or disabled state.",
+      "evidence": "<Button>"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button",
+      "file": "artifacts/commandcentre/src/pages/gis-centre.tsx",
+      "line": 3,
+      "message": "Button has no onClick handler and is not a submit button.",
+      "evidence": "<button key={w} className=\"text-left border border-border p-3 hover:border-primary hover:bg-primary/5\">"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button",
+      "file": "artifacts/commandcentre/src/pages/gis-intelligence.tsx",
+      "line": 161,
+      "message": "Button has no onClick handler and is not a submit button.",
+      "evidence": "<button type=\"button\" key={`${row.constituency}-${row.ward}`} className=\"group relative overflow-hidden rounded-md border p-4 text-left transition hover:border-primary/50 hover:bg-primary/5\" >"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button",
+      "file": "artifacts/commandcentre/src/pages/governance.tsx",
+      "line": 137,
+      "message": "Button has no onClick handler and is not a submit button.",
+      "evidence": "<button className=\"bg-primary px-4 font-mono text-xs text-primary-foreground\">"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button",
+      "file": "artifacts/commandcentre/src/pages/operations-hub.tsx",
+      "line": 10,
+      "message": "Button has no onClick handler and is not a submit button.",
+      "evidence": "<button className=\"bg-primary text-primary-foreground px-4 flex items-center gap-2 text-xs font-mono\">"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button-component",
+      "file": "artifacts/commandcentre/src/pages/public-campaign.tsx",
+      "line": 50,
+      "message": "Button component has no onClick, asChild, submit behavior, or disabled state.",
+      "evidence": "<Button size=\"lg\">"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button-component",
+      "file": "artifacts/commandcentre/src/pages/public-campaign.tsx",
+      "line": 51,
+      "message": "Button component has no onClick, asChild, submit behavior, or disabled state.",
+      "evidence": "<Button size=\"lg\" variant=\"outline\">"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button-component",
+      "file": "artifacts/commandcentre/src/pages/public-campaign.tsx",
+      "line": 85,
+      "message": "Button component has no onClick, asChild, submit behavior, or disabled state.",
+      "evidence": "<Button className=\"mt-7\" size=\"lg\">"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button",
+      "file": "artifacts/commandcentre/src/pages/reports-hub.tsx",
+      "line": 4,
+      "message": "Button has no onClick handler and is not a submit button.",
+      "evidence": "<button className=\"bg-primary text-primary-foreground px-4 flex gap-2 items-center text-xs font-mono\">"
+    },
+    {
+      "severity": "high",
+      "category": "non-clickable-button",
+      "file": "artifacts/commandcentre/src/pages/reports-hub.tsx",
+      "line": 4,
+      "message": "Button has no onClick handler and is not a submit button.",
+      "evidence": "<button className=\"border border-border p-2\" title=\"Export when report is ready\">"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/components/ai-assist-panel.tsx",
+      "line": 370,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"Ask Smart Assist…\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/components/ai-assist-panel.tsx",
+      "line": 371,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "className=\"max-h-28 min-h-11 flex-1 resize-none overflow-y-auto border border-border bg-secondary px-3 py-3 font-mono text-[12px] outline-none placeholder:text-muted-foreground/60 focus:border-primary disabled:opacity-50"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/components/ui/command.tsx",
+      "line": 47,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "\"flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50\","
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/components/ui/input.tsx",
+      "line": 11,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "\"flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-f"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/components/ui/select.tsx",
+      "line": 22,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "\"flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background data-[placeholder]:text-muted-foreground focus:outline-none"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/components/ui/textarea.tsx",
+      "line": 12,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "\"flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cur"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/admin.tsx",
+      "line": 341,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={inviteForm.name ?? \"\"} onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))} placeholder=\"e.g. John Mutua Kioko\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mono text-x"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/admin.tsx",
+      "line": 345,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input type=\"email\" value={inviteForm.email ?? \"\"} onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))} placeholder=\"e.g. john@kaloki2027.ke\" className=\"w-full bg-secondary border border-border px-3 py-2"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/admin.tsx",
+      "line": 349,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={inviteForm.phone ?? \"\"} onChange={e => setInviteForm(p => ({ ...p, phone: e.target.value }))} placeholder=\"+254 7XX XXX XXX\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mono text-xs f"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/admin.tsx",
+      "line": 360,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={inviteForm.notes ?? \"\"} onChange={e => setInviteForm(p => ({ ...p, notes: e.target.value }))} placeholder=\"e.g. Wote Ward Field Coordinator\" className=\"w-full bg-secondary border border-border px-3 py-2 fon"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/admin.tsx",
+      "line": 408,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder=\"Search users by name, email or role…\" className=\"bg-transparent font-mono text-xs focus:outline-none flex-1\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/admin.tsx",
+      "line": 432,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={editUserForm.name ?? \"\"} onChange={e => setEditUserForm(p => ({ ...p, name: e.target.value }))} placeholder=\"Name\" className=\"col-span-2 bg-secondary border border-border px-2 py-1.5 font-mono text-xs focus"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/admin.tsx",
+      "line": 433,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={editUserForm.phone ?? \"\"} onChange={e => setEditUserForm(p => ({ ...p, phone: e.target.value }))} placeholder=\"Phone\" className=\"bg-secondary border border-border px-2 py-1.5 font-mono text-xs focus:outline"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/admin.tsx",
+      "line": 440,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={editUserForm.notes ?? \"\"} onChange={e => setEditUserForm(p => ({ ...p, notes: e.target.value }))} placeholder=\"Notes / department…\" className=\"col-span-3 bg-secondary border border-border px-2 py-1.5 font-m"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/admin.tsx",
+      "line": 535,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={roleForm.name ?? \"\"} onChange={e => setRoleForm((p: any) => ({ ...p, name: e.target.value }))} placeholder=\"e.g. ward-coordinator\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mono tex"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/admin.tsx",
+      "line": 539,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={roleForm.description ?? \"\"} onChange={e => setRoleForm((p: any) => ({ ...p, description: e.target.value }))} placeholder=\"Who this role is for…\" className=\"w-full bg-secondary border border-border px-3 py-2"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/campaign-plan.tsx",
+      "line": 865,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={editForm.owner ?? \"\"} onChange={e => setEditForm(p => ({ ...p, owner: e.target.value }))} placeholder=\"Owner\" className=\"bg-card border border-border px-2 py-1.5 font-mono text-xs focus:outline-none focus:b"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/campaign-plan.tsx",
+      "line": 867,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={editForm.description ?? \"\"} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} placeholder=\"Description\" className=\"w-full bg-card border border-border px-2 py-1.5 font-mono text-xs f"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/campaign-plan.tsx",
+      "line": 869,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={editForm.notes ?? \"\"} onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))} placeholder=\"Notes\" className=\"bg-card border border-border px-2 py-1.5 font-mono text-xs focus:outline-none focus:b"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/campaign-plan.tsx",
+      "line": 1059,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={readinessForm.item} onChange={e => setReadinessForm(p => ({ ...p, item: e.target.value }))} placeholder=\"Checklist item description…\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mono "
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/campaign-plan.tsx",
+      "line": 1115,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"Add note…\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/campaign-plan.tsx",
+      "line": 1117,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "className=\"mt-0.5 w-full bg-transparent font-mono text-[9px] text-transparent placeholder:text-muted-foreground/30 group-hover:placeholder:text-muted-foreground/60 italic focus:outline-none focus:text-foreground border-b"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/campaign-plan.tsx",
+      "line": 1117,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "className=\"mt-0.5 w-full bg-transparent font-mono text-[9px] text-transparent placeholder:text-muted-foreground/30 group-hover:placeholder:text-muted-foreground/60 italic focus:outline-none focus:text-foreground border-b"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/communications-hub.tsx",
+      "line": 4,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "export default function CommunicationsHub(){const [briefs,setBriefs]=useState<any[]>([]),[title,setTitle]=useState(''),[summary,setSummary]=useState('');const load=()=>api('/briefs').then(setBriefs);useEffect(()=>{load()"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/communications-hub.tsx",
+      "line": 4,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "export default function CommunicationsHub(){const [briefs,setBriefs]=useState<any[]>([]),[title,setTitle]=useState(''),[summary,setSummary]=useState('');const load=()=>api('/briefs').then(setBriefs);useEffect(()=>{load()"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 543,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={recordForm.title ?? \"\"} onChange={e => setRecordForm(p => ({ ...p, title: e.target.value }))} placeholder=\"e.g. National Cohesion and Integration (Amendment) Bill, 2024\" className=\"w-full bg-secondary borde"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 569,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<textarea rows={2} value={recordForm.description ?? \"\"} onChange={e => setRecordForm(p => ({ ...p, description: e.target.value }))} placeholder=\"What the bill/motion/petition covers…\" className=\"w-full bg-secondary borde"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 573,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={recordForm.impact ?? \"\"} onChange={e => setRecordForm(p => ({ ...p, impact: e.target.value }))} placeholder=\"What change this achieves for constituents…\" className=\"w-full bg-secondary border border-border "
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 577,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={recordForm.beneficiaries ?? \"\"} onChange={e => setRecordForm(p => ({ ...p, beneficiaries: e.target.value }))} placeholder=\"e.g. 50,000 farmers in Makueni\" className=\"w-full bg-secondary border border-border"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 581,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={recordForm.session ?? \"\"} onChange={e => setRecordForm(p => ({ ...p, session: e.target.value }))} placeholder=\"e.g. 13th Parliament, 1st Session\" className=\"w-full bg-secondary border border-border px-3 py-"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 585,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={(recordForm.evidenceLinks ?? []).join(\", \")} onChange={e => setRecordForm(p => ({ ...p, evidenceLinks: e.target.value.split(\",\").map((s: string) => s.trim()).filter(Boolean) }))} placeholder=\"Hansard URL, G"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 640,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<div className=\"col-span-2\"><input value={editRecordForm.impact ?? \"\"} onChange={e => setEditRecordForm(p => ({ ...p, impact: e.target.value }))} placeholder=\"Impact…\" className=\"w-full bg-secondary border border-border "
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 641,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={editRecordForm.beneficiaries ?? \"\"} onChange={e => setEditRecordForm(p => ({ ...p, beneficiaries: e.target.value }))} placeholder=\"Beneficiaries…\" className=\"bg-secondary border border-border px-2 py-1.5 fo"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 727,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={achForm.title ?? \"\"} onChange={e => setAchForm(p => ({ ...p, title: e.target.value }))} placeholder=\"e.g. Wote–Mavindini Road Tarmacking, Phase 1\" className=\"w-full bg-secondary border border-border px-3 py"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 731,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={achForm.year ?? \"\"} onChange={e => setAchForm(p => ({ ...p, year: e.target.value }))} placeholder=\"2024\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none fo"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 754,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<textarea rows={2} value={achForm.description ?? \"\"} onChange={e => setAchForm(p => ({ ...p, description: e.target.value }))} placeholder=\"Detailed description of the project or achievement…\" className=\"w-full bg-seconda"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 758,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={achForm.impactMetric ?? \"\"} onChange={e => setAchForm(p => ({ ...p, impactMetric: e.target.value }))} placeholder=\"e.g. households connected\" className=\"w-full bg-secondary border border-border px-3 py-2 fo"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 762,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={achForm.impactValue ?? \"\"} onChange={e => setAchForm(p => ({ ...p, impactValue: e.target.value }))} placeholder=\"e.g. 1,200\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mono text-xs f"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 766,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={achForm.budget ?? \"\"} onChange={e => setAchForm(p => ({ ...p, budget: e.target.value }))} placeholder=\"e.g. 45,000,000\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 770,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={achForm.fundingSource ?? \"\"} onChange={e => setAchForm(p => ({ ...p, fundingSource: e.target.value }))} placeholder=\"e.g. NG-CDF, National Government, County\" className=\"w-full bg-secondary border border-bo"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 774,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={(achForm.partnerAgencies ?? []).join(\", \")} onChange={e => setAchForm(p => ({ ...p, partnerAgencies: e.target.value.split(\",\").map((s: string) => s.trim()).filter(Boolean) }))} placeholder=\"e.g. KeNHA, Mini"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 823,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={editAchForm.impactValue ?? \"\"} onChange={e => setEditAchForm(p => ({ ...p, impactValue: e.target.value }))} placeholder=\"Impact value…\" className=\"bg-secondary border border-border px-2 py-1.5 font-mono tex"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 824,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={editAchForm.impactMetric ?? \"\"} onChange={e => setEditAchForm(p => ({ ...p, impactMetric: e.target.value }))} placeholder=\"Impact metric…\" className=\"bg-secondary border border-border px-2 py-1.5 font-mono "
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/credentials.tsx",
+      "line": 909,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"e.g. What legislation can improve water access in rural Makueni?\""
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/dashboard.tsx",
+      "line": 78,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"TOTAL MEMBERS\" value={summary.totalMembers.toLocaleString()} icon={Users} sub=\"IDENTITY GRAPH\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/dashboard.tsx",
+      "line": 79,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"ACTIVE VOLUNTEERS\" value={summary.activeVolunteers} icon={Activity} sub=\"DEPLOYED\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/dashboard.tsx",
+      "line": 80,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"MESSAGES SENT\" value={summary.messagesSent.toLocaleString()} icon={MessageSquare} sub=\"ALL CHANNELS\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/dashboard.tsx",
+      "line": 81,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"DOORS KNOCKED\" value={summary.doorsKnocked.toLocaleString()} icon={Map} sub=\"FIELD OPS\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/dashboard.tsx",
+      "line": 82,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"WARDS COVERED\" value={summary.wardsCovered} icon={TrendingUp} sub=\"ACTIVE ZONES\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/dashboard.tsx",
+      "line": 83,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"OPEN THREATS\" value={summary.openThreats} icon={ShieldAlert} sub=\"NARRATIVE\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/dashboard.tsx",
+      "line": 84,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"READINESS SCORE\" value={`${summary.campaignReadiness}%`} icon={Target} sub=\"OVERALL\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/dashboard.tsx",
+      "line": 85,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"UPCOMING EVENTS\" value={summary.upcomingEvents} icon={Calendar} sub=\"SCHEDULED\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "hard-coded-status",
+      "file": "artifacts/commandcentre/src/pages/dashboard.tsx",
+      "line": 245,
+      "message": "Operational system status appears hard-coded rather than health-check driven.",
+      "evidence": "{ label: \"IDENTITY_GRAPH\", status: \"OPERATIONAL\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/election-day.tsx",
+      "line": 256,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"0\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/election-day.tsx",
+      "line": 284,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"Agent name\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/election-day.tsx",
+      "line": 427,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input required placeholder=\"Event title\" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} className=\"w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-n"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/election-day.tsx",
+      "line": 428,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<textarea required rows={2} placeholder=\"Description\" value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} className=\"w-full bg-secondary border border-border px-3 py-2 font-mono"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/election-war-room.tsx",
+      "line": 274,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"Search polling station, ward or constituency\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/field-ops.tsx",
+      "line": 269,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input required value={sessionForm.name ?? \"\"} onChange={e => setSessionForm(p => ({ ...p, name: e.target.value }))} placeholder=\"e.g. Wote Market Friday Baraza\" className=\"w-full bg-secondary border border-border px-3 p"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/field-ops.tsx",
+      "line": 281,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={sessionForm.notes ?? \"\"} onChange={e => setSessionForm(p => ({ ...p, notes: e.target.value }))} placeholder=\"Objectives, location, intelligence notes…\" className=\"w-full bg-secondary border border-border px"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/field-ops.tsx",
+      "line": 435,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={visitForm.notes ?? \"\"} onChange={e => setVisitForm(p => ({ ...p, notes: e.target.value }))} placeholder=\"Concerns raised, commitments made, follow-up needed…\" className=\"w-full bg-card border border-border "
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 161,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"Search donors…\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 184,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"FULL NAME\" required placeholder=\"Hon. James Mutua\" value={form.name ?? \"\"} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 186,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"PHONE\" placeholder=\"0712 345 678\" value={form.phone ?? \"\"} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 187,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"EMAIL\" type=\"email\" placeholder=\"donor@email.com\" value={form.email ?? \"\"} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 206,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"NOTES\" placeholder=\"Key relationship notes\" value={form.notes ?? \"\"} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 207,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"TAGS\" placeholder=\"elder, businessman, diaspora-nairobi\" value={form.tags ?? \"\"} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 330,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={donorSearch} onChange={e => setDonorSearch(e.target.value)} placeholder=\"Search donor…\" className=\"bg-secondary border border-border pl-8 pr-3 py-1.5 font-mono text-xs focus:outline-none focus:border-primar"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 352,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"DONOR NAME\" required placeholder=\"Hon. James Mutua\" value={form.donorName ?? \"\"} onChange={e => setForm(p => ({ ...p, donorName: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 353,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"AMOUNT (KES)\" required type=\"number\" min={1} placeholder=\"50000\" value={form.amount ?? \"\"} onChange={e => setForm(p => ({ ...p, amount: parseInt(e.target.value) }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 369,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"REFERENCE / M-PESA CODE\" placeholder=\"QGT7X3KP0N\" value={form.reference ?? \"\"} onChange={e => setForm(p => ({ ...p, reference: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 371,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"NOTES\" placeholder=\"Diaspora fundraiser dinner pledge\" value={form.notes ?? \"\"} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 457,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<div className=\"col-span-2\"><Input label=\"CAMPAIGN NAME\" required placeholder=\"Nairobi Diaspora Fundraiser\" value={form.name ?? \"\"} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 458,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"TARGET (KES)\" type=\"number\" min={0} placeholder=\"500000\" value={form.goalAmount ?? \"\"} onChange={e => setForm(p => ({ ...p, goalAmount: parseInt(e.target.value) }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 459,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"DESCRIPTION\" placeholder=\"Brief objective\" value={form.description ?? \"\"} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 564,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"DONOR NAME\" required placeholder=\"Hon. James Mutua\" value={form.donorName ?? \"\"} onChange={e => setForm(p => ({ ...p, donorName: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 565,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"AMOUNT (KES)\" required type=\"number\" min={1} placeholder=\"100000\" value={form.amount ?? \"\"} onChange={e => setForm(p => ({ ...p, amount: parseInt(e.target.value) }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 575,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"NOTES\" placeholder=\"Commitment details\" value={form.notes ?? \"\"} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 930,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"PAYBILL NUMBER\" value={mpesa.paybill} onChange={e => setMpesa(p => ({ ...p, paybill: e.target.value }))} placeholder=\"123456\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 931,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"ACCOUNT NUMBER\" value={mpesa.account} onChange={e => setMpesa(p => ({ ...p, account: e.target.value }))} placeholder=\"KALOKI2027\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 932,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"SHORTCODE (TILL)\" value={mpesa.shortcode} onChange={e => setMpesa(p => ({ ...p, shortcode: e.target.value }))} placeholder=\"400200\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 933,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"TILL NUMBER (OPTIONAL)\" value={mpesa.tillNumber} onChange={e => setMpesa(p => ({ ...p, tillNumber: e.target.value }))} placeholder=\"—\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 946,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"BANK NAME\" value={bank.bank} onChange={e => setBank(p => ({ ...p, bank: e.target.value }))} placeholder=\"Kenya Commercial Bank\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 947,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"BRANCH\" value={bank.branch} onChange={e => setBank(p => ({ ...p, branch: e.target.value }))} placeholder=\"Wote Branch\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 948,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"ACCOUNT NUMBER\" value={bank.account} onChange={e => setBank(p => ({ ...p, account: e.target.value }))} placeholder=\"1234567890\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 949,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"SWIFT CODE\" value={bank.swift} onChange={e => setBank(p => ({ ...p, swift: e.target.value }))} placeholder=\"KCBLKENX\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 959,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"PAYPAL EMAIL\" placeholder=\"fundraising@kaloki2027.ke\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 960,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"WESTERN UNION REFERENCE\" placeholder=\"KALOKI2027 KE\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 1093,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"PHONE NUMBER\" required placeholder=\"07XXXXXXXX\" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 1094,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"AMOUNT (KES)\" required type=\"number\" min={1} placeholder=\"1000\" value={form.amount} onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/fundraising.tsx",
+      "line": 1095,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"DONOR NAME (OPTIONAL)\" placeholder=\"Jane Mwikali\" value={form.donorName} onChange={e => setForm(p => ({ ...p, donorName: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/gis-intelligence.tsx",
+      "line": 147,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"Search ward or constituency\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/governance.tsx",
+      "line": 136,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<div className=\"flex flex-wrap gap-2\"><div className=\"relative min-w-64 flex-1\"><Search className=\"absolute left-3 top-2.5 h-4 w-4 text-muted-foreground\" /><input value={query} onChange={(e) => setQuery(e.target.value)} "
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/governance.tsx",
+      "line": 137,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{showFolder && <form onSubmit={createFolder} className=\"flex gap-2 border border-border bg-card p-3\"><input autoFocus value={folderName} onChange={(e) => setFolderName(e.target.value)} placeholder=\"Folder name\" className"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/governance.tsx",
+      "line": 138,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{showUpload && <form onSubmit={uploadDocument} className=\"grid gap-3 border border-primary/30 bg-card p-4 md:grid-cols-2\"><input type=\"file\" required onChange={(e) => setFile(e.target.files?.[0] || null)} className=\"md:c"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/governance.tsx",
+      "line": 138,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{showUpload && <form onSubmit={uploadDocument} className=\"grid gap-3 border border-primary/30 bg-card p-4 md:grid-cols-2\"><input type=\"file\" required onChange={(e) => setFile(e.target.files?.[0] || null)} className=\"md:c"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/governance.tsx",
+      "line": 138,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{showUpload && <form onSubmit={uploadDocument} className=\"grid gap-3 border border-primary/30 bg-card p-4 md:grid-cols-2\"><input type=\"file\" required onChange={(e) => setFile(e.target.files?.[0] || null)} className=\"md:c"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 633,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"REJECTION REASON…\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 741,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"@handle · Twitter/X · WhatsApp group · etc.\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 752,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"Paste the attack, claim, or negative social media post here…\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 957,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"bearerToken\", label: \"BEARER TOKEN\", placeholder: \"AAAA…\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 958,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"apiKey\", label: \"API KEY (v2)\", placeholder: \"Your API key\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 959,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"apiSecret\", label: \"API SECRET\", placeholder: \"Your API secret\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 966,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"accessToken\", label: \"PAGE ACCESS TOKEN\", placeholder: \"EAA…\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 967,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"pageId\", label: \"PAGE ID\", placeholder: \"Your Facebook Page ID\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 968,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"apiKey\", label: \"APP ID\", placeholder: \"Meta App ID\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 969,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"apiSecret\", label: \"APP SECRET\", placeholder: \"Meta App Secret\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 976,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"rssUrl\", label: \"GOOGLE ALERTS RSS URL\", placeholder: \"https://www.google.com/alerts/feeds/…\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 983,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"rssUrl\", label: \"RSS FEED URL\", placeholder: \"https://www.nation.co.ke/rss or custom feed\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 990,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"accessToken\", label: \"ACCESS TOKEN\", placeholder: \"TikTok Developer Access Token\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 991,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "{ key: \"apiKey\", label: \"CLIENT KEY\", placeholder: \"TikTok Client Key\" },"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 1019,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder={f.placeholder}"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 1019,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder={f.placeholder}"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/intelligence.tsx",
+      "line": 1160,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<div className=\"space-y-1\"><label className=\"text-[10px] font-mono text-muted-foreground\">CATEGORY *</label><input required value={briefForm.category ?? \"\"} onChange={e => setBriefForm(p => ({ ...p, category: e.target.va"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/kol.tsx",
+      "line": 93,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={form.handle ?? \"\"} onChange={e => setForm(p => ({ ...p, handle: e.target.value }))} placeholder=\"@handle\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none f"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/login.tsx",
+      "line": 67,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"username or id@campaign.org\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/login.tsx",
+      "line": 80,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"••••••••••••\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/members.tsx",
+      "line": 99,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={search} onChange={e => setSearch(e.target.value)} placeholder=\"SEARCH CONTACTS...\" className=\"w-full bg-card border border-border pl-8 pr-3 py-2 font-mono text-xs focus:outline-none focus:border-primary\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 150,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"API KEY\" required type=\"password\" placeholder=\"AT_API_KEY_...\" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 151,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"USERNAME\" required placeholder=\"sandbox or your username\" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 153,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"SENDER ID (SHORTCODE / ALPHANUMERIC)\" placeholder=\"e.g. KALOKI or 40100\" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 161,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"ACCOUNT SID\" required type=\"password\" placeholder=\"ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 162,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"AUTH TOKEN\" required type=\"password\" placeholder=\"your_auth_token\" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 164,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"FROM PHONE NUMBER\" placeholder=\"+12065550100\" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 171,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"API KEY\" required type=\"password\" placeholder=\"App xxxxxxxxxxxx\" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 172,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"BASE URL\" placeholder=\"xxxxx.api.infobip.com\" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 174,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"SENDER NAME / NUMBER\" placeholder=\"KALOKI2027\" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 268,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"PERMANENT ACCESS TOKEN\" required type=\"password\" placeholder=\"EAAxxxxxxxxxxxxxxxx...\" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 271,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"PHONE NUMBER ID\" required placeholder=\"123456789012345\" value={form.phoneNumberId} onChange={e => setForm(p => ({ ...p, phoneNumberId: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 272,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"WHATSAPP BUSINESS ACCOUNT ID\" required placeholder=\"123456789012345\" value={form.businessAccountId} onChange={e => setForm(p => ({ ...p, businessAccountId: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 274,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"DISPLAY PHONE NUMBER\" placeholder=\"+254712345678\" value={form.phoneNumber} onChange={e => setForm(p => ({ ...p, phoneNumber: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 281,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"API KEY\" required type=\"password\" placeholder=\"AT_API_KEY_...\" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 282,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"USERNAME\" required placeholder=\"your_at_username\" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 284,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"SENDER ID / PHONE\" placeholder=\"+254712345678\" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 291,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"ACCOUNT SID\" required type=\"password\" placeholder=\"ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 292,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"AUTH TOKEN\" required type=\"password\" placeholder=\"your_auth_token\" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 294,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"WHATSAPP FROM NUMBER (with whatsapp: prefix)\" placeholder=\"whatsapp:+14155238886\" value={form.phoneNumber} onChange={e => setForm(p => ({ ...p, phoneNumber: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 390,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"API KEY\" required type=\"password\" placeholder={providerVal === \"sendgrid\" ? \"SG.xxxxxxxx...\" : \"AKIA...\"} value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 393,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"AWS SECRET KEY\" required type=\"password\" placeholder=\"aws_secret_access_key\" value={form.apiSecret} onChange={e => setForm(p => ({ ...p, apiSecret: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 395,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"FROM EMAIL\" required type=\"email\" placeholder=\"campaign@kaloki2027.ke\" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 396,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"FROM NAME\" placeholder=\"Prof. Philip Kaloki Campaign\" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 403,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"MANDRILL / MAILCHIMP API KEY\" required type=\"password\" placeholder=\"md-xxxxxxxxxxxxxxxxxxxxxxxx\" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 405,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"FROM EMAIL\" required type=\"email\" placeholder=\"campaign@kaloki2027.ke\" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 406,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"FROM NAME\" placeholder=\"Prof. Philip Kaloki Campaign\" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 412,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"SMTP HOST\" required placeholder=\"smtp.gmail.com\" value={form.smtpHost} onChange={e => setForm(p => ({ ...p, smtpHost: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 413,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"PORT\" required placeholder=\"587\" value={form.smtpPort} onChange={e => setForm(p => ({ ...p, smtpPort: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 414,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"SMTP USERNAME\" required placeholder=\"campaign@kaloki2027.ke\" value={form.smtpUser} onChange={e => setForm(p => ({ ...p, smtpUser: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 415,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"SMTP PASSWORD\" required type=\"password\" placeholder=\"app_password_here\" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 416,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"FROM EMAIL\" required type=\"email\" placeholder=\"campaign@kaloki2027.ke\" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 417,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<FieldInput label=\"FROM NAME\" placeholder=\"Prof. Philip Kaloki Campaign\" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/messaging.tsx",
+      "line": 509,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder={channel === \"email\" ? \"Email body (HTML supported)...\" : channel === \"whatsapp\" ? \"WhatsApp message (supports *bold*, _italic_, ~strikethrough~)...\" : \"SMS message (max 160 chars for 1 part)...\"}"
+    },
+    {
+      "severity": "medium",
+      "category": "possibly-unregistered-page",
+      "file": "artifacts/commandcentre/src/pages/not-found.tsx",
+      "line": 1,
+      "message": "Page may not have a matching registered route: /not-found, /not-found",
+      "evidence": ""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/operations-hub.tsx",
+      "line": 10,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<form onSubmit={add} className=\"bg-card border border-border p-4 flex gap-2\"><input value={title} onChange={e=>setTitle(e.target.value)} placeholder=\"Create a field task...\" className=\"flex-1 bg-background border border-"
+    },
+    {
+      "severity": "medium",
+      "category": "possibly-unregistered-page",
+      "file": "artifacts/commandcentre/src/pages/public-campaign.tsx",
+      "line": 1,
+      "message": "Page may not have a matching registered route: /public-campaign, /public-campaign",
+      "evidence": ""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/reports-hub.tsx",
+      "line": 4,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "export default function ReportsHub(){const [rows,setRows]=useState<any[]>([]),[title,setTitle]=useState('');const load=()=>api('/reports').then(setRows);useEffect(()=>{load()},[]);const add=async(e:FormEvent)=>{e.prevent"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/segments.tsx",
+      "line": 272,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input type=\"number\" value={form._manualSize ?? \"\"} onChange={e => setForm(p => ({ ...p, _manualSize: e.target.value }))} placeholder=\"Auto-calculated if blank\" className=\"w-full bg-secondary border border-border px-3 py"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/smart-assist.tsx",
+      "line": 51,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<div className=\"flex flex-col sm:flex-row gap-2\"><input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key===\"Enter\"&&search()} placeholder=\"Search candidate, ward, issue or opponent...\" className=\""
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/social-listening.tsx",
+      "line": 112,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"TOTAL MENTIONS\" value={counts.total} tone=\"text-foreground\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/social-listening.tsx",
+      "line": 113,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"POSITIVE\" value={counts.positive} tone=\"text-green-400\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/social-listening.tsx",
+      "line": 114,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"NEGATIVE\" value={counts.negative} tone=\"text-red-400\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/social-listening.tsx",
+      "line": 115,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"NEUTRAL\" value={counts.neutral} tone=\"text-yellow-400\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/speeches.tsx",
+      "line": 244,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder=\"e.g. youth, farmers, church congregation\" className={inputCls} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/speeches.tsx",
+      "line": 275,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"Bullet the specific promises, achievements or themes to include...\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/speeches.tsx",
+      "line": 318,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"Any specific issues to emphasize across the manifesto...\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/strategist.tsx",
+      "line": 332,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"Ask your Chief Strategist anything about the campaign...\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/strategist.tsx",
+      "line": 335,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "className=\"flex-1 resize-none rounded-lg border border-border/60 bg-card/50 px-4 py-3 text-sm focus:outline-none focus:border-primary/50 placeholder:text-muted-foreground/60\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 277,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={pollForm.title ?? \"\"} onChange={e => setPollForm(p => ({ ...p, title: e.target.value }))} placeholder=\"e.g. Which development project should be prioritised?\" className=\"w-full bg-secondary border border-bor"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 298,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={pollForm.description ?? \"\"} onChange={e => setPollForm(p => ({ ...p, description: e.target.value }))} placeholder=\"Optional context for respondents\" className=\"w-full bg-secondary border border-border px-3 "
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 311,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder={`Option ${idx + 1}…`}"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 388,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input placeholder=\"RESPONDENT NAME (optional)\" value={voteForm.respondentName ?? \"\"} onChange={e => setVoteForm(p => ({ ...p, respondentName: e.target.value }))} className=\"bg-secondary border border-border px-2 py-1.5 "
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 489,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={issueForm.title ?? \"\"} onChange={e => setIssueForm(p => ({ ...p, title: e.target.value }))} placeholder=\"e.g. Wote–Mavindini road impassable during rains\" className=\"w-full bg-secondary border border-border"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 512,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input type=\"number\" value={issueForm.affectedPopulation ?? \"\"} onChange={e => setIssueForm(p => ({ ...p, affectedPopulation: e.target.value }))} placeholder=\"Est. number of residents\" className=\"w-full bg-secondary bord"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 516,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={issueForm.reportedBy ?? \"\"} onChange={e => setIssueForm(p => ({ ...p, reportedBy: e.target.value }))} placeholder=\"Field agent / source\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mo"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 520,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<textarea value={issueForm.description ?? \"\"} onChange={e => setIssueForm(p => ({ ...p, description: e.target.value }))} rows={3} placeholder=\"Full description of the issue, background, and impact…\" className=\"w-full bg-"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 620,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input placeholder=\"AGENT NAME\" value={reportForm.reportedBy ?? \"\"} onChange={e => setReportForm(p => ({ ...p, reportedBy: e.target.value }))} className=\"bg-card border border-border px-2 py-1.5 font-mono text-[10px] foc"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 621,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input placeholder=\"LOCATION\" value={reportForm.location ?? \"\"} onChange={e => setReportForm(p => ({ ...p, location: e.target.value }))} className=\"bg-card border border-border px-2 py-1.5 font-mono text-[10px] focus:out"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 624,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<textarea value={reportForm.notes ?? \"\"} onChange={e => setReportForm(p => ({ ...p, notes: e.target.value }))} placeholder=\"Intelligence report notes…\" rows={2} className=\"w-full bg-card border border-border px-2 py-1.5 "
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 634,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={resolution} onChange={e => setResolution(e.target.value)} placeholder=\"RESOLUTION NOTES…\" className=\"flex-1 bg-secondary border border-green-400/30 px-3 py-1.5 font-mono text-xs focus:outline-none focus:bor"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 676,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={q.text ?? \"\"} onChange={e => setQuestions(qs => qs.map((item, i) => i === idx ? { ...item, text: e.target.value } : item))} placeholder=\"Question text…\" className=\"flex-1 bg-card border border-border px-2 p"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/surveys.tsx",
+      "line": 683,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={(q.options ?? []).join(\", \")} onChange={e => setQuestions(qs => qs.map((item, i) => i === idx ? { ...item, options: e.target.value.split(\",\").map(s => s.trim()) } : item))} placeholder=\"Option 1, Option 2, "
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/turnout.tsx",
+      "line": 136,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"PROJECTED TURNOUT\" value={`${data.totals.predictedTurnoutRate}%`} sub={`${fmt(data.totals.predictedVotes)} OF ${fmt(data.totals.registered)} VOTERS`} />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/turnout.tsx",
+      "line": 141,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"PROJECTED KALOKI VOTES\" value={fmt(data.totals.predictedCandidateVotes)} sub={`${data.totals.predictedCandidateShare}% PROJECTED VOTE SHARE`} accent=\"text-green-400\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/turnout.tsx",
+      "line": 147,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"REGISTERED VOTERS\" value={fmt(data.totals.registered)} sub={`${data.wards.length} WARDS · MAKUENI`} />"
+    },
+    {
+      "severity": "medium",
+      "category": "static-dashboard-card",
+      "file": "artifacts/commandcentre/src/pages/turnout.tsx",
+      "line": 152,
+      "message": "StatCard is display-only and has no navigation destination.",
+      "evidence": "<StatCard label=\"TOP GOTV PRIORITY\" value={data.totals.topGotvWard ?? \"—\"} sub={`+${fmt(data.totals.topGotvUpside)} POTENTIAL VOTES`} accent=\"text-yellow-400\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/volunteers.tsx",
+      "line": 413,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={taskForm.title ?? \"\"} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} placeholder=\"e.g. Canvass Wote Market, 200 doors\" className=\"w-full bg-secondary border border-border px-3 py-2 font"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/volunteers.tsx",
+      "line": 427,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={taskForm.targetMetric ?? \"\"} onChange={e => setTaskForm(p => ({ ...p, targetMetric: e.target.value }))} placeholder=\"e.g. Doors Knocked\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mo"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/volunteers.tsx",
+      "line": 431,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input type=\"number\" value={taskForm.targetValue ?? \"\"} onChange={e => setTaskForm(p => ({ ...p, targetValue: e.target.value }))} placeholder=\"200\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mono "
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/volunteers.tsx",
+      "line": 533,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input type=\"number\" min=\"0\" max=\"100\" value={logForm.completionPct ?? \"\"} onChange={e => setLogForm(p => ({ ...p, completionPct: e.target.value }))} placeholder=\"0-100\" className=\"w-full bg-card border border-border px-"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/volunteers.tsx",
+      "line": 543,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input type=\"number\" value={logForm.hoursSpent ?? \"\"} onChange={e => setLogForm(p => ({ ...p, hoursSpent: e.target.value }))} placeholder=\"0\" className=\"w-full bg-card border border-border px-2 py-1.5 font-mono text-xs f"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/volunteers.tsx",
+      "line": 547,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={logForm.notes ?? \"\"} onChange={e => setLogForm(p => ({ ...p, notes: e.target.value }))} placeholder=\"What was accomplished today?\" className=\"w-full bg-card border border-border px-2 py-1.5 font-mono text-x"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/volunteers.tsx",
+      "line": 551,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={logForm.blockers ?? \"\"} onChange={e => setLogForm(p => ({ ...p, blockers: e.target.value }))} placeholder=\"Any obstacles preventing progress?\" className=\"w-full bg-card border border-border border-red-400/2"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/volunteers.tsx",
+      "line": 669,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={issueForm.title ?? \"\"} onChange={e => setIssueForm(p => ({ ...p, title: e.target.value }))} placeholder=\"Brief description\" className=\"w-full bg-secondary border border-border px-3 py-2 font-mono text-xs fo"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/volunteers.tsx",
+      "line": 719,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={resolution} onChange={e => setResolution(e.target.value)} placeholder=\"RESOLUTION NOTES…\" className=\"flex-1 bg-secondary border border-green-400/30 px-3 py-1.5 font-mono text-xs focus:outline-none focus:bor"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 170,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === \"Enter\" && handleSearch()} placeholder=\"Name, National ID, Voter #...\" className=\"w-full bg-secondary border border-border pl-8 pr"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 430,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"FULL NAME\" required placeholder=\"John Mutua Kioko\" value={form.fullName ?? \"\"} onChange={e => setForm(p => ({ ...p, fullName: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 432,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"NATIONAL ID\" placeholder=\"12345678\" value={form.nationalId ?? \"\"} onChange={e => setForm(p => ({ ...p, nationalId: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 433,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"VOTER NUMBER / SERIAL\" placeholder=\"01234567\" value={form.voterNumber ?? \"\"} onChange={e => setForm(p => ({ ...p, voterNumber: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 434,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"PHONE\" type=\"tel\" placeholder=\"0712 345 678\" value={form.phone ?? \"\"} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 445,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"SUB-COUNTY\" placeholder=\"Makueni\" value={form.subCounty ?? \"\"} onChange={e => setForm(p => ({ ...p, subCounty: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 447,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"POLLING STATION\" placeholder=\"Wote Township Primary School\" value={form.pollingStation ?? \"\"} onChange={e => setForm(p => ({ ...p, pollingStation: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 449,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"STATION CODE\" placeholder=\"TAL-001\" value={form.pollingStationCode ?? \"\"} onChange={e => setForm(p => ({ ...p, pollingStationCode: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 450,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"STREAM\" placeholder=\"1\" value={form.stream ?? \"\"} onChange={e => setForm(p => ({ ...p, stream: e.target.value }))} />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 626,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "placeholder=\"iebc_live_xxxxxxxxxxxxxxxxxxxxxxxx\""
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 631,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"BASE URL\" value={form.baseUrl} onChange={e => setForm(p => ({ ...p, baseUrl: e.target.value }))} placeholder=\"https://api.iebc.or.ke/v1\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 632,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"CLIENT ID\" value={form.clientId} onChange={e => setForm(p => ({ ...p, clientId: e.target.value }))} placeholder=\"makueni-campaign-001\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 633,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"NOTES\" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder=\"Integration contact, expiry date etc.\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 658,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"POLLING STATION (OPTIONAL)\" value={syncOpts.pollingStation} onChange={e => setSyncOpts(p => ({ ...p, pollingStation: e.target.value }))} placeholder=\"Wote Township Primary\" />"
+    },
+    {
+      "severity": "medium",
+      "category": "placeholder",
+      "file": "artifacts/commandcentre/src/pages/voters-db.tsx",
+      "line": 659,
+      "message": "Potential unfinished implementation: placeholder",
+      "evidence": "<Input label=\"RECORD LIMIT\" type=\"number\" value={syncOpts.limit} onChange={e => setSyncOpts(p => ({ ...p, limit: e.target.value }))} placeholder=\"500\" />"
+    }
+  ]
+}

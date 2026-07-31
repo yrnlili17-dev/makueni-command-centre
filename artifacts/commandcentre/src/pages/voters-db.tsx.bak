@@ -912,20 +912,14 @@ export default function VotersDb() {
         <div>
           <h1 className="text-xl font-bold tracking-widest flex items-center gap-3">
             <Database className="w-5 h-5 text-primary" />
-            {CAMPAIGN_UI.commandCentreTitle}
+            CONSTITUENT DATABASE
           </h1>
-
           <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">
-            {CAMPAIGN_OPERATIONS.commandCentre}
-          </p>
-
-          <p className="text-xs text-muted-foreground">
-            {CAMPAIGN_OPERATIONS.constituencies} Constituencies •{" "}
-            {CAMPAIGN_OPERATIONS.wards} Wards
+            VOTER REGISTRY MANAGEMENT — MAKUENI COUNTY · IEBC INTEGRATION
           </p>
         </div>
         <div className="font-mono text-[10px] text-muted-foreground border border-border px-3 py-1.5 bg-card">
-          {CAMPAIGN_OPERATIONS.constituencies} Constituencies • {CAMPAIGN_OPERATIONS.wards} Wards
+          MAKUENI — 5 WARDS · 165 POLLING STATIONS
         </div>
       </div>
 

@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CAMPAIGN_UI } from "../config/campaign-ui";
+import { CAMPAIGN_OPERATIONS } from "../config/campaign-operations";
 
 type WardMetric = {
   ward: string;
@@ -101,14 +103,21 @@ export default function GisIntelligencePage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-xs tracking-[0.24em] text-primary">
-            V2.0-B
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            GIS & Campaign Intelligence
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Ward coverage, contact concentration, polling-station readiness and field risk.
-          </p>
+  {CAMPAIGN_OPERATIONS.election}
+</p>
+
+<h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+  {CAMPAIGN_UI.commandCentreTitle}
+</h1>
+
+<p className="mt-1 text-sm text-muted-foreground">
+  {CAMPAIGN_OPERATIONS.commandCentre}
+</p>
+
+<p className="text-xs text-muted-foreground">
+  {CAMPAIGN_OPERATIONS.constituencies} Constituencies •{" "}
+  {CAMPAIGN_OPERATIONS.wards} Wards
+</p>
         </div>
         <Button variant="outline" onClick={() => void load()}>
           <RefreshCw className="mr-2 h-4 w-4" />
