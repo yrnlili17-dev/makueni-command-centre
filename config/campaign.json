@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "2.1.0",
+  "candidate": {
+    "fullName": "Prof. Philip Kaloki",
+    "shortName": "Prof. Kaloki",
+    "displayName": "Prof. Philip Kaloki",
+    "title": "Prof.",
+    "position": "Governor",
+    "electionType": "Gubernatorial",
+    "county": "Makueni County",
+    "country": "Kenya"
+  },
+  "campaign": {
+    "name": "Kaloki 2027",
+    "party": "UDA",
+    "slogan": "",
+    "description": "Makueni County gubernatorial campaign command centre."
+  },
+  "contact": {
+    "phone": "",
+    "email": "",
+    "website": "",
+    "headquarters": ""
+  },
+  "runningMate": {
+    "name": "",
+    "configured": false
+  }
+}

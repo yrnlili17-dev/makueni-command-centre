@@ -217,7 +217,7 @@ async function seedMessaging(segments: any[]) {
       name: "Tala Rally Reminder — SMS",
       channel: "sms",
       status: "sent",
-      messageBody: "KUMBUSHO: Mkutano Mkuu wa Tala ni KESHO saa nne asubuhi. Mheshimiwa Mule atakuwa hapo. Njoo na jirani yako!",
+      messageBody: "KUMBUSHO: Mkutano Mkuu wa Tala ni KESHO saa nne asubuhi. Prof. Kaloki atakuwa hapo. Njoo na jirani yako!",
       segmentId: segments[1]!.id,
       recipientCount: 14,
       deliveredCount: 13,
@@ -391,7 +391,7 @@ async function seedEvents() {
   console.log("Seeding events...");
   const events = [
     { title: "Tala Ward Rally", type: "rally", location: "Tala Social Hall", ward: "Tala", startDate: daysAgo(20).toISOString().slice(0,10), status: "completed", attendeeCount: 312, maxAttendees: 400, description: "Main launch rally for Makueni 2027 campaign" },
-    { title: "Makueni North Townhall", type: "townhall", location: "Kyumbi Primary School Grounds", ward: "Makueni North", startDate: daysAgo(12).toISOString().slice(0,10), status: "completed", attendeeCount: 184, maxAttendees: 250, description: "Community Q&A session with Hon. Mule" },
+    { title: "Makueni North Townhall", type: "townhall", location: "Kyumbi Primary School Grounds", ward: "Makueni North", startDate: daysAgo(12).toISOString().slice(0,10), status: "completed", attendeeCount: 184, maxAttendees: 250, description: "Community Q&A session with Prof. Kaloki" },
     { title: "Women's Empowerment Forum — Kyeleni", type: "community", location: "Kyeleni SDA Church Hall", ward: "Kyeleni", startDate: daysAgo(6).toISOString().slice(0,10), status: "completed", attendeeCount: 97, maxAttendees: 120, description: "Women's forum — bursary distribution" },
     { title: "Youth Jobs Fair — Makueni East", type: "community", location: "Yatta Junction Market Square", ward: "Makueni East", startDate: daysAgo(2).toISOString().slice(0,10), status: "completed", attendeeCount: 228, maxAttendees: 300, description: "Youth employment linkage event with Makueni County" },
     { title: "Volunteer Training & Briefing", type: "training", location: "Tala Resource Centre", ward: "Tala", startDate: daysFromNow(4), status: "scheduled", attendeeCount: 0, maxAttendees: 40, description: "GOTV training for all ward teams" },
@@ -407,13 +407,13 @@ async function seedEvents() {
 async function seedIntelligence() {
   console.log("Seeding intelligence...");
   await db.insert(narrativeMentionsTable).values([
-    { platform: "Facebook", content: "Mule amejaza mifuko yake tu! Hajafanya kitu Makueni kwa miaka 5. Acheni uwongo!", author: "MakueniMtaa", threatLevel: "high", status: "responded", counterNarrative: "Hon. Mule amewaletea Makueni miradi ya maji ya Kyeleni, bursaries 847, na ujenzi wa barabara ya Tala–Matuu. Tunaendelea.", detectedAt: daysAgo(18), respondedAt: daysAgo(17) },
-    { platform: "Twitter/X", content: "Why is Tala–Matuu road still unpaved after 5 years? Mule keep promising, zero delivery. #MakueniDeservesBetter", author: "@TalaActivist", threatLevel: "medium", status: "responded", counterNarrative: "Phase 1 of Tala–Matuu road (8km) completed 2024. Phase 2 funded by NG-CDF. Works commence Q3 2026.", detectedAt: daysAgo(11), respondedAt: daysAgo(10) },
-    { platform: "WhatsApp", content: "Mule anataka kukaa bunge tu. Mpinzani wake ndiye mwenye miradi ya kweli — angalia alichofanya Kangundo!", author: "Unknown", threatLevel: "high", status: "open", counterNarrative: null, detectedAt: daysAgo(4) },
+    { platform: "Facebook", content: "Kaloki amejaza mifuko yake tu! Hajafanya kitu Makueni kwa miaka 5. Acheni uwongo!", author: "MakueniMtaa", threatLevel: "high", status: "responded", counterNarrative: "Prof. Kaloki amewaletea Makueni miradi ya maji ya Kyeleni, bursaries 847, na ujenzi wa barabara ya Tala–Matuu. Tunaendelea.", detectedAt: daysAgo(18), respondedAt: daysAgo(17) },
+    { platform: "Twitter/X", content: "Why is Tala–Matuu road still unpaved after 5 years? Kaloki keep promising, zero delivery. #MakueniDeservesBetter", author: "@TalaActivist", threatLevel: "medium", status: "responded", counterNarrative: "Phase 1 of Tala–Matuu road (8km) completed 2024. Phase 2 funded by NG-CDF. Works commence Q3 2026.", detectedAt: daysAgo(11), respondedAt: daysAgo(10) },
+    { platform: "WhatsApp", content: "Kaloki anataka kukaa bunge tu. Mpinzani wake ndiye mwenye miradi ya kweli — angalia alichofanya Kangundo!", author: "Unknown", threatLevel: "high", status: "open", counterNarrative: null, detectedAt: daysAgo(4) },
     { platform: "Facebook", content: "BREAKING: Voter bribery allegations surface in Makueni East — unnamed MP accused of vote buying scheme", author: "MakueniNews254", threatLevel: "critical", status: "open", counterNarrative: null, detectedAt: daysAgo(2) },
-    { platform: "TikTok", content: "Ndani ya gari ya Mule — hizo zimekuwa bei gani? Wananchi wanaomba uji, yeye ana Range Rover mbili", author: "@MakueniVlogger", threatLevel: "medium", status: "monitoring", counterNarrative: null, detectedAt: daysAgo(6) },
+    { platform: "TikTok", content: "Ndani ya gari ya Kaloki — hizo zimekuwa bei gani? Wananchi wanaomba uji, yeye ana Range Rover mbili", author: "@MakueniVlogger", threatLevel: "medium", status: "monitoring", counterNarrative: null, detectedAt: daysAgo(6) },
     { platform: "Radio", content: "Kambi ya upinzani inadai NG-CDF funds zilitumika vibaya — wanasema watapeleka kesi mahakamani", author: "Radio Citizen Machakos", threatLevel: "high", status: "monitoring", counterNarrative: null, detectedAt: daysAgo(3) },
-    { platform: "Facebook", content: "Asante Mheshimiwa Mule! Mtoto wangu amepata bursary — sasa anasoma university. Mungu akubariki!", author: "MamaWaMercy", threatLevel: "low", status: "resolved", counterNarrative: "Thank you Mama Mercy! Education is our priority — 847 bursaries awarded this term alone.", detectedAt: daysAgo(9), respondedAt: daysAgo(9) },
+    { platform: "Facebook", content: "Asante Prof. Kaloki! Mtoto wangu amepata bursary — sasa anasoma university. Mungu akubariki!", author: "MamaWaMercy", threatLevel: "low", status: "resolved", counterNarrative: "Thank you Mama Mercy! Education is our priority — 847 bursaries awarded this term alone.", detectedAt: daysAgo(9), respondedAt: daysAgo(9) },
   ]);
 
   await db.insert(competitorsTable).values([
@@ -452,7 +452,7 @@ async function seedIntelligence() {
   await db.insert(warRoomBriefsTable).values([
     { title: "CRITICAL: Vote Buying Allegations — Makueni East", summary: "Social media and local informants report opposition distributing cash in Makueni East ward. Targeting undecided voters aged 18–35. Network of 6 brokers identified.", priority: "urgent", category: "NARRATIVE", actions: ["Deploy rapid response team to Makueni East immediately", "Document evidence — photograph + video", "Issue press statement by COB today", "Alert IEBC field officers"], status: "active" },
     { title: "Malombe Ground Team Gaining in Makueni East", summary: "Opposition coordinator Bernard Muli running parallel voter registration exercise in Makueni East. Handing out branded merchandise. Estimate 200+ new registrations in 3 weeks.", priority: "high", category: "FIELD INTEL", actions: ["Accelerate Makueni East canvass sessions", "Counter with bursary distribution event", "Deploy 2 additional volunteers to Makueni East"], status: "active" },
-    { title: "Tala–Matuu Road Narrative — Positive Momentum", summary: "Phase 1 completion generating organic positive conversation. 3 community leaders have publicly endorsed Mule citing road project. Opportunity to amplify.", priority: "medium", category: "NARRATIVE", actions: ["Film testimonials with road users", "Amplify on WhatsApp broadcast lists", "Arrange site visit photo opportunity for candidate"], status: "active" },
+    { title: "Tala–Matuu Road Narrative — Positive Momentum", summary: "Phase 1 completion generating organic positive conversation. 3 community leaders have publicly endorsed Kaloki citing road project. Opportunity to amplify.", priority: "medium", category: "NARRATIVE", actions: ["Film testimonials with road users", "Amplify on WhatsApp broadcast lists", "Arrange site visit photo opportunity for candidate"], status: "active" },
     { title: "Radio Claim on NG-CDF — Pre-emptive Response Needed", summary: "Radio Citizen Machakos to air opposition segment on alleged NG-CDF misuse Monday 7am. We have 48-hour window to set the record straight.", priority: "high", category: "MEDIA", actions: ["Prepare NG-CDF expenditure brief for distribution", "Book response slot on same station", "Send documentation to friendly journalists"], status: "active" },
   ]);
   console.log(`  ✓ intelligence data seeded`);
@@ -501,16 +501,16 @@ async function seedCampaignPlan() {
 async function seedKOL() {
   console.log("Seeding KOLs...");
   await db.insert(kolTable).values([
-    { name: "Pastor Emmanuel Mutua", platform: "Facebook", handle: "PastorMutuaTala", tier: "mid", influenceScore: 78, followerCount: 12400, alignment: "supporter", ward: "Tala", notes: "Chairs Tala Interfaith Council. Endorsed Mule publicly April 2026." },
+    { name: "Pastor Emmanuel Mutua", platform: "Facebook", handle: "PastorMutuaTala", tier: "mid", influenceScore: 78, followerCount: 12400, alignment: "supporter", ward: "Tala", notes: "Chairs Tala Interfaith Council. Endorsed Kaloki publicly April 2026." },
     { name: "Mama Grace Ndunda", platform: "WhatsApp", handle: null, tier: "micro", influenceScore: 62, followerCount: 800, alignment: "supporter", ward: "Makueni North", notes: "Chairs women's group network across North ward. Key mobiliser." },
     { name: "Bw. Kamau Mwangangi", platform: "Facebook", handle: "KamauMwangangi254", tier: "mid", influenceScore: 71, followerCount: 9800, alignment: "neutral", ward: "Makueni East", notes: "Respected teacher and blogger. Neutral — needs cultivation." },
     { name: "Kyeleni Youth Network", platform: "TikTok", handle: "@kyeleniyouth", tier: "micro", influenceScore: 55, followerCount: 3200, alignment: "neutral", ward: "Kyeleni", notes: "Influential youth collective. Swing group — priority engagement." },
-    { name: "Fr. Benedict Kioko", platform: "Facebook", handle: "FrBenedictKioko", tier: "mid", influenceScore: 68, followerCount: 7100, alignment: "supporter", ward: "Makueni East", notes: "Catholic priest. Spoken positively of Mule's bursary programme." },
+    { name: "Fr. Benedict Kioko", platform: "Facebook", handle: "FrBenedictKioko", tier: "mid", influenceScore: 68, followerCount: 7100, alignment: "supporter", ward: "Makueni East", notes: "Catholic priest. Spoken positively of Kaloki's bursary programme." },
     { name: "Makueni Business Forum", platform: "Facebook", handle: "MakueniBizForum", tier: "macro", influenceScore: 83, followerCount: 21000, alignment: "neutral", ward: null, notes: "Business association covering all 5 wards. Key endorsement target." },
     { name: "Teacher Waweru Mwangi", platform: "Twitter/X", handle: "@WaweruMakueni", tier: "micro", influenceScore: 47, followerCount: 2100, alignment: "opponent", ward: "Makueni West", notes: "Critical of NG-CDF allocation. Active online — monitor closely." },
     { name: "Mama Mbula — Tala Market Chair", platform: "WhatsApp", handle: null, tier: "micro", influenceScore: 69, followerCount: 1200, alignment: "supporter", ward: "Tala", notes: "Chairs Tala Market Women's Association. Controls large trader network." },
     { name: "Machakos Youth Connect", platform: "Instagram", handle: "@machakosyouth", tier: "macro", influenceScore: 77, followerCount: 18500, alignment: "neutral", ward: null, notes: "County-wide youth platform. Could amplify manifesto." },
-    { name: "Daktari James Muema", platform: "Facebook", handle: "DrMuemaMakueni", tier: "mid", influenceScore: 64, followerCount: 5400, alignment: "supporter", ward: "Kyeleni", notes: "Clinic owner. Champions healthcare agenda. Publicly backed Mule." },
+    { name: "Daktari James Muema", platform: "Facebook", handle: "DrMuemaMakueni", tier: "mid", influenceScore: 64, followerCount: 5400, alignment: "supporter", ward: "Kyeleni", notes: "Clinic owner. Champions healthcare agenda. Publicly backed Kaloki." },
   ]);
   console.log(`  ✓ 10 KOLs seeded`);
 }

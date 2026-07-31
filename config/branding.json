@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "campaignName": "Kaloki 2027",
+  "candidateName": "Prof. Philip Kaloki",
+  "party": "UDA",
+  "slogan": "",
+  "logo": {
+    "campaignLogo": "",
+    "candidatePhoto": "",
+    "partyLogo": "",
+    "countyLogo": ""
+  },
+  "colours": {
+    "primary": "",
+    "secondary": "",
+    "accent": "",
+    "background": "",
+    "text": ""
+  },
+  "theme": {
+    "useExistingSystemTheme": true,
+    "defaultMode": "system"
+  }
+}

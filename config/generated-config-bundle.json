@@ -1,0 +1,279 @@
+{
+  "campaign": {
+    "schemaVersion": 1,
+    "releaseVersion": "2.1.0",
+    "candidate": {
+      "fullName": "Prof. Philip Kaloki",
+      "shortName": "Prof. Kaloki",
+      "displayName": "Prof. Philip Kaloki",
+      "title": "Prof.",
+      "position": "Governor",
+      "electionType": "Gubernatorial",
+      "county": "Makueni County",
+      "country": "Kenya"
+    },
+    "campaign": {
+      "name": "Kaloki 2027",
+      "party": "UDA",
+      "slogan": "",
+      "description": "Makueni County gubernatorial campaign command centre."
+    },
+    "contact": {
+      "phone": "",
+      "email": "",
+      "website": "",
+      "headquarters": ""
+    },
+    "runningMate": {
+      "name": "",
+      "configured": false
+    }
+  },
+  "branding": {
+    "schemaVersion": 1,
+    "campaignName": "Kaloki 2027",
+    "candidateName": "Prof. Philip Kaloki",
+    "party": "UDA",
+    "slogan": "",
+    "logo": {
+      "campaignLogo": "",
+      "candidatePhoto": "",
+      "partyLogo": "",
+      "countyLogo": ""
+    },
+    "colours": {
+      "primary": "",
+      "secondary": "",
+      "accent": "",
+      "background": "",
+      "text": ""
+    },
+    "theme": {
+      "useExistingSystemTheme": true,
+      "defaultMode": "system"
+    }
+  },
+  "election": {
+    "schemaVersion": 1,
+    "releaseVersion": "2.1.0",
+    "country": "Kenya",
+    "county": "Makueni",
+    "electionYear": 2027,
+    "electionDate": "",
+    "electionType": "General Election",
+    "contest": {
+      "office": "Governor",
+      "level": "county",
+      "jurisdiction": "Makueni County"
+    },
+    "targets": {
+      "registeredVoters": null,
+      "targetVotes": null,
+      "targetTurnoutPercentage": null
+    }
+  },
+  "geography": {
+    "schemaVersion": 1,
+    "releaseVersion": "2.1.0",
+    "country": "Kenya",
+    "county": {
+      "name": "Makueni",
+      "displayName": "Makueni County",
+      "code": "017"
+    },
+    "summary": {
+      "constituencyCount": 6,
+      "wardCount": 30
+    },
+    "constituencies": [
+      {
+        "id": "mbooni",
+        "name": "Mbooni",
+        "wards": [
+          {
+            "id": "tulimani",
+            "name": "Tulimani"
+          },
+          {
+            "id": "mbooni",
+            "name": "Mbooni"
+          },
+          {
+            "id": "kithungo-kitundu",
+            "name": "Kithungo/Kitundu"
+          },
+          {
+            "id": "kiteta-kisau",
+            "name": "Kiteta/Kisau"
+          },
+          {
+            "id": "waia-kako",
+            "name": "Waia/Kako"
+          },
+          {
+            "id": "kalawa",
+            "name": "Kalawa"
+          }
+        ]
+      },
+      {
+        "id": "kilome",
+        "name": "Kilome",
+        "wards": [
+          {
+            "id": "kasikeu",
+            "name": "Kasikeu"
+          },
+          {
+            "id": "mukaa",
+            "name": "Mukaa"
+          },
+          {
+            "id": "kiima-kiu-kalanzoni",
+            "name": "Kiima Kiu/Kalanzoni"
+          }
+        ]
+      },
+      {
+        "id": "kaiti",
+        "name": "Kaiti",
+        "wards": [
+          {
+            "id": "ukia",
+            "name": "Ukia"
+          },
+          {
+            "id": "kee",
+            "name": "Kee"
+          },
+          {
+            "id": "kilungu",
+            "name": "Kilungu"
+          },
+          {
+            "id": "ilima",
+            "name": "Ilima"
+          }
+        ]
+      },
+      {
+        "id": "makueni",
+        "name": "Makueni",
+        "wards": [
+          {
+            "id": "wote-nziu",
+            "name": "Wote/Nziu"
+          },
+          {
+            "id": "muvau-kikuumini",
+            "name": "Muvau/Kikuumini"
+          },
+          {
+            "id": "mavindini",
+            "name": "Mavindini"
+          },
+          {
+            "id": "kitise-kithuki",
+            "name": "Kitise/Kithuki"
+          },
+          {
+            "id": "kathonzweni",
+            "name": "Kathonzweni"
+          },
+          {
+            "id": "nzaui-kilili-kalamba",
+            "name": "Nzaui/Kilili/Kalamba"
+          },
+          {
+            "id": "mbitini",
+            "name": "Mbitini"
+          }
+        ]
+      },
+      {
+        "id": "kibwezi-west",
+        "name": "Kibwezi West",
+        "wards": [
+          {
+            "id": "makindu",
+            "name": "Makindu"
+          },
+          {
+            "id": "nguumo",
+            "name": "Nguumo"
+          },
+          {
+            "id": "kikumbulyu-north",
+            "name": "Kikumbulyu North"
+          },
+          {
+            "id": "kikumbulyu-south",
+            "name": "Kikumbulyu South"
+          },
+          {
+            "id": "nguu-masumba",
+            "name": "Nguu/Masumba"
+          },
+          {
+            "id": "emali-mulala",
+            "name": "Emali/Mulala"
+          }
+        ]
+      },
+      {
+        "id": "kibwezi-east",
+        "name": "Kibwezi East",
+        "wards": [
+          {
+            "id": "masongaleni",
+            "name": "Masongaleni"
+          },
+          {
+            "id": "mtito-andei",
+            "name": "Mtito Andei"
+          },
+          {
+            "id": "thange",
+            "name": "Thange"
+          },
+          {
+            "id": "ivingoni-nzambani",
+            "name": "Ivingoni/Nzambani"
+          }
+        ]
+      }
+    ]
+  },
+  "ai": {
+    "schemaVersion": 1,
+    "releaseVersion": "2.1.0",
+    "enabled": true,
+    "identity": {
+      "assistantName": "Kaloki Campaign AI",
+      "candidateName": "Prof. Philip Kaloki",
+      "campaignName": "Kaloki 2027",
+      "office": "Governor",
+      "jurisdiction": "Makueni County",
+      "party": "UDA"
+    },
+    "rules": {
+      "useGubernatorialContext": true,
+      "avoidParliamentaryClaims": true,
+      "avoidUnverifiedAchievements": true,
+      "avoidFabricatedStatistics": true,
+      "requireHumanApprovalForPublicContent": true,
+      "respectDataPrivacy": true
+    },
+    "supportedFunctions": [
+      "campaign-strategy",
+      "speech-writing",
+      "social-listening",
+      "sentiment-analysis",
+      "counter-narratives",
+      "field-operations",
+      "polling-analysis",
+      "communications",
+      "reports"
+    ]
+  }
+}

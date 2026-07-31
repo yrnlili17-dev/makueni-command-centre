@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "2.1.0",
+  "country": "Kenya",
+  "county": "Makueni",
+  "electionYear": 2027,
+  "electionDate": "",
+  "electionType": "General Election",
+  "contest": {
+    "office": "Governor",
+    "level": "county",
+    "jurisdiction": "Makueni County"
+  },
+  "targets": {
+    "registeredVoters": null,
+    "targetVotes": null,
+    "targetTurnoutPercentage": null
+  }
+}

@@ -311,7 +311,7 @@ const SIMULATED_MENTIONS: Array<{ platform: string; author: string; content: str
   { platform: "Facebook", author: "Kibwezi East Ward Representative", content: "Prof. Philip Kaloki is failing us. The CDF projects he promised — health centre, market — are years behind. Our people deserve better representation!", engagementCount: 563 },
   { platform: "Twitter/X", author: "@KenyaPolitics254", content: "Mbooni residents block road demanding Prof. Kaloki address their water crisis. 6 months since he promised a solution. #AccountabilityKE", engagementCount: 1567 },
   { platform: "News", author: "Daily Nation", content: "Prof. Philip Kaloki joins MPs rallying behind Affordable Housing Bill during Makueni public participation forum.", engagementCount: 289 },
-  { platform: "Facebook", author: "Youth For Kaloki", content: "Mheshimiwa Mule just visited our football pitch in Kaiti. Promised to fund the youth team's uniforms and tournament. Real grassroots leader!", engagementCount: 731 },
+  { platform: "Facebook", author: "Youth For Kaloki", content: "Prof. Kaloki just visited our football pitch in Kaiti. Promised to fund the youth team's uniforms and tournament. Real grassroots leader!", engagementCount: 731 },
 ];
 
 router.post("/scan", async (req, res) => {
