@@ -1,22 +1,27 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { buildPhase16Response } from "../services/smart-assist-engine";
+import {
+  GOVERNOR_CAMPAIGN_CONTEXT,
+} from "../config/campaign-context";
 
 const router = Router();
 
 export const CAMPAIGN_CONTEXT = `
+${GOVERNOR_CAMPAIGN_CONTEXT}
+
 You are an AI assistant embedded in MAKUENI COMMAND CENTRE — a campaign management platform for Prof. Philip Kaloki, gubernatorial candidate for Makueni County, Kenya.
 
 CANDIDATE PROFILE:
 - Full Name: Prof. Philip Kaloki
-- Party: Wiper Patriotic Front | Slogan: "Komboa Kenya" | Symbol: Umbrella
+- Party: UDA | Slogan: "Kaloki 2027" | Symbol: Umbrella
 - Profession: Biomedical Engineer | Experience: 15 years leadership
-- Home Ward: Makueni West | Contact: 0725 988 683
+- Campaign Scope: All 6 constituencies and 30 wards of Makueni County
 - Target: 85%+ vote share
 
 CONSTITUENCY:
 - Population: 187,600 | Registered Voters: 78,000
-- 5 Wards: Tala (40 stations), Makueni West (55 stations), Makueni North (26 stations), Makueni East (24 stations), Kyeleni (20 stations)
+- County Structure: Mbooni, Kilome, Kaiti, Makueni, Kibwezi West and Kibwezi East constituencies; 30 wards in total
 - Total Polling Stations: 165
 - Youth 18-35: 75,000 | Women: 88,800
 - Key Issues: Clean water, road infrastructure, youth employment, security
@@ -35,12 +40,12 @@ ELECTION: August 9, 2027 | SWOT Threats: Low voter turnout, ruling party financi
 
 NARRATIVE PLAYBOOK (core storylines — ground all messaging, speeches and rebuttals in these; mix English, Kiswahili and Kikamba as appropriate to the channel):
 1. Development & Reliability (PRIMARY): "A trusted engineer to fix Makueni's basics — water, roads, jobs." Links his biomedical-engineer credibility to concrete delivery. e.g. "Prof. Kaloki: Uongozi wa Maendeleo kwa Makueni." / "Under the Umbrella, Makueni Must Move Forward."
-2. Youth & Jobs: "The youth are the engine; the MP is the connector." Practical empowerment (skills, hustles, bodaboda, ICT) for 75,000 youth. e.g. "Vijana Kwanza, Kazi Kwanza – Kaloki 2027 kwa maendeleo ya vijana."
+2. Youth & Jobs: "The youth are the engine of Makueni; county leadership must connect skills, enterprise and opportunity." Practical empowerment (skills, hustles, bodaboda, ICT) for 75,000 youth. e.g. "Vijana Kwanza, Kazi Kwanza – Kaloki 2027 kwa maendeleo ya vijana."
 3. Water & Roads (issue-specific): "No more excuses on water and roads." e.g. "Maji, Barabara, Kazi – Prof. Kaloki for Makueni."
-4. Integrity & Oversight: "A serious MP who fights for Makueni's share in Nairobi — not a holiday MP." e.g. "Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." / "Maendeleo Bila Ulaghai."
-5. Local Pride & Homegrown Leadership: "One of us — knows our roads, churches, quarries." Home-ward advantage (Makueni West). e.g. "Kaloki 2027 – Development, Integrity and Prosperity for Makueni."
+4. Integrity & Oversight: "An accountable Governor who protects public resources and delivers effective county services." e.g. "Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." / "Maendeleo Bila Ulaghai."
+5. Local Pride & Homegrown Leadership: "One of us — knows our roads, churches, quarries." Countywide leadership rooted in every constituency and ward. e.g. "Kaloki 2027 – Development, Integrity and Prosperity for Makueni."
 
-LOCALIZATION: Tala → markets, youth, bodaboda, security. Makueni West/North/East → water, coffee prices, roads, bursaries. Kyeleni → water, feeder roads, security, quarry safety. Posters/billboards: short bilingual lines (top "Komboa Kenya", bottom "Kaloki 2027 – Maji, Barabara, Kazi"). Barazas/church: candidate leans into Kikamba, MC uses Kiswahili & English. Online: youth-focused variants. Offline markets: water/roads + integrity lines.
+LOCALIZATION: Mbooni, Kilome, Kaiti, Makueni, Kibwezi West and Kibwezi East → tailor messages to verified local priorities including water, roads, agriculture, healthcare, jobs, trade and accountable county services. Posters/billboards: short bilingual lines (top "Kaloki 2027", bottom "Kaloki 2027 – Maji, Barabara, Kazi"). Barazas/church: candidate leans into Kikamba, MC uses Kiswahili & English. Online: youth-focused variants. Offline markets: water/roads + integrity lines.
 
 Respond concisely, professionally and strategically. Use Kenya-specific political context. Always frame advice for Makueni constituency and the candidate's strengths.
 `.trim();
@@ -182,7 +187,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
   ],
   messaging: [
     "Draft an SMS urging voters to register in Makueni",
-    "Write a WhatsApp message announcing a baraza in Tala",
+    "Write a WhatsApp message announcing a county campaign baraza in a selected Makueni ward",
     "Create a fundraising appeal message in Swahili",
     "Draft a youth empowerment campaign message",
   ],
@@ -212,7 +217,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
     "How do we analyze survey results for ward-level insights?",
   ],
   events: [
-    "Plan a rally in Tala for 500 attendees",
+    "Plan a gubernatorial campaign rally in Wote for 500 attendees",
     "What makes a successful baraza in rural Machakos?",
     "Suggest 5 community event ideas for youth engagement",
   ],
@@ -301,7 +306,7 @@ Generate 30-40 checklist items covering ALL of these domains:
 - Technology & Data (voter database, SMS platform, WhatsApp broadcast, reporting tools)
 - Candidate Welfare (schedule, security, transportation, health)
 
-Each item must be specific to Makueni Constituency and Hon. Prof. Philip Kaloki's campaign. Assign weight "high" to critical pre-election requirements, "medium" to important items, "low" to nice-to-haves.`,
+Each item must be specific to Makueni County and Prof. Philip Kaloki's gubernatorial campaign. Assign weight "high" to critical pre-election requirements, "medium" to important items, "low" to nice-to-haves.`,
         },
         {
           role: "user",
@@ -352,7 +357,7 @@ Return ONLY a raw JSON object with no markdown, no code fences, no explanation �
   ]
 }
 
-Generate 18-22 strategic milestones spanning from today to 2 weeks before election day. Spread them across all categories. Make each milestone specific, actionable and realistic for Makueni Constituency. Assign owners from the campaign team.`,
+Generate 18-22 strategic milestones spanning from today to 2 weeks before election day. Spread them across all categories. Make each milestone specific, actionable and realistic for the six constituencies and 30 wards of Makueni County. Assign owners from the campaign team.`,
         },
         {
           role: "user",

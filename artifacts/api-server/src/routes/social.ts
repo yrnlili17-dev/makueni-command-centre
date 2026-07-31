@@ -24,15 +24,15 @@ const idParamSchema = z.object({ id: z.coerce.number().int().positive() });
 const SCAN_CATEGORIES = [
   {
     key: "candidate",
-    prompt: `recent public mentions, news articles, and social media posts about "Prof. Philip Kaloki", the Member of Parliament for Makueni Constituency in Makueni County, Kenya`,
+    prompt: `recent public mentions, news articles, and social media posts about "Prof. Philip Kaloki", the Kaloki 2027 gubernatorial candidate for Makueni County, Kenya`,
   },
   {
     key: "issues",
-    prompt: `recent trending local issues, public concerns, development news, and hot topics among residents of Makueni Constituency and Makueni County, Kenya`,
+    prompt: `recent trending local issues, public concerns, development news, and hot topics among residents of all six constituencies and 30 wards of Makueni County, Kenya`,
   },
   {
     key: "opponent",
-    prompt: `recent political activity, statements, or campaigns by rival politicians and opponents in Makueni Constituency and Makueni County, Kenya`,
+    prompt: `recent political activity, statements, or campaigns by gubernatorial competitors and other political actors in Makueni County, Kenya`,
   },
 ] as const;
 

@@ -102,7 +102,7 @@ Keep it authentic to Kenyan / Ukambani political rhetoric and grounded in Makuen
       ),
       generateSection(
         base,
-        `Write the CLOSING of the speech (~${Math.round(words * 0.4)} words): a rousing call to action, unity, and a strong appeal to vote for Prof. Philip Kaloki under the Wiper "Komboa Kenya" banner. End with an uplifting rallying line.`,
+        `Write the CLOSING of the speech (~${Math.round(words * 0.4)} words): a rousing call to action, unity, and a strong appeal to vote for Prof. Philip Kaloki under the Wiper "Kaloki 2027" banner. End with an uplifting rallying line.`,
         480,
       ),
     ]);
@@ -143,7 +143,7 @@ const PILLARS = [
   },
   {
     key: "Local Patronage & Accessibility",
-    hint: "regular barazas, market visits, an accessible MP present in every ward, responsive constituency office.",
+    hint: "regular barazas, market visits, an accessible Governor present across the county, responsive county leadership and accountable public service.",
   },
 ];
 
@@ -165,7 +165,7 @@ router.post("/manifesto", async (req, res) => {
 
 You are drafting the official manifesto for Prof. Philip Kaloki. Tone: ${tone.toLowerCase()}, credible and specific.
 Language: ${language}. Write ONLY the prose for the requested section — no headings, no markdown, no labels, no bullet symbols other than plain lines.
-Make commitments concrete and grounded in Makueni Constituency realities.`;
+Make commitments concrete and grounded in the realities of Makueni County's six constituencies and 30 wards.`;
 
   const issuesLine = priorityIssues ? ` Emphasize these priority issues: ${priorityIssues}.` : "";
 
@@ -192,7 +192,7 @@ Make commitments concrete and grounded in Makueni Constituency realities.`;
   sectionCalls.push(
     generateSection(
       base,
-      `Write the CLOSING PLEDGE (~140 words): a personal pledge of accountability and service, a unifying message across all 5 wards, and a call to vote under the Wiper "Komboa Kenya" banner (symbol: Umbrella).`,
+      `Write the CLOSING PLEDGE (~140 words): a personal pledge of accountability and service, a unifying message across all 5 wards, and a call to vote under the Wiper "Kaloki 2027" banner (symbol: Umbrella).`,
       460,
     ).then((text) => ({ heading: "OUR PLEDGE TO MAKUENI COUNTY", text })),
   );

@@ -39,7 +39,7 @@ async function openAiAnalyze(content: string, platform: string): Promise<{ threa
       model: "gpt-5-mini",
       max_completion_tokens: 500,
       messages: [
-        { role: "system", content: `You are an AI political campaign intelligence analyst for Prof. Philip Kaloki, MNA for Makueni constituency, Kenya. Analyze social media and news content for threats and sentiment. Respond with valid JSON only.` },
+        { role: "system", content: `You are an AI political campaign intelligence analyst for Prof. Philip Kaloki, gubernatorial candidate for Makueni County, Kenya. Analyze social media and news content for threats and sentiment. Respond with valid JSON only.` },
         { role: "user", content: `Analyze this ${platform} post about Prof. Philip Kaloki:\n\n"${content}"\n\nRespond with JSON: { "threatLevel": "normal"|"elevated"|"high"|"critical", "sentiment": "positive"|"neutral"|"negative", "sentimentScore": 0-100, "aiSummary": "2-sentence analysis", "suggestedResponse": "1-2 sentence counter-narrative if needed, else empty string" }` },
       ],
     });
@@ -64,13 +64,13 @@ async function openAiGenerateResponse(content: string, platform: string, threatL
       model: "gpt-5-mini",
       max_completion_tokens: 300,
       messages: [
-        { role: "system", content: `You are a professional communications officer for Prof. Philip Kaloki, MNA for Makueni constituency, Kenya. Craft professional, factual counter-narratives for ${platform}. Be concise, firm, and dignified. Do not be aggressive.` },
+        { role: "system", content: `You are a professional communications officer for Prof. Philip Kaloki, gubernatorial candidate for Makueni County, Kenya. Craft professional, factual counter-narratives for ${platform}. Be concise, firm, and dignified. Do not be aggressive.` },
         { role: "user", content: `Draft a ${platform} counter-narrative response to this ${threatLevel}-level threat:\n\n"${content}"\n\nWrite only the response text, no preamble.` },
       ],
     });
     return response.choices[0]?.message?.content?.trim() ?? "";
   } catch {
-    return `Prof. Philip Kaloki, MNA for Makueni, remains committed to serving the people of Makueni constituency with integrity and dedication.`;
+    return `Prof. Philip Kaloki remains committed to presenting a responsible, development-focused vision for the people of Makueni County.`;
   }
 }
 
@@ -186,7 +186,7 @@ const CHAR_LIMITS: Record<string, number> = {
   "TikTok Caption": 150,
 };
 
-const CANDIDATE_CTX = `Prof. Philip Kaloki (Prof. Kaloki), MNA for Makueni County, covering all six constituencies and 30 wards. Biomedical Engineer. Wiper Patriotic Front, "Komboa Kenya" campaign. 78,000 registered voters, election August 9 2027. His team: Campaign Manager John Kyalo, Comms Fiddellis Wambua.`;
+const CANDIDATE_CTX = `Prof. Philip Kaloki (Prof. Kaloki), UDA gubernatorial candidate for Makueni County, covering all six constituencies and 30 wards. Campaign: Kaloki 2027. Do not assume voter totals, endorsements, staff identities or achievements unless verified in approved campaign data.`;
 
 router.post("/ai-draft-rebuttal", async (req, res) => {
   const { attack, platform = "Twitter/X", urgency = "planned" } = req.body as {
@@ -307,7 +307,7 @@ const SIMULATED_MENTIONS: Array<{ platform: string; author: string; content: str
   { platform: "Twitter/X", author: "@MakueniVoter", content: "Prof. Philip Kaloki has done absolutely nothing for Wote/Nziu ward. The road from Wote to Kathonzweni is still impassable during rains. We voted for development not silence!", engagementCount: 847 },
   { platform: "Facebook", author: "Makueni Community Group", content: "Philip Kaloki was at the Kyeleni borehole opening today. Finally water for our people! This is the leadership we needed. Hongera Mheshimiwa!", engagementCount: 1243 },
   { platform: "Twitter/X", author: "@NairobiEye", content: "Rumours circulating that Prof. Kaloki received corrupt funds from contractor Ndungu for the Makueni County roads programme. Need answers Mheshimiwa!", engagementCount: 2891 },
-  { platform: "News", author: "The Star Kenya", content: "Makueni MNA Philip Kaloki today launched bursary applications for 500 students from the constituency. CDF allocation of KSh 45M earmarked for education.", engagementCount: 412 },
+  { platform: "News", author: "The Star Kenya", content: "The Kaloki 2027 campaign discussed education access and youth opportunity during a Makueni County engagement. Any figures or commitments must be verified before publication.", engagementCount: 412 },
   { platform: "Facebook", author: "Kibwezi East Ward Representative", content: "Prof. Philip Kaloki is failing us. The CDF projects he promised — health centre, market — are years behind. Our people deserve better representation!", engagementCount: 563 },
   { platform: "Twitter/X", author: "@KenyaPolitics254", content: "Mbooni residents block road demanding Prof. Kaloki address their water crisis. 6 months since he promised a solution. #AccountabilityKE", engagementCount: 1567 },
   { platform: "News", author: "Daily Nation", content: "Prof. Philip Kaloki joins MPs rallying behind Affordable Housing Bill during Makueni public participation forum.", engagementCount: 289 },

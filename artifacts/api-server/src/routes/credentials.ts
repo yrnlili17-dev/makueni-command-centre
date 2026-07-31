@@ -114,8 +114,8 @@ router.get("/summary", async (req, res) => {
 
 const CANDIDATE_BRIEF = `
 CANDIDATE: Prof. Philip Kaloki (Prof. Kaloki)
-ROLE: Member of the National Assembly, Makueni Constituency, Makueni County, Kenya
-PARTY: Wiper Democratic Movement (Patriotic Front) | Symbol: Umbrella | Slogan: "Komboa Kenya"
+ROLE: Gubernatorial candidate for Makueni County, Kenya
+PARTY: Wiper Democratic Movement (Patriotic Front) | Symbol: Umbrella | Slogan: "Kaloki 2027"
 PROFESSION: Biomedical Engineer (15+ years) | Entrepreneur | Community leader
 HOME WARD: Kaiti
 CONSTITUENCY: 78,000 registered voters | 5 wards: Mbooni, Kilome, Kaiti, Makueni, Kibwezi West and Kibwezi East constituencies | 165 polling stations
@@ -132,7 +132,7 @@ router.post("/ai-populate", async (req, res) => {
 
   try {
     // Run both AI calls in parallel — strict compact schema to stay within token budget
-    const RECORDS_PROMPT = `You are a database builder for a Kenyan MNA credentials system.
+    const RECORDS_PROMPT = `You are a database builder for a Kenyan gubernatorial candidate credentials system.
 
 ${CANDIDATE_BRIEF}
 
@@ -143,7 +143,7 @@ Schema (strict, all fields required, keep ALL text fields under 120 characters):
 Generate 8 records in this order: 2 bills, 2 motions, 1 question, 1 statement, 1 committee, 1 petition.
 Dates between 2022-09-20 and ${today}. Mark 2 as featured:true. Use KeNHA, WaSREB, NHIF where relevant.`;
 
-    const ACHIEVEMENTS_PROMPT = `You are a database builder for a Kenyan MNA achievements system.
+    const ACHIEVEMENTS_PROMPT = `You are a database builder for a Kenyan gubernatorial candidate record and achievements system.
 
 ${CANDIDATE_BRIEF}
 
@@ -256,7 +256,7 @@ router.post("/research", async (req, res) => {
   let aiGenerated = false;
 
   try {
-    const systemPrompt = `You are a legislative research assistant for Prof. Philip Kaloki, Member of the National Assembly for Makueni Constituency, Kenya.
+    const systemPrompt = `You are a county policy and governance research assistant for Prof. Philip Kaloki, gubernatorial candidate for Makueni County, Kenya.
 Your role is to help research legislative topics, provide context on Kenya's parliamentary procedures, compare with regional and national benchmarks, and suggest talking points that strengthen the candidate's credentials.
 Always provide structured, factual responses with clear sections.`;
 
@@ -266,7 +266,7 @@ Query: ${query}
 
 Please provide:
 1. A concise research summary (3-5 paragraphs)
-2. Key talking points (bullet list of 5-7 points) that the MNA can use
+2. Key talking points (bullet list of 5-7 points) that the gubernatorial candidate can use
 3. Relevant benchmarks or comparisons (how does Makueni/Machakos compare nationally?)
 4. Suggested legislation or motions related to this topic
 5. Evidence sources to cite
@@ -294,7 +294,7 @@ Format your response with clear section headers using **bold** for headers.`;
   } catch (_) { /* fall through to template */ }
 
   if (!aiGenerated) {
-    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni Constituency and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Makueni County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. Makueni Constituency, as part of Makueni County, receives equitable share allocations directed towards ${topic}-related development.\n\n**Key Recommendations**\n\nFor Prof. Philip Kaloki to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
+    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni County and Kenya's constitutional and devolved-governance framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Makueni County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. Makueni County receives equitable share and other lawful county revenues supporting ${topic}-related development.\n\n**Key Recommendations**\n\nFor Prof. Philip Kaloki to strengthen credentials on ${topic}: develop a lawful county policy proposal, identify the responsible county or national institution, consult affected communities, and establish measurable implementation and accountability steps.`;
     keyPoints = [
       `Makueni's ${topic} needs align with national development priorities`,
       `Constitutional mandate under Chapter Eleven supports county action on ${topic}`,

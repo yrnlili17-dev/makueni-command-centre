@@ -286,7 +286,7 @@ export async function seedDefaultConfig(): Promise<void> {
 
   const defaults = [
     { key: "candidate.name", value: "Prof. Philip Kaloki", category: "campaign", description: "Candidate's full name displayed across the system" },
-    { key: "candidate.title", value: "MNA — Makueni Constituency", category: "campaign", description: "Candidate's title and constituency label" },
+    { key: "candidate.title", value: "Governor Candidate — Makueni County", category: "campaign", description: "Candidate office and county campaign label" },
     { key: "candidate.party", value: "", category: "campaign", description: "Political party affiliation" },
     { key: "campaign.election_date", value: "2027-08-10", category: "campaign", description: "Target election date (YYYY-MM-DD)" },
     { key: "campaign.slogan", value: "", category: "campaign", description: "Campaign slogan displayed on reports and exports" },
