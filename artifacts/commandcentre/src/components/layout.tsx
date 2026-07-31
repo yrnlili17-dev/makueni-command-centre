@@ -10,6 +10,9 @@ import {
   BrainCircuit, FolderLock, Menu, X, Home, Bell, MoreHorizontal
 } from "lucide-react";
 import brandIcon from "@assets/brand-icon.png";
+import {
+  CAMPAIGN_UI,
+} from "../config/campaign-ui";
 
 const navGroups = [
   { title: "COMMAND", items: [
@@ -191,7 +194,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <p className="truncate text-xs font-bold tracking-wider lg:hidden">MAKUENI COMMAND CENTRE</p>
               <div className="hidden items-center gap-3 lg:flex">
                 <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="font-mono text-xs tracking-widest text-muted-foreground">MAKUENI COUNTY · CAMPAIGN COMMAND CENTRE · SECURE OPERATIONS</span>
+                <span className="font-mono text-xs tracking-widest text-muted-foreground">{`${CAMPAIGN_UI.campaignName.toUpperCase()} · ${CAMPAIGN_UI.county.toUpperCase()} · SECURE CAMPAIGN OPERATIONS`}</span>
               </div>
               <p className="truncate font-mono text-[9px] uppercase tracking-widest text-primary lg:hidden">{currentModule.replace(/-/g, " ")}</p>
             </div>
@@ -211,7 +214,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
               </div>}
             </div>
-            <div className="hidden border border-primary/30 bg-primary/10 px-2 py-1 font-mono text-[10px] text-primary sm:block">KOMBOA KENYA</div>
+            <div className="hidden border border-primary/30 bg-primary/10 px-2 py-1 font-mono text-[10px] text-primary sm:block">KOMBOA Makueni</div>
           </div>
         </header>
 

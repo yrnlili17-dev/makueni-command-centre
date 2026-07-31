@@ -28,6 +28,9 @@ type ScoreEx = {
 };
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  CAMPAIGN_MESSAGES,
+  CAMPAIGN_UI,
+} from "../config/campaign-ui";
   Plus, X, Check, ShieldAlert, TrendingUp, TrendingDown, Minus,
   AlertTriangle, Target, Zap, Eye, Send, Settings, RefreshCw,
   Clock, CheckCircle, XCircle, Radio, Globe, Twitter, Facebook,
@@ -56,7 +59,7 @@ const NARRATIVE_PLAYBOOK = [
   {
     tag: "YOUTH",
     title: "Youth & Jobs",
-    core: "The youth are the engine; the MP is the connector.",
+    core: CAMPAIGN_MESSAGES.youth,
     lines: [
       { lang: "EN", text: "Prof. Kaloki: Empowering Youth, Building Makueni's Future." },
       { lang: "SW/KAM", text: "Vijana Kwanza, Kazi Kwanza – Prof. Kaloki aũsya matalanta ma Makueni." },
@@ -78,14 +81,14 @@ const NARRATIVE_PLAYBOOK = [
   {
     tag: "INTEGRITY",
     title: "Integrity & Oversight",
-    core: "A serious MP who fights for Makueni's share in Nairobi.",
+    core: CAMPAIGN_MESSAGES.accountability,
     lines: [
       { lang: "EN", text: "Your Voice in Nairobi, Your Defender in Makueni." },
       { lang: "EN", text: "Prof. Kaloki: Maendeleo Bila Ulaghai." },
       { lang: "SW/KAM", text: "Prof. Kaloki: Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." },
       { lang: "SW/KAM", text: "Maendeleo na Ukweli – Sio Siasa za Porojo." },
     ],
-    why: "Distinguishes him from 'holiday MPs'; ties to constitutional mandate pillar.",
+    why: "Distinguishes the campaign through visible, accountable and countywide leadership.",
   },
   {
     tag: "LOCAL PRIDE",
@@ -107,7 +110,7 @@ const PLAYBOOK_WARDS = [
 ] as const;
 
 const PLAYBOOK_CHANNELS = [
-  { channel: "Posters / Billboards", guidance: "Short bilingual lines. Top: \"Komboa Kenya\" · Bottom: \"Komboa Makueni na Prof. Kaloki – Maji, Barabara, Kazi.\"" },
+  { channel: "Posters / Billboards", guidance: CAMPAIGN_MESSAGES.posterGuidance },
   { channel: "Barazas / Church", guidance: "Candidate leans into Kikamba versions; MC uses Kiswahili and English." },
   { channel: "Online", guidance: "Youth variant: \"Vijana Kwanza, Kazi Kwanza – Prof. Kaloki Makueni 2027.\"" },
   { channel: "Offline (markets)", guidance: "Water / roads + integrity lines." },
@@ -362,7 +365,7 @@ export default function Intelligence() {
         <div>
           <h1 className="text-xl font-bold tracking-widest">NARRATIVE COMMAND</h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
-            AI-POWERED SENTIMENT INTELLIGENCE · PROF. PHILIP KALOKI · MAKUENI GUBERNATORIAL CAMPAIGN
+            {`AI-POWERED SENTIMENT INTELLIGENCE · ${CAMPAIGN_UI.candidateName.toUpperCase()} · ${CAMPAIGN_UI.county.toUpperCase()} GUBERNATORIAL CAMPAIGN`}
             {score?.aiEnabled ? (
               <span className="ml-3 text-green-400">[ AI_ONLINE ]</span>
             ) : (
@@ -975,7 +978,7 @@ export default function Intelligence() {
                 fields: [
                   { key: "rssUrl", label: "GOOGLE ALERTS RSS URL", placeholder: "https://www.google.com/alerts/feeds/…" },
                 ],
-                hint: "Set up a Google Alert for 'Philip Kaloki' or 'Makueni MNA', then paste the RSS feed URL here."
+                hint: "Set up a Google Alert for 'Prof. Philip Kaloki' or 'Kaloki 2027 Makueni Governor', then paste the RSS feed URL here."
               },
               {
                 key: "news_rss", label: "NEWS MEDIA RSS", icon: <Newspaper className="w-4 h-4 text-yellow-400" />,
@@ -1110,7 +1113,7 @@ export default function Intelligence() {
           <div className="bg-card border border-border">
             <div className="px-4 py-3 border-b border-border flex items-center gap-2">
               <Shield className="w-3 h-3 text-primary" />
-              <span className="font-mono text-[10px] tracking-widest">SWOT ANALYSIS · PROF. PHILIP KALOKI · MAKUENI GUBERNATORIAL CAMPAIGN</span>
+              <span className="font-mono text-[10px] tracking-widest">{`SWOT ANALYSIS · ${CAMPAIGN_UI.candidateName.toUpperCase()} · ${CAMPAIGN_UI.county.toUpperCase()} GUBERNATORIAL CAMPAIGN`}</span>
             </div>
             <div className="grid grid-cols-2 divide-x divide-y divide-border">
               <div className="p-4">

@@ -11,6 +11,9 @@ type MilestoneEx = Milestone & { priority?: string | null };
 type ReadinessEx = ReadinessScore & { overdueCount?: number };
 import { useQueryClient } from "@tanstack/react-query";
 import {
+import {
+  CAMPAIGN_UI,
+} from "../config/campaign-ui";
   Plus, X, Check, Trash2, Clock, AlertTriangle, Target, TrendingUp,
   ChevronDown, ChevronUp, Printer, Download, RefreshCw, Edit2, Save,
   Flag, Users, MapPin, BarChart2, CheckCircle, Circle, AlertCircle, Zap,
@@ -308,7 +311,7 @@ export default function CampaignPlan() {
     const report = await apiFetch("/report");
     const lines: string[] = [
       "═══════════════════════════════════════════════════════",
-      "  MAKUENI COMMAND CENTRE — CAMPAIGN PLAN REPORT",
+      "  ${CAMPAIGN_UI.campaignName.toUpperCase()} — ${CAMPAIGN_UI.county.toUpperCase()} CAMPAIGN PLAN REPORT",
       "  PROF. PHILIP KALOKI — MAKUENI COUNTY",
       "═══════════════════════════════════════════════════════",
       `  Generated: ${new Date().toLocaleString("en-KE")}`,
@@ -437,8 +440,8 @@ export default function CampaignPlan() {
 
         {/* Print header (only visible when printing) */}
         <div className="hidden print:block mb-6">
-          <h1 className="text-2xl font-bold">MAKUENI COMMAND CENTRE — CAMPAIGN PLAN</h1>
-          <p className="text-sm">Prof. Philip Kaloki · Makueni Constituency · Generated {new Date().toLocaleString("en-KE")}</p>
+          <h1 className="text-2xl font-bold">KALOKI 2027 — MAKUENI COUNTY CAMPAIGN PLAN</h1>
+          <p className="text-sm">{CAMPAIGN_UI.reportIdentity} · Generated {new Date().toLocaleString("en-KE")}</p>
         </div>
 
         {/* Stats bar */}

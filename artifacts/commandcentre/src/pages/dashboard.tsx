@@ -101,16 +101,16 @@ export default function Dashboard() {
                 <p className="font-bold text-sm tracking-wide">PROF. PHILIP KALOKI</p>
                 <p className="font-mono text-[10px] text-primary tracking-widest mt-0.5">PROF. KALOKI · MAKUENI GUBERNATORIAL CAMPAIGN</p>
               </div>
-              <span className="font-mono text-[9px] border border-primary/30 px-2 py-0.5 text-primary shrink-0">WIPER PATRIOTIC FRONT</span>
+              <span className="font-mono text-[9px] border border-primary/30 px-2 py-0.5 text-primary shrink-0">UDA </span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
               {[
-                ["SLOGAN", "Komboa Kenya"],
-                ["SYMBOL", "Umbrella"],
-                ["PROFESSION", "Biomedical Engineer"],
+                ["SLOGAN", ""],
+                ["SYMBOL", ""],
+                ["PROFESSION", ""],
                 ["EXPERIENCE", "15 Years Leadership"],
                 ["EDUCATION", "Degree"],
-                ["CONTACT", "0725 988 683"],
+                ["CONTACT", ""],
                 ["WARD", "Makindu"],
                 ["TARGET WIN", "85%+"],
               ].map(([k, v]) => (
