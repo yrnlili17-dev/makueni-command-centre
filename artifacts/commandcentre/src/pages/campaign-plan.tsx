@@ -10,11 +10,11 @@ import type { Milestone, MilestoneInput, MilestoneUpdate, ReadinessScore } from 
 type MilestoneEx = Milestone & { priority?: string | null };
 type ReadinessEx = ReadinessScore & { overdueCount?: number };
 import { useQueryClient } from "@tanstack/react-query";
+
+import { CAMPAIGN_UI } from "../config/campaign-ui";
+
 import {
-import {
-  CAMPAIGN_UI,
-} from "../config/campaign-ui";
-  Plus, X, Check, Trash2, Clock, AlertTriangle, Target, TrendingUp,
+Plus, X, Check, Trash2, Clock, AlertTriangle, Target, TrendingUp,
   ChevronDown, ChevronUp, Printer, Download, RefreshCw, Edit2, Save,
   Flag, Users, MapPin, BarChart2, CheckCircle, Circle, AlertCircle, Zap,
   Sparkles, Loader2, Square, CheckSquare, UploadCloud

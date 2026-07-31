@@ -27,11 +27,14 @@ type ScoreEx = {
   aiEnabled?: boolean;
 };
 import { useQueryClient } from "@tanstack/react-query";
+
 import {
   CAMPAIGN_MESSAGES,
   CAMPAIGN_UI,
 } from "../config/campaign-ui";
-  Plus, X, Check, ShieldAlert, TrendingUp, TrendingDown, Minus,
+
+import {
+Plus, X, Check, ShieldAlert, TrendingUp, TrendingDown, Minus,
   AlertTriangle, Target, Zap, Eye, Send, Settings, RefreshCw,
   Clock, CheckCircle, XCircle, Radio, Globe, Twitter, Facebook,
   Newspaper, ThumbsUp, ThumbsDown, Bot, Shield, ChevronDown, ChevronUp, Edit2, Trash2, BookOpen, Megaphone, MapPin
