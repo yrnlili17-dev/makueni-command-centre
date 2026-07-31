@@ -86,7 +86,7 @@ const PATH_MODULE: Record<string, string> = {
   "/speeches": "speeches", "/fundraising": "fundraising", "/election-day": "election-day",
   "/war-room": "war-room", "/turnout": "turnout",
   "/credentials": "credentials", "/analytics": "analytics", "/governance": "governance", "/admin": "admin",
-  "/production-centre": "production-centre",
+  "/production-centre": "production-centre", "/gis-centre": "gis-centre", "/gis-intelligence": "gis-intelligence", "/election-war-room": "election-war-room", "/production-readiness": "production-readiness", "/smart-assist": "smart-assist", "/data-centre": "data-centre",
 };
 
 const mobileNav = [
@@ -99,6 +99,7 @@ const mobileNav = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { user, can, logout } = useAuth();
   const currentModule = PATH_MODULE[location] ?? "dashboard";
 
@@ -196,7 +197,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <button className="touch-target grid place-items-center" aria-label="Notifications"><Bell className="h-4 w-4" /></button>
+            <div className="relative">
+              <button type="button" onClick={() => setNotificationsOpen((open) => !open)} className="touch-target relative grid place-items-center" aria-label="Notifications" aria-expanded={notificationsOpen}>
+                <Bell className="h-4 w-4" />
+                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" />
+              </button>
+              {notificationsOpen && <div className="absolute right-0 top-12 z-[80] w-[min(92vw,22rem)] border border-border bg-card shadow-2xl">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3"><span className="font-mono text-xs tracking-widest">NOTIFICATION CENTRE</span><button type="button" onClick={() => setNotificationsOpen(false)} aria-label="Close notifications"><X className="h-4 w-4" /></button></div>
+                <div className="divide-y divide-border">
+                  <button type="button" onClick={() => { setLocation('/governance'); setNotificationsOpen(false); }} className="w-full p-4 text-left hover:bg-secondary"><p className="text-sm font-medium">Review pending approvals</p><p className="mt-1 font-mono text-[10px] text-muted-foreground">GOVERNANCE · ACTION REQUIRED</p></button>
+                  <button type="button" onClick={() => { setLocation('/intelligence'); setNotificationsOpen(false); }} className="w-full p-4 text-left hover:bg-secondary"><p className="text-sm font-medium">Check campaign intelligence</p><p className="mt-1 font-mono text-[10px] text-muted-foreground">INTELLIGENCE · LIVE MONITORING</p></button>
+                  <button type="button" onClick={() => { setLocation('/events'); setNotificationsOpen(false); }} className="w-full p-4 text-left hover:bg-secondary"><p className="text-sm font-medium">Review upcoming events</p><p className="mt-1 font-mono text-[10px] text-muted-foreground">CALENDAR · SCHEDULE</p></button>
+                </div>
+              </div>}
+            </div>
             <div className="hidden border border-primary/30 bg-primary/10 px-2 py-1 font-mono text-[10px] text-primary sm:block">KOMBOA KENYA</div>
           </div>
         </header>

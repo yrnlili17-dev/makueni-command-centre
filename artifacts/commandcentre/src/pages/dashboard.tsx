@@ -1,16 +1,18 @@
 import { useGetDashboardSummary, useGetDashboardActivity } from "@workspace/api-client-react";
-import { Users, MessageSquare, Map, ShieldAlert, Target, Calendar, Zap, Clock, TrendingUp, Activity, User, Building2 } from "lucide-react";
+import { Users, MessageSquare, Map, ShieldAlert, Target, Calendar, Zap, Clock, TrendingUp, Activity, User, Building2, ArrowUpRight } from "lucide-react";
+import { useLocation } from "wouter";
 
-function StatCard({ label, value, icon: Icon, sub }: { label: string; value: string | number; icon: any; sub?: string }) {
+function StatCard({ label, value, icon: Icon, sub, href }: { label: string; value: string | number; icon: any; sub?: string; href: string }) {
+  const [, setLocation] = useLocation();
   return (
-    <div className="bg-card border border-border p-4">
+    <button type="button" onClick={() => setLocation(href)} className="group w-full bg-card border border-border p-4 text-left transition hover:border-primary/60 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
       <div className="flex items-start justify-between mb-3">
         <span className="text-[10px] font-mono tracking-widest text-muted-foreground">{label}</span>
-        <Icon className="w-4 h-4 text-primary" />
+        <div className="flex items-center gap-2"><Icon className="w-4 h-4 text-primary" /><ArrowUpRight className="w-3 h-3 text-muted-foreground transition group-hover:text-primary" /></div>
       </div>
       <div className="text-3xl font-bold tabular-nums">{value}</div>
       {sub && <div className="text-[10px] font-mono text-muted-foreground mt-1">{sub}</div>}
-    </div>
+    </button>
   );
 }
 
@@ -75,14 +77,14 @@ export default function Dashboard() {
         </div>
       ) : summary ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label="TOTAL MEMBERS" value={summary.totalMembers.toLocaleString()} icon={Users} sub="IDENTITY GRAPH" />
-          <StatCard label="ACTIVE VOLUNTEERS" value={summary.activeVolunteers} icon={Activity} sub="DEPLOYED" />
-          <StatCard label="MESSAGES SENT" value={summary.messagesSent.toLocaleString()} icon={MessageSquare} sub="ALL CHANNELS" />
-          <StatCard label="DOORS KNOCKED" value={summary.doorsKnocked.toLocaleString()} icon={Map} sub="FIELD OPS" />
-          <StatCard label="WARDS COVERED" value={summary.wardsCovered} icon={TrendingUp} sub="ACTIVE ZONES" />
-          <StatCard label="OPEN THREATS" value={summary.openThreats} icon={ShieldAlert} sub="NARRATIVE" />
-          <StatCard label="READINESS SCORE" value={`${summary.campaignReadiness}%`} icon={Target} sub="OVERALL" />
-          <StatCard label="UPCOMING EVENTS" value={summary.upcomingEvents} icon={Calendar} sub="SCHEDULED" />
+          <StatCard label="TOTAL MEMBERS" value={summary.totalMembers.toLocaleString()} icon={Users} sub="IDENTITY GRAPH" href="/members" />
+          <StatCard label="ACTIVE VOLUNTEERS" value={summary.activeVolunteers} icon={Activity} sub="DEPLOYED" href="/volunteers" />
+          <StatCard label="MESSAGES SENT" value={summary.messagesSent.toLocaleString()} icon={MessageSquare} sub="ALL CHANNELS" href="/messaging" />
+          <StatCard label="DOORS KNOCKED" value={summary.doorsKnocked.toLocaleString()} icon={Map} sub="FIELD OPS" href="/field-ops" />
+          <StatCard label="WARDS COVERED" value={summary.wardsCovered} icon={TrendingUp} sub="ACTIVE ZONES" href="/gis-centre" />
+          <StatCard label="OPEN THREATS" value={summary.openThreats} icon={ShieldAlert} sub="NARRATIVE" href="/intelligence" />
+          <StatCard label="READINESS SCORE" value={`${summary.campaignReadiness}%`} icon={Target} sub="OVERALL" href="/executive-command" />
+          <StatCard label="UPCOMING EVENTS" value={summary.upcomingEvents} icon={Calendar} sub="SCHEDULED" href="/events" />
         </div>
       ) : null}
 
