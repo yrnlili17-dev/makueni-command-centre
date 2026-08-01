@@ -37,8 +37,6 @@ import integrationsRouter from "./integrations";
 import geographyRouter from "./geography";
 import documentsRouter from "./documents";
 import commandCentreRouter from "./command-centre";
-import phase6HealthRouter from "./phase6-health";
-import localIntelligenceRouter from "./local-intelligence";
 
 const router: IRouter = Router();
 
@@ -55,8 +53,6 @@ router.use("/integrations", integrationsRouter);
 router.use("/geography", geographyRouter);
 router.use("/documents", documentsRouter);
 router.use("/command-centre", commandCentreRouter);
-router.use("/phase6-health", phase6HealthRouter);
-router.use("/local-intelligence", localIntelligenceRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/members", membersRouter);
 router.use("/segments", segmentsRouter);

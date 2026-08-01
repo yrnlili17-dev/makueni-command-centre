@@ -3,17 +3,6 @@ import { db, narrativeMentionsTable, competitorsTable, warRoomBriefsTable, narra
 import { eq, sql, and, desc } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 
-// PHASE6_INCIDENT_ENGINE
-import {
-  assignIncident,
-  buildIncidentChannels,
-  getIncident,
-  incidentMetrics,
-  listIncidents,
-  recordIncidentEvent,
-  updateIncidentStatus,
-} from "../services/intelligence-incident-engine";
-
 const router = Router();
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -280,94 +269,15 @@ router.get("/responses", async (req, res) => {
   const { status } = req.query as Record<string, string>;
   const conditions = status ? [eq(narrativeResponsesTable.status, status)] : [];
   const where = conditions.length ? and(...conditions) : undefined;
-
-  const allResponses = await db
-    .select()
-    .from(narrativeResponsesTable)
-    .where(where)
-    .orderBy(desc(narrativeResponsesTable.createdAt));
-
-  // Newest response wins. Manual drafts without a mention stay separate.
-  const responses = allResponses.filter((response, index, rows) => {
-    if (response.mentionId == null) return true;
-    return index === rows.findIndex(
-      (candidate) => candidate.mentionId === response.mentionId,
-    );
-  });
-
+  const responses = await db.select().from(narrativeResponsesTable).where(where).orderBy(desc(narrativeResponsesTable.createdAt));
   const mentions = await db.select().from(narrativeMentionsTable);
-  const mentionById = new Map(
-    mentions.map((mention) => [mention.id, mention]),
-  );
-
-  function sourceFallback(
-    platform: string,
-    author?: string | null,
-  ): string | null {
-    const cleanAuthor = author?.trim().replace(/^@/, "");
-    if (!cleanAuthor) return null;
-
-    const key = platform.toLowerCase();
-    if (key.includes("twitter") || key === "x") {
-      return `https://x.com/${encodeURIComponent(cleanAuthor)}`;
-    }
-    if (key.includes("facebook")) {
-      return `https://www.facebook.com/${encodeURIComponent(cleanAuthor)}`;
-    }
-    if (key.includes("tiktok")) {
-      return `https://www.tiktok.com/@${encodeURIComponent(cleanAuthor)}`;
-    }
-    if (key.includes("instagram")) {
-      return `https://www.instagram.com/${encodeURIComponent(cleanAuthor)}/`;
-    }
-    return null;
-  }
-
-  res.json(
-    responses.map((response) => {
-      const mention = response.mentionId
-        ? mentionById.get(response.mentionId)
-        : undefined;
-      const sourceContent = mention?.content ?? "";
-      const sourceAuthor = mention?.author ?? null;
-      const sourcePlatform = mention?.platform ?? response.platform;
-      const sourceUrl = mention?.url ?? null;
-      const sourceHref =
-        sourceUrl || sourceFallback(sourcePlatform, sourceAuthor);
-      const threatLevel = mention?.threatLevel ?? "normal";
-      const hiddenDuplicateCount =
-        response.mentionId == null
-          ? 0
-          : Math.max(
-              0,
-              allResponses.filter(
-                (item) => item.mentionId === response.mentionId,
-              ).length - 1,
-            );
-
-      return {
-        ...response,
-        sourceContent,
-        sourceAuthor,
-        sourcePlatform,
-        sourceUrl,
-        sourceHref,
-        sourceLinkLabel: sourceUrl
-          ? "OPEN ORIGINAL POST"
-          : sourceHref
-            ? "OPEN SOURCE PROFILE"
-            : null,
-        threatLevel,
-        sentiment: mention?.sentiment ?? null,
-        hiddenDuplicateCount,
-        responseOptions: buildLocalResponseOptions(
-          sourceContent || response.content,
-          response.platform,
-          threatLevel,
-        ),
-      };
-    }),
-  );
+  const mentionById = new Map(mentions.map((mention) => [mention.id, mention]));
+  res.json(responses.map((response) => {
+    const mention = response.mentionId ? mentionById.get(response.mentionId) : undefined;
+    const sourceContent = mention?.content ?? "";
+    const threatLevel = mention?.threatLevel ?? "normal";
+    return { ...response, sourceContent, sourceUrl: mention?.url ?? null, sourceAuthor: mention?.author ?? null, sourcePlatform: mention?.platform ?? response.platform, threatLevel, sentiment: mention?.sentiment ?? null, responseOptions: buildLocalResponseOptions(sourceContent || response.content, response.platform, threatLevel) };
+  }));
 });
 
 router.post("/responses", async (req, res) => {
@@ -498,117 +408,6 @@ router.post("/briefs", async (req, res) => {
   if (!title || !summary || !category) { res.status(400).json({ error: "title, summary, category required" }); return; }
   const [brief] = await db.insert(warRoomBriefsTable).values({ title, summary, priority, category, actions, status: "active" }).returning();
   res.status(201).json(brief);
-});
-
-
-// ─── Phase 6: Intelligence Incident Operations Engine ────────────────────────
-
-router.get("/incidents/metrics", async (_req, res) => {
-  res.json(await incidentMetrics());
-});
-
-router.get("/incidents", async (req, res) => {
-  const query = req.query as Record<string, string>;
-  res.json(
-    await listIncidents({
-      status: query.status,
-      platform: query.platform,
-      threatLevel: query.threatLevel,
-    }),
-  );
-});
-
-router.get("/incidents/:identifier", async (req, res) => {
-  const incident = await getIncident(String(req.params.identifier));
-  if (!incident) {
-    res.status(404).json({ error: "Incident not found" });
-    return;
-  }
-  res.json(incident);
-});
-
-router.patch("/incidents/:identifier/assign", async (req, res) => {
-  const { assignedTo, dueAt, priority } = req.body ?? {};
-  if (!assignedTo) {
-    res.status(400).json({ error: "assignedTo is required" });
-    return;
-  }
-
-  const incident = await assignIncident(String(req.params.identifier), {
-    assignedTo,
-    dueAt,
-    priority,
-  });
-
-  if (!incident) {
-    res.status(404).json({ error: "Incident not found" });
-    return;
-  }
-
-  res.json(incident);
-});
-
-router.patch("/incidents/:identifier/status", async (req, res) => {
-  const { status, note, actor } = req.body ?? {};
-  const allowed = new Set([
-    "detected",
-    "analysed",
-    "awaiting_approval",
-    "approved",
-    "published",
-    "monitoring",
-    "closed",
-  ]);
-
-  if (!allowed.has(status)) {
-    res.status(400).json({ error: "Invalid incident status" });
-    return;
-  }
-
-  const incident = await updateIncidentStatus(
-    String(req.params.identifier),
-    { status, note, actor },
-  );
-
-  if (!incident) {
-    res.status(404).json({ error: "Incident not found" });
-    return;
-  }
-
-  res.json(incident);
-});
-
-router.post("/incidents/:identifier/events", async (req, res) => {
-  const { eventType, actor, note, metadata } = req.body ?? {};
-  if (!eventType) {
-    res.status(400).json({ error: "eventType is required" });
-    return;
-  }
-
-  const event = await recordIncidentEvent(
-    String(req.params.identifier),
-    { eventType, actor, note, metadata },
-  );
-
-  if (!event) {
-    res.status(404).json({ error: "Incident not found" });
-    return;
-  }
-
-  res.status(201).json(event);
-});
-
-router.post("/incidents/:identifier/channels", async (req, res) => {
-  const output = await buildIncidentChannels(
-    String(req.params.identifier),
-  );
-
-  if (!output) {
-    res.status(404).json({ error: "Incident not found" });
-    return;
-  }
-
-  res.json(output);
 });
 
 export default router;
