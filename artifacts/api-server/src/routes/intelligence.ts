@@ -218,59 +218,236 @@ const CHAR_LIMITS: Record<string, number> = {
 const CANDIDATE_CTX = `Prof. Philip Kaloki (Prof. Kaloki), UDA gubernatorial candidate for Makueni County, covering all six constituencies and 30 wards. Campaign: Kaloki 2027. Do not assume voter totals, endorsements, staff identities or achievements unless verified in approved campaign data.`;
 
 router.post("/ai-draft-rebuttal", async (req, res) => {
-  const { attack, platform = "Twitter/X", urgency = "planned" } = req.body as {
-    attack: string; platform?: string; urgency?: string;
+  const {
+    attack,
+    platform = "Twitter/X",
+    urgency = "planned",
+  } = req.body as {
+    attack: string;
+    platform?: string;
+    urgency?: string;
   };
-  if (!attack?.trim()) { res.status(400).json({ error: "attack text required" }); return; }
+
+  if (!attack?.trim()) {
+    res.status(400).json({ error: "attack text required" });
+    return;
+  }
 
   const charLimit = CHAR_LIMITS[platform] ?? 400;
+  const attackSnippet = attack.trim().substring(0, 400);
 
-  const BASE = `Senior comms officer for ${CANDIDATE_CTX}. ${urgency === "live" ? "LIVE URGENT" : "Planned"} rebuttal for ${platform} (max ${charLimit} chars). Never name opponents. Stay dignified. Kenya political language. Include one Makueni reference. Output ONLY raw JSON, no markdown.`;
+  function trimToLimit(value: string): string {
+    if (value.length <= charLimit) return value;
 
-  const ATTACK_SNIPPET = attack.substring(0, 400);
+    return `${value
+      .slice(0, Math.max(0, charLimit - 1))
+      .trimEnd()}…`;
+  }
 
-  const VARIATIONS = [
-    { tone: "FACTUAL COUNTER", angle: "Cite specific Makueni achievements/data to disprove the claim.", schema: `{"tone":"FACTUAL COUNTER","angle":"string","content":"string"}` },
-    { tone: "FIRM DENIAL",     angle: "Direct, authoritative, dignified denial with brief rationale. No aggression.", schema: `{"tone":"FIRM DENIAL","angle":"string","content":"string"}` },
-    { tone: "BRIDGE & PIVOT",  angle: "Acknowledge voter frustration, pivot to positive vision and commitment.", schema: `{"tone":"BRIDGE & PIVOT","angle":"string","content":"string"}` },
-  ];
+  function detectTopic(value: string): string {
+    const text = value.toLowerCase();
 
-  const makeCall = (v: typeof VARIATIONS[0]) =>
-    openai.chat.completions.create({
-      model: "gpt-5.1",
-      max_completion_tokens: 600,
-      messages: [
-        { role: "system", content: `${BASE}\nTone: ${v.tone}. ${v.angle}\nSchema: ${v.schema}\nContent must be under ${charLimit} chars.` },
-        { role: "user", content: `Draft a ${v.tone} rebuttal for this attack: "${ATTACK_SNIPPET}"` },
-      ],
-    });
+    if (text.includes("water") || text.includes("borehole")) {
+      return "water access";
+    }
 
-  try {
-    const [r1, r2, r3] = await Promise.all(VARIATIONS.map(makeCall));
+    if (
+      text.includes("road") ||
+      text.includes("bridge") ||
+      text.includes("transport")
+    ) {
+      return "road infrastructure";
+    }
 
-    const parseOne = (res: any, fallbackTone: string) => {
-      const text = res.choices[0]?.message?.content ?? "";
-      const m = text.match(/\{[\s\S]*\}/);
-      if (!m) return { tone: fallbackTone, angle: "", content: "" };
-      try { return JSON.parse(m[0]); } catch { return { tone: fallbackTone, angle: "", content: "" }; }
-    };
+    if (
+      text.includes("health") ||
+      text.includes("hospital") ||
+      text.includes("dispensary")
+    ) {
+      return "healthcare";
+    }
 
-    const rebuttals = [r1, r2, r3].map((r, i) => {
-      const parsed = parseOne(r, VARIATIONS[i].tone);
-      return {
-        tone: parsed.tone ?? VARIATIONS[i].tone,
-        angle: parsed.angle ?? "",
-        content: parsed.content ?? "",
-        characterCount: (parsed.content ?? "").length,
+    if (
+      text.includes("job") ||
+      text.includes("youth") ||
+      text.includes("employment")
+    ) {
+      return "youth employment and opportunity";
+    }
+
+    if (
+      text.includes("corrupt") ||
+      text.includes("fund") ||
+      text.includes("tender") ||
+      text.includes("procurement")
+    ) {
+      return "accountability and transparent use of public resources";
+    }
+
+    if (
+      text.includes("education") ||
+      text.includes("school") ||
+      text.includes("bursary")
+    ) {
+      return "education access";
+    }
+
+    return "Makueni County development priorities";
+  }
+
+  function buildLocalRebuttals() {
+    const topic = detectTopic(attackSnippet);
+
+    const factual = trimToLimit(
+      `Facts and accountability matter. Prof. Philip Kaloki's campaign remains focused on ${topic}, responsible leadership and practical solutions for communities across Makueni County.`,
+    );
+
+    const firm = trimToLimit(
+      `Unverified claims should not replace evidence. The campaign will continue responding with facts, integrity and a clear commitment to ${topic} for the people of Makueni County.`,
+    );
+
+    const bridge = trimToLimit(
+      `We understand the concern being raised. Prof. Philip Kaloki's campaign will keep listening to residents, verifying information and presenting workable plans on ${topic} for every ward in Makueni.`,
+    );
+
+    return [
+      {
+        tone: "FACTUAL COUNTER",
+        angle: `Correct the claim with verified messaging on ${topic}.`,
+        content: factual,
+        characterCount: factual.length,
         platform,
         charLimit,
-      };
+      },
+      {
+        tone: "FIRM DENIAL",
+        angle:
+          "Reject unverified claims without attacking any individual.",
+        content: firm,
+        characterCount: firm.length,
+        platform,
+        charLimit,
+      },
+      {
+        tone: "BRIDGE & PIVOT",
+        angle: `Acknowledge the concern and return the discussion to ${topic}.`,
+        content: bridge,
+        characterCount: bridge.length,
+        platform,
+        charLimit,
+      },
+    ];
+  }
+
+  const apiKey =
+    process.env.AI_INTEGRATIONS_OPENAI_API_KEY ??
+    process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    res.json({
+      rebuttals: buildLocalRebuttals(),
+      platform,
+      attack: attackSnippet,
+      generatedBy: "local-campaign-engine",
+      requiresApiKeys: false,
+      urgency,
+    });
+    return;
+  }
+
+  const basePrompt = `Senior communications officer for ${CANDIDATE_CTX}. ${
+    urgency === "live" ? "LIVE URGENT" : "Planned"
+  } rebuttal for ${platform}, maximum ${charLimit} characters. Never name opponents. Stay dignified, factual and focused on Makueni County. Output only JSON.`;
+
+  const variations = [
+    {
+      tone: "FACTUAL COUNTER",
+      angle:
+        "Correct the claim using factual, development-focused messaging.",
+    },
+    {
+      tone: "FIRM DENIAL",
+      angle:
+        "Issue a direct but dignified denial without aggression.",
+    },
+    {
+      tone: "BRIDGE & PIVOT",
+      angle:
+        "Acknowledge concern and pivot to the campaign's positive vision.",
+    },
+  ];
+
+  try {
+    const results = await Promise.all(
+      variations.map((variation) =>
+        openai.chat.completions.create({
+          model: "gpt-5.1",
+          max_completion_tokens: 600,
+          messages: [
+            {
+              role: "system",
+              content: `${basePrompt}
+Tone: ${variation.tone}
+Angle: ${variation.angle}
+Return:
+{"tone":"string","angle":"string","content":"string"}`,
+            },
+            {
+              role: "user",
+              content: `Draft a rebuttal for this attack: "${attackSnippet}"`,
+            },
+          ],
+        }),
+      ),
+    );
+
+    const localFallback = buildLocalRebuttals();
+
+    const rebuttals = results.map((result, index) => {
+      const raw = result.choices[0]?.message?.content ?? "";
+      const match = raw.match(/\{[\s\S]*\}/);
+
+      if (!match) return localFallback[index];
+
+      try {
+        const parsed = JSON.parse(match[0]);
+        const content = trimToLimit(parsed.content ?? "");
+
+        return {
+          tone: parsed.tone ?? variations[index].tone,
+          angle: parsed.angle ?? variations[index].angle,
+          content,
+          characterCount: content.length,
+          platform,
+          charLimit,
+        };
+      } catch {
+        return localFallback[index];
+      }
     });
 
-    res.json({ rebuttals, platform, attack: ATTACK_SNIPPET });
-  } catch (err) {
-    req.log.error({ err }, "ai-draft-rebuttal failed");
-    res.status(500).json({ error: "Rebuttal generation failed. Please retry." });
+    res.json({
+      rebuttals,
+      platform,
+      attack: attackSnippet,
+      generatedBy: "openai",
+      requiresApiKeys: true,
+      urgency,
+    });
+  } catch (error) {
+    req.log.error(
+      { error },
+      "OpenAI rebuttal generation failed; using local fallback",
+    );
+
+    res.json({
+      rebuttals: buildLocalRebuttals(),
+      platform,
+      attack: attackSnippet,
+      generatedBy: "local-campaign-engine-fallback",
+      requiresApiKeys: false,
+      urgency,
+    });
   }
 });
 
