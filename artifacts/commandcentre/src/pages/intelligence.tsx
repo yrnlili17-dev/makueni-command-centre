@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import ResponseOperationsV7 from "../components/intelligence/ResponseOperationsV7";
 import IncidentOperationsV6 from "../components/intelligence/IncidentOperationsV6";
 import ExecutiveDashboardV6 from "../components/intelligence/ExecutiveDashboardV6";
 import ResponseQueueV5 from "../components/response-queue/ResponseQueueV5";
@@ -643,12 +644,12 @@ export default function Intelligence() {
     },
     {
       id: "queue",
-      label: "RESPONSE QUEUE",
+      label: "RESPONSE OPS",
       icon: <Shield className="w-3 h-3" />,
     },
     {
       id: "rebuttal",
-      label: "AI REBUTTAL CENTER",
+      label: "REBUTTAL CENTER",
       icon: <Zap className="w-3 h-3" />,
     },
     {
@@ -1150,26 +1151,10 @@ export default function Intelligence() {
 
       {/* ── PHASE 6 INCIDENT OPERATIONS ── */}
       {tab === "incidents" && <IncidentOperationsV6 />}
+      {/* ── PHASE 7 RESPONSE OPERATIONS ── */}
+      {tab === "queue" && <ResponseOperationsV7 />}
 
-      {/* ── RESPONSE QUEUE V5 ── */}
-      {tab === "queue" && (
-        <ResponseQueueV5
-          responses={responses}
-          loading={responsesLoading}
-          onRefresh={loadResponses}
-          onUpdate={updateResponse}
-          onDelete={deleteResponse}
-          onSaveContent={async (id, content) => {
-            await apiFetch(`/responses/${id}`, {
-              method: "PATCH",
-              body: JSON.stringify({ content }),
-            });
-            await loadResponses();
-          }}
-        />
-      )}
-
-      {/* ── AI REBUTTAL CENTER ── */}
+      {/* ── REBUTTAL CENTER ── */}
       {tab === "rebuttal" &&
         (() => {
           const ATTACK_TEMPLATES = [
@@ -1393,7 +1378,7 @@ export default function Intelligence() {
                           click DRAFT 3 REBUTTALS.
                         </p>
                         <p className="font-mono text-[10px] text-muted-foreground">
-                          AI will generate 3 variations: Factual Counter · Firm
+                          Local Campaign Intelligence will generate 3 variations: Factual Counter · Firm
                           Denial · Bridge & Pivot
                         </p>
                       </div>

@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import IncidentInvestigationV7 from "./IncidentInvestigationV7";
 
 type IncidentMetrics = {
   activeIncidents: number;
@@ -171,6 +172,7 @@ export default function IncidentOperationsV6() {
   const [assignedTo, setAssignedTo] = useState("");
   const [dueAt, setDueAt] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [investigationCode, setInvestigationCode] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -514,7 +516,7 @@ export default function IncidentOperationsV6() {
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => void openIncident(incident)}
+                      onClick={() => setInvestigationCode(incident.incident_code)}
                       className="flex items-center gap-1 border border-border px-3 py-1.5 font-mono text-[9px] hover:bg-secondary"
                     >
                       <Eye className="h-3 w-3" />
@@ -770,6 +772,14 @@ export default function IncidentOperationsV6() {
           </aside>
         </div>
       )}
+      {investigationCode && (
+        <IncidentInvestigationV7
+          incidentCode={investigationCode}
+          onClose={() => setInvestigationCode(null)}
+          onChanged={load}
+        />
+      )}
+
     </div>
   );
 }

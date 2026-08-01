@@ -37,6 +37,7 @@ import integrationsRouter from "./integrations";
 import geographyRouter from "./geography";
 import documentsRouter from "./documents";
 import commandCentreRouter from "./command-centre";
+import phase7OperationsRouter from "./phase7-operations";
 import phase6HealthRouter from "./phase6-health";
 import localIntelligenceRouter from "./local-intelligence";
 
@@ -55,6 +56,7 @@ router.use("/integrations", integrationsRouter);
 router.use("/geography", geographyRouter);
 router.use("/documents", documentsRouter);
 router.use("/command-centre", commandCentreRouter);
+router.use("/phase7-operations", phase7OperationsRouter);
 router.use("/phase6-health", phase6HealthRouter);
 router.use("/local-intelligence", localIntelligenceRouter);
 router.use("/dashboard", dashboardRouter);
