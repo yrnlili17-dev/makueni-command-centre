@@ -19,9 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { CAMPAIGN_UI } from "../config/campaign-ui";
 import { CAMPAIGN_OPERATIONS } from "../config/campaign-operations";
-import ElectionOperationsCentre from "@/components/election/ElectionOperationsCentre";
-import LiveElectionCommandBoard from "@/components/election/LiveElectionCommandBoard";
-import ElectionReadinessSitrep from "@/components/election/ElectionReadinessSitrep";
 
 type WarRoomSummary = {
   registeredVoters: number;
@@ -224,12 +221,6 @@ export default function ElectionWarRoomPage() {
           </div>
         </div>
       )}
-
-      <LiveElectionCommandBoard />
-
-      <ElectionReadinessSitrep />
-
-      <ElectionOperationsCentre />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {cards.map(({ label, value, detail, icon: Icon }) => (

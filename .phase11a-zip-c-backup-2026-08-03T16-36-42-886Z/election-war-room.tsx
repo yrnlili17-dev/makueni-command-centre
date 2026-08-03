@@ -20,8 +20,6 @@ import { Input } from "@/components/ui/input";
 import { CAMPAIGN_UI } from "../config/campaign-ui";
 import { CAMPAIGN_OPERATIONS } from "../config/campaign-operations";
 import ElectionOperationsCentre from "@/components/election/ElectionOperationsCentre";
-import LiveElectionCommandBoard from "@/components/election/LiveElectionCommandBoard";
-import ElectionReadinessSitrep from "@/components/election/ElectionReadinessSitrep";
 
 type WarRoomSummary = {
   registeredVoters: number;
@@ -224,10 +222,6 @@ export default function ElectionWarRoomPage() {
           </div>
         </div>
       )}
-
-      <LiveElectionCommandBoard />
-
-      <ElectionReadinessSitrep />
 
       <ElectionOperationsCentre />
 
