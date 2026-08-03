@@ -1,12 +1,9 @@
 import { useState } from "react";
 import LiveOperationsWall from "@/components/war-room/LiveOperationsWall";
 import CountySituationRoom from "@/components/war-room/CountySituationRoom";
-import ExecutiveDecisionConsole from "@/components/war-room/ExecutiveDecisionConsole";
 
 export default function WarRoom() {
-  const [tab, setTab] = useState<
-    "decisions" | "situation" | "live" | "legacy"
-  >("decisions");
+  const [tab, setTab] = useState<"live" | "situation" | "legacy">("situation");
 
   return (
     <div className="space-y-5">
@@ -19,13 +16,12 @@ export default function WarRoom() {
             LIVE CAMPAIGN OPERATIONS
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">
-            Executive decisions, county situation and operational command.
+            County situation, operational awareness and command execution.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           {[
-            ["decisions", "DECISION CONSOLE"],
             ["situation", "SITUATION ROOM"],
             ["live", "LIVE WALL"],
             ["legacy", "LEGACY REPORTS"],
@@ -34,13 +30,7 @@ export default function WarRoom() {
               key={value}
               type="button"
               onClick={() =>
-                setTab(
-                  value as
-                    | "decisions"
-                    | "situation"
-                    | "live"
-                    | "legacy",
-                )
+                setTab(value as "live" | "situation" | "legacy")
               }
               className={`border px-3 py-2 font-mono text-[8px] ${
                 tab === value
@@ -54,9 +44,7 @@ export default function WarRoom() {
         </div>
       </header>
 
-      {tab === "decisions" ? (
-        <ExecutiveDecisionConsole />
-      ) : tab === "situation" ? (
+      {tab === "situation" ? (
         <CountySituationRoom />
       ) : tab === "live" ? (
         <LiveOperationsWall />

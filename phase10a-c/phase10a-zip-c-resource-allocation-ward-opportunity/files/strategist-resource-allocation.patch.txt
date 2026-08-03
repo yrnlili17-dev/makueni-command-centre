@@ -1,0 +1,236 @@
+async function ensureStrategistAllocationTable() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS strategist_resource_recommendations (
+      id bigserial PRIMARY KEY,
+      ward text NOT NULL,
+      constituency text,
+      opportunity_score integer NOT NULL DEFAULT 0,
+      risk_score integer NOT NULL DEFAULT 0,
+      recommended_volunteers integer NOT NULL DEFAULT 0,
+      recommended_field_visits integer NOT NULL DEFAULT 0,
+      messaging_priority text NOT NULL DEFAULT 'medium',
+      contact_recovery_priority text NOT NULL DEFAULT 'medium',
+      support_classification_priority text NOT NULL DEFAULT 'medium',
+      rationale text NOT NULL,
+      status text NOT NULL DEFAULT 'active',
+      generated_at timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+}
+
+router.get("/resource-allocation", async (req, res) => {
+  try {
+    await ensureStrategistAllocationTable();
+
+    const result = await db.execute(sql`
+      WITH ward_base AS (
+        SELECT
+          ward,
+          max(constituency) AS constituency,
+          count(*)::integer AS constituents,
+          count(*) FILTER (
+            WHERE phone IS NOT NULL AND btrim(phone) <> ''
+          )::integer AS phone_ready,
+          count(*) FILTER (
+            WHERE support_level IS NOT NULL
+              AND btrim(support_level) <> ''
+          )::integer AS support_classified,
+          count(*) FILTER (
+            WHERE support_level = 'undecided'
+          )::integer AS undecided,
+          count(*) FILTER (
+            WHERE support_level IN ('strong', 'leaning')
+          )::integer AS positive_support
+        FROM campaign_constituents
+        WHERE ward IS NOT NULL AND btrim(ward) <> ''
+        GROUP BY ward
+      )
+      SELECT
+        ward,
+        constituency,
+        constituents,
+        phone_ready,
+        support_classified,
+        undecided,
+        positive_support,
+        CASE
+          WHEN constituents = 0 THEN 0
+          ELSE round(
+            (
+              (constituents - phone_ready)::numeric /
+              constituents::numeric
+            ) * 45
+            +
+            (
+              (constituents - support_classified)::numeric /
+              constituents::numeric
+            ) * 35
+            +
+            (
+              undecided::numeric /
+              constituents::numeric
+            ) * 20
+          )::integer
+        END AS opportunity_score,
+        CASE
+          WHEN constituents = 0 THEN 0
+          ELSE round(
+            (
+              (constituents - phone_ready)::numeric /
+              constituents::numeric
+            ) * 50
+            +
+            (
+              (constituents - support_classified)::numeric /
+              constituents::numeric
+            ) * 30
+            +
+            (
+              greatest(0, 60 - least(60,
+                round(
+                  phone_ready::numeric /
+                  constituents::numeric * 100
+                )
+              ))::numeric / 60
+            ) * 20
+          )::integer
+        END AS risk_score
+      FROM ward_base
+      ORDER BY opportunity_score DESC, constituents DESC, ward
+    `);
+
+    const rows = ((result as any).rows ?? []).map((row: any) => {
+      const constituents = Number(row.constituents ?? 0);
+      const phoneReady = Number(row.phone_ready ?? 0);
+      const supportClassified = Number(row.support_classified ?? 0);
+      const opportunityScore = Number(row.opportunity_score ?? 0);
+      const riskScore = Number(row.risk_score ?? 0);
+      const missingPhone = Math.max(0, constituents - phoneReady);
+      const missingSupport = Math.max(0, constituents - supportClassified);
+
+      const recommendedVolunteers = Math.max(
+        2,
+        Math.ceil(constituents / 500) + Math.ceil(riskScore / 25),
+      );
+
+      const recommendedFieldVisits = Math.max(
+        1,
+        Math.ceil(constituents / 750) + Math.ceil(opportunityScore / 35),
+      );
+
+      const messagingPriority =
+        missingPhone > constituents * 0.5
+          ? "high"
+          : opportunityScore >= 60
+            ? "high"
+            : opportunityScore >= 35
+              ? "medium"
+              : "low";
+
+      const contactRecoveryPriority =
+        missingPhone > constituents * 0.45
+          ? "critical"
+          : missingPhone > constituents * 0.25
+            ? "high"
+            : "medium";
+
+      const supportClassificationPriority =
+        missingSupport > constituents * 0.6
+          ? "critical"
+          : missingSupport > constituents * 0.35
+            ? "high"
+            : "medium";
+
+      return {
+        ward: row.ward,
+        constituency: row.constituency,
+        constituents,
+        phoneReady,
+        supportClassified,
+        undecided: Number(row.undecided ?? 0),
+        opportunityScore,
+        riskScore,
+        recommendedVolunteers,
+        recommendedFieldVisits,
+        messagingPriority,
+        contactRecoveryPriority,
+        supportClassificationPriority,
+        rationale:
+          `${row.ward} has ${constituents.toLocaleString()} constituents, ` +
+          `${missingPhone.toLocaleString()} missing phone contacts and ` +
+          `${missingSupport.toLocaleString()} records without support classification.`,
+      };
+    });
+
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "strategist resource allocation failed");
+    res.status(500).json({
+      error: "Failed to calculate resource allocation",
+      detail: err instanceof Error ? err.message : "Unknown allocation error",
+    });
+  }
+});
+
+router.post("/resource-allocation/:ward/action", async (req, res) => {
+  try {
+    await ensureStrategistOperationsTables();
+
+    const ward = decodeURIComponent(String(req.params.ward ?? "")).trim();
+    const body = req.body as any;
+
+    if (!ward) {
+      res.status(400).json({ error: "ward required" });
+      return;
+    }
+
+    const title =
+      String(body?.title ?? "").trim() ||
+      `Implement resource allocation plan for ${ward}`;
+
+    const description =
+      String(body?.description ?? "").trim() ||
+      `Deploy ${Number(body?.recommendedVolunteers ?? 0)} volunteers and schedule ` +
+      `${Number(body?.recommendedFieldVisits ?? 0)} field visits in ${ward}.`;
+
+    const priority =
+      Number(body?.riskScore ?? 0) >= 70
+        ? "critical"
+        : Number(body?.riskScore ?? 0) >= 45
+          ? "high"
+          : "medium";
+
+    const result = await db.execute(sql`
+      INSERT INTO strategist_action_queue (
+        title,
+        description,
+        category,
+        priority,
+        status,
+        owner,
+        due_date,
+        source
+      )
+      VALUES (
+        ${title},
+        ${description},
+        'resource-allocation',
+        ${priority},
+        'pending',
+        ${body?.owner ?? null},
+        ${body?.dueDate ?? null},
+        'ward-opportunity-engine'
+      )
+      RETURNING *
+    `);
+
+    res.status(201).json((result as any).rows?.[0]);
+  } catch (err) {
+    req.log.error({ err }, "strategist allocation action create failed");
+    res.status(500).json({
+      error: "Failed to create allocation action",
+      detail: err instanceof Error ? err.message : "Unknown action error",
+    });
+  }
+});
+

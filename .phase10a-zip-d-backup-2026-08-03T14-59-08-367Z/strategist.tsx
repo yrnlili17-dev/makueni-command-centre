@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import ExecutiveStrategistBriefing from "@/components/strategist/ExecutiveStrategistBriefing";
 import DailyBriefingActionQueue from "@/components/strategist/DailyBriefingActionQueue";
 import WardOpportunityEngine from "@/components/strategist/WardOpportunityEngine";
-import StrategyPlaybookWorkspace from "@/components/strategist/StrategyPlaybookWorkspace";
 
 const BASE = import.meta.env.BASE_URL ?? "/";
 
@@ -236,9 +235,6 @@ export default function Strategist() {
           onPrompt={(prompt) => void sendMessage(prompt)}
         />
         <WardOpportunityEngine
-          onPrompt={(prompt) => void sendMessage(prompt)}
-        />
-        <StrategyPlaybookWorkspace
           onPrompt={(prompt) => void sendMessage(prompt)}
         />
       </div>

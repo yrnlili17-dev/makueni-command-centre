@@ -1,0 +1,148 @@
+router.get("/situation-room", async (_req, res) => {
+  try {
+    const [overview, actions, incidents, events] = await Promise.all([
+      db.execute(sql`
+        WITH ward_base AS (
+          SELECT
+            ward,
+            max(constituency) AS constituency,
+            count(*)::integer AS constituents,
+            count(*) FILTER (
+              WHERE phone IS NOT NULL AND btrim(phone) <> ''
+            )::integer AS phone_ready,
+            count(*) FILTER (
+              WHERE support_level IS NOT NULL
+                AND btrim(support_level) <> ''
+            )::integer AS support_classified,
+            count(*) FILTER (
+              WHERE support_level = 'undecided'
+            )::integer AS undecided
+          FROM campaign_constituents
+          WHERE ward IS NOT NULL AND btrim(ward) <> ''
+          GROUP BY ward
+        )
+        SELECT
+          ward,
+          constituency,
+          constituents,
+          phone_ready,
+          support_classified,
+          undecided,
+          CASE
+            WHEN constituents = 0 THEN 0
+            ELSE round(
+              (
+                phone_ready::numeric /
+                constituents::numeric
+              ) * 70
+              +
+              (
+                support_classified::numeric /
+                constituents::numeric
+              ) * 30
+            )::integer
+          END AS readiness,
+          CASE
+            WHEN constituents = 0 THEN 0
+            ELSE round(
+              (
+                (constituents - phone_ready)::numeric /
+                constituents::numeric
+              ) * 55
+              +
+              (
+                (constituents - support_classified)::numeric /
+                constituents::numeric
+              ) * 45
+            )::integer
+          END AS risk_score,
+          CASE
+            WHEN constituents = 0 THEN 0
+            ELSE round(
+              (
+                (constituents - support_classified)::numeric /
+                constituents::numeric
+              ) * 60
+              +
+              (
+                undecided::numeric /
+                constituents::numeric
+              ) * 40
+            )::integer
+          END AS opportunity_score
+        FROM ward_base
+        ORDER BY risk_score DESC, opportunity_score DESC, ward
+      `),
+      db.execute(sql`
+        SELECT
+          id,
+          title,
+          priority,
+          status,
+          owner,
+          created_at AS "createdAt"
+        FROM strategist_action_queue
+        WHERE status <> 'completed'
+        ORDER BY
+          CASE priority
+            WHEN 'critical' THEN 1
+            WHEN 'high' THEN 2
+            WHEN 'medium' THEN 3
+            ELSE 4
+          END,
+          updated_at DESC
+        LIMIT 20
+      `).catch(() => ({ rows: [] } as any)),
+      db.execute(sql`
+        SELECT
+          id,
+          coalesce(title, 'Field incident') AS title,
+          coalesce(priority, severity, 'medium') AS severity,
+          coalesce(status, 'open') AS status,
+          created_at AS "createdAt"
+        FROM field_incidents
+        ORDER BY created_at DESC
+        LIMIT 20
+      `).catch(() => ({ rows: [] } as any)),
+      db.execute(sql`
+        SELECT
+          id,
+          title,
+          start_date AS "startDate",
+          coalesce(status, 'scheduled') AS status
+        FROM campaign_events
+        WHERE start_date >= current_date
+        ORDER BY start_date ASC
+        LIMIT 20
+      `).catch(() => ({ rows: [] } as any)),
+    ]);
+
+    const wards = (overview as any).rows ?? [];
+    const highestRisk = [...wards]
+      .sort((a: any, b: any) => Number(b.risk_score) - Number(a.risk_score))
+      .slice(0, 5);
+    const highestOpportunity = [...wards]
+      .sort(
+        (a: any, b: any) =>
+          Number(b.opportunity_score) - Number(a.opportunity_score),
+      )
+      .slice(0, 5);
+
+    res.json({
+      generatedAt: new Date().toISOString(),
+      wards,
+      highestRisk,
+      highestOpportunity,
+      actions: (actions as any).rows ?? [],
+      incidents: (incidents as any).rows ?? [],
+      events: (events as any).rows ?? [],
+    });
+  } catch (err) {
+    console.error("county situation room failed", err);
+    res.status(500).json({
+      error: "Failed to load county situation room",
+      detail: err instanceof Error ? err.message : "Unknown situation-room error",
+    });
+  }
+});
+

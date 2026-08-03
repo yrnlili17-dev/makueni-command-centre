@@ -1,0 +1,392 @@
+async function ensureStrategistPlaybookTable() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS strategist_playbooks (
+      id bigserial PRIMARY KEY,
+      title text NOT NULL,
+      playbook_type text NOT NULL,
+      objective text NOT NULL,
+      timeframe text NOT NULL,
+      target_area text,
+      executive_summary text NOT NULL,
+      actions jsonb NOT NULL DEFAULT '[]'::jsonb,
+      success_metrics jsonb NOT NULL DEFAULT '[]'::jsonb,
+      risks jsonb NOT NULL DEFAULT '[]'::jsonb,
+      status text NOT NULL DEFAULT 'draft',
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+}
+
+router.get("/playbooks", async (req, res) => {
+  try {
+    await ensureStrategistPlaybookTable();
+
+    const result = await db.execute(sql`
+      SELECT
+        id,
+        title,
+        playbook_type AS "playbookType",
+        objective,
+        timeframe,
+        target_area AS "targetArea",
+        executive_summary AS "executiveSummary",
+        actions,
+        success_metrics AS "successMetrics",
+        risks,
+        status,
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+      FROM strategist_playbooks
+      ORDER BY updated_at DESC, id DESC
+      LIMIT 50
+    `);
+
+    res.json((result as any).rows ?? []);
+  } catch (err) {
+    req.log.error({ err }, "strategist playbooks list failed");
+    res.status(500).json({
+      error: "Failed to load strategist playbooks",
+      detail: err instanceof Error ? err.message : "Unknown playbook error",
+    });
+  }
+});
+
+router.post("/playbooks/generate", async (req, res) => {
+  try {
+    await ensureStrategistPlaybookTable();
+
+    const body = req.body as any;
+    const playbookType = String(body?.playbookType ?? "30-day-strategy");
+    const targetArea = String(body?.targetArea ?? "Makueni County").trim();
+    const timeframe = String(body?.timeframe ?? "30 days").trim();
+
+    const overview = await db.execute(sql`
+      SELECT
+        count(*)::integer AS constituents,
+        count(*) FILTER (
+          WHERE phone IS NOT NULL AND btrim(phone) <> ''
+        )::integer AS phone_ready,
+        count(*) FILTER (
+          WHERE support_level IS NOT NULL
+            AND btrim(support_level) <> ''
+        )::integer AS support_classified,
+        count(DISTINCT ward) FILTER (
+          WHERE ward IS NOT NULL AND btrim(ward) <> ''
+        )::integer AS wards
+      FROM campaign_constituents
+    `);
+
+    const metrics = (overview as any).rows?.[0] ?? {};
+    const constituents = Number(metrics.constituents ?? 0);
+    const phoneReady = Number(metrics.phone_ready ?? 0);
+    const supportClassified = Number(metrics.support_classified ?? 0);
+    const wards = Number(metrics.wards ?? 0);
+    const phoneCoverage =
+      constituents > 0 ? Math.round((phoneReady / constituents) * 100) : 0;
+    const supportCoverage =
+      constituents > 0
+        ? Math.round((supportClassified / constituents) * 100)
+        : 0;
+
+    const titleMap: Record<string, string> = {
+      "7-day-ward-plan": `7-Day Ward Action Plan — ${targetArea}`,
+      "30-day-strategy": `30-Day Campaign Strategy — ${targetArea}`,
+      "rally-plan": `Rally Mobilisation Plan — ${targetArea}`,
+      "volunteer-plan": `Volunteer Deployment Plan — ${targetArea}`,
+      "messaging-plan": `Messaging & Narrative Plan — ${targetArea}`,
+      "threat-response": `Threat Response Playbook — ${targetArea}`,
+    };
+
+    const objectiveMap: Record<string, string> = {
+      "7-day-ward-plan":
+        "Stabilise campaign readiness, recover contacts and increase visible field activity within seven days.",
+      "30-day-strategy":
+        "Improve campaign readiness, voter contactability, support classification and field execution over thirty days.",
+      "rally-plan":
+        "Deliver a disciplined, well-attended rally that strengthens mobilisation, message retention and follow-up.",
+      "volunteer-plan":
+        "Recruit, assign and track volunteers against ward-level contact and mobilisation targets.",
+      "messaging-plan":
+        "Create a coordinated campaign narrative with measurable voter response and ward-level adaptation.",
+      "threat-response":
+        "Detect, assign and neutralise narrative or operational threats before they affect public confidence.",
+    };
+
+    const commonActions = [
+      `Validate the ${constituents.toLocaleString()} constituent records and prioritise the ${(
+        constituents - phoneReady
+      ).toLocaleString()} contacts missing phone numbers.`,
+      `Assign named owners for activity across the ${wards} imported wards.`,
+      `Classify voter support for the ${(
+        constituents - supportClassified
+      ).toLocaleString()} records without a recorded support position.`,
+      "Set daily field, messaging and data-cleaning targets and review them in the evening command meeting.",
+      "Convert every unresolved risk into a tracked strategist action with an owner and deadline.",
+    ];
+
+    const specialisedActions: Record<string, string[]> = {
+      "7-day-ward-plan": [
+        "Day 1: confirm ward leadership, data gaps and field targets.",
+        "Days 2–3: run contact recovery and household outreach.",
+        "Days 4–5: conduct persuasion visits and volunteer mobilisation.",
+        "Day 6: review performance and redeploy resources.",
+        "Day 7: submit ward results and next-week priorities.",
+      ],
+      "30-day-strategy": [
+        "Week 1: stabilise campaign data and assign operating owners.",
+        "Week 2: expand field and volunteer activity in low-readiness wards.",
+        "Week 3: intensify persuasion, messaging and leader engagement.",
+        "Week 4: measure results, correct gaps and publish the next action cycle.",
+      ],
+      "rally-plan": [
+        "Confirm venue, permissions, transport, security and programme ownership.",
+        "Set ward mobilisation targets and transport manifests.",
+        "Prepare a locally relevant candidate speech and issue brief.",
+        "Capture attendance, contacts, commitments and follow-up assignments.",
+      ],
+      "volunteer-plan": [
+        "Define volunteer roles for mobilisation, data, events and polling-station work.",
+        "Recruit by ward and verify contact details.",
+        "Train teams using standard scripts and reporting procedures.",
+        "Track daily assignments, outputs and unresolved issues.",
+      ],
+      "messaging-plan": [
+        "Define one primary narrative and three supporting messages.",
+        "Adapt messages for WhatsApp, SMS, public meetings and speeches.",
+        "Assign response tracking and threat-monitoring responsibilities.",
+        "Review message performance weekly and update weak content.",
+      ],
+      "threat-response": [
+        "Classify each threat by urgency, reach, credibility and likely impact.",
+        "Assign a response owner and deadline.",
+        "Prepare factual rebuttal, surrogate response and field clarification.",
+        "Track whether the narrative is weakening, stable or expanding.",
+      ],
+    };
+
+    const actions = [
+      ...(specialisedActions[playbookType] ?? []),
+      ...commonActions,
+    ].slice(0, 10);
+
+    const successMetrics = [
+      `Phone coverage improves from ${phoneCoverage}% toward at least 70%.`,
+      `Support classification improves from ${supportCoverage}% toward at least 50%.`,
+      "Every action has a named owner and due date.",
+      "Ward-level outputs are reviewed and reported at least weekly.",
+      "Open threats and overdue campaign actions decline.",
+    ];
+
+    const risks = [
+      "Unassigned actions may remain incomplete.",
+      "Weak contact coverage can limit mobilisation and follow-up.",
+      "Lack of support classification can hide persuasion priorities.",
+      "Field activity without consistent reporting may produce unreliable results.",
+    ];
+
+    const objective =
+      objectiveMap[playbookType] ??
+      objectiveMap["30-day-strategy"];
+
+    const executiveSummary =
+      `${objective} The current database contains ${constituents.toLocaleString()} constituents across ${wards} imported wards. ` +
+      `Phone coverage is ${phoneCoverage}% and support classification is ${supportCoverage}%. ` +
+      `The playbook therefore prioritises execution ownership, contact recovery, support intelligence, field activation and measurable reporting.`;
+
+    const title =
+      titleMap[playbookType] ??
+      `Campaign Strategy Playbook — ${targetArea}`;
+
+    const inserted = await db.execute(sql`
+      INSERT INTO strategist_playbooks (
+        title,
+        playbook_type,
+        objective,
+        timeframe,
+        target_area,
+        executive_summary,
+        actions,
+        success_metrics,
+        risks,
+        status
+      )
+      VALUES (
+        ${title},
+        ${playbookType},
+        ${objective},
+        ${timeframe},
+        ${targetArea},
+        ${executiveSummary},
+        ${JSON.stringify(actions)}::jsonb,
+        ${JSON.stringify(successMetrics)}::jsonb,
+        ${JSON.stringify(risks)}::jsonb,
+        'draft'
+      )
+      RETURNING
+        id,
+        title,
+        playbook_type AS "playbookType",
+        objective,
+        timeframe,
+        target_area AS "targetArea",
+        executive_summary AS "executiveSummary",
+        actions,
+        success_metrics AS "successMetrics",
+        risks,
+        status,
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+    `);
+
+    res.status(201).json((inserted as any).rows?.[0]);
+  } catch (err) {
+    req.log.error({ err }, "strategist playbook generate failed");
+    res.status(500).json({
+      error: "Failed to generate strategy playbook",
+      detail: err instanceof Error ? err.message : "Unknown playbook error",
+    });
+  }
+});
+
+router.patch("/playbooks/:id", async (req, res) => {
+  try {
+    await ensureStrategistPlaybookTable();
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid playbook id" });
+      return;
+    }
+
+    const body = req.body as any;
+    const result = await db.execute(sql`
+      UPDATE strategist_playbooks
+      SET
+        title = coalesce(${body?.title ?? null}, title),
+        objective = coalesce(${body?.objective ?? null}, objective),
+        timeframe = coalesce(${body?.timeframe ?? null}, timeframe),
+        target_area = coalesce(${body?.targetArea ?? null}, target_area),
+        status = coalesce(${body?.status ?? null}, status),
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING
+        id,
+        title,
+        playbook_type AS "playbookType",
+        objective,
+        timeframe,
+        target_area AS "targetArea",
+        executive_summary AS "executiveSummary",
+        actions,
+        success_metrics AS "successMetrics",
+        risks,
+        status,
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+    `);
+
+    if ((result as any).rows?.length === 0) {
+      res.status(404).json({ error: "Playbook not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    req.log.error({ err }, "strategist playbook update failed");
+    res.status(500).json({
+      error: "Failed to update strategy playbook",
+      detail: err instanceof Error ? err.message : "Unknown update error",
+    });
+  }
+});
+
+router.delete("/playbooks/:id", async (req, res) => {
+  try {
+    await ensureStrategistPlaybookTable();
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid playbook id" });
+      return;
+    }
+
+    await db.execute(sql`
+      DELETE FROM strategist_playbooks
+      WHERE id = ${id}
+    `);
+
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "strategist playbook delete failed");
+    res.status(500).json({
+      error: "Failed to delete strategy playbook",
+      detail: err instanceof Error ? err.message : "Unknown delete error",
+    });
+  }
+});
+
+router.post("/playbooks/:id/actions", async (req, res) => {
+  try {
+    await ensureStrategistPlaybookTable();
+    await ensureStrategistOperationsTables();
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid playbook id" });
+      return;
+    }
+
+    const playbookResult = await db.execute(sql`
+      SELECT
+        title,
+        actions,
+        target_area
+      FROM strategist_playbooks
+      WHERE id = ${id}
+    `);
+
+    const playbook = (playbookResult as any).rows?.[0];
+    if (!playbook) {
+      res.status(404).json({ error: "Playbook not found" });
+      return;
+    }
+
+    const actions = Array.isArray(playbook.actions)
+      ? playbook.actions
+      : [];
+
+    for (const action of actions) {
+      await db.execute(sql`
+        INSERT INTO strategist_action_queue (
+          title,
+          description,
+          category,
+          priority,
+          status,
+          source
+        )
+        VALUES (
+          ${String(action)},
+          ${`Generated from ${playbook.title}`},
+          'strategy-playbook',
+          'high',
+          'pending',
+          'strategy-playbook-workspace'
+        )
+      `);
+    }
+
+    res.status(201).json({
+      ok: true,
+      createdActions: actions.length,
+    });
+  } catch (err) {
+    req.log.error({ err }, "strategist playbook action conversion failed");
+    res.status(500).json({
+      error: "Failed to convert playbook into actions",
+      detail: err instanceof Error ? err.message : "Unknown conversion error",
+    });
+  }
+});
+
