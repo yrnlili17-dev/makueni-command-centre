@@ -323,23 +323,6 @@ router.post("/constituents/:id/interactions", async (req, res) => {
   res.status(201).json((result as any).rows?.[0]);
 });
 
-router.post("/maintenance/normalize-makueni-wards", async (_req, res) => {
-  await ensureTables();
-
-  const result = await db.execute(sql`
-    UPDATE campaign_constituents
-    SET ward = 'MUVAU/KIKUMINI'
-    WHERE upper(btrim(ward)) = 'MUVAU/KIKUUMINI'
-    RETURNING id
-  `);
-
-  res.json({
-    status: "completed",
-    normalizedWard: "MUVAU/KIKUMINI",
-    updatedRecords: ((result as any).rows ?? []).length,
-  });
-});
-
 router.get("/filters", async (_req, res) => {
   await ensureTables();
 

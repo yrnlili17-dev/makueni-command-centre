@@ -10,10 +10,6 @@ import {
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import CampaignKpiDashboard from "../components/analytics/CampaignKpiDashboard";
-import ExecutiveDecisionCentre from "../components/analytics/ExecutiveDecisionCentre";
-import TrendPerformanceAnalytics from "../components/analytics/TrendPerformanceAnalytics";
-import ExecutiveCampaignScorecard from "../components/analytics/ExecutiveCampaignScorecard";
 import GeographicIntelligence from "../components/analytics/GeographicIntelligence";
 
 type AnalyticsOverview = {
@@ -68,8 +64,6 @@ type AnalyticsOverview = {
 };
 
 type Tab =
-  | "kpi"
-  | "scorecard"
   | "executive"
   | "geography"
   | "growth"
@@ -80,8 +74,6 @@ type Tab =
   | "intelligence";
 
 const TABS: Array<{ id: Tab; label: string }> = [
-  { id: "kpi", label: "KPI DASHBOARD" },
-  { id: "scorecard", label: "EXECUTIVE SCORECARD" },
   { id: "executive", label: "EXECUTIVE" },
   { id: "geography", label: "GEOGRAPHIC INTELLIGENCE" },
   { id: "growth", label: "GROWTH" },
@@ -183,7 +175,6 @@ function ProgressRow({
 export default function AnalyticsHub() {
   const [tab, setTab] = useState<Tab>("executive");
   const [data, setData] = useState<AnalyticsOverview | null>(null);
-  const [campaignReadiness, setCampaignReadiness] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -192,20 +183,7 @@ export default function AnalyticsHub() {
     setError(null);
 
     try {
-      const [overviewData, readinessResponse] = await Promise.all([
-        getOverview(),
-        fetch(`${BASE}api/campaign-plan/readiness`, {
-          credentials: "include",
-        }),
-      ]);
-
-      setData(overviewData);
-
-      if (readinessResponse.ok) {
-        setCampaignReadiness(await readinessResponse.json());
-      } else {
-        setCampaignReadiness(null);
-      }
+      setData(await getOverview());
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -302,28 +280,7 @@ export default function AnalyticsHub() {
         </div>
       )}
 
-      {tab === "kpi" ? (
-        <CampaignKpiDashboard
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-        />
-      ) : tab === "scorecard" ? (
-        <ExecutiveCampaignScorecard
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-        />
-      ) : tab === "growth" ? (
-        <TrendPerformanceAnalytics
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-          onRefresh={() => void load()}
-        />
-      ) : tab === "intelligence" ? (
-        <ExecutiveDecisionCentre
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-        />
-      ) : tab === "executive" ? (
+      {tab === "executive" ? (
         <>
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
             <MetricCard
@@ -631,7 +588,6 @@ export default function AnalyticsHub() {
       ) : tab === "geography" ? (
         <GeographicIntelligence
           constituencies={(data as any)?.constituencies ?? []}
-          wards={(data as any)?.wards ?? []}
         />
       ) : (
         <section className="border border-border bg-card p-10 text-center">

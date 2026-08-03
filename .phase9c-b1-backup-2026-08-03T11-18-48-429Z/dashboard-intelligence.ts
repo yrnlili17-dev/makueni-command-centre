@@ -65,160 +65,12 @@ router.get("/overview", async (_req, res) => {
   const m = (cr as any).rows?.[0] ?? {};
 
   const wr = await db.execute(sql`
-    WITH ward_base AS (
-      SELECT
-        ward,
-        constituency,
-        phone,
-        email,
-        gender,
-        dob,
-        polling_station,
-        support_level,
-        CASE
-          WHEN dob IS NULL THEN NULL
-          ELSE date_part('year', age(current_date, dob))::integer
-        END AS age_years
-      FROM campaign_constituents
-      WHERE ward IS NOT NULL AND btrim(ward) <> ''
-    )
-    SELECT
-      ward,
-      max(constituency) AS constituency,
-      count(*)::integer AS constituents,
-      count(*) FILTER (
-        WHERE phone IS NOT NULL AND btrim(phone) <> ''
-      )::integer AS phone_ready,
-      count(*) FILTER (
-        WHERE email IS NOT NULL AND btrim(email) <> ''
-      )::integer AS email_ready,
-      count(*) FILTER (WHERE gender = 'female')::integer AS women,
-      count(*) FILTER (WHERE gender = 'male')::integer AS men,
-      count(*) FILTER (
-        WHERE age_years BETWEEN 18 AND 35
-      )::integer AS youth,
-      count(DISTINCT polling_station) FILTER (
-        WHERE polling_station IS NOT NULL
-          AND btrim(polling_station) <> ''
-      )::integer AS polling_stations,
-      count(*) FILTER (
-        WHERE support_level = 'strong'
-      )::integer AS strong_support,
-      count(*) FILTER (
-        WHERE support_level = 'leaning'
-      )::integer AS leaning_support,
-      count(*) FILTER (
-        WHERE support_level = 'undecided'
-      )::integer AS undecided,
-      count(*) FILTER (
-        WHERE support_level = 'opposed'
-      )::integer AS opposed,
-      count(*) FILTER (
-        WHERE phone IS NULL OR btrim(phone) = ''
-      )::integer AS missing_phone,
-      CASE
-        WHEN count(*) = 0 THEN 0
-        ELSE round(
-          (
-            count(*) FILTER (
-              WHERE phone IS NOT NULL AND btrim(phone) <> ''
-            )
-          )::numeric / count(*)::numeric * 70
-          +
-          (
-            count(*) FILTER (
-              WHERE constituency IS NOT NULL
-                AND btrim(constituency) <> ''
-            )
-          )::numeric / count(*)::numeric * 30
-        )::integer
-      END AS ward_readiness
-    FROM ward_base
-    GROUP BY ward
-    ORDER BY constituents DESC, ward
-  `);
-
-  const ctr = await db.execute(sql`
-    WITH constituency_base AS (
-      SELECT
-        constituency,
-        phone,
-        email,
-        gender,
-        dob,
-        ward,
-        polling_station,
-        support_level,
-        CASE
-          WHEN dob IS NULL THEN NULL
-          ELSE date_part('year', age(current_date, dob))::integer
-        END AS age_years
-      FROM campaign_constituents
-      WHERE constituency IS NOT NULL
-        AND btrim(constituency) <> ''
-    )
-    SELECT
-      constituency,
-      count(*)::integer AS constituents,
-      count(*) FILTER (
-        WHERE phone IS NOT NULL AND btrim(phone) <> ''
-      )::integer AS phone_ready,
-      count(*) FILTER (
-        WHERE email IS NOT NULL AND btrim(email) <> ''
-      )::integer AS email_ready,
-      count(*) FILTER (WHERE gender = 'female')::integer AS women,
-      count(*) FILTER (WHERE gender = 'male')::integer AS men,
-      count(*) FILTER (
-        WHERE age_years BETWEEN 18 AND 35
-      )::integer AS youth,
-      count(DISTINCT ward) FILTER (
-        WHERE ward IS NOT NULL AND btrim(ward) <> ''
-      )::integer AS wards,
-      count(DISTINCT polling_station) FILTER (
-        WHERE polling_station IS NOT NULL
-          AND btrim(polling_station) <> ''
-      )::integer AS polling_stations,
-      count(*) FILTER (
-        WHERE support_level = 'strong'
-      )::integer AS strong_support,
-      count(*) FILTER (
-        WHERE support_level = 'leaning'
-      )::integer AS leaning_support,
-      count(*) FILTER (
-        WHERE support_level = 'undecided'
-      )::integer AS undecided,
-      count(*) FILTER (
-        WHERE support_level = 'opposed'
-      )::integer AS opposed,
-      count(*) FILTER (
-        WHERE phone IS NULL OR btrim(phone) = ''
-      )::integer AS missing_phone,
-      count(*) FILTER (
-        WHERE ward IS NULL OR btrim(ward) = ''
-      )::integer AS missing_ward,
-      CASE
-        WHEN count(*) = 0 THEN 0
-        ELSE round(
-          (
-            (
-              count(*) FILTER (
-                WHERE phone IS NOT NULL AND btrim(phone) <> ''
-              )
-            )::numeric / count(*)::numeric
-          ) * 60
-          +
-          (
-            (
-              count(*) FILTER (
-                WHERE ward IS NOT NULL AND btrim(ward) <> ''
-              )
-            )::numeric / count(*)::numeric
-          ) * 40
-        )::integer
-      END AS constituency_readiness
-    FROM constituency_base
-    GROUP BY constituency
-    ORDER BY constituents DESC, constituency
+    SELECT ward, count(*)::integer AS constituents,
+      count(*) FILTER (WHERE phone IS NOT NULL AND phone <> '')::integer AS phone_ready,
+      count(*) FILTER (WHERE gender='female')::integer AS women
+    FROM campaign_constituents
+    WHERE ward IS NOT NULL AND ward <> ''
+    GROUP BY ward ORDER BY constituents DESC, ward LIMIT 12
   `);
 
   const ir = await db.execute(sql`
@@ -243,9 +95,7 @@ router.get("/overview", async (_req, res) => {
     metrics:{
       totalConstituents:total, phoneReady, emailReady:n(m.email_ready), smsConsented:n(m.sms_consented), whatsappConsented:n(m.whatsapp_consented), emailConsented:n(m.email_consented), women:n(m.women), men:n(m.men), youth:n(m.youth), seniors:n(m.seniors), wardsCovered:n(m.wards), constituenciesCovered:n(m.constituencies), pollingStations:n(m.polling_stations), missingPhone:n(m.missing_phone), missingWard:n(m.missing_ward), strongSupport:n(m.strong_support), leaningSupport:n(m.leaning_support), undecided:n(m.undecided), opposed:n(m.opposed), activeVolunteers,messagesSent,upcomingEvents,doorsKnocked,openThreats,dataReadiness,operationalReadiness
     },
-    wards:(wr as any).rows ?? [],
-    constituencies:(ctr as any).rows ?? [],
-    recentImports:(ir as any).rows ?? [],
+    wards:(wr as any).rows ?? [], recentImports:(ir as any).rows ?? [],
     availability:{
       volunteers:(await exists("campaign_volunteers"))||(await exists("volunteers")),
       messaging:(await exists("campaign_messages"))||(await exists("messages")),

@@ -10,11 +10,6 @@ import {
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import CampaignKpiDashboard from "../components/analytics/CampaignKpiDashboard";
-import ExecutiveDecisionCentre from "../components/analytics/ExecutiveDecisionCentre";
-import TrendPerformanceAnalytics from "../components/analytics/TrendPerformanceAnalytics";
-import ExecutiveCampaignScorecard from "../components/analytics/ExecutiveCampaignScorecard";
-import GeographicIntelligence from "../components/analytics/GeographicIntelligence";
 
 type AnalyticsOverview = {
   generatedAt: string;
@@ -68,8 +63,6 @@ type AnalyticsOverview = {
 };
 
 type Tab =
-  | "kpi"
-  | "scorecard"
   | "executive"
   | "geography"
   | "growth"
@@ -80,8 +73,6 @@ type Tab =
   | "intelligence";
 
 const TABS: Array<{ id: Tab; label: string }> = [
-  { id: "kpi", label: "KPI DASHBOARD" },
-  { id: "scorecard", label: "EXECUTIVE SCORECARD" },
   { id: "executive", label: "EXECUTIVE" },
   { id: "geography", label: "GEOGRAPHIC INTELLIGENCE" },
   { id: "growth", label: "GROWTH" },
@@ -183,7 +174,6 @@ function ProgressRow({
 export default function AnalyticsHub() {
   const [tab, setTab] = useState<Tab>("executive");
   const [data, setData] = useState<AnalyticsOverview | null>(null);
-  const [campaignReadiness, setCampaignReadiness] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -192,20 +182,7 @@ export default function AnalyticsHub() {
     setError(null);
 
     try {
-      const [overviewData, readinessResponse] = await Promise.all([
-        getOverview(),
-        fetch(`${BASE}api/campaign-plan/readiness`, {
-          credentials: "include",
-        }),
-      ]);
-
-      setData(overviewData);
-
-      if (readinessResponse.ok) {
-        setCampaignReadiness(await readinessResponse.json());
-      } else {
-        setCampaignReadiness(null);
-      }
+      setData(await getOverview());
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -302,28 +279,7 @@ export default function AnalyticsHub() {
         </div>
       )}
 
-      {tab === "kpi" ? (
-        <CampaignKpiDashboard
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-        />
-      ) : tab === "scorecard" ? (
-        <ExecutiveCampaignScorecard
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-        />
-      ) : tab === "growth" ? (
-        <TrendPerformanceAnalytics
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-          onRefresh={() => void load()}
-        />
-      ) : tab === "intelligence" ? (
-        <ExecutiveDecisionCentre
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-        />
-      ) : tab === "executive" ? (
+      {tab === "executive" ? (
         <>
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
             <MetricCard
@@ -629,10 +585,56 @@ export default function AnalyticsHub() {
           </section>
         </>
       ) : tab === "geography" ? (
-        <GeographicIntelligence
-          constituencies={(data as any)?.constituencies ?? []}
-          wards={(data as any)?.wards ?? []}
-        />
+        <section className="space-y-4">
+          <div className="border border-border bg-card p-4">
+            <div>
+              <p className="font-mono text-[10px] tracking-widest text-primary">
+                GEOGRAPHIC INTELLIGENCE
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Live constituency, ward and polling station analytics will appear here in Phase 9C ZIP B.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <article className="border border-border bg-card p-4">
+              <p className="font-mono text-[9px] text-muted-foreground">
+                CONSTITUENCIES
+              </p>
+              <p className="mt-3 text-sm font-medium">
+                Constituency Intelligence
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Live constituency totals, support distribution and data completeness will be connected in Step 2.
+              </p>
+            </article>
+
+            <article className="border border-border bg-card p-4">
+              <p className="font-mono text-[9px] text-muted-foreground">
+                WARDS
+              </p>
+              <p className="mt-3 text-sm font-medium">
+                Ward Intelligence
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                All 30 wards, rankings, coverage and drill-down navigation will be activated in Step 3.
+              </p>
+            </article>
+
+            <article className="border border-border bg-card p-4">
+              <p className="font-mono text-[9px] text-muted-foreground">
+                POLLING STATIONS
+              </p>
+              <p className="mt-3 text-sm font-medium">
+                Polling Station Intelligence
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Polling-station coverage, coordinators and field activity will be connected in Step 4.
+              </p>
+            </article>
+          </div>
+        </section>
       ) : (
         <section className="border border-border bg-card p-10 text-center">
           <p className="font-mono text-xs text-primary">

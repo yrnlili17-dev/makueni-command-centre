@@ -10,9 +10,6 @@ import {
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import CampaignKpiDashboard from "../components/analytics/CampaignKpiDashboard";
-import ExecutiveDecisionCentre from "../components/analytics/ExecutiveDecisionCentre";
-import TrendPerformanceAnalytics from "../components/analytics/TrendPerformanceAnalytics";
 import ExecutiveCampaignScorecard from "../components/analytics/ExecutiveCampaignScorecard";
 import GeographicIntelligence from "../components/analytics/GeographicIntelligence";
 
@@ -68,7 +65,6 @@ type AnalyticsOverview = {
 };
 
 type Tab =
-  | "kpi"
   | "scorecard"
   | "executive"
   | "geography"
@@ -80,7 +76,6 @@ type Tab =
   | "intelligence";
 
 const TABS: Array<{ id: Tab; label: string }> = [
-  { id: "kpi", label: "KPI DASHBOARD" },
   { id: "scorecard", label: "EXECUTIVE SCORECARD" },
   { id: "executive", label: "EXECUTIVE" },
   { id: "geography", label: "GEOGRAPHIC INTELLIGENCE" },
@@ -302,24 +297,8 @@ export default function AnalyticsHub() {
         </div>
       )}
 
-      {tab === "kpi" ? (
-        <CampaignKpiDashboard
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-        />
-      ) : tab === "scorecard" ? (
+      {tab === "scorecard" ? (
         <ExecutiveCampaignScorecard
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-        />
-      ) : tab === "growth" ? (
-        <TrendPerformanceAnalytics
-          overview={data as any}
-          campaignReadiness={campaignReadiness}
-          onRefresh={() => void load()}
-        />
-      ) : tab === "intelligence" ? (
-        <ExecutiveDecisionCentre
           overview={data as any}
           campaignReadiness={campaignReadiness}
         />
