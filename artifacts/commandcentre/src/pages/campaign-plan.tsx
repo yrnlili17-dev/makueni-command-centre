@@ -12,6 +12,8 @@ type ReadinessEx = ReadinessScore & { overdueCount?: number };
 import { useQueryClient } from "@tanstack/react-query";
 
 import { CAMPAIGN_UI } from "../config/campaign-ui";
+import CandidateReadinessExecutive from "../components/campaign-plan/CandidateReadinessExecutive";
+import CampaignExecutiveOperations from "../components/campaign-plan/CampaignExecutiveOperations";
 
 import {
 Plus, X, Check, Trash2, Clock, AlertTriangle, Target, TrendingUp,
@@ -158,7 +160,11 @@ export default function CampaignPlan() {
   }, []);
 
   useEffect(() => { if (tab === "readiness") loadReadiness(); }, [tab, loadReadiness]);
-  useEffect(() => { if (tab === "pacing") { loadAlerts(); } }, [tab, loadAlerts]);
+  useEffect(() => {
+    if (tab === "overview" || tab === "pacing") {
+      void loadAlerts();
+    }
+  }, [tab, loadAlerts, milestones]);
 
   async function initReadiness() {
     for (const domain of READINESS_DOMAINS) {
@@ -311,8 +317,8 @@ export default function CampaignPlan() {
     const report = await apiFetch("/report");
     const lines: string[] = [
       "═══════════════════════════════════════════════════════",
-      "  ${CAMPAIGN_UI.campaignName.toUpperCase()} — ${CAMPAIGN_UI.county.toUpperCase()} CAMPAIGN PLAN REPORT",
-      "  PROF. PHILIP KALOKI — MAKUENI COUNTY",
+      `  ${CAMPAIGN_UI.campaignName.toUpperCase()} — ${CAMPAIGN_UI.county.toUpperCase()} CAMPAIGN PLAN REPORT`,
+      `  ${CAMPAIGN_UI.reportIdentity}`,
       "═══════════════════════════════════════════════════════",
       `  Generated: ${new Date().toLocaleString("en-KE")}`,
       `  Election Date: ${report.electionDate ?? "Not set"}`,
@@ -473,6 +479,24 @@ export default function CampaignPlan() {
         {/* ─── OVERVIEW ─── */}
         {tab === "overview" && (
           <div className="space-y-4">
+            <CampaignExecutiveOperations
+              milestones={(milestones ?? []) as any[]}
+              readiness={readiness as any}
+              countdown={countdown as any}
+              alerts={alerts}
+              onOpenMilestone={(milestone) => {
+                setTab("milestones");
+                setEditingId(milestone.id);
+                setEditForm({
+                  title: milestone.title,
+                  dueDate: milestone.dueDate,
+                  category: milestone.category,
+                  status: milestone.status,
+                  priority: milestone.priority ?? "medium",
+                  owner: milestone.owner,
+                });
+              }}
+            />
             {/* Countdown clock */}
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-card border border-border p-6 text-center">
@@ -553,7 +577,25 @@ export default function CampaignPlan() {
                 {(milestones ?? []).filter(m => m.status !== "completed" && m.dueDate >= todayStr && m.dueDate <= new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)).length === 0 ? (
                   <div className="px-4 py-8 text-center font-mono text-xs text-muted-foreground">[ NO_UPCOMING_MILESTONES ]</div>
                 ) : (milestones ?? []).filter(m => m.status !== "completed" && m.dueDate >= todayStr && m.dueDate <= new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)).slice(0, 8).map(m => (
-                  <div key={m.id} className="flex items-center gap-4 px-4 py-2.5">
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => {
+                      setTab("milestones");
+                      setEditingId(m.id);
+                      setEditForm({
+                        title: m.title,
+                        description: m.description,
+                        dueDate: m.dueDate,
+                        startDate: (m as any).startDate,
+                        category: m.category,
+                        priority: (m as any).priority ?? "medium",
+                        owner: m.owner,
+                        notes: (m as any).notes,
+                      });
+                    }}
+                    className="flex w-full items-center gap-4 px-4 py-2.5 text-left transition-colors hover:bg-secondary/50"
+                  >
                     <Badge label={((m as MilestoneEx).priority ?? "medium").toUpperCase()} className={priorityColor((m as MilestoneEx).priority ?? "medium")} />
                     <div className="flex-1">
                       <p className="text-sm">{m.title}</p>
@@ -561,7 +603,7 @@ export default function CampaignPlan() {
                     </div>
                     <span className="font-mono text-[10px] text-muted-foreground">{m.owner ?? "—"}</span>
                     <span className={`font-mono text-[10px] ${m.dueDate <= new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) ? "text-orange-400" : "text-muted-foreground"}`}>{m.dueDate}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -599,7 +641,7 @@ export default function CampaignPlan() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 divide-y divide-border">
                 {[
                   { num: "01", title: "Grassroots Socioeconomic Empowerment", detail: "Youth & women empowerment, welfare support, bodaboda & table-banking initiatives, bursaries" },
-                  { num: "02", title: "Infrastructural Development", detail: "Roads, water, electricity, schools and health facility infrastructure across all 5 wards" },
+                  { num: "02", title: "Infrastructural Development", detail: "Roads, water, electricity, schools and health facility infrastructure across all 30 wards" },
                   { num: "03", title: "Constitutional Mandate Execution", detail: "Effective legislation, representation and parliamentary oversight duties" },
                   { num: "04", title: "Local Patronage", detail: "Direct constituency presence, barazas, market engagements and ward-level accessibility" },
                 ].map(({ num, title, detail }) => (
@@ -909,6 +951,13 @@ export default function CampaignPlan() {
         {/* ─── CANDIDATE READINESS ─── */}
         {tab === "readiness" && (
           <div className="space-y-3">
+            <CandidateReadinessExecutive
+              readinessItems={readinessItems}
+              milestones={(milestones ?? []) as any[]}
+              electionDate={countdown?.electionDate}
+              daysRemaining={countdown?.daysRemaining}
+              onPrint={handlePrint}
+            />
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="bg-card border border-border px-4 py-2">
