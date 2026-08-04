@@ -225,7 +225,7 @@ export default function PollingStationCommandCentre() {
       <header className="flex flex-col gap-3 border border-border bg-card p-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
           <p className="font-mono text-[10px] tracking-widest text-primary">
-            PHASE 11B · POLLING STATION COMMAND CENTRE
+            POLLING STATION COMMAND CENTRE
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Live turnout, polling-station reporting, queues, incidents and logistics.

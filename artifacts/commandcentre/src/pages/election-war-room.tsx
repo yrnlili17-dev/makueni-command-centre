@@ -21,6 +21,16 @@ import { CAMPAIGN_UI } from "../config/campaign-ui";
 import { CAMPAIGN_OPERATIONS } from "../config/campaign-operations";
 import ElectionOperationsCentre from "@/components/election/ElectionOperationsCentre";
 import LiveElectionCommandBoard from "@/components/election/LiveElectionCommandBoard";
+import ResultsIntelligenceCentre from "@/components/election/ResultsIntelligenceCentre";
+import LiveCountyTallyCentre from "@/components/election/LiveCountyTallyCentre";
+import ResultsVerificationCentre from "@/components/election/ResultsVerificationCentre";
+import ResultsFormsEvidenceCentre from "@/components/election/ResultsFormsEvidenceCentre";
+import ConstituencyWardResultsDashboard from "@/components/election/ConstituencyWardResultsDashboard";
+import CandidateIntelligenceDashboard from "@/components/election/CandidateIntelligenceDashboard";
+import ResultsPredictionScenarioIntelligence from "@/components/election/ResultsPredictionScenarioIntelligence";
+import StatisticalAnomalyDetectionCentre from "@/components/election/StatisticalAnomalyDetectionCentre";
+import ResultsSituationRoomDecisionConsole from "@/components/election/ResultsSituationRoomDecisionConsole";
+import ExecutiveResultsCommandIntelligence from "@/components/election/ExecutiveResultsCommandIntelligence";
 import ElectionReadinessSitrep from "@/components/election/ElectionReadinessSitrep";
 
 type WarRoomSummary = {
@@ -226,6 +236,26 @@ export default function ElectionWarRoomPage() {
       )}
 
       <LiveElectionCommandBoard />
+
+      <ResultsIntelligenceCentre />
+
+      <LiveCountyTallyCentre />
+
+      <ResultsVerificationCentre />
+
+      <ResultsFormsEvidenceCentre />
+
+      <ConstituencyWardResultsDashboard />
+
+      <CandidateIntelligenceDashboard />
+
+      <ResultsPredictionScenarioIntelligence />
+
+      <StatisticalAnomalyDetectionCentre />
+
+      <ResultsSituationRoomDecisionConsole />
+
+      <ExecutiveResultsCommandIntelligence />
 
       <ElectionReadinessSitrep />
 

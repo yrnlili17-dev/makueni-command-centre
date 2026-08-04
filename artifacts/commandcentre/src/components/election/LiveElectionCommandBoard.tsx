@@ -354,7 +354,7 @@ export default function LiveElectionCommandBoard() {
       <header className="flex flex-col gap-3 border border-border bg-card p-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="font-mono text-[10px] tracking-widest text-primary">
-            PHASE 11A · LIVE ELECTION COMMAND BOARD
+            LIVE ELECTION COMMAND BOARD
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Real-time election readiness, alerts, ward risk and operations timeline.

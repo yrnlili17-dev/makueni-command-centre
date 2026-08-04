@@ -263,7 +263,7 @@ export default function ElectionOperationsCentre() {
       <header className="flex flex-col gap-3 border border-border bg-card p-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="font-mono text-[10px] tracking-widest text-primary">
-            PHASE 11A · ELECTION OPERATIONS CENTRE
+            ELECTION OPERATIONS CENTRE
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Polling readiness, agent deployment, transport, observers and incident escalation.

@@ -280,7 +280,7 @@ export default function ElectionReadinessSitrep() {
       <header className="flex flex-col gap-3 border border-border bg-card p-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="font-mono text-[10px] tracking-widest text-primary">
-            PHASE 11A · ELECTION READINESS SITREP
+            ELECTION READINESS SITREP
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Executive readiness assessment, findings and command recommendations.

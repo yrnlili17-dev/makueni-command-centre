@@ -789,4 +789,1004 @@ router.patch("/operations-centre/escalations/:id", async (req, res) => {
 });
 
 
+
+async function ensureResultEvidenceTables() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS election_result_forms (
+      id bigserial PRIMARY KEY,
+      station_code text NOT NULL,
+      ward text,
+      constituency text,
+      form_type text NOT NULL DEFAULT 'polling-station-result',
+      document_url text NOT NULL,
+      file_name text,
+      checksum text,
+      submitted_by text,
+      review_status text NOT NULL DEFAULT 'pending',
+      review_notes text,
+      reviewed_by text,
+      reviewed_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE INDEX IF NOT EXISTS election_result_forms_station_idx
+      ON election_result_forms (station_code);
+
+    CREATE INDEX IF NOT EXISTS election_result_forms_status_idx
+      ON election_result_forms (review_status);
+  `);
+}
+
+router.get("/result-forms", async (req, res) => {
+  try {
+    await ensureResultEvidenceTables();
+
+    const stationCode = String(req.query.stationCode ?? "").trim();
+    const status = String(req.query.status ?? "").trim();
+
+    const result = await db.execute(sql`
+      SELECT
+        id,
+        station_code AS "stationCode",
+        ward,
+        constituency,
+        form_type AS "formType",
+        document_url AS "documentUrl",
+        file_name AS "fileName",
+        checksum,
+        submitted_by AS "submittedBy",
+        review_status AS "reviewStatus",
+        review_notes AS "reviewNotes",
+        reviewed_by AS "reviewedBy",
+        reviewed_at AS "reviewedAt",
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+      FROM election_result_forms
+      WHERE
+        (${stationCode} = '' OR station_code = ${stationCode})
+        AND (${status} = '' OR review_status = ${status})
+      ORDER BY updated_at DESC
+      LIMIT 1000
+    `);
+
+    res.json((result as any).rows ?? []);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load result forms",
+      detail: err instanceof Error ? err.message : "Unknown result-form error",
+    });
+  }
+});
+
+router.post("/result-forms", async (req, res) => {
+  try {
+    await ensureResultEvidenceTables();
+
+    const body = req.body as any;
+    const stationCode = String(body?.stationCode ?? "").trim();
+    const documentUrl = String(body?.documentUrl ?? "").trim();
+
+    if (!stationCode || !documentUrl) {
+      res.status(400).json({
+        error: "stationCode and documentUrl required",
+      });
+      return;
+    }
+
+    const duplicate = await db.execute(sql`
+      SELECT id
+      FROM election_result_forms
+      WHERE station_code = ${stationCode}
+        AND (
+          document_url = ${documentUrl}
+          OR (
+            ${body?.checksum ?? null} IS NOT NULL
+            AND checksum = ${body?.checksum ?? null}
+          )
+        )
+      LIMIT 1
+    `);
+
+    if (((duplicate as any).rows ?? []).length > 0) {
+      res.status(409).json({
+        error: "Duplicate result form detected",
+      });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      INSERT INTO election_result_forms (
+        station_code,
+        ward,
+        constituency,
+        form_type,
+        document_url,
+        file_name,
+        checksum,
+        submitted_by,
+        review_status
+      )
+      VALUES (
+        ${stationCode},
+        ${body?.ward ?? null},
+        ${body?.constituency ?? null},
+        ${body?.formType ?? "polling-station-result"},
+        ${documentUrl},
+        ${body?.fileName ?? null},
+        ${body?.checksum ?? null},
+        ${body?.submittedBy ?? null},
+        ${body?.reviewStatus ?? "pending"}
+      )
+      RETURNING *
+    `);
+
+    res.status(201).json((result as any).rows?.[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to register result form",
+      detail: err instanceof Error ? err.message : "Unknown result-form error",
+    });
+  }
+});
+
+router.patch("/result-forms/:id/review", async (req, res) => {
+  try {
+    await ensureResultEvidenceTables();
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid result-form id" });
+      return;
+    }
+
+    const body = req.body as any;
+    const status = String(body?.reviewStatus ?? "").trim();
+
+    if (!["pending", "accepted", "rejected", "under-review"].includes(status)) {
+      res.status(400).json({ error: "Invalid reviewStatus" });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      UPDATE election_result_forms
+      SET
+        review_status = ${status},
+        review_notes = ${body?.reviewNotes ?? null},
+        reviewed_by = ${body?.reviewedBy ?? null},
+        reviewed_at = now(),
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+
+    if (((result as any).rows ?? []).length === 0) {
+      res.status(404).json({ error: "Result form not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to review result form",
+      detail: err instanceof Error ? err.message : "Unknown review error",
+    });
+  }
+});
+
+
+async function ensureResultsDecisionTables() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS election_results_decisions (
+      id bigserial PRIMARY KEY,
+      title text NOT NULL,
+      category text NOT NULL DEFAULT 'results',
+      priority text NOT NULL DEFAULT 'medium',
+      ward text,
+      constituency text,
+      station_code text,
+      owner text,
+      decision text,
+      status text NOT NULL DEFAULT 'open',
+      due_at timestamptz,
+      created_by text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE INDEX IF NOT EXISTS election_results_decisions_status_idx
+      ON election_results_decisions (status);
+
+    CREATE INDEX IF NOT EXISTS election_results_decisions_priority_idx
+      ON election_results_decisions (priority);
+  `);
+}
+
+router.get("/results-decisions", async (req, res) => {
+  try {
+    await ensureResultsDecisionTables();
+
+    const status = String(req.query.status ?? "").trim();
+    const result = await db.execute(sql`
+      SELECT
+        id,
+        title,
+        category,
+        priority,
+        ward,
+        constituency,
+        station_code AS "stationCode",
+        owner,
+        decision,
+        status,
+        due_at AS "dueAt",
+        created_by AS "createdBy",
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+      FROM election_results_decisions
+      WHERE (${status} = '' OR status = ${status})
+      ORDER BY
+        CASE priority
+          WHEN 'critical' THEN 1
+          WHEN 'high' THEN 2
+          WHEN 'medium' THEN 3
+          ELSE 4
+        END,
+        updated_at DESC
+      LIMIT 1000
+    `);
+
+    res.json((result as any).rows ?? []);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load results decisions",
+      detail: err instanceof Error ? err.message : "Unknown results decision error",
+    });
+  }
+});
+
+router.post("/results-decisions", async (req, res) => {
+  try {
+    await ensureResultsDecisionTables();
+
+    const body = req.body as any;
+    const title = String(body?.title ?? "").trim();
+
+    if (!title) {
+      res.status(400).json({ error: "title required" });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      INSERT INTO election_results_decisions (
+        title,
+        category,
+        priority,
+        ward,
+        constituency,
+        station_code,
+        owner,
+        decision,
+        status,
+        due_at,
+        created_by
+      )
+      VALUES (
+        ${title},
+        ${body?.category ?? "results"},
+        ${body?.priority ?? "medium"},
+        ${body?.ward ?? null},
+        ${body?.constituency ?? null},
+        ${body?.stationCode ?? null},
+        ${body?.owner ?? null},
+        ${body?.decision ?? null},
+        ${body?.status ?? "open"},
+        ${body?.dueAt ?? null},
+        ${body?.createdBy ?? null}
+      )
+      RETURNING *
+    `);
+
+    res.status(201).json((result as any).rows?.[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to create results decision",
+      detail: err instanceof Error ? err.message : "Unknown results decision error",
+    });
+  }
+});
+
+router.patch("/results-decisions/:id", async (req, res) => {
+  try {
+    await ensureResultsDecisionTables();
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid decision id" });
+      return;
+    }
+
+    const body = req.body as any;
+    const result = await db.execute(sql`
+      UPDATE election_results_decisions
+      SET
+        priority = coalesce(${body?.priority ?? null}, priority),
+        owner = coalesce(${body?.owner ?? null}, owner),
+        decision = coalesce(${body?.decision ?? null}, decision),
+        status = coalesce(${body?.status ?? null}, status),
+        due_at = coalesce(${body?.dueAt ?? null}, due_at),
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+
+    if (((result as any).rows ?? []).length === 0) {
+      res.status(404).json({ error: "Decision not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update results decision",
+      detail: err instanceof Error ? err.message : "Unknown results decision error",
+    });
+  }
+});
+
+
+async function ensureExecutiveResultsCommandTables() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS election_results_escalations (
+      id bigserial PRIMARY KEY,
+      title text NOT NULL,
+      source_type text NOT NULL DEFAULT 'results',
+      source_id text,
+      priority text NOT NULL DEFAULT 'high',
+      ward text,
+      constituency text,
+      station_code text,
+      owner text,
+      acknowledged_by text,
+      acknowledged_at timestamptz,
+      status text NOT NULL DEFAULT 'open',
+      resolution text,
+      resolved_by text,
+      resolved_at timestamptz,
+      due_at timestamptz,
+      created_by text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS election_results_recommendations (
+      id bigserial PRIMARY KEY,
+      recommendation_type text NOT NULL DEFAULT 'executive',
+      title text NOT NULL,
+      rationale text,
+      priority text NOT NULL DEFAULT 'medium',
+      ward text,
+      constituency text,
+      station_code text,
+      recommended_owner text,
+      status text NOT NULL DEFAULT 'proposed',
+      accepted_by text,
+      accepted_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE INDEX IF NOT EXISTS election_results_escalations_status_idx
+      ON election_results_escalations (status);
+
+    CREATE INDEX IF NOT EXISTS election_results_recommendations_status_idx
+      ON election_results_recommendations (status);
+  `);
+}
+
+router.get("/executive-results-command", async (_req, res) => {
+  try {
+    await ensureExecutiveResultsCommandTables();
+    await ensureResultsDecisionTables();
+
+    const [results, stations, decisions, escalations, recommendations] =
+      await Promise.all([
+        db.execute(sql`
+          SELECT *
+          FROM tally_results
+          ORDER BY created_at DESC
+        `),
+        db.execute(sql`
+          SELECT *
+          FROM polling_stations
+          ORDER BY ward, code
+        `),
+        db.execute(sql`
+          SELECT
+            id,
+            title,
+            category,
+            priority,
+            ward,
+            constituency,
+            station_code AS "stationCode",
+            owner,
+            decision,
+            status,
+            due_at AS "dueAt",
+            created_by AS "createdBy",
+            created_at AS "createdAt",
+            updated_at AS "updatedAt"
+          FROM election_results_decisions
+          ORDER BY updated_at DESC
+        `),
+        db.execute(sql`
+          SELECT
+            id,
+            title,
+            source_type AS "sourceType",
+            source_id AS "sourceId",
+            priority,
+            ward,
+            constituency,
+            station_code AS "stationCode",
+            owner,
+            acknowledged_by AS "acknowledgedBy",
+            acknowledged_at AS "acknowledgedAt",
+            status,
+            resolution,
+            resolved_by AS "resolvedBy",
+            resolved_at AS "resolvedAt",
+            due_at AS "dueAt",
+            created_by AS "createdBy",
+            created_at AS "createdAt",
+            updated_at AS "updatedAt"
+          FROM election_results_escalations
+          ORDER BY
+            CASE priority
+              WHEN 'critical' THEN 1
+              WHEN 'high' THEN 2
+              WHEN 'medium' THEN 3
+              ELSE 4
+            END,
+            updated_at DESC
+        `),
+        db.execute(sql`
+          SELECT
+            id,
+            recommendation_type AS "recommendationType",
+            title,
+            rationale,
+            priority,
+            ward,
+            constituency,
+            station_code AS "stationCode",
+            recommended_owner AS "recommendedOwner",
+            status,
+            accepted_by AS "acceptedBy",
+            accepted_at AS "acceptedAt",
+            created_at AS "createdAt",
+            updated_at AS "updatedAt"
+          FROM election_results_recommendations
+          ORDER BY
+            CASE priority
+              WHEN 'critical' THEN 1
+              WHEN 'high' THEN 2
+              WHEN 'medium' THEN 3
+              ELSE 4
+            END,
+            updated_at DESC
+        `),
+      ]);
+
+    const resultRows = (results as any).rows ?? [];
+    const stationRows = (stations as any).rows ?? [];
+    const decisionRows = (decisions as any).rows ?? [];
+    const escalationRows = (escalations as any).rows ?? [];
+    const recommendationRows = (recommendations as any).rows ?? [];
+
+    const submittedStationCodes = new Set(
+      resultRows
+        .map((row: any) =>
+          String(
+            row.station_code ??
+              row.stationCode ??
+              row.polling_station_code ??
+              "",
+          ),
+        )
+        .filter(Boolean),
+    );
+
+    const verifiedStationCodes = new Set(
+      resultRows
+        .filter(
+          (row: any) =>
+            String(row.status ?? "submitted").toLowerCase() ===
+            "verified",
+        )
+        .map((row: any) =>
+          String(
+            row.station_code ??
+              row.stationCode ??
+              row.polling_station_code ??
+              "",
+          ),
+        )
+        .filter(Boolean),
+    );
+
+    const disputedStationCodes = new Set(
+      resultRows
+        .filter((row: any) =>
+          ["disputed", "rejected", "under-review"].includes(
+            String(row.status ?? "").toLowerCase(),
+          ),
+        )
+        .map((row: any) =>
+          String(
+            row.station_code ??
+              row.stationCode ??
+              row.polling_station_code ??
+              "",
+          ),
+        )
+        .filter(Boolean),
+    );
+
+    const openDecisions = decisionRows.filter(
+      (row: any) => row.status !== "closed",
+    );
+    const openEscalations = escalationRows.filter(
+      (row: any) =>
+        !["resolved", "closed"].includes(
+          String(row.status ?? "").toLowerCase(),
+        ),
+    );
+
+    const overdueEscalations = openEscalations.filter(
+      (row: any) =>
+        row.dueAt && new Date(row.dueAt).getTime() < Date.now(),
+    );
+
+    const totalStations = stationRows.length;
+    const reportingRate =
+      totalStations > 0
+        ? Math.round(
+            (submittedStationCodes.size / totalStations) * 100,
+          )
+        : 0;
+
+    const verificationRate =
+      submittedStationCodes.size > 0
+        ? Math.round(
+            (verifiedStationCodes.size /
+              submittedStationCodes.size) *
+              100,
+          )
+        : 0;
+
+    const countyRiskScore = Math.min(
+      100,
+      disputedStationCodes.size * 10 +
+        openEscalations.length * 8 +
+        overdueEscalations.length * 12 +
+        openDecisions.filter(
+          (row: any) => row.priority === "critical",
+        ).length *
+          10 +
+        Math.max(0, 50 - reportingRate),
+    );
+
+    const feed = [
+      ...decisionRows.map((row: any) => ({
+        id: `decision-${row.id}`,
+        type: "decision",
+        title: row.title,
+        status: row.status,
+        priority: row.priority,
+        ward: row.ward,
+        stationCode: row.stationCode,
+        timestamp: row.updatedAt,
+      })),
+      ...escalationRows.map((row: any) => ({
+        id: `escalation-${row.id}`,
+        type: "escalation",
+        title: row.title,
+        status: row.status,
+        priority: row.priority,
+        ward: row.ward,
+        stationCode: row.stationCode,
+        timestamp: row.updatedAt,
+      })),
+      ...recommendationRows.map((row: any) => ({
+        id: `recommendation-${row.id}`,
+        type: "recommendation",
+        title: row.title,
+        status: row.status,
+        priority: row.priority,
+        ward: row.ward,
+        stationCode: row.stationCode,
+        timestamp: row.updatedAt,
+      })),
+    ]
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.timestamp).getTime() -
+          new Date(a.timestamp).getTime(),
+      )
+      .slice(0, 200);
+
+    res.json({
+      generatedAt: new Date().toISOString(),
+      summary: {
+        totalStations,
+        reportingStations: submittedStationCodes.size,
+        verifiedStations: verifiedStationCodes.size,
+        disputedStations: disputedStationCodes.size,
+        reportingRate,
+        verificationRate,
+        openDecisions: openDecisions.length,
+        criticalDecisions: openDecisions.filter(
+          (row: any) => row.priority === "critical",
+        ).length,
+        openEscalations: openEscalations.length,
+        overdueEscalations: overdueEscalations.length,
+        proposedRecommendations: recommendationRows.filter(
+          (row: any) => row.status === "proposed",
+        ).length,
+        countyRiskScore,
+      },
+      decisions: decisionRows,
+      escalations: escalationRows,
+      recommendations: recommendationRows,
+      feed,
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load executive results command",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown executive results command error",
+    });
+  }
+});
+
+router.post("/executive-results-command/escalations", async (req, res) => {
+  try {
+    await ensureExecutiveResultsCommandTables();
+
+    const body = req.body as any;
+    const title = String(body?.title ?? "").trim();
+
+    if (!title) {
+      res.status(400).json({ error: "title required" });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      INSERT INTO election_results_escalations (
+        title,
+        source_type,
+        source_id,
+        priority,
+        ward,
+        constituency,
+        station_code,
+        owner,
+        status,
+        due_at,
+        created_by
+      )
+      VALUES (
+        ${title},
+        ${body?.sourceType ?? "results"},
+        ${body?.sourceId ?? null},
+        ${body?.priority ?? "high"},
+        ${body?.ward ?? null},
+        ${body?.constituency ?? null},
+        ${body?.stationCode ?? null},
+        ${body?.owner ?? null},
+        ${body?.status ?? "open"},
+        ${body?.dueAt ?? null},
+        ${body?.createdBy ?? null}
+      )
+      RETURNING *
+    `);
+
+    res.status(201).json((result as any).rows?.[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to create executive escalation",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown escalation creation error",
+    });
+  }
+});
+
+router.patch("/executive-results-command/escalations/:id", async (req, res) => {
+  try {
+    await ensureExecutiveResultsCommandTables();
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid escalation id" });
+      return;
+    }
+
+    const body = req.body as any;
+    const status = body?.status ?? null;
+    const acknowledged =
+      status === "acknowledged" || body?.acknowledgedBy;
+    const resolved =
+      status === "resolved" || status === "closed";
+
+    const result = await db.execute(sql`
+      UPDATE election_results_escalations
+      SET
+        owner = coalesce(${body?.owner ?? null}, owner),
+        priority = coalesce(${body?.priority ?? null}, priority),
+        status = coalesce(${status}, status),
+        acknowledged_by = coalesce(
+          ${body?.acknowledgedBy ?? null},
+          acknowledged_by
+        ),
+        acknowledged_at = CASE
+          WHEN ${acknowledged} THEN coalesce(acknowledged_at, now())
+          ELSE acknowledged_at
+        END,
+        resolution = coalesce(${body?.resolution ?? null}, resolution),
+        resolved_by = coalesce(
+          ${body?.resolvedBy ?? null},
+          resolved_by
+        ),
+        resolved_at = CASE
+          WHEN ${resolved} THEN coalesce(resolved_at, now())
+          ELSE resolved_at
+        END,
+        due_at = coalesce(${body?.dueAt ?? null}, due_at),
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+
+    if (((result as any).rows ?? []).length === 0) {
+      res.status(404).json({ error: "Escalation not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update executive escalation",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown escalation update error",
+    });
+  }
+});
+
+router.post("/executive-results-command/recommendations/generate", async (_req, res) => {
+  try {
+    await ensureExecutiveResultsCommandTables();
+    await ensureResultsDecisionTables();
+
+    const [results, stations, decisions, escalations] =
+      await Promise.all([
+        db.execute(sql`SELECT * FROM tally_results`),
+        db.execute(sql`SELECT * FROM polling_stations`),
+        db.execute(sql`
+          SELECT * FROM election_results_decisions
+          WHERE status <> 'closed'
+        `),
+        db.execute(sql`
+          SELECT * FROM election_results_escalations
+          WHERE status NOT IN ('resolved', 'closed')
+        `),
+      ]);
+
+    const resultRows = (results as any).rows ?? [];
+    const stationRows = (stations as any).rows ?? [];
+    const decisionRows = (decisions as any).rows ?? [];
+    const escalationRows = (escalations as any).rows ?? [];
+
+    const submittedCodes = new Set(
+      resultRows
+        .map((row: any) =>
+          String(
+            row.station_code ??
+              row.stationCode ??
+              row.polling_station_code ??
+              "",
+          ),
+        )
+        .filter(Boolean),
+    );
+
+    const disputedCodes = new Set(
+      resultRows
+        .filter((row: any) =>
+          ["disputed", "rejected", "under-review"].includes(
+            String(row.status ?? "").toLowerCase(),
+          ),
+        )
+        .map((row: any) =>
+          String(
+            row.station_code ??
+              row.stationCode ??
+              row.polling_station_code ??
+              "",
+          ),
+        )
+        .filter(Boolean),
+    );
+
+    const recommendations: any[] = [];
+
+    const outstanding = Math.max(
+      0,
+      stationRows.length - submittedCodes.size,
+    );
+
+    if (outstanding > 0) {
+      recommendations.push({
+        type: "reporting",
+        title: "Deploy reporting recovery team",
+        rationale: `${outstanding} polling station(s) have not submitted results.`,
+        priority: outstanding > 10 ? "critical" : "high",
+        owner: "Results Collection Lead",
+      });
+    }
+
+    if (disputedCodes.size > 0) {
+      recommendations.push({
+        type: "legal",
+        title: "Open evidence review for disputed stations",
+        rationale: `${disputedCodes.size} polling station(s) are disputed, rejected or under review.`,
+        priority: "critical",
+        owner: "Legal & Verification Lead",
+      });
+    }
+
+    if (decisionRows.length > 5) {
+      recommendations.push({
+        type: "executive",
+        title: "Convene executive decision clearance session",
+        rationale: `${decisionRows.length} decisions remain open.`,
+        priority: "high",
+        owner: "Campaign Director",
+      });
+    }
+
+    if (escalationRows.length > 0) {
+      recommendations.push({
+        type: "operations",
+        title: "Review unresolved executive escalations",
+        rationale: `${escalationRows.length} escalation(s) remain unresolved.`,
+        priority: escalationRows.length > 3 ? "critical" : "high",
+        owner: "Situation Room Lead",
+      });
+    }
+
+    if (recommendations.length === 0) {
+      recommendations.push({
+        type: "executive",
+        title: "Maintain current results command posture",
+        rationale: "No major reporting, dispute or escalation gaps are currently detected.",
+        priority: "low",
+        owner: "Results Command",
+      });
+    }
+
+    const created = [];
+
+    for (const item of recommendations) {
+      const duplicate = await db.execute(sql`
+        SELECT id
+        FROM election_results_recommendations
+        WHERE title = ${item.title}
+          AND status IN ('proposed', 'accepted')
+        LIMIT 1
+      `);
+
+      if (((duplicate as any).rows ?? []).length > 0) {
+        continue;
+      }
+
+      const result = await db.execute(sql`
+        INSERT INTO election_results_recommendations (
+          recommendation_type,
+          title,
+          rationale,
+          priority,
+          recommended_owner,
+          status
+        )
+        VALUES (
+          ${item.type},
+          ${item.title},
+          ${item.rationale},
+          ${item.priority},
+          ${item.owner},
+          'proposed'
+        )
+        RETURNING *
+      `);
+
+      created.push((result as any).rows?.[0]);
+    }
+
+    res.status(201).json({
+      generated: created.length,
+      recommendations: created,
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to generate executive recommendations",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown recommendation generation error",
+    });
+  }
+});
+
+router.patch("/executive-results-command/recommendations/:id", async (req, res) => {
+  try {
+    await ensureExecutiveResultsCommandTables();
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid recommendation id" });
+      return;
+    }
+
+    const body = req.body as any;
+    const status = String(body?.status ?? "").trim();
+
+    if (!["proposed", "accepted", "dismissed", "completed"].includes(status)) {
+      res.status(400).json({ error: "Invalid recommendation status" });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      UPDATE election_results_recommendations
+      SET
+        status = ${status},
+        accepted_by = CASE
+          WHEN ${status} = 'accepted'
+          THEN coalesce(${body?.acceptedBy ?? null}, accepted_by)
+          ELSE accepted_by
+        END,
+        accepted_at = CASE
+          WHEN ${status} = 'accepted'
+          THEN coalesce(accepted_at, now())
+          ELSE accepted_at
+        END,
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+
+    if (((result as any).rows ?? []).length === 0) {
+      res.status(404).json({ error: "Recommendation not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update executive recommendation",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown recommendation update error",
+    });
+  }
+});
+
 export default router;

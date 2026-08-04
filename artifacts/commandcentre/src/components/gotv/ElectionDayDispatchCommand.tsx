@@ -209,7 +209,7 @@ export default function ElectionDayDispatchCommand() {
       <header className="flex flex-col gap-3 border border-border bg-card p-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="font-mono text-[10px] tracking-widest text-primary">
-            PHASE 11B · ELECTION DAY DISPATCH COMMAND
+            ELECTION DAY DISPATCH COMMAND
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Polling station opening, agent presence, devices, materials, turnout and incidents.
