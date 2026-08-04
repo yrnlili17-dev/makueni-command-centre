@@ -1,0 +1,209 @@
+
+async function ensureGotvTables() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS gotv_household_visits (
+      id bigserial PRIMARY KEY,
+      ward text NOT NULL,
+      household_name text,
+      contact_name text,
+      phone text,
+      visit_status text NOT NULL DEFAULT 'pending',
+      support_status text NOT NULL DEFAULT 'unknown',
+      follow_up_required boolean NOT NULL DEFAULT false,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS gotv_contact_queue (
+      id bigserial PRIMARY KEY,
+      ward text,
+      contact_name text NOT NULL,
+      phone text,
+      channel text NOT NULL DEFAULT 'call',
+      status text NOT NULL DEFAULT 'pending',
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS gotv_transport_requests (
+      id bigserial PRIMARY KEY,
+      ward text NOT NULL,
+      voter_name text NOT NULL,
+      phone text,
+      pickup_point text,
+      vehicle_registration text,
+      status text NOT NULL DEFAULT 'requested',
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS gotv_ward_targets (
+      id bigserial PRIMARY KEY,
+      ward text NOT NULL UNIQUE,
+      household_target integer NOT NULL DEFAULT 0,
+      contact_target integer NOT NULL DEFAULT 0,
+      turnout_target integer NOT NULL DEFAULT 65,
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+  `);
+}
+
+router.get("/operations-centre", async (_req, res) => {
+  try {
+    await ensureGotvTables();
+    const [households, contacts, transport, targets, volunteers, wards] =
+      await Promise.all([
+        db.execute(sql`SELECT * FROM gotv_household_visits ORDER BY updated_at DESC`),
+        db.execute(sql`SELECT * FROM gotv_contact_queue ORDER BY updated_at DESC`),
+        db.execute(sql`SELECT * FROM gotv_transport_requests ORDER BY updated_at DESC`),
+        db.execute(sql`SELECT * FROM gotv_ward_targets ORDER BY ward`),
+        db.execute(sql`
+          SELECT count(*)::integer AS total,
+                 count(*) FILTER (WHERE status='active')::integer AS active
+          FROM volunteers
+        `).catch(() => ({rows:[{total:0,active:0}]} as any)),
+        db.execute(sql`
+          SELECT ward,
+                 count(*)::integer AS stations,
+                 coalesce(sum(registered_voters),0)::integer AS registered
+          FROM polling_stations
+          GROUP BY ward
+          ORDER BY registered DESC
+        `),
+      ]);
+
+    const hs = (households as any).rows ?? [];
+    const cs = (contacts as any).rows ?? [];
+    const ts = (transport as any).rows ?? [];
+    const tg = (targets as any).rows ?? [];
+    const targetMap = new Map(tg.map((r:any)=>[String(r.ward),r]));
+    const wardRows = ((wards as any).rows ?? []).map((r:any)=>{
+      const ward = String(r.ward ?? "UNASSIGNED");
+      const wh = hs.filter((x:any)=>x.ward===ward);
+      const wc = cs.filter((x:any)=>x.ward===ward);
+      const wt = ts.filter((x:any)=>x.ward===ward);
+      const target:any = targetMap.get(ward);
+      const visited = wh.filter((x:any)=>x.visit_status==="visited").length;
+      const contacted = wc.filter((x:any)=>x.status==="completed").length;
+      const transported = wt.filter((x:any)=>x.status==="completed").length;
+      const hp = target?.household_target ? Math.round(visited/target.household_target*100) : 0;
+      const cp = target?.contact_target ? Math.round(contacted/target.contact_target*100) : 0;
+      const tp = wt.length ? Math.round(transported/wt.length*100) : 0;
+      return {
+        ward,
+        stations:Number(r.stations??0),
+        registered:Number(r.registered??0),
+        turnoutTarget:Number(target?.turnout_target??65),
+        householdTarget:Number(target?.household_target??0),
+        householdsVisited:visited,
+        contactTarget:Number(target?.contact_target??0),
+        contactsCompleted:contacted,
+        transportRequests:wt.length,
+        transportCompleted:transported,
+        mobilisationScore:Math.max(0,Math.min(100,Math.round(hp*.45+cp*.35+tp*.20))),
+      };
+    });
+
+    const v = (volunteers as any).rows?.[0] ?? {total:0,active:0};
+    res.json({
+      generatedAt:new Date().toISOString(),
+      summary:{
+        households:hs.length,
+        householdsVisited:hs.filter((x:any)=>x.visit_status==="visited").length,
+        followUps:hs.filter((x:any)=>x.follow_up_required).length,
+        contacts:cs.length,
+        contactsCompleted:cs.filter((x:any)=>x.status==="completed").length,
+        pendingCalls:cs.filter((x:any)=>x.channel==="call"&&x.status==="pending").length,
+        pendingSms:cs.filter((x:any)=>x.channel==="sms"&&x.status==="pending").length,
+        pendingWhatsapp:cs.filter((x:any)=>x.channel==="whatsapp"&&x.status==="pending").length,
+        transportRequests:ts.length,
+        transportCompleted:ts.filter((x:any)=>x.status==="completed").length,
+        volunteers:Number(v.total??0),
+        activeVolunteers:Number(v.active??0),
+      },
+      wards:wardRows,
+      households:hs,
+      contacts:cs,
+      transport:ts,
+      targets:tg,
+    });
+  } catch (err) {
+    res.status(500).json({
+      error:"Failed to load GOTV operations centre",
+      detail:err instanceof Error ? err.message : "Unknown GOTV error",
+    });
+  }
+});
+
+router.post("/operations-centre/households", async (req,res)=>{
+  try {
+    await ensureGotvTables();
+    const b=req.body as any;
+    if(!b?.ward){res.status(400).json({error:"ward required"});return;}
+    const out=await db.execute(sql`
+      INSERT INTO gotv_household_visits
+      (ward,household_name,contact_name,phone,visit_status,support_status,follow_up_required)
+      VALUES
+      (${b.ward},${b.householdName??null},${b.contactName??null},${b.phone??null},
+       ${b.visitStatus??"pending"},${b.supportStatus??"unknown"},${Boolean(b.followUpRequired)})
+      RETURNING *
+    `);
+    res.status(201).json((out as any).rows?.[0]);
+  } catch(err) {
+    res.status(500).json({error:"Failed to create household visit"});
+  }
+});
+
+router.post("/operations-centre/contacts", async (req,res)=>{
+  try {
+    await ensureGotvTables();
+    const b=req.body as any;
+    if(!b?.contactName){res.status(400).json({error:"contactName required"});return;}
+    const out=await db.execute(sql`
+      INSERT INTO gotv_contact_queue (ward,contact_name,phone,channel,status)
+      VALUES (${b.ward??null},${b.contactName},${b.phone??null},${b.channel??"call"},${b.status??"pending"})
+      RETURNING *
+    `);
+    res.status(201).json((out as any).rows?.[0]);
+  } catch(err) {
+    res.status(500).json({error:"Failed to create contact"});
+  }
+});
+
+router.post("/operations-centre/transport", async (req,res)=>{
+  try {
+    await ensureGotvTables();
+    const b=req.body as any;
+    if(!b?.ward||!b?.voterName){res.status(400).json({error:"ward and voterName required"});return;}
+    const out=await db.execute(sql`
+      INSERT INTO gotv_transport_requests
+      (ward,voter_name,phone,pickup_point,vehicle_registration,status)
+      VALUES (${b.ward},${b.voterName},${b.phone??null},${b.pickupPoint??null},
+              ${b.vehicleRegistration??null},${b.status??"requested"})
+      RETURNING *
+    `);
+    res.status(201).json((out as any).rows?.[0]);
+  } catch(err) {
+    res.status(500).json({error:"Failed to create transport request"});
+  }
+});
+
+router.put("/operations-centre/targets", async (req,res)=>{
+  try {
+    await ensureGotvTables();
+    const b=req.body as any;
+    if(!b?.ward){res.status(400).json({error:"ward required"});return;}
+    const out=await db.execute(sql`
+      INSERT INTO gotv_ward_targets
+      (ward,household_target,contact_target,turnout_target,updated_at)
+      VALUES (${b.ward},${Number(b.householdTarget??0)},${Number(b.contactTarget??0)},
+              ${Number(b.turnoutTarget??65)},now())
+      ON CONFLICT (ward) DO UPDATE SET
+        household_target=excluded.household_target,
+        contact_target=excluded.contact_target,
+        turnout_target=excluded.turnout_target,
+        updated_at=now()
+      RETURNING *
+    `);
+    res.json((out as any).rows?.[0]);
+  } catch(err) {
+    res.status(500).json({error:"Failed to update GOTV targets"});
+  }
+});

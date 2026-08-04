@@ -243,7 +243,7 @@ export default function ExecutiveDecisionConsole() {
 
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[10px] tracking-widest">
               ACTIVE DECISIONS
             </p>
@@ -328,7 +328,7 @@ export default function ExecutiveDecisionConsole() {
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[10px] tracking-widest">
               EXECUTIVE AUDIT TRAIL
             </p>

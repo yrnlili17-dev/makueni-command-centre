@@ -3,6 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, Users, Vote, Megaphone, Save, RotateCcw, Target } from "lucide-react";
 import { CAMPAIGN_UI } from "../config/campaign-ui";
 import { CAMPAIGN_OPERATIONS } from "../config/campaign-operations";
+import GotvOperationsCentre from "@/components/gotv/GotvOperationsCentre";
+import GotvLiveCommandBoard from "@/components/gotv/GotvLiveCommandBoard";
+import ElectionDayDispatchCommand from "@/components/gotv/ElectionDayDispatchCommand";
+import PollingStationCommandCentre from "@/components/gotv/PollingStationCommandCentre";
 
 const BASE = import.meta.env.BASE_URL;
 const API = `${BASE}api/turnout`;
@@ -110,7 +114,14 @@ export default function Turnout() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <GotvLiveCommandBoard />
+
+      <ElectionDayDispatchCommand />
+
+      <PollingStationCommandCentre />
+
+      <GotvOperationsCentre />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-wider flex items-center gap-2">
   <TrendingUp className="w-5 h-5 text-primary" />
@@ -141,7 +152,7 @@ export default function Turnout() {
 
       {data && (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               label="PROJECTED TURNOUT"
               value={`${data.totals.predictedTurnoutRate}%`}
@@ -292,7 +303,7 @@ export default function Turnout() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <div className="bg-card border border-border p-4 flex items-start gap-3">
               <Users className="w-4 h-4 text-primary mt-0.5 shrink-0" />
               <div>

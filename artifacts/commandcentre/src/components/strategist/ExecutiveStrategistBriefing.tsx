@@ -105,7 +105,7 @@ export default function ExecutiveStrategistBriefing({
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         {cards.map(([label, value, Icon]) => (
           <article key={label} className="border border-border bg-card p-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="font-mono text-[7px] text-muted-foreground">{label}</p>
               <Icon className="h-3.5 w-3.5 text-primary" />
             </div>
@@ -118,7 +118,7 @@ export default function ExecutiveStrategistBriefing({
 
       <div className="grid gap-4 xl:grid-cols-2">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[10px] tracking-widest">PRIORITY WARDS</p>
             <MapPin className="h-4 w-4 text-primary" />
           </div>
@@ -145,7 +145,7 @@ export default function ExecutiveStrategistBriefing({
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[10px] tracking-widest">RECOMMENDED EXECUTIVE ACTIONS</p>
             <BrainCircuit className="h-4 w-4 text-primary" />
           </div>

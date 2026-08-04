@@ -325,7 +325,7 @@ export default function ElectionReadinessSitrep() {
 
       <section className="grid gap-4 xl:grid-cols-[0.7fr_1.3fr]">
         <article className="border border-border bg-card p-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[10px] tracking-widest">
               OVERALL ELECTION READINESS
             </p>
@@ -356,7 +356,7 @@ export default function ElectionReadinessSitrep() {
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[10px] tracking-widest">
               EXECUTIVE SITUATION REPORT
             </p>

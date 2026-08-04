@@ -409,7 +409,7 @@ export default function LiveElectionCommandBoard() {
           ["OPEN ESCALATIONS", number(summary.openEscalations), ShieldAlert, incidentHealth],
         ].map(([label, value, Icon, score]) => (
           <article key={String(label)} className="border border-border bg-card p-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="font-mono text-[7px] text-muted-foreground">
                 {label}
               </p>
@@ -424,7 +424,7 @@ export default function LiveElectionCommandBoard() {
 
       <section className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 EXECUTIVE ALERT BANNER
@@ -470,7 +470,7 @@ export default function LiveElectionCommandBoard() {
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 WARD READINESS HEAT TABLE
@@ -522,7 +522,7 @@ export default function LiveElectionCommandBoard() {
       </section>
 
       <article className="border border-border bg-card p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-mono text-[10px] tracking-widest">
               LIVE OPERATIONS TIMELINE

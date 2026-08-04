@@ -174,7 +174,7 @@ export default function CountySituationRoom() {
           ["OPEN INCIDENTS", data?.incidents?.length ?? 0, AlertTriangle],
         ].map(([label, value, Icon]) => (
           <article key={String(label)} className="border border-border bg-card p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="font-mono text-[8px] text-muted-foreground">
                 {label}
               </p>
@@ -235,7 +235,7 @@ export default function CountySituationRoom() {
 
       <section className="grid gap-4 xl:grid-cols-2">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 HIGHEST-RISK WARDS
@@ -274,7 +274,7 @@ export default function CountySituationRoom() {
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 HIGHEST-OPPORTUNITY WARDS
@@ -317,7 +317,7 @@ export default function CountySituationRoom() {
 
       <section className="grid gap-4 xl:grid-cols-3">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[10px] tracking-widest">
               STRATEGIC ACTIONS
             </p>
@@ -342,7 +342,7 @@ export default function CountySituationRoom() {
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[10px] tracking-widest">
               INCIDENT MATRIX
             </p>
@@ -367,7 +367,7 @@ export default function CountySituationRoom() {
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[10px] tracking-widest">
               CAMPAIGN TIMELINE
             </p>

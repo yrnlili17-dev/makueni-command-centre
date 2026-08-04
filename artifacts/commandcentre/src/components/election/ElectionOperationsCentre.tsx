@@ -298,7 +298,7 @@ export default function ElectionOperationsCentre() {
           ["OPEN ESCALATIONS", data?.summary.openEscalations ?? 0, AlertTriangle],
         ].map(([label, value, Icon]) => (
           <article key={String(label)} className="border border-border bg-card p-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="font-mono text-[7px] text-muted-foreground">{label}</p>
               <Icon className="h-3.5 w-3.5 text-primary" />
             </div>

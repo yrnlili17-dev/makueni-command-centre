@@ -416,7 +416,7 @@ export default function ElectionWarRoomPage() {
                       {result.status}
                     </Badge>
                   </div>
-                  <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 text-sm">
                     <div>
                       <p className="text-xs text-muted-foreground">Votes</p>
                       <p className="font-semibold">

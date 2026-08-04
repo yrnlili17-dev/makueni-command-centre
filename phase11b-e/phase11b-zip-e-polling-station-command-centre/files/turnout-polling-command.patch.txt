@@ -1,0 +1,357 @@
+
+async function ensurePollingCommandTables() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS polling_command_hourly_turnout (
+      id bigserial PRIMARY KEY,
+      station_code text NOT NULL,
+      ward text,
+      report_hour integer NOT NULL,
+      turnout_count integer NOT NULL DEFAULT 0,
+      reported_by text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (station_code, report_hour)
+    );
+
+    CREATE TABLE IF NOT EXISTS polling_command_logistics (
+      id bigserial PRIMARY KEY,
+      resource_type text NOT NULL,
+      resource_name text NOT NULL,
+      ward text,
+      station_code text,
+      quantity integer NOT NULL DEFAULT 1,
+      status text NOT NULL DEFAULT 'available',
+      assigned_to text,
+      notes text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+  `);
+}
+
+router.get("/operations-centre/polling-command", async (_req, res) => {
+  try {
+    await ensureGotvTables();
+    await ensureElectionDispatchTables();
+    await ensurePollingCommandTables();
+
+    const [stations, incidents, hourly, logistics] = await Promise.all([
+      db.execute(sql`
+        SELECT
+          d.id,
+          d.station_code AS "stationCode",
+          d.ward,
+          d.station_name AS "stationName",
+          d.agent_name AS "agentName",
+          d.agent_phone AS "agentPhone",
+          d.opening_status AS "openingStatus",
+          d.queue_status AS "queueStatus",
+          d.materials_status AS "materialsStatus",
+          d.device_status AS "deviceStatus",
+          d.turnout_count AS "turnoutCount",
+          d.turnout_hour AS "turnoutHour",
+          d.notes,
+          d.updated_at AS "updatedAt",
+          coalesce(ps.registered_voters, 0)::integer AS "registeredVoters"
+        FROM gotv_polling_dispatch d
+        LEFT JOIN polling_stations ps
+          ON ps.code = d.station_code
+        ORDER BY d.ward, d.station_code
+      `),
+      db.execute(sql`
+        SELECT
+          id,
+          station_code AS "stationCode",
+          ward,
+          title,
+          description,
+          severity,
+          status,
+          assigned_to AS "assignedTo",
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+        FROM gotv_dispatch_incidents
+        ORDER BY updated_at DESC
+      `),
+      db.execute(sql`
+        SELECT
+          id,
+          station_code AS "stationCode",
+          ward,
+          report_hour AS "reportHour",
+          turnout_count AS "turnoutCount",
+          reported_by AS "reportedBy",
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+        FROM polling_command_hourly_turnout
+        ORDER BY report_hour, station_code
+      `),
+      db.execute(sql`
+        SELECT
+          id,
+          resource_type AS "resourceType",
+          resource_name AS "resourceName",
+          ward,
+          station_code AS "stationCode",
+          quantity,
+          status,
+          assigned_to AS "assignedTo",
+          notes,
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+        FROM polling_command_logistics
+        ORDER BY updated_at DESC
+      `),
+    ]);
+
+    const stationRows = (stations as any).rows ?? [];
+    const incidentRows = (incidents as any).rows ?? [];
+    const hourlyRows = (hourly as any).rows ?? [];
+    const logisticsRows = (logistics as any).rows ?? [];
+
+    const registered = stationRows.reduce(
+      (sum: number, row: any) =>
+        sum + Number(row.registeredVoters ?? 0),
+      0,
+    );
+    const turnout = stationRows.reduce(
+      (sum: number, row: any) =>
+        sum + Number(row.turnoutCount ?? 0),
+      0,
+    );
+
+    const hours = Array.from({ length: 11 }, (_, index) => index + 7).map(
+      (hour) => {
+        const rows = hourlyRows.filter(
+          (row: any) => Number(row.reportHour) === hour,
+        );
+        return {
+          hour,
+          turnout: rows.reduce(
+            (sum: number, row: any) =>
+              sum + Number(row.turnoutCount ?? 0),
+            0,
+          ),
+          reports: rows.length,
+        };
+      },
+    );
+
+    const wardMap = new Map<string, any>();
+
+    for (const station of stationRows) {
+      const ward = station.ward || "UNASSIGNED";
+      if (!wardMap.has(ward)) {
+        wardMap.set(ward, {
+          ward,
+          stations: 0,
+          opened: 0,
+          turnout: 0,
+          registered: 0,
+          longQueues: 0,
+          failedDevices: 0,
+          missingMaterials: 0,
+          activeIncidents: 0,
+        });
+      }
+
+      const row = wardMap.get(ward);
+      row.stations += 1;
+      row.registered += Number(station.registeredVoters ?? 0);
+      row.turnout += Number(station.turnoutCount ?? 0);
+      if (station.openingStatus === "open") row.opened += 1;
+      if (station.queueStatus === "long" || station.queueStatus === "blocked") {
+        row.longQueues += 1;
+      }
+      if (station.deviceStatus === "failed") row.failedDevices += 1;
+      if (station.materialsStatus === "missing") row.missingMaterials += 1;
+    }
+
+    for (const incident of incidentRows) {
+      if (incident.status === "resolved") continue;
+      const ward = incident.ward || "UNASSIGNED";
+      if (wardMap.has(ward)) {
+        wardMap.get(ward).activeIncidents += 1;
+      }
+    }
+
+    const wards = [...wardMap.values()].map((ward) => ({
+      ...ward,
+      turnoutRate:
+        ward.registered > 0
+          ? Math.round((ward.turnout / ward.registered) * 100)
+          : 0,
+      reportingRate:
+        ward.stations > 0
+          ? Math.round((ward.opened / ward.stations) * 100)
+          : 0,
+      riskScore: Math.min(
+        100,
+        ward.activeIncidents * 20 +
+          ward.longQueues * 12 +
+          ward.failedDevices * 18 +
+          ward.missingMaterials * 18 +
+          Math.max(0, ward.stations - ward.opened) * 10,
+      ),
+    }));
+
+    res.json({
+      generatedAt: new Date().toISOString(),
+      summary: {
+        stations: stationRows.length,
+        reporting: stationRows.filter(
+          (row: any) => row.openingStatus === "open",
+        ).length,
+        registered,
+        turnout,
+        turnoutRate:
+          registered > 0 ? Math.round((turnout / registered) * 100) : 0,
+        activeIncidents: incidentRows.filter(
+          (row: any) => row.status !== "resolved",
+        ).length,
+        longQueues: stationRows.filter(
+          (row: any) =>
+            row.queueStatus === "long" ||
+            row.queueStatus === "blocked",
+        ).length,
+        failedDevices: stationRows.filter(
+          (row: any) => row.deviceStatus === "failed",
+        ).length,
+        missingMaterials: stationRows.filter(
+          (row: any) => row.materialsStatus === "missing",
+        ).length,
+        logisticsAvailable: logisticsRows
+          .filter((row: any) => row.status === "available")
+          .reduce(
+            (sum: number, row: any) =>
+              sum + Number(row.quantity ?? 0),
+            0,
+          ),
+      },
+      wards,
+      stations: stationRows,
+      incidents: incidentRows,
+      hourly: hours,
+      logistics: logisticsRows,
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load polling station command centre",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown polling command error",
+    });
+  }
+});
+
+router.post("/operations-centre/polling-command/hourly-turnout", async (req, res) => {
+  try {
+    await ensurePollingCommandTables();
+
+    const body = req.body as any;
+    const stationCode = String(body?.stationCode ?? "").trim();
+    const reportHour = Number(body?.reportHour);
+    const turnoutCount = Number(body?.turnoutCount ?? 0);
+
+    if (!stationCode || !Number.isInteger(reportHour)) {
+      res.status(400).json({
+        error: "stationCode and integer reportHour required",
+      });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      INSERT INTO polling_command_hourly_turnout (
+        station_code,
+        ward,
+        report_hour,
+        turnout_count,
+        reported_by,
+        updated_at
+      )
+      VALUES (
+        ${stationCode},
+        ${body?.ward ?? null},
+        ${reportHour},
+        ${turnoutCount},
+        ${body?.reportedBy ?? null},
+        now()
+      )
+      ON CONFLICT (station_code, report_hour)
+      DO UPDATE SET
+        ward = excluded.ward,
+        turnout_count = excluded.turnout_count,
+        reported_by = excluded.reported_by,
+        updated_at = now()
+      RETURNING *
+    `);
+
+    await db.execute(sql`
+      UPDATE gotv_polling_dispatch
+      SET
+        turnout_count = greatest(turnout_count, ${turnoutCount}),
+        turnout_hour = ${reportHour},
+        updated_at = now()
+      WHERE station_code = ${stationCode}
+    `);
+
+    res.status(201).json((result as any).rows?.[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to save hourly turnout",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown hourly turnout error",
+    });
+  }
+});
+
+router.post("/operations-centre/polling-command/logistics", async (req, res) => {
+  try {
+    await ensurePollingCommandTables();
+
+    const body = req.body as any;
+    const resourceName = String(body?.resourceName ?? "").trim();
+
+    if (!resourceName) {
+      res.status(400).json({ error: "resourceName required" });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      INSERT INTO polling_command_logistics (
+        resource_type,
+        resource_name,
+        ward,
+        station_code,
+        quantity,
+        status,
+        assigned_to,
+        notes
+      )
+      VALUES (
+        ${body?.resourceType ?? "general"},
+        ${resourceName},
+        ${body?.ward ?? null},
+        ${body?.stationCode ?? null},
+        ${Number(body?.quantity ?? 1)},
+        ${body?.status ?? "available"},
+        ${body?.assignedTo ?? null},
+        ${body?.notes ?? null}
+      )
+      RETURNING *
+    `);
+
+    res.status(201).json((result as any).rows?.[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to create logistics item",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown logistics error",
+    });
+  }
+});

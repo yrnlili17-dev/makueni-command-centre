@@ -177,7 +177,7 @@ export default function WardOpportunityEngine({ onPrompt }: Props) {
                 ["CLASSIFIED", row.supportClassified, Target],
               ].map(([label, value, Icon]) => (
                 <div key={String(label)} className="border border-border p-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="font-mono text-[7px] text-muted-foreground">
                       {label}
                     </p>

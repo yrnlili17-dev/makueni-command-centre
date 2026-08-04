@@ -1,0 +1,282 @@
+
+router.patch("/operations-centre/households/:id", async (req, res) => {
+  try {
+    await ensureGotvTables();
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid household id" });
+      return;
+    }
+
+    const body = req.body as any;
+    const result = await db.execute(sql`
+      UPDATE gotv_household_visits
+      SET
+        visit_status = coalesce(${body?.visitStatus ?? null}, visit_status),
+        support_status = coalesce(${body?.supportStatus ?? null}, support_status),
+        follow_up_required = coalesce(${body?.followUpRequired ?? null}, follow_up_required),
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+
+    if ((result as any).rows?.length === 0) {
+      res.status(404).json({ error: "Household record not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update household visit",
+      detail: err instanceof Error ? err.message : "Unknown household update error",
+    });
+  }
+});
+
+router.patch("/operations-centre/contacts/:id", async (req, res) => {
+  try {
+    await ensureGotvTables();
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid contact id" });
+      return;
+    }
+
+    const body = req.body as any;
+    const result = await db.execute(sql`
+      UPDATE gotv_contact_queue
+      SET
+        status = coalesce(${body?.status ?? null}, status),
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+
+    if ((result as any).rows?.length === 0) {
+      res.status(404).json({ error: "Contact item not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update contact item",
+      detail: err instanceof Error ? err.message : "Unknown contact update error",
+    });
+  }
+});
+
+router.patch("/operations-centre/transport/:id", async (req, res) => {
+  try {
+    await ensureGotvTables();
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid transport id" });
+      return;
+    }
+
+    const body = req.body as any;
+    const result = await db.execute(sql`
+      UPDATE gotv_transport_requests
+      SET
+        status = coalesce(${body?.status ?? null}, status),
+        vehicle_registration = coalesce(
+          ${body?.vehicleRegistration ?? null},
+          vehicle_registration
+        ),
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+
+    if ((result as any).rows?.length === 0) {
+      res.status(404).json({ error: "Transport request not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update transport request",
+      detail: err instanceof Error ? err.message : "Unknown transport update error",
+    });
+  }
+});
+
+router.get("/operations-centre/live-command", async (_req, res) => {
+  try {
+    await ensureGotvTables();
+
+    const [households, contacts, transport, targets, wards] = await Promise.all([
+      db.execute(sql`
+        SELECT * FROM gotv_household_visits
+        ORDER BY updated_at DESC
+      `),
+      db.execute(sql`
+        SELECT * FROM gotv_contact_queue
+        ORDER BY updated_at DESC
+      `),
+      db.execute(sql`
+        SELECT * FROM gotv_transport_requests
+        ORDER BY updated_at DESC
+      `),
+      db.execute(sql`
+        SELECT * FROM gotv_ward_targets
+        ORDER BY ward
+      `),
+      db.execute(sql`
+        SELECT
+          ward,
+          count(*)::integer AS stations,
+          coalesce(sum(registered_voters), 0)::integer AS registered
+        FROM polling_stations
+        GROUP BY ward
+        ORDER BY registered DESC
+      `),
+    ]);
+
+    const hs = (households as any).rows ?? [];
+    const cs = (contacts as any).rows ?? [];
+    const ts = (transport as any).rows ?? [];
+    const tg = (targets as any).rows ?? [];
+    const targetMap = new Map(tg.map((row: any) => [String(row.ward), row]));
+
+    const wardRows = ((wards as any).rows ?? []).map((row: any) => {
+      const ward = String(row.ward ?? "UNASSIGNED");
+      const wardHouseholds = hs.filter((item: any) => item.ward === ward);
+      const wardContacts = cs.filter((item: any) => item.ward === ward);
+      const wardTransport = ts.filter((item: any) => item.ward === ward);
+      const target: any = targetMap.get(ward);
+
+      const visited = wardHouseholds.filter(
+        (item: any) => item.visit_status === "visited",
+      ).length;
+      const followUps = wardHouseholds.filter(
+        (item: any) => item.follow_up_required,
+      ).length;
+      const completedContacts = wardContacts.filter(
+        (item: any) => item.status === "completed",
+      ).length;
+      const completedTransport = wardTransport.filter(
+        (item: any) => item.status === "completed",
+      ).length;
+
+      const householdTarget = Number(target?.household_target ?? 0);
+      const contactTarget = Number(target?.contact_target ?? 0);
+
+      const householdProgress =
+        householdTarget > 0
+          ? Math.round((visited / householdTarget) * 100)
+          : 0;
+      const contactProgress =
+        contactTarget > 0
+          ? Math.round((completedContacts / contactTarget) * 100)
+          : 0;
+      const transportProgress =
+        wardTransport.length > 0
+          ? Math.round((completedTransport / wardTransport.length) * 100)
+          : 0;
+
+      const mobilisationScore = Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            householdProgress * 0.45 +
+            contactProgress * 0.35 +
+            transportProgress * 0.2,
+          ),
+        ),
+      );
+
+      const riskScore = Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            (100 - mobilisationScore) * 0.65 +
+            Math.min(100, followUps * 8) * 0.2 +
+            Math.min(
+              100,
+              wardTransport.filter((item: any) => item.status === "requested").length * 10,
+            ) * 0.15,
+          ),
+        ),
+      );
+
+      return {
+        ward,
+        registered: Number(row.registered ?? 0),
+        stations: Number(row.stations ?? 0),
+        turnoutTarget: Number(target?.turnout_target ?? 65),
+        householdTarget,
+        householdsVisited: visited,
+        followUps,
+        contactTarget,
+        contactsCompleted: completedContacts,
+        transportRequests: wardTransport.length,
+        transportCompleted: completedTransport,
+        mobilisationScore,
+        riskScore,
+      };
+    });
+
+    const timeline = [
+      ...hs.map((item: any) => ({
+        id: `household-${item.id}`,
+        type: "household",
+        title: `${item.household_name || item.contact_name || "Household"} · ${item.visit_status}`,
+        ward: item.ward,
+        status: item.visit_status,
+        timestamp: item.updated_at,
+      })),
+      ...cs.map((item: any) => ({
+        id: `contact-${item.id}`,
+        type: "contact",
+        title: `${item.contact_name} · ${item.channel}`,
+        ward: item.ward,
+        status: item.status,
+        timestamp: item.updated_at,
+      })),
+      ...ts.map((item: any) => ({
+        id: `transport-${item.id}`,
+        type: "transport",
+        title: `${item.voter_name} · ${item.status}`,
+        ward: item.ward,
+        status: item.status,
+        timestamp: item.updated_at,
+      })),
+    ]
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.timestamp).getTime() -
+          new Date(a.timestamp).getTime(),
+      )
+      .slice(0, 100);
+
+    res.json({
+      generatedAt: new Date().toISOString(),
+      wards: wardRows.sort(
+        (a: any, b: any) => b.riskScore - a.riskScore,
+      ),
+      timeline,
+      alerts: wardRows
+        .filter((ward: any) => ward.riskScore >= 40)
+        .map((ward: any) => ({
+          ward: ward.ward,
+          severity: ward.riskScore >= 70 ? "critical" : "high",
+          title: `${ward.ward} mobilisation risk`,
+          detail:
+            `Mobilisation ${ward.mobilisationScore}%, ` +
+            `${ward.followUps} follow-up(s), ` +
+            `${ward.transportRequests - ward.transportCompleted} pending transport request(s).`,
+        })),
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load GOTV live command",
+      detail: err instanceof Error ? err.message : "Unknown live command error",
+    });
+  }
+});

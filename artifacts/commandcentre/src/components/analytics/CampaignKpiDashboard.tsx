@@ -364,7 +364,7 @@ export default function CampaignKpiDashboard({
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 KPI TARGET TRACKING
@@ -436,7 +436,7 @@ export default function CampaignKpiDashboard({
 
       <section className="grid gap-4 xl:grid-cols-2">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 DEMOGRAPHIC REPRESENTATION
@@ -482,7 +482,7 @@ export default function CampaignKpiDashboard({
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 TOP WARD PERFORMANCE

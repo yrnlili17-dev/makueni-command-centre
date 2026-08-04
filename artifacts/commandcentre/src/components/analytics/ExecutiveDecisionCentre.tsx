@@ -250,7 +250,7 @@ export default function ExecutiveDecisionCentre({
           ["OVERDUE MILESTONES", campaignReadiness?.overdueCount ?? 0, Flag],
         ].map(([label, value, Icon]) => (
           <article key={String(label)} className="border border-border bg-card p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="font-mono text-[8px] text-muted-foreground">{label}</p>
               <Icon className="h-4 w-4 text-primary" />
             </div>
@@ -261,7 +261,7 @@ export default function ExecutiveDecisionCentre({
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 PRIORITIZED EXECUTIVE DECISIONS
@@ -304,7 +304,7 @@ export default function ExecutiveDecisionCentre({
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 RESOURCE DEPLOYMENT PRIORITY

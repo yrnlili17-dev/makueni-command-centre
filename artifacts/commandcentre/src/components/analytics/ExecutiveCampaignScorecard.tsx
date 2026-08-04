@@ -411,7 +411,7 @@ export default function ExecutiveCampaignScorecard({
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 EXECUTIVE SUMMARY
@@ -448,7 +448,7 @@ export default function ExecutiveCampaignScorecard({
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 PRIORITIZED EXECUTIVE ACTIONS

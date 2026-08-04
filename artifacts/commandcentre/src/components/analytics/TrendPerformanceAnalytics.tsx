@@ -282,7 +282,7 @@ export default function TrendPerformanceAnalytics({
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {performanceCards.map(({ label, value, note, icon: Icon }) => (
           <article key={label} className="border border-border bg-card p-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="font-mono text-[8px] text-muted-foreground">
                 {label}
               </p>
@@ -297,7 +297,7 @@ export default function TrendPerformanceAnalytics({
       </div>
 
       <article className="border border-border bg-card p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-mono text-[10px] tracking-widest">
               DATABASE GROWTH TREND
@@ -344,7 +344,7 @@ export default function TrendPerformanceAnalytics({
 
       <section className="grid gap-4 xl:grid-cols-2">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 WARD PERFORMANCE
@@ -393,7 +393,7 @@ export default function TrendPerformanceAnalytics({
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 CONSTITUENCY PERFORMANCE

@@ -236,7 +236,7 @@ export default function DailyBriefingActionQueue({ onPrompt }: Props) {
 
       <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 LATEST EXECUTIVE BRIEFING
@@ -333,7 +333,7 @@ export default function DailyBriefingActionQueue({ onPrompt }: Props) {
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 STRATEGIC ACTION QUEUE

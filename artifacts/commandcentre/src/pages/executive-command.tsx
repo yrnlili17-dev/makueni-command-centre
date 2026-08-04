@@ -333,7 +333,7 @@ export default function ExecutiveCommand() {
             onClick={() => navigate(path)}
             className="border border-border bg-card p-3 text-left transition hover:border-primary/60"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="font-mono text-[7px] text-muted-foreground">
                 {label}
               </p>
@@ -346,7 +346,7 @@ export default function ExecutiveCommand() {
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 EXECUTIVE ALERT WALL
@@ -374,7 +374,7 @@ export default function ExecutiveCommand() {
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 URGENT STRATEGIC ACTIONS
@@ -428,7 +428,7 @@ export default function ExecutiveCommand() {
 
       <section className="grid gap-4 xl:grid-cols-2">
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 PRIORITY WARD WATCHLIST
@@ -470,7 +470,7 @@ export default function ExecutiveCommand() {
         </article>
 
         <article className="border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-mono text-[10px] tracking-widest">
                 LIVE OPERATIONS SUMMARY
@@ -492,7 +492,7 @@ export default function ExecutiveCommand() {
               ["REPORTS READY", summary?.reports?.ready ?? 0, CalendarDays],
             ].map(([label, value, Icon]) => (
               <div key={String(label)} className="border border-border p-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="font-mono text-[7px] text-muted-foreground">
                     {label}
                   </p>

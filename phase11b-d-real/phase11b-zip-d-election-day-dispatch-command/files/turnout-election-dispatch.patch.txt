@@ -1,0 +1,335 @@
+
+async function ensureElectionDispatchTables() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS gotv_polling_dispatch (
+      id bigserial PRIMARY KEY,
+      station_code text NOT NULL,
+      ward text,
+      station_name text,
+      agent_name text,
+      agent_phone text,
+      opening_status text NOT NULL DEFAULT 'not-open',
+      queue_status text NOT NULL DEFAULT 'normal',
+      materials_status text NOT NULL DEFAULT 'unknown',
+      device_status text NOT NULL DEFAULT 'unknown',
+      turnout_count integer NOT NULL DEFAULT 0,
+      turnout_hour integer,
+      notes text,
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (station_code)
+    );
+
+    CREATE TABLE IF NOT EXISTS gotv_dispatch_incidents (
+      id bigserial PRIMARY KEY,
+      station_code text,
+      ward text,
+      title text NOT NULL,
+      description text,
+      severity text NOT NULL DEFAULT 'medium',
+      status text NOT NULL DEFAULT 'open',
+      assigned_to text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+  `);
+}
+
+router.get("/operations-centre/election-dispatch", async (_req, res) => {
+  try {
+    await ensureElectionDispatchTables();
+
+    await db.execute(sql`
+      INSERT INTO gotv_polling_dispatch (
+        station_code,
+        ward,
+        station_name,
+        agent_name,
+        agent_phone
+      )
+      SELECT
+        ps.code,
+        ps.ward,
+        ps.name,
+        ps.agent_name,
+        ps.agent_phone
+      FROM polling_stations ps
+      ON CONFLICT (station_code) DO UPDATE SET
+        ward = excluded.ward,
+        station_name = excluded.station_name,
+        agent_name = coalesce(
+          gotv_polling_dispatch.agent_name,
+          excluded.agent_name
+        ),
+        agent_phone = coalesce(
+          gotv_polling_dispatch.agent_phone,
+          excluded.agent_phone
+        )
+    `);
+
+    const [stations, incidents] = await Promise.all([
+      db.execute(sql`
+        SELECT
+          id,
+          station_code AS "stationCode",
+          ward,
+          station_name AS "stationName",
+          agent_name AS "agentName",
+          agent_phone AS "agentPhone",
+          opening_status AS "openingStatus",
+          queue_status AS "queueStatus",
+          materials_status AS "materialsStatus",
+          device_status AS "deviceStatus",
+          turnout_count AS "turnoutCount",
+          turnout_hour AS "turnoutHour",
+          notes,
+          updated_at AS "updatedAt"
+        FROM gotv_polling_dispatch
+        ORDER BY ward, station_code
+      `),
+      db.execute(sql`
+        SELECT
+          id,
+          station_code AS "stationCode",
+          ward,
+          title,
+          description,
+          severity,
+          status,
+          assigned_to AS "assignedTo",
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+        FROM gotv_dispatch_incidents
+        ORDER BY
+          CASE severity
+            WHEN 'critical' THEN 1
+            WHEN 'high' THEN 2
+            WHEN 'medium' THEN 3
+            ELSE 4
+          END,
+          updated_at DESC
+      `),
+    ]);
+
+    const rows = (stations as any).rows ?? [];
+    const incidentRows = (incidents as any).rows ?? [];
+
+    const wards = [...new Set(rows.map((row: any) => row.ward || "UNASSIGNED"))]
+      .map((ward) => {
+        const wardStations = rows.filter(
+          (row: any) => (row.ward || "UNASSIGNED") === ward,
+        );
+
+        return {
+          ward,
+          stations: wardStations.length,
+          opened: wardStations.filter(
+            (row: any) => row.openingStatus === "open",
+          ).length,
+          agentsPresent: wardStations.filter(
+            (row: any) => row.agentName,
+          ).length,
+          deviceReady: wardStations.filter(
+            (row: any) => row.deviceStatus === "ready",
+          ).length,
+          materialsReady: wardStations.filter(
+            (row: any) => row.materialsStatus === "received",
+          ).length,
+          turnout: wardStations.reduce(
+            (sum: number, row: any) =>
+              sum + Number(row.turnoutCount ?? 0),
+            0,
+          ),
+          openIncidents: incidentRows.filter(
+            (incident: any) =>
+              incident.ward === ward &&
+              incident.status !== "resolved",
+          ).length,
+        };
+      });
+
+    res.json({
+      generatedAt: new Date().toISOString(),
+      summary: {
+        stations: rows.length,
+        opened: rows.filter(
+          (row: any) => row.openingStatus === "open",
+        ).length,
+        agentsPresent: rows.filter((row: any) => row.agentName).length,
+        devicesReady: rows.filter(
+          (row: any) => row.deviceStatus === "ready",
+        ).length,
+        materialsReady: rows.filter(
+          (row: any) => row.materialsStatus === "received",
+        ).length,
+        turnout: rows.reduce(
+          (sum: number, row: any) =>
+            sum + Number(row.turnoutCount ?? 0),
+          0,
+        ),
+        openIncidents: incidentRows.filter(
+          (incident: any) => incident.status !== "resolved",
+        ).length,
+      },
+      wards,
+      stations: rows,
+      incidents: incidentRows,
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load election dispatch command",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown dispatch error",
+    });
+  }
+});
+
+router.patch("/operations-centre/election-dispatch/stations/:code", async (req, res) => {
+  try {
+    await ensureElectionDispatchTables();
+
+    const code = decodeURIComponent(String(req.params.code ?? "")).trim();
+    if (!code) {
+      res.status(400).json({ error: "station code required" });
+      return;
+    }
+
+    const body = req.body as any;
+    const result = await db.execute(sql`
+      UPDATE gotv_polling_dispatch
+      SET
+        opening_status = coalesce(
+          ${body?.openingStatus ?? null},
+          opening_status
+        ),
+        queue_status = coalesce(
+          ${body?.queueStatus ?? null},
+          queue_status
+        ),
+        materials_status = coalesce(
+          ${body?.materialsStatus ?? null},
+          materials_status
+        ),
+        device_status = coalesce(
+          ${body?.deviceStatus ?? null},
+          device_status
+        ),
+        turnout_count = coalesce(
+          ${body?.turnoutCount ?? null},
+          turnout_count
+        ),
+        turnout_hour = coalesce(
+          ${body?.turnoutHour ?? null},
+          turnout_hour
+        ),
+        notes = coalesce(${body?.notes ?? null}, notes),
+        updated_at = now()
+      WHERE station_code = ${code}
+      RETURNING *
+    `);
+
+    if ((result as any).rows?.length === 0) {
+      res.status(404).json({ error: "Station dispatch record not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update polling station dispatch",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown dispatch update error",
+    });
+  }
+});
+
+router.post("/operations-centre/election-dispatch/incidents", async (req, res) => {
+  try {
+    await ensureElectionDispatchTables();
+
+    const body = req.body as any;
+    const title = String(body?.title ?? "").trim();
+
+    if (!title) {
+      res.status(400).json({ error: "title required" });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      INSERT INTO gotv_dispatch_incidents (
+        station_code,
+        ward,
+        title,
+        description,
+        severity,
+        status,
+        assigned_to
+      )
+      VALUES (
+        ${body?.stationCode ?? null},
+        ${body?.ward ?? null},
+        ${title},
+        ${body?.description ?? null},
+        ${body?.severity ?? "medium"},
+        ${body?.status ?? "open"},
+        ${body?.assignedTo ?? null}
+      )
+      RETURNING *
+    `);
+
+    res.status(201).json((result as any).rows?.[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to create election dispatch incident",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown incident error",
+    });
+  }
+});
+
+router.patch("/operations-centre/election-dispatch/incidents/:id", async (req, res) => {
+  try {
+    await ensureElectionDispatchTables();
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid incident id" });
+      return;
+    }
+
+    const body = req.body as any;
+    const result = await db.execute(sql`
+      UPDATE gotv_dispatch_incidents
+      SET
+        status = coalesce(${body?.status ?? null}, status),
+        severity = coalesce(${body?.severity ?? null}, severity),
+        assigned_to = coalesce(
+          ${body?.assignedTo ?? null},
+          assigned_to
+        ),
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+
+    if ((result as any).rows?.length === 0) {
+      res.status(404).json({ error: "Incident not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update election dispatch incident",
+      detail:
+        err instanceof Error
+          ? err.message
+          : "Unknown incident update error",
+    });
+  }
+});
