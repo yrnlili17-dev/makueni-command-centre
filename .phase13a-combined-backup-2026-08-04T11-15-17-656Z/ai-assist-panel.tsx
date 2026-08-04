@@ -198,7 +198,7 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
         onClick={() => setOpen((current) => !current)}
         className={cn(
           "fixed z-[70] flex items-center gap-2 border px-3 py-2.5 font-mono text-[11px] font-bold tracking-widest shadow-lg transition-all",
-          "bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3",
+          "bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3",
           "sm:bottom-6 sm:right-6 sm:px-4 sm:text-xs",
           open
             ? "border-primary bg-primary text-primary-foreground"
@@ -227,7 +227,7 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
             aria-label="Smart Assist — Chief Strategist"
             className={cn(
               "fixed z-[72] flex min-h-0 flex-col overflow-hidden border border-primary/30 bg-card shadow-2xl",
-              "inset-x-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))]",
+              "inset-x-2 bottom-[calc(4.25rem+env(safe-area-inset-bottom))]",
               "h-[min(82dvh,720px)] max-h-[calc(100dvh-5.25rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]",
               "sm:inset-auto sm:bottom-20 sm:right-6 sm:h-[min(74vh,720px)] sm:w-[min(440px,calc(100vw-3rem))]",
             )}

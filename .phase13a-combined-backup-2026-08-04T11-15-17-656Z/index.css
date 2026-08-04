@@ -313,24 +313,3 @@ body { min-width: 320px; }
 }
 
 @import "./responsive-command-centre.css";
-
-/* Phase 13A — Global responsive command-centre UX */
-@media (max-width: 767px) {
-  .responsive-content { width: 100%; max-width: 100vw; }
-  .responsive-content > * { min-width: 0; }
-  .responsive-content table { white-space: nowrap; }
-  .responsive-content :where(.grid) { min-width: 0; }
-  .responsive-content :where(button, a, input, select, textarea) { max-width: 100%; }
-}
-@media (min-width: 1920px) {
-  .responsive-content { max-width: 2200px; width: 100%; margin-inline: auto; }
-}
-@media (min-width: 2560px) {
-  .responsive-content { max-width: 2800px; }
-}
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .responsive-content { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
-  @media (min-width: 1024px) {
-    .responsive-content { padding-bottom: 6rem; }
-  }
-}

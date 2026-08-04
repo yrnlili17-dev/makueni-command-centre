@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { AiAssistPanel } from "@/components/ai-assist-panel";
@@ -7,7 +7,7 @@ import {
   Activity, Users, PieChart, MessageSquare, Command, ClipboardList, Megaphone, FileBarChart,
   Map, UserPlus, FileText, Calendar, ShieldAlert, Target, Star, LayoutDashboard, LogOut,
   Banknote, Vote, Database, Award, Settings, BarChart2, Crosshair, Radio, TrendingUp, Mic,
-  BrainCircuit, FolderLock, Menu, X, Home, Bell, MoreHorizontal, ChevronDown
+  BrainCircuit, FolderLock, Menu, X, Home, Bell, MoreHorizontal
 } from "lucide-react";
 import brandIcon from "@assets/brand-icon.png";
 import {
@@ -51,9 +51,8 @@ const navGroups = [
   ]},
   { title: "ELECTION DAY", items: [
     { href: "/election-day", label: "ELECTION DAY OPS", icon: Vote },
-    { href: "/war-room", label: "ELECTION WAR ROOM", icon: Vote },
-    { href: "/election-war-room", label: "RESULTS COMMAND CENTRE", icon: Activity },
-    { href: "/turnout", label: "TURNOUT & GOTV", icon: TrendingUp },
+      { href: "/war-room", label: "ELECTION WAR ROOM", icon: Vote },
+    { href: "/turnout", label: "TURNOUT FORECAST", icon: TrendingUp },
   ]},
   { title: "ADMINISTRATION", items: [
     { href: "/fundraising", label: "FINANCE OPS", icon: Banknote },
@@ -93,12 +92,10 @@ const PATH_MODULE: Record<string, string> = {
   "/production-centre": "production-centre", "/gis-centre": "gis-centre", "/gis-intelligence": "gis-intelligence", "/election-war-room": "election-war-room", "/production-readiness": "production-readiness", "/smart-assist": "smart-assist", "/data-centre": "data-centre",
 };
 
-const NAV_GROUP_STORAGE_KEY = "makueni-command-centre-open-nav-group";
-
 const mobileNav = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/analytics", label: "Analytics", icon: BarChart2 },
-  { href: "/operations-hub", label: "Ops", icon: ClipboardList },
+  { href: "/operations-hub", label: "Operations", icon: ClipboardList },
   { href: "/messaging", label: "Messages", icon: MessageSquare },
 ];
 
@@ -106,10 +103,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [openGroup, setOpenGroup] = useState(() => {
-    if (typeof window === "undefined") return "COMMAND";
-    return window.localStorage.getItem(NAV_GROUP_STORAGE_KEY) ?? "COMMAND";
-  });
   const { user, can, logout } = useAuth();
   const currentModule = PATH_MODULE[location] ?? "dashboard";
 
@@ -119,30 +112,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
-  const visibleGroups = useMemo(() => navGroups.map(group => ({
+  const visibleGroups = navGroups.map(group => ({
     ...group,
     items: group.items.filter(item => NAV_PERM[item.href] ? can(NAV_PERM[item.href]) : true),
-  })).filter(group => group.items.length > 0), [can]);
-
-  const activeGroupTitle = useMemo(
-    () => visibleGroups.find(group =>
-      group.items.some(item => item.href === location)
-    )?.title ?? visibleGroups[0]?.title ?? "COMMAND",
-    [location, visibleGroups],
-  );
-
-  useEffect(() => {
-    setOpenGroup(activeGroupTitle);
-    window.localStorage.setItem(NAV_GROUP_STORAGE_KEY, activeGroupTitle);
-  }, [activeGroupTitle]);
-
-  const toggleGroup = (title: string) => {
-    setOpenGroup(current => {
-      const next = current === title ? "" : title;
-      window.localStorage.setItem(NAV_GROUP_STORAGE_KEY, next);
-      return next;
-    });
-  };
+  })).filter(group => group.items.length > 0);
 
   const handleLogout = async () => {
     await logout();
@@ -166,61 +139,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-3">
-        <div className="space-y-1.5 px-2">
-          {visibleGroups.map(group => {
-            const expanded = openGroup === group.title;
-            const containsActive = group.items.some(item => location === item.href);
-            return (
-              <section key={group.title} className="overflow-hidden border border-border/70 bg-background/20">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group.title)}
-                  className={cn(
-                    "flex min-h-11 w-full items-center justify-between gap-3 px-3 py-2 text-left transition-colors hover:bg-secondary",
-                    containsActive && "bg-secondary/80",
-                  )}
-                  aria-expanded={expanded}
-                >
-                  <span className="min-w-0 truncate font-mono text-[10px] font-bold uppercase tracking-[0.16em]">
-                    {group.title}
-                  </span>
-                  <ChevronDown className={cn(
-                    "h-4 w-4 shrink-0 text-primary transition-transform duration-200",
-                    expanded && "rotate-180",
-                  )} />
-                </button>
-                <div className={cn(
-                  "grid transition-[grid-template-rows,opacity] duration-200",
-                  expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-60",
-                )}>
-                  <div className="overflow-hidden">
-                    <ul className="space-y-1 border-t border-border/70 p-1.5">
-                      {group.items.map(item => {
-                        const active = location === item.href;
-                        return (
-                          <li key={item.href}>
-                            <Link
-                              href={item.href}
-                              onClick={() => setMenuOpen(false)}
-                              className={cn(
-                                "flex min-h-10 items-center gap-3 border-l-2 px-3 py-2 font-mono text-[11px] tracking-wide transition-colors",
-                                active
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground",
-                              )}
-                            >
-                              <item.icon className="h-4 w-4 shrink-0" />
-                              <span className="min-w-0 truncate">{item.label}</span>
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                </div>
-              </section>
-            );
-          })}
+        <div className="space-y-4 px-2">
+          {visibleGroups.map(group => (
+            <div key={group.title}>
+              <div className="mb-1.5 flex items-center gap-2 border-l-2 border-primary bg-secondary/60 px-3 py-1.5">
+                <span className="font-mono text-[10px] font-bold text-primary">▸</span>
+                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-foreground">{group.title}</span>
+              </div>
+              <ul className="space-y-1">
+                {group.items.map(item => {
+                  const active = location === item.href;
+                  return (
+                    <li key={item.href}>
+                      <Link href={item.href} className={cn(
+                        "flex min-h-11 items-center gap-3 border-l-2 px-3 py-2 font-mono text-xs tracking-wider transition-colors",
+                        active ? "border-primary-foreground bg-primary text-primary-foreground" : "border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      )}>
+                        <item.icon className="h-4 w-4 shrink-0" /><span>{item.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </div>
       </nav>
 
@@ -276,20 +218,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <div className="responsive-content flex-1 overflow-x-hidden px-3 py-3 pb-24 sm:px-5 sm:py-4 lg:overflow-y-auto lg:p-6 lg:pb-24 2xl:px-8">
+        <div className="responsive-content flex-1 overflow-x-hidden px-3 py-4 pb-28 sm:px-5 lg:overflow-y-auto lg:p-6 lg:pb-24">
           {children}
         </div>
       </main>
 
-      <nav className="mobile-bottom-nav fixed inset-x-2 z-50 grid h-[58px] grid-cols-5 overflow-hidden rounded-xl border border-border bg-card/95 px-1 shadow-2xl backdrop-blur lg:hidden" style={{ bottom: "max(.5rem, env(safe-area-inset-bottom))" }} aria-label="Quick navigation">
+      <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t border-border bg-card/95 px-1 pb-[max(.35rem,env(safe-area-inset-bottom))] pt-1 backdrop-blur lg:hidden" aria-label="Quick navigation">
         {mobileNav.map(item => {
           const active = location === item.href;
-          return <Link key={item.href} href={item.href} className={cn("flex min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[9px]", active ? "text-primary" : "text-muted-foreground")}>
-            <item.icon className="h-4 w-4" /><span className="w-full truncate text-center">{item.label}</span>
+          return <Link key={item.href} href={item.href} className={cn("flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-[10px]", active ? "text-primary" : "text-muted-foreground")}>
+            <item.icon className="h-5 w-5" /><span>{item.label}</span>
           </Link>;
         })}
-        <button onClick={() => setMenuOpen(true)} className="flex min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[9px] text-muted-foreground">
-          <MoreHorizontal className="h-4 w-4" /><span>Menu</span>
+        <button onClick={() => setMenuOpen(true)} className="flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-[10px] text-muted-foreground">
+          <MoreHorizontal className="h-5 w-5" /><span>More</span>
         </button>
       </nav>
 
