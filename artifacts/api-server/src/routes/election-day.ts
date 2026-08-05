@@ -1788,4 +1788,504 @@ router.patch("/executive-results-command/recommendations/:id", async (req, res) 
   }
 });
 
+
+async function ensureGisFieldTrackingTables() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS gis_field_assets (
+      id bigserial PRIMARY KEY,
+      asset_type text NOT NULL DEFAULT 'vehicle',
+      name text NOT NULL,
+      registration text,
+      ward text,
+      constituency text,
+      latitude numeric,
+      longitude numeric,
+      status text NOT NULL DEFAULT 'available',
+      assigned_to text,
+      phone text,
+      fuel_level integer NOT NULL DEFAULT 100,
+      last_seen_at timestamptz,
+      notes text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS gis_field_movements (
+      id bigserial PRIMARY KEY,
+      asset_id bigint NOT NULL REFERENCES gis_field_assets(id) ON DELETE CASCADE,
+      latitude numeric,
+      longitude numeric,
+      ward text,
+      constituency text,
+      status text,
+      recorded_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE INDEX IF NOT EXISTS gis_field_assets_status_idx
+      ON gis_field_assets (status);
+
+    CREATE INDEX IF NOT EXISTS gis_field_assets_ward_idx
+      ON gis_field_assets (ward);
+  `);
+}
+
+router.get("/gis-field-assets", async (_req, res) => {
+  try {
+    await ensureGisFieldTrackingTables();
+
+    const result = await db.execute(sql`
+      SELECT
+        id,
+        asset_type AS "assetType",
+        name,
+        registration,
+        ward,
+        constituency,
+        latitude,
+        longitude,
+        status,
+        assigned_to AS "assignedTo",
+        phone,
+        fuel_level AS "fuelLevel",
+        last_seen_at AS "lastSeenAt",
+        notes,
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+      FROM gis_field_assets
+      ORDER BY updated_at DESC
+    `);
+
+    res.json((result as any).rows ?? []);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load GIS field assets",
+      detail: err instanceof Error ? err.message : "Unknown GIS tracking error",
+    });
+  }
+});
+
+router.post("/gis-field-assets", async (req, res) => {
+  try {
+    await ensureGisFieldTrackingTables();
+
+    const body = req.body as any;
+    const name = String(body?.name ?? "").trim();
+
+    if (!name) {
+      res.status(400).json({ error: "name required" });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      INSERT INTO gis_field_assets (
+        asset_type,
+        name,
+        registration,
+        ward,
+        constituency,
+        latitude,
+        longitude,
+        status,
+        assigned_to,
+        phone,
+        fuel_level,
+        last_seen_at,
+        notes
+      )
+      VALUES (
+        ${body?.assetType ?? "vehicle"},
+        ${name},
+        ${body?.registration ?? null},
+        ${body?.ward ?? null},
+        ${body?.constituency ?? null},
+        ${body?.latitude ?? null},
+        ${body?.longitude ?? null},
+        ${body?.status ?? "available"},
+        ${body?.assignedTo ?? null},
+        ${body?.phone ?? null},
+        ${Number(body?.fuelLevel ?? 100)},
+        now(),
+        ${body?.notes ?? null}
+      )
+      RETURNING *
+    `);
+
+    res.status(201).json((result as any).rows?.[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to create GIS field asset",
+      detail: err instanceof Error ? err.message : "Unknown GIS asset creation error",
+    });
+  }
+});
+
+router.patch("/gis-field-assets/:id", async (req, res) => {
+  try {
+    await ensureGisFieldTrackingTables();
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid asset id" });
+      return;
+    }
+
+    const body = req.body as any;
+
+    const result = await db.execute(sql`
+      UPDATE gis_field_assets
+      SET
+        ward = coalesce(${body?.ward ?? null}, ward),
+        constituency = coalesce(${body?.constituency ?? null}, constituency),
+        latitude = coalesce(${body?.latitude ?? null}, latitude),
+        longitude = coalesce(${body?.longitude ?? null}, longitude),
+        status = coalesce(${body?.status ?? null}, status),
+        assigned_to = coalesce(${body?.assignedTo ?? null}, assigned_to),
+        phone = coalesce(${body?.phone ?? null}, phone),
+        fuel_level = coalesce(${body?.fuelLevel ?? null}, fuel_level),
+        notes = coalesce(${body?.notes ?? null}, notes),
+        last_seen_at = now(),
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+
+    if (((result as any).rows ?? []).length === 0) {
+      res.status(404).json({ error: "Asset not found" });
+      return;
+    }
+
+    if (body?.latitude != null || body?.longitude != null) {
+      await db.execute(sql`
+        INSERT INTO gis_field_movements (
+          asset_id,
+          latitude,
+          longitude,
+          ward,
+          constituency,
+          status
+        )
+        VALUES (
+          ${id},
+          ${body?.latitude ?? null},
+          ${body?.longitude ?? null},
+          ${body?.ward ?? null},
+          ${body?.constituency ?? null},
+          ${body?.status ?? null}
+        )
+      `);
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update GIS field asset",
+      detail: err instanceof Error ? err.message : "Unknown GIS asset update error",
+    });
+  }
+});
+
+
+async function ensureAiGisTables() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS gis_ai_recommendations (
+      id bigserial PRIMARY KEY,
+      ward text,
+      constituency text,
+      category text NOT NULL DEFAULT 'operations',
+      title text NOT NULL,
+      rationale text,
+      priority text NOT NULL DEFAULT 'medium',
+      recommended_action text,
+      recommended_owner text,
+      status text NOT NULL DEFAULT 'proposed',
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE INDEX IF NOT EXISTS gis_ai_recommendations_status_idx
+      ON gis_ai_recommendations (status);
+  `);
+}
+
+router.get("/gis-ai-situation", async (_req, res) => {
+  try {
+    await ensureAiGisTables();
+
+    const [wards, assets, incidents, recommendations] = await Promise.all([
+      db.execute(sql`
+        WITH ward_base AS (
+          SELECT
+            ward,
+            max(constituency) AS constituency,
+            count(*)::integer AS constituents
+          FROM members
+          WHERE ward IS NOT NULL AND btrim(ward) <> ''
+          GROUP BY ward
+        ),
+        station_base AS (
+          SELECT
+            ward,
+            count(*)::integer AS stations,
+            coalesce(sum(registered_voters),0)::bigint AS registered
+          FROM polling_stations
+          GROUP BY ward
+        ),
+        turnout_base AS (
+          SELECT
+            ward,
+            coalesce(max(expected_turnout_rate),0)::integer AS turnout_forecast,
+            coalesce(max(mule_support_share),0)::integer AS support_share
+          FROM turnout_assumptions
+          GROUP BY ward
+        )
+        SELECT
+          wb.ward,
+          wb.constituency,
+          wb.constituents,
+          coalesce(sb.stations,0)::integer AS stations,
+          coalesce(sb.registered,0)::bigint AS registered,
+          coalesce(tb.turnout_forecast,0)::integer AS "turnoutForecast",
+          coalesce(tb.support_share,0)::integer AS "supportShare"
+        FROM ward_base wb
+        LEFT JOIN station_base sb ON sb.ward = wb.ward
+        LEFT JOIN turnout_base tb ON tb.ward = wb.ward
+        ORDER BY wb.ward
+      `),
+      db.execute(sql`
+        SELECT
+          ward,
+          count(*)::integer AS assets,
+          count(*) FILTER (
+            WHERE status IN ('active','deployed','en-route')
+          )::integer AS active
+        FROM gis_field_assets
+        GROUP BY ward
+      `),
+      db.execute(sql`
+        SELECT
+          ward,
+          count(*) FILTER (
+            WHERE status = 'open'
+          )::integer AS incidents
+        FROM election_events
+        GROUP BY ward
+      `),
+      db.execute(sql`
+        SELECT
+          id,
+          ward,
+          constituency,
+          category,
+          title,
+          rationale,
+          priority,
+          recommended_action AS "recommendedAction",
+          recommended_owner AS "recommendedOwner",
+          status,
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+        FROM gis_ai_recommendations
+        ORDER BY
+          CASE priority
+            WHEN 'critical' THEN 1
+            WHEN 'high' THEN 2
+            WHEN 'medium' THEN 3
+            ELSE 4
+          END,
+          updated_at DESC
+      `),
+    ]);
+
+    const wardRows = (wards as any).rows ?? [];
+    const assetRows = (assets as any).rows ?? [];
+    const incidentRows = (incidents as any).rows ?? [];
+    const recommendationRows = (recommendations as any).rows ?? [];
+
+    const assetMap = new Map(assetRows.map((row:any)=>[String(row.ward),row]));
+    const incidentMap = new Map(incidentRows.map((row:any)=>[String(row.ward),row]));
+
+    const computed = wardRows.map((row:any)=>{
+      const asset = assetMap.get(String(row.ward)) as any;
+      const incident = incidentMap.get(String(row.ward)) as any;
+      const registered = Number(row.registered ?? 0);
+      const constituents = Number(row.constituents ?? 0);
+      const turnoutForecast = Number(row.turnoutForecast ?? 0);
+      const supportShare = Number(row.supportShare ?? 0);
+      const activeAssets = Number(asset?.active ?? 0);
+      const incidents = Number(incident?.incidents ?? 0);
+
+      const logisticsGap = Math.max(0, 3 - activeAssets) * 12;
+      const turnoutRisk = Math.max(0, 55 - turnoutForecast);
+      const supportRisk = Math.max(0, 50 - supportShare);
+      const incidentRisk = incidents * 18;
+      const riskScore = Math.min(
+        100,
+        Math.round(logisticsGap + turnoutRisk * 0.5 + supportRisk * 0.4 + incidentRisk),
+      );
+      const opportunityScore = Math.min(
+        100,
+        Math.round(
+          Math.min(40, constituents / 100) +
+          Math.min(30, registered / 500) +
+          Math.max(0, 30 - supportShare * 0.2),
+        ),
+      );
+      const projectedTurnout = Math.round(
+        registered * (turnoutForecast / 100),
+      );
+      const projectedCandidateVotes = Math.round(
+        projectedTurnout * (supportShare / 100),
+      );
+
+      return {
+        ...row,
+        activeAssets,
+        incidents,
+        riskScore,
+        opportunityScore,
+        projectedTurnout,
+        projectedCandidateVotes,
+      };
+    }).sort((a:any,b:any)=>b.riskScore-a.riskScore);
+
+    res.json({
+      generatedAt: new Date().toISOString(),
+      summary: {
+        wards: computed.length,
+        highRiskWards: computed.filter((row:any)=>row.riskScore >= 60).length,
+        criticalWards: computed.filter((row:any)=>row.riskScore >= 80).length,
+        projectedTurnout: computed.reduce((sum:number,row:any)=>sum+row.projectedTurnout,0),
+        projectedCandidateVotes: computed.reduce((sum:number,row:any)=>sum+row.projectedCandidateVotes,0),
+      },
+      wards: computed,
+      recommendations: recommendationRows,
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load GIS AI situation",
+      detail: err instanceof Error ? err.message : "Unknown GIS AI error",
+    });
+  }
+});
+
+router.post("/gis-ai-recommendations/generate", async (_req, res) => {
+  try {
+    await ensureAiGisTables();
+
+    const situation = await db.execute(sql`
+      SELECT
+        ps.ward,
+        max(ps.constituency) AS constituency,
+        count(*)::integer AS stations,
+        coalesce(sum(ps.registered_voters),0)::bigint AS registered,
+        count(*) FILTER (
+          WHERE ps.status <> 'open'
+        )::integer AS unopened
+      FROM polling_stations ps
+      GROUP BY ps.ward
+      ORDER BY ps.ward
+    `);
+
+    const rows = (situation as any).rows ?? [];
+    const created = [];
+
+    for (const row of rows) {
+      const unopened = Number(row.unopened ?? 0);
+      if (unopened <= 0) continue;
+
+      const title = `Restore polling readiness in ${row.ward}`;
+      const existing = await db.execute(sql`
+        SELECT id
+        FROM gis_ai_recommendations
+        WHERE title = ${title}
+          AND status IN ('proposed','accepted')
+        LIMIT 1
+      `);
+
+      if (((existing as any).rows ?? []).length > 0) continue;
+
+      const priority =
+        unopened >= 5 ? "critical" :
+        unopened >= 2 ? "high" :
+        "medium";
+
+      const result = await db.execute(sql`
+        INSERT INTO gis_ai_recommendations (
+          ward,
+          constituency,
+          category,
+          title,
+          rationale,
+          priority,
+          recommended_action,
+          recommended_owner
+        )
+        VALUES (
+          ${row.ward},
+          ${row.constituency ?? null},
+          'readiness',
+          ${title},
+          ${`${unopened} polling station(s) are not marked open.`},
+          ${priority},
+          'Deploy field coordinators, confirm agents and verify materials immediately.',
+          'Election Operations Lead'
+        )
+        RETURNING *
+      `);
+
+      created.push((result as any).rows?.[0]);
+    }
+
+    res.status(201).json({
+      generated: created.length,
+      recommendations: created,
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to generate GIS AI recommendations",
+      detail: err instanceof Error ? err.message : "Unknown GIS AI generation error",
+    });
+  }
+});
+
+router.patch("/gis-ai-recommendations/:id", async (req, res) => {
+  try {
+    await ensureAiGisTables();
+
+    const id = Number(req.params.id);
+    const status = String(req.body?.status ?? "").trim();
+
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: "Invalid recommendation id" });
+      return;
+    }
+
+    if (!["proposed","accepted","dismissed","completed"].includes(status)) {
+      res.status(400).json({ error: "Invalid recommendation status" });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      UPDATE gis_ai_recommendations
+      SET
+        status = ${status},
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `);
+
+    if (((result as any).rows ?? []).length === 0) {
+      res.status(404).json({ error: "Recommendation not found" });
+      return;
+    }
+
+    res.json((result as any).rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update GIS AI recommendation",
+      detail: err instanceof Error ? err.message : "Unknown GIS AI update error",
+    });
+  }
+});
+
 export default router;
