@@ -28,7 +28,7 @@ type Tab = "warroom" | "submit" | "stations" | "events" | "verification" | "work
 
 const CANDIDATES = [
   { name: "Prof. Philip Kaloki", party: "UDA" },
-  { name: "Mutula Kilonzo Jr.", party: "Wiper Party" },
+  { name: "Mutula Kilonzo Jr.", party: "Wiper" },
   { name: "Others", party: "Other Parties" },
 ];
 

@@ -27,9 +27,10 @@ import { Vote, AlertTriangle, CheckCircle, Clock, Radio, Shield, Send, List, Bar
 type Tab = "warroom" | "submit" | "stations" | "events" | "verification" | "workqueue" | "publish";
 
 const CANDIDATES = [
-  { name: "Prof. Philip Kaloki", party: "UDA" },
-  { name: "Mutula Kilonzo Jr.", party: "Wiper Party" },
-  { name: "Others", party: "Other Parties" },
+  { name: "Prof. Philip Kaloki", party: "ODM" },
+  { name: "Hon. Julius Malombe", party: "UDA" },
+  { name: "George Mutisya Mwangi", party: "Independent" },
+  { name: "Lucy Ndunda Muema", party: "Wiper" },
 ];
 
 const WARDS = ['Tulimani', 'Mbooni', 'Kithungo/Kitundu', 'Kisau/Kiteta', 'Kako/Waia', 'Kalawa', 'Kiima Kiu/Kalanzoni', 'Mukaa', 'Kasikeu', 'Kee', 'Kilungu', 'Ilima', 'Ukia', 'Nzaui/Kilili/Kalamba', 'Muvau/Kikumini', 'Kathonzweni', 'Mavindini', 'Kitise/Kithuki', 'Wote', 'Mbitini', 'Makindu', 'Kikumbulyu North', 'Kikumbulyu South', 'Nguumo', 'Nguu/Masumba', 'Emali/Mulala', 'Masongaleni', 'Mtito Andei', 'Thange', 'Ivingoni/Nzambani'];

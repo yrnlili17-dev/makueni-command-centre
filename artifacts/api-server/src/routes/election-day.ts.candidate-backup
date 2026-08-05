@@ -5,9 +5,10 @@ import { eq, sql, desc, and, inArray } from "drizzle-orm";
 const router = Router();
 
 const CANDIDATES = [
-  { name: "Prof. Philip Kaloki", party: "UDA" },
-  { name: "Mutula Kilonzo Jr.", party: "Wiper" },
-  { name: "Others", party: "Other Parties" },
+  { name: "Prof. Philip Kaloki", party: "ODM" },
+  { name: "Hon. Julius Malombe", party: "UDA" },
+  { name: "George Mutisya Mwangi", party: "Independent" },
+  { name: "Lucy Ndunda Muema", party: "Wiper" },
 ];
 
 // ── Summary / HQ Tally ─────────────────────────────────────────────────────
