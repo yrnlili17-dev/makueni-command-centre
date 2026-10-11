@@ -228,7 +228,7 @@ export default function Volunteers() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-widest">VOLUNTEER COMMAND</h1>
-          <p className="text-[10px] font-mono text-muted-foreground mt-0.5">GROUND FORCE MANAGEMENT · MATUNGULU CONSTITUENCY</p>
+          <p className="text-[10px] font-mono text-muted-foreground mt-0.5">FIELD TEAM MANAGEMENT · MAKUENI COUNTY</p>
         </div>
         {tab === "roster" && (
           <button onClick={() => setShowEnlist(v => !v)} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 font-mono text-xs hover:bg-primary/90">
@@ -441,7 +441,7 @@ export default function Volunteers() {
                 </div>
                 <div className="col-span-2 space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground">TASK TITLE *</label>
-                  <input value={taskForm.title ?? ""} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Canvass Tala Market, 200 doors" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+                  <input value={taskForm.title ?? ""} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Support a Wote community service activity" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground">DUE DATE</label>
@@ -783,7 +783,7 @@ export default function Volunteers() {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h2 className="font-mono text-sm font-bold tracking-widest">CAMPAIGN MANAGER DAILY REPORT</h2>
-                    <p className="font-mono text-[10px] text-muted-foreground">HON. STEPHEN MULE — MATUNGULU MNA · DATE: {report.date}</p>
+                    <p className="font-mono text-[10px] text-muted-foreground">MAKUENI COUNTY · DAILY REPORT · DATE: {report.date}</p>
                   </div>
                   {report.summary.criticalIssues > 0 && (
                     <span className="font-mono text-[10px] text-red-500 border border-red-500/40 px-2 py-1 animate-pulse">⚠ {report.summary.criticalIssues} CRITICAL ISSUE{report.summary.criticalIssues > 1 ? "S" : ""} REQUIRE ATTENTION</span>
