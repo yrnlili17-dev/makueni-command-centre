@@ -99,8 +99,8 @@ router.get("/coverage", async (req, res) => {
     return {
       ward,
       doorsKnocked: Number(r?.total ?? 0),
-      doorsTotal: null,
-      coveragePercent: null,
+      doorsTotal: 0,
+      coveragePercent: 0,
       supportCount: Number(r?.support ?? 0),
       opposeCount: Number(r?.oppose ?? 0),
       undecidedCount: Number(r?.undecided ?? 0),
