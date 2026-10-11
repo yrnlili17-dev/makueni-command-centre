@@ -1,19 +1,16 @@
 import { Router } from "express";
 import { db, pollingStationsTable, tallyResultsTable, electionEventsTable } from "@workspace/db";
 import { eq, sql, desc, and, inArray } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
 
 const router = Router();
 
-const CANDIDATES = [
-  { name: "Hon. Stephen Mule", party: "ODM" },
-  { name: "Hon. Julius Malombe", party: "UDA" },
-  { name: "George Mutisya Mwangi", party: "Independent" },
-  { name: "Lucy Ndunda Muema", party: "Wiper" },
-];
+const CANDIDATES: Array<{ name: string; party: string }> = [];
 
 // ── Summary / HQ Tally ─────────────────────────────────────────────────────
 router.get("/summary", async (req, res) => {
-  const totalStations = await db.select({ count: sql<number>`count(*)` }).from(pollingStationsTable);
+  const totalStations = await db.select({ count: sql<number>`count(*)` }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
   const submittedStations = await db.select({ count: sql<number>`count(distinct station_code)` }).from(tallyResultsTable);
   const verifiedStations = await db.select({ count: sql<number>`count(distinct station_code)` }).from(tallyResultsTable).where(eq(tallyResultsTable.status, "verified"));
 
@@ -39,7 +36,7 @@ router.get("/summary", async (req, res) => {
     .groupBy(pollingStationsTable.ward);
 
   const totalRegistered = await db.select({ total: sql<number>`coalesce(sum(registered_voters), 0)` }).from(pollingStationsTable);
-  const totalVotesCast = await db.select({ total: sql<number>`coalesce(sum(votes), 0)` }).from(tallyResultsTable).where(eq(tallyResultsTable.candidateName, CANDIDATES[0]!.name));
+  const totalVotesCast = await db.select({ total: sql<number>`coalesce(sum(votes), 0)` }).from(tallyResultsTable);
 
   res.json({
     totalStations: Number(totalStations[0]?.count ?? 0),
