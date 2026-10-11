@@ -326,7 +326,7 @@ router.get("/scans", async (req, res) => {
 // ─── Competitors ─────────────────────────────────────────────────────────────
 
 router.get("/competitors", async (req, res) => {
-  const competitors = (await db.select().from(competitorsTable).orderBy(competitorsTable.name)).filter(c => !isOutOfCountyText([c.name, c.constituency, ...(c.strengths ?? []), ...(c.weaknesses ?? [])].join(" ")));
+  const competitors = (await db.select().from(competitorsTable).orderBy(competitorsTable.name)).filter(c => !isOutOfCountyText([c.name, c.constituency, ...(Array.isArray(c.strengths) ? c.strengths : []), ...(Array.isArray(c.weaknesses) ? c.weaknesses : [])].join(" ")));
   res.json(competitors);
 });
 
