@@ -7,8 +7,7 @@ import { z } from "zod/v4";
 
 const router = Router();
 
-// The campaign principal whose vote share we forecast.
-const PRINCIPAL = "Hon. Stephen Mule";
+// Candidate identity is not hardcoded in county turnout reporting.
 
 // Baseline assumptions used for any ward that has no saved override.
 // These are configurable modelling defaults, not observed Makueni turnout; support is
@@ -34,6 +33,7 @@ router.get("/prediction", async (req, res) => {
       stations: sql<number>`count(*)`,
     })
     .from(pollingStationsTable)
+    .where(inArray(pollingStationsTable.ward, WARDS))
     .groupBy(pollingStationsTable.ward);
 
   const assumptions = await db.select().from(turnoutAssumptionsTable);
@@ -56,7 +56,7 @@ router.get("/prediction", async (req, res) => {
     const registered = Number(w.registered);
     const asmp = aMap.get(w.ward);
     const baseTurnout = asmp?.expectedTurnoutRate ?? DEFAULT_TURNOUT;
-    const baseSupport = asmp?.muleSupportShare ?? DEFAULT_SUPPORT;
+    const baseSupport = asmp?.candidateSupportShare ?? DEFAULT_SUPPORT;
     const turnoutRate = clamp(baseTurnout + turnoutDelta);
     const supportShare = clamp(baseSupport + supportDelta);
     const predictedVotes = Math.round((registered * turnoutRate) / 100);
@@ -79,10 +79,10 @@ router.get("/prediction", async (req, res) => {
       turnoutRate,
       effectiveSupportShare: supportShare,
       predictedVotes,
-      predictedMuleVotes,
+      predictedCandidateVotes,
       gotvUpside,
       actualVotesCast,
-      actualMuleVotes,
+      actualCandidateVotes,
       actualTurnoutRate: registered ? Math.round((actualVotesCast / registered) * 100) : 0,
       reportingStations,
     };
@@ -99,11 +99,11 @@ router.get("/prediction", async (req, res) => {
 
   const totalRegistered = wardsOut.reduce((s, w) => s + w.registered, 0);
   const totalPredictedVotes = wardsOut.reduce((s, w) => s + w.predictedVotes, 0);
-  const totalCandidateVotes = wardsOut.reduce((s, w) => s + w.predictedMuleVotes, 0);
+  const totalCandidateVotes = wardsOut.reduce((s, w) => s + w.predictedCandidateVotes, 0);
   const topGotv = [...wardsOut].sort((a, b) => b.gotvUpside - a.gotvUpside)[0];
 
   res.json({
-    principal: PRINCIPAL,
+    scope: "Makueni County",
     scenario: { turnoutDelta, supportDelta },
     defaults: { turnout: DEFAULT_TURNOUT, support: DEFAULT_SUPPORT },
     wards: wardsOut,
@@ -111,8 +111,8 @@ router.get("/prediction", async (req, res) => {
       registered: totalRegistered,
       predictedVotes: totalPredictedVotes,
       predictedTurnoutRate: totalRegistered ? Math.round((totalPredictedVotes / totalRegistered) * 100) : 0,
-      predictedMuleVotes: totalMuleVotes,
-      predictedMuleShare: totalPredictedVotes ? Math.round((totalMuleVotes / totalPredictedVotes) * 100) : 0,
+      predictedMuleVotes: totalCandidateVotes,
+      predictedCandidateShare: totalPredictedVotes ? Math.round((totalCandidateVotes / totalPredictedVotes) * 100) : 0,
       topGotvWard: topGotv?.ward ?? null,
       topGotvUpside: topGotv?.gotvUpside ?? 0,
     },
