@@ -135,8 +135,7 @@ Output ONLY compact raw JSON. No markdown. No extra whitespace. No explanations.
 Schema (strict, all fields required, keep ALL text fields under 120 characters):
 {"records":[{"title":"string","type":"bill|motion|petition|speech|committee|question|statement|amendment","description":"string max 120 chars","date":"YYYY-MM-DD","session":"string","status":"passed|pending|defeated|withdrawn|in_committee|second_reading|first_reading|responded|answered|completed","category":"agriculture|education|health|infrastructure|security|finance|environment|youth|women|governance|water|housing|general","impact":"string max 80 chars","tags":["tag"],"published":true,"featured":false}]}
 
-Generate 8 records in this order: 2 bills, 2 motions, 1 question, 1 statement, 1 committee, 1 petition.
-Dates between 2022-09-20 and ${today}. Mark 2 as featured:true. Use KeNHA, WaSREB, NHIF where relevant.`;
+Only include records supported by verified official source material and dated on or before ${today}. Do not fabricate bills, motions, dates or outcomes. Return an empty records array if evidence is unavailable.`;
 
     const ACHIEVEMENTS_PROMPT = `You are a county development records assistant for Makueni County, Kenya.
 
