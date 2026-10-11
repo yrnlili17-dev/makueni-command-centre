@@ -136,7 +136,7 @@ ${COUNTY_BRIEF}
 
 Output ONLY compact raw JSON. No markdown. No extra whitespace. No explanations.
 Schema (strict, all fields required, keep ALL text fields under 120 characters):
-{"achievements":[{"title":"string","description":"string max 120 chars","category":"infrastructure|education|health|water|security|youth|women|agriculture|environment|governance|economy|housing","ward":"Tala|Makueni West|Makueni North|Makueni East|Kyeleni|all","year":"2022|2023|2024|2025|2026","status":"completed|ongoing|planned","impactMetric":"string","impactValue":"string","budget":"number as string","fundingSource":"string","partnerAgencies":["string"],"published":true,"featured":false}]}
+{"achievements":[{"title":"string","description":"string max 120 chars","category":"infrastructure|education|health|water|security|youth|women|agriculture|environment|governance|economy|housing","ward":"Tulimani|Mbooni|Kithungo/Kitundu|Kiteta/Kisau|Kako/Waia|Kalawa|Kiima Kiu/Kalanzoni|Mukaa|Kasikeu|Kee|Kilungu|Ilima|Ukia|Nzaui/Kilili/Kalamba|Muvau/Kikumini|Kathonzweni|Mavindini|Kitise/Kithuki|Wote|Mbitini|Makindu|Kikumbulyu North|Kikumbulyu South|Nguumo|Nguu/Masumba|Emali/Mulala|Masongaleni|Mtito Andei|Thange|Ivingoni/Nzambani|county-wide","year":"2022|2023|2024|2025|2026","status":"completed|ongoing|planned","impactMetric":"string","impactValue":"string","budget":"number as string","fundingSource":"string","partnerAgencies":["string"],"published":true,"featured":false}]}
 
 Generate 8 achievements. Cover all 30 wards (min 1 each). Categories: infrastructure, water, health, education, youth, women, agriculture. Vary years 2022–2026. Mark 2 as featured:true. Use only verified place names within Makueni County.`;
 
