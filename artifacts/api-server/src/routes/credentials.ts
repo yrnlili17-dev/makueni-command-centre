@@ -85,39 +85,20 @@ router.delete("/achievements/:id", async (req, res) => {
 // ─── Summary / Overview ───────────────────────────────────────────────────────
 
 router.get("/summary", async (req, res) => {
-  const [recStats] = await db.select({
-    total: sql<number>`count(*)`,
-    published: sql<number>`sum(case when ${legislativeRecordsTable.published} then 1 else 0 end)`,
-    passed: sql<number>`sum(case when ${legislativeRecordsTable.status} = 'passed' then 1 else 0 end)`,
-    bills: sql<number>`sum(case when ${legislativeRecordsTable.type} = 'bill' then 1 else 0 end)`,
-    motions: sql<number>`sum(case when ${legislativeRecordsTable.type} = 'motion' then 1 else 0 end)`,
-  }).from(legislativeRecordsTable);
-
-  const [achStats] = await db.select({
-    total: sql<number>`count(*)`,
-    published: sql<number>`sum(case when ${achievementsTable.published} then 1 else 0 end)`,
-    completed: sql<number>`sum(case when ${achievementsTable.status} = 'completed' then 1 else 0 end)`,
-  }).from(achievementsTable);
-
-  const byCategory = await db.select({
-    category: legislativeRecordsTable.category,
-    count: sql<number>`count(*)`,
-  }).from(legislativeRecordsTable).groupBy(legislativeRecordsTable.category).orderBy(desc(sql`count(*)`));
-
-  const featuredRecords = await db.select().from(legislativeRecordsTable).where(eq(legislativeRecordsTable.featured, true)).orderBy(desc(legislativeRecordsTable.date)).limit(5);
-  const featuredAchievements = await db.select().from(achievementsTable).where(eq(achievementsTable.featured, true)).orderBy(desc(achievementsTable.year)).limit(5);
-  const recentSessions = await db.select().from(researchSessionsTable).orderBy(desc(researchSessionsTable.createdAt)).limit(3);
-
+  const records = (await db.select().from(legislativeRecordsTable)).filter(r => !isOutOfCountyText([r.title, r.description, r.session, ...(r.tags ?? [])].join(" ")));
+  const achievements = (await db.select().from(achievementsTable)).filter(r => isMakueniWard(r.ward) && !isOutOfCountyText([r.title, r.description, r.fundingSource, ...(r.partnerAgencies ?? [])].join(" ")));
+  const recentSessions = (await db.select().from(researchSessionsTable)).filter(r => !isOutOfCountyText([r.topic, r.query, r.response].join(" "))).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3);
+  const byCategoryMap = new Map<string, number>();
+  for (const r of records) byCategoryMap.set(r.category, (byCategoryMap.get(r.category) ?? 0) + 1);
   res.json({
-    records: { total: Number(recStats?.total ?? 0), published: Number(recStats?.published ?? 0), passed: Number(recStats?.passed ?? 0), bills: Number(recStats?.bills ?? 0), motions: Number(recStats?.motions ?? 0) },
-    achievements: { total: Number(achStats?.total ?? 0), published: Number(achStats?.published ?? 0), completed: Number(achStats?.completed ?? 0) },
-    byCategory: byCategory.map(r => ({ category: r.category, count: Number(r.count) })),
-    featuredRecords,
-    featuredAchievements,
+    records: { total: records.length, published: records.filter(r => r.published).length, passed: records.filter(r => r.status === "passed").length, bills: records.filter(r => r.type === "bill").length, motions: records.filter(r => r.type === "motion").length },
+    achievements: { total: achievements.length, published: achievements.filter(a => a.published).length, completed: achievements.filter(a => a.status === "completed").length },
+    byCategory: Array.from(byCategoryMap, ([category, count]) => ({ category, count })),
+    featuredRecords: records.filter(r => r.featured).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5),
+    featuredAchievements: achievements.filter(a => a.featured).sort((a, b) => Number(b.year) - Number(a.year)).slice(0, 5),
     recentSessions,
   });
 });
-
 // ─── AI Auto-Populate ─────────────────────────────────────────────────────────
 
 const COUNTY_BRIEF = "SCOPE: Makueni County, Kenya. Six constituencies: Mbooni, Kilome, Kaiti, Makueni, Kibwezi West and Kibwezi East; 30 county assembly wards. Organise county development records and service delivery. Never invent projects, budgets, dates, statistics or legislative records. Omit claims without primary-source evidence. Prefer official county publications, County Assembly records, Controller of Budget reports and KNBS.";
