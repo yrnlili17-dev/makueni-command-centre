@@ -131,10 +131,6 @@ const STATUS_CLS: Record<string, string> = {
   cancelled: "text-red-400 border-red-400/30",
 };
 
-const WARD_VOTERS: Record<string, number> = {
-  "Wote": 19000, "Kibwezi West": 26000,
-  "Mbooni": 15000, "Kibwezi East": 12000, "Kaiti": 10000,
-};
 
 function TypeBadge({ type }: { type: string }) {
   const cfg = TYPE_CFG[type] ?? { color: "#6B7280", label: type.toUpperCase() };
@@ -509,14 +505,13 @@ export default function FieldOps() {
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <BarChart2 className="w-3 h-3 text-primary" />
             <span className="font-mono text-[10px] tracking-widest">WARD COVERAGE REPORT</span>
-            <span className="font-mono text-[9px] text-muted-foreground border border-border px-1.5 py-0.5">CONTACTS AS % OF VOTER UNIVERSE</span>
+            <span className="font-mono text-[9px] text-muted-foreground border border-border px-1.5 py-0.5">RECORDED FIELD ACTIVITY · IEBC DENOMINATORS NOT LOADED</span>
           </div>
           <div className="p-4 space-y-3">
             {WARDS.map(ward => {
               const w = (coverage as any[]).find((c: any) => c.ward === ward);
               if (!w) return null;
-              const voters = WARD_VOTERS[ward] ?? 10000;
-              const pct = Math.min(w.coveragePercent, 100);
+              const contacts = Number(w.doorsKnocked ?? 0);
               return (
                 <div key={ward} className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -525,14 +520,13 @@ export default function FieldOps() {
                       <span className="text-green-400">{(w.supportCount || 0).toLocaleString()} SUP</span>
                       <span className="text-yellow-400">{(w.undecidedCount || 0).toLocaleString()} UND</span>
                       <span className="text-red-400">{(w.opposeCount || 0).toLocaleString()} OPP</span>
-                      <span className="text-muted-foreground">{w.doorsKnocked.toLocaleString()} / {voters.toLocaleString()}</span>
-                      <span className="font-bold text-foreground w-10 text-right">{pct.toFixed(1)}%</span>
+                      <span className="text-muted-foreground">{contacts.toLocaleString()} recorded contacts</span>
                     </div>
                   </div>
                   <div className="h-2 bg-secondary flex overflow-hidden">
-                    <div className="h-full bg-green-400/70 transition-all" style={{ width: `${Math.min((w.supportCount || 0) / voters * 100, 100)}%` }} />
-                    <div className="h-full bg-yellow-400/70 transition-all" style={{ width: `${Math.min((w.undecidedCount || 0) / voters * 100, 100)}%` }} />
-                    <div className="h-full bg-red-400/50 transition-all" style={{ width: `${Math.min((w.opposeCount || 0) / voters * 100, 100)}%` }} />
+                    <div className="h-full bg-green-400/70 transition-all" style={{ width: `${contacts > 0 ? Math.min((w.supportCount || 0) / contacts * 100, 100) : 0}%` }} />
+                    <div className="h-full bg-yellow-400/70 transition-all" style={{ width: `${contacts > 0 ? Math.min((w.undecidedCount || 0) / contacts * 100, 100) : 0}%` }} />
+                    <div className="h-full bg-red-400/50 transition-all" style={{ width: `${contacts > 0 ? Math.min((w.opposeCount || 0) / contacts * 100, 100) : 0}%` }} />
                   </div>
                 </div>
               );
