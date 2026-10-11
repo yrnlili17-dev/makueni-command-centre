@@ -54,7 +54,7 @@ const LENGTH_WORDS: Record<string, number> = {
 const speechSchema = z.object({
   occasion: z.string().min(1).max(120),
   audience: z.string().max(200).optional().default(""),
-  ward: z.string().max(60).optional().default("Makueni"),
+  ward: z.string().max(60).optional().default("county-wide"),
   language: z.string().max(40).optional().default("English"),
   tone: z.string().max(40).optional().default("Inspirational"),
   keyPoints: z.string().max(1200).optional().default(""),
@@ -74,15 +74,16 @@ router.post("/generate", async (req, res) => {
     return;
   }
   const { occasion, audience, ward, language, tone, keyPoints, length } = parsed.data;
+  if (ward !== "county-wide" && !["Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa","Kiima Kiu/Kalanzoni","Mukaa","Kasikeu","Kee","Kilungu","Ilima","Ukia","Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini","Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala","Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"].includes(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   const words = LENGTH_WORDS[length] ?? 170;
 
   const base = `${CAMPAIGN_CONTEXT}
 
-You are the head speechwriter for Hon. Stephen Mule. Write in a ${tone.toLowerCase()} tone.
+You are preparing a public-service announcement for Makueni County. Use a ${tone.toLowerCase()} tone.
 Language: ${language} (if "Swahili" write in Swahili; if a mix, blend naturally as Kenyan politicians do).
 Occasion: ${occasion}. Audience: ${audience || "the people of Makueni"}. Ward focus: ${ward}.
-Write ONLY the speech prose for the requested part — no headings, no stage directions, no markdown, no labels.
-Keep it authentic to Kenyan / Ukambani political rhetoric and grounded in Makueni realities.`;
+Write only the public information text for the requested part. No election appeal, candidate promotion or unverified claims.
+Ground it in Makueni County services and cite official sources where available.`;
 
   const pointsLine = keyPoints ? `\nWeave in these key points where relevant: ${keyPoints}` : "";
 
@@ -102,7 +103,7 @@ Keep it authentic to Kenyan / Ukambani political rhetoric and grounded in Makuen
       ),
       generateSection(
         base,
-        `Write the CLOSING of the speech (~${Math.round(words * 0.4)} words): a rousing call to action, unity, and a strong appeal to vote for Hon. Stephen Mule under the Wiper "Komboa Kenya" banner. End with an uplifting rallying line.`,
+        `Write the CLOSING of the speech (~${Math.round(words * 0.4)} words): a clear explanation of next steps, the responsible county department and how residents can obtain verified updates. End with a practical service follow-up instruction.`,
         480,
       ),
     ]);
@@ -118,7 +119,7 @@ Keep it authentic to Kenyan / Ukambani political rhetoric and grounded in Makuen
     return;
   }
 
-  const title = `${occasion}${ward && ward !== "Makueni" ? ` — ${ward}` : ""}`;
+  const title = `${occasion}${ward && ward !== "county-wide" ? ` — ${ward}` : ""}`;
   res.json({ title, body: [opening, body, close].join("\n\n") });
 });
 
@@ -135,15 +136,15 @@ const PILLARS = [
   },
   {
     key: "Infrastructural Development",
-    hint: "roads, clean water, rural electrification, schools, health facilities across all 5 wards.",
+    hint: "roads, clean water, schools, health facilities and public infrastructure across the 30 official wards.",
   },
   {
     key: "Constitutional Mandate",
-    hint: "legislation, parliamentary oversight, faithful representation, maximizing CDF/NG-CDF for Makueni.",
+    hint: "county plans, approved budgets, public reporting and accountability for devolved functions.",
   },
   {
     key: "Local Patronage & Accessibility",
-    hint: "regular barazas, market visits, an accessible MP present in every ward, responsive constituency office.",
+    hint: "public participation forums, accessible county service information and documented follow-up actions.",
   },
 ];
 
@@ -163,9 +164,9 @@ router.post("/manifesto", async (req, res) => {
 
   const base = `${CAMPAIGN_CONTEXT}
 
-You are drafting the official manifesto for Hon. Stephen Mule. Tone: ${tone.toLowerCase()}, credible and specific.
+You are drafting a Makueni County development and service-delivery brief. Tone: ${tone.toLowerCase()}, factual and specific.
 Language: ${language}. Write ONLY the prose for the requested section — no headings, no markdown, no labels, no bullet symbols other than plain lines.
-Make commitments concrete and grounded in Makueni Constituency realities.`;
+Describe only county-government responsibilities and documented Makueni County needs. Distinguish proposed actions from approved or completed work.`;
 
   const issuesLine = priorityIssues ? ` Emphasize these priority issues: ${priorityIssues}.` : "";
 
@@ -174,7 +175,7 @@ Make commitments concrete and grounded in Makueni Constituency realities.`;
   sectionCalls.push(
     generateSection(
       base,
-      `Write the PREAMBLE / VISION (~180 words): who Hon. Stephen Mule is, his covenant with the people of Makueni, and the vision for the constituency toward the August 2027 election.${issuesLine}`,
+      `Write the PREAMBLE / VISION (~180 words): the current county service context, the evidence base, and priorities for public accountability.${issuesLine}`,
       520,
     ).then((text) => ({ heading: "PREAMBLE & VISION", text })),
   );
@@ -192,9 +193,9 @@ Make commitments concrete and grounded in Makueni Constituency realities.`;
   sectionCalls.push(
     generateSection(
       base,
-      `Write the CLOSING PLEDGE (~140 words): a personal pledge of accountability and service, a unifying message across all 5 wards, and a call to vote under the Wiper "Komboa Kenya" banner (symbol: Umbrella).`,
+      `Write the CLOSING PLEDGE (~140 words): a summary of transparent service commitments, public reporting and follow-up across all 30 official wards.`,
       460,
-    ).then((text) => ({ heading: "OUR PLEDGE TO MATUNGULU", text })),
+    ).then((text) => ({ heading: "COUNTY SERVICE COMMITMENTS", text })),
   );
 
   genInFlight = true;
@@ -214,7 +215,7 @@ Make commitments concrete and grounded in Makueni Constituency realities.`;
   }
 
   const body = sections.map((s) => `## ${s.heading}\n\n${s.text}`).join("\n\n");
-  res.json({ title: "Manifesto — Hon. Stephen Mule (Makueni 2027)", body });
+  res.json({ title: "Makueni County Development & Service Brief", body });
 });
 
 // ---- Saved document library (CRUD) ----
