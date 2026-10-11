@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db, legislativeRecordsTable, achievementsTable, researchSessionsTable } from "@workspace/db";
 import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
-const ALLOWED_WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const ALLOWED_WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 const isMakueniWard = (ward: unknown) => typeof ward === "string" && (ALLOWED_WARDS.includes(ward) || ward === "county-wide" || ward === "all");
 const isOutOfCountyText = (value: unknown) => /\b(mule|matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\b/i.test(String(value ?? ""));
 import { openai } from "@workspace/integrations-openai-ai-server";
@@ -20,7 +20,7 @@ router.get("/records", async (req, res) => {
   if (published === "true") conditions.push(eq(legislativeRecordsTable.published, true));
   const where = conditions.length ? and(...conditions) : undefined;
   const records = await db.select().from(legislativeRecordsTable).where(where).orderBy(desc(legislativeRecordsTable.date));
-  res.json(records.filter(r => !isOutOfCountyText([r.title, r.description, r.session, ...(r.tags ?? [])].join(" "))));
+  res.json(records.filter(r => !isOutOfCountyText([r.title, r.description, r.session, ...(Array.isArray(r.tags) ? r.tags : [])].join(" "))));
 });
 
 router.post("/records", async (req, res) => {
@@ -54,7 +54,7 @@ router.get("/achievements", async (req, res) => {
   if (published === "true") conditions.push(eq(achievementsTable.published, true));
   const where = conditions.length ? and(...conditions) : undefined;
   const items = await db.select().from(achievementsTable).where(where).orderBy(desc(achievementsTable.year), desc(achievementsTable.createdAt));
-  res.json(items.filter(r => !isOutOfCountyText([r.title, r.description, r.fundingSource, ...(r.partnerAgencies ?? [])].join(" "))));
+  res.json(items.filter(r => !isOutOfCountyText([r.title, r.description, r.fundingSource, ...(Array.isArray(r.partnerAgencies) ? r.partnerAgencies : [])].join(" "))));
 });
 
 router.post("/achievements", async (req, res) => {
