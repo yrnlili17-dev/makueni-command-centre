@@ -2,14 +2,14 @@ import { Router } from "express";
 import { db, segmentsTable, membersTable } from "@workspace/db";
 import { eq, sql, and, inArray } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
-const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 
 const router = Router();
 
 async function computeMemberCount(criteria: Record<string, any>) {
   if (criteria.manualSize !== undefined) return Number(criteria.manualSize);
   const conditions = [];
-  if (criteria.ward) conditions.push(eq(membersTable.ward, criteria.ward));
+  if (typeof criteria.ward === "string" && criteria.ward !== "all" && criteria.ward !== "county-wide" && WARDS.includes(criteria.ward)) conditions.push(eq(membersTable.ward, criteria.ward));
   if (criteria.supportLevel) conditions.push(eq(membersTable.supportLevel, criteria.supportLevel));
   if (criteria.smsConsent) conditions.push(eq(membersTable.smsConsent, true));
   if (criteria.whatsappConsent) conditions.push(eq(membersTable.whatsappConsent, true));
@@ -20,7 +20,7 @@ async function computeMemberCount(criteria: Record<string, any>) {
 }
 
 router.get("/", async (req, res) => {
-  const segs = (await db.select().from(segmentsTable).orderBy(segmentsTable.createdAt)).filter(seg => !seg.criteria?.ward || seg.criteria.ward === "all" || seg.criteria.ward === "county-wide" || WARDS.includes(seg.criteria.ward));
+  const segs = (await db.select().from(segmentsTable).orderBy(segmentsTable.createdAt)).filter(seg => { const criteria = seg.criteria as Record<string, unknown> | null; const ward = criteria?.ward; return !ward || ward === "all" || ward === "county-wide" || (typeof ward === "string" && WARDS.includes(ward)); });
   res.json(segs);
 });
 
