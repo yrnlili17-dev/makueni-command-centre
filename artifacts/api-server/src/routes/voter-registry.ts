@@ -276,8 +276,16 @@ router.post("/iebc/sync", async (req, res) => {
       throw new Error(`IEBC API error: ${response.status} ${response.statusText}`);
     }
 
-    const data: { voters?: Array<Record<string, string>> } = await response.json();
-    const voters = data.voters ?? [];
+    const payload: unknown = await response.json();
+    const data = payload && typeof payload === "object" && "voters" in payload
+      ? (payload as { voters?: unknown }).voters
+      : undefined;
+    const voters: Array<Record<string, string>> = Array.isArray(data)
+      ? data.filter((item): item is Record<string, string> =>
+          !!item && typeof item === "object" && !Array.isArray(item) &&
+          Object.values(item).every(value => typeof value === "string")
+        )
+      : [];
 
     for (const v of voters) {
       const natId = v["national_id"] ?? v["nationalId"];
