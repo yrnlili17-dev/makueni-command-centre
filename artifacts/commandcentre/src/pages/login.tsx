@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Shield, AlertTriangle, Copy, Check } from "lucide-react";
+import { Shield, AlertTriangle, Mail } from "lucide-react";
 import brandIcon from "@assets/brand-icon.png";
 import { useAuth } from "@/lib/auth";
 
-const DEMO_USER = "demo";
-const DEMO_PASS = "Komboa2027";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -14,7 +12,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [copied, setCopied] = useState<"user" | "pass" | null>(null);
 
   useEffect(() => {
     if (!loading && user) setLocation("/dashboard");
@@ -34,12 +31,7 @@ export default function Login() {
     }
   };
 
-  const copy = (value: string, field: "user" | "pass") => {
-    navigator.clipboard.writeText(value).then(() => {
-      setCopied(field);
-      setTimeout(() => setCopied(null), 1800);
-    });
-  };
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative overflow-hidden gap-4">
@@ -103,39 +95,15 @@ export default function Login() {
         </div>
       </div>
 
-      <div className="w-full max-w-md border border-border bg-card/60 relative z-10">
-        <div className="border-b border-border px-4 py-2 flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-          <p className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">Demo Access Credentials</p>
-        </div>
-        <div className="p-4 space-y-3">
-          <div className="flex items-center justify-between bg-secondary border border-border px-3 py-2">
-            <div>
-              <p className="text-[9px] font-mono text-muted-foreground tracking-widest mb-0.5">USERNAME</p>
-              <p className="text-sm font-mono text-foreground">{DEMO_USER}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => copy(DEMO_USER, "user")}
-              className="text-muted-foreground hover:text-primary transition-colors ml-3"
-              title="Copy"
-            >
-              {copied === "user" ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-          <div className="flex items-center justify-between bg-secondary border border-border px-3 py-2">
-            <div>
-              <p className="text-[9px] font-mono text-muted-foreground tracking-widest mb-0.5">PASSCODE</p>
-              <p className="text-sm font-mono text-foreground">{DEMO_PASS}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => copy(DEMO_PASS, "pass")}
-              className="text-muted-foreground hover:text-primary transition-colors ml-3"
-              title="Copy"
-            >
-              {copied === "pass" ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
+      <div className="w-full max-w-md border border-border bg-card/60 relative z-10 p-4">
+        <div className="flex items-start gap-3">
+          <Mail className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+          <div className="space-y-1">
+            <p className="text-[10px] font-mono text-foreground tracking-widest uppercase">Need access?</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Sign in using the username/email and password assigned to you by your system administrator.
+              Don't have an account or need help signing in? Contact your administrator to request access.
+            </p>
           </div>
         </div>
       </div>
