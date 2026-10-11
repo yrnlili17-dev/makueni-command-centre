@@ -74,7 +74,8 @@ router.patch("/stations/:id", async (req, res) => {
   ["code", "name", "ward", "registeredVoters", "streamCount", "agentName", "agentPhone", "status", "notes"].forEach(f => {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   });
-  if (updates.ward !== undefined && !WARDS.includes(String(updates.ward))) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }\n  const [station] = await db.update(pollingStationsTable).set(updates).where(eq(pollingStationsTable.id, parseInt(req.params.id))).returning();
+  if (updates.ward !== undefined && !WARDS.includes(String(updates.ward))) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
+  const [station] = await db.update(pollingStationsTable).set(updates).where(eq(pollingStationsTable.id, parseInt(req.params.id))).returning();
   if (!station) { res.status(404).json({ error: "Not found" }); return; }
   res.json(station);
 });
@@ -83,7 +84,8 @@ router.patch("/stations/:id", async (req, res) => {
 router.get("/results", async (req, res) => {
   const { stationCode, status } = req.query as Record<string, string>;
   const validStations = await db.select({ code: pollingStationsTable.code }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
-  const validCodes = new Set(validStations.map(station => station.code));\n  let rows = (await db.select().from(tallyResultsTable).orderBy(desc(tallyResultsTable.submittedAt))).filter(row => validCodes.has(row.stationCode));
+  const validCodes = new Set(validStations.map(station => station.code));
+  let rows = (await db.select().from(tallyResultsTable).orderBy(desc(tallyResultsTable.submittedAt))).filter(row => validCodes.has(row.stationCode));
   if (stationCode) rows = rows.filter(r => r.stationCode === stationCode);
   if (status) rows = rows.filter(r => r.status === status);
   res.json(rows);
@@ -164,7 +166,8 @@ router.patch("/events/:id", async (req, res) => {
 // ── Workqueue ──────────────────────────────────────────────────────────────
 router.get("/workqueue", async (req, res) => {
   const validStations = await db.select({ code: pollingStationsTable.code }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
-  const validCodes = new Set(validStations.map(s => s.code));\n  const submittedCodes = (await db.select({ code: tallyResultsTable.stationCode }).from(tallyResultsTable).groupBy(tallyResultsTable.stationCode)).map(r => r.code).filter(code => validCodes.has(code));
+  const validCodes = new Set(validStations.map(s => s.code));
+  const submittedCodes = (await db.select({ code: tallyResultsTable.stationCode }).from(tallyResultsTable).groupBy(tallyResultsTable.stationCode)).map(r => r.code).filter(code => validCodes.has(code));
 
   const unsubmittedStations = await db.select().from(pollingStationsTable).where(and(inArray(pollingStationsTable.status, ["pending", "open"]), inArray(pollingStationsTable.ward, WARDS)));
 
