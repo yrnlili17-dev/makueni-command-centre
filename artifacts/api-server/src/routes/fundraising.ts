@@ -231,46 +231,24 @@ router.get("/reconciliation", async (req, res) => {
 });
 // ── Insights (computed) ─────────────────────────────────────────────────────
 router.get("/insights", async (req, res) => {
-  const [totals] = await db.select({ raised: sql<number>`coalesce(sum(amount), 0)`, count: sql<number>`count(*)` }).from(donationsTable);
-  const [goalTotals] = await db.select({ goal: sql<number>`coalesce(sum(goal_amount), 0)` }).from(fundraisingCampaignsTable).where(eq(fundraisingCampaignsTable.status, "active"));
-  const [pledgeTotals] = await db.select({ pending: sql<number>`coalesce(sum(amount), 0)`, count: sql<number>`count(*)` }).from(pledgesTable).where(eq(pledgesTable.status, "pending"));
-  const [donorCount] = await db.select({ count: sql<number>`count(*)` }).from(donorsTable);
-  const [majorDonors] = await db.select({ count: sql<number>`count(*)`, total: sql<number>`coalesce(sum(total_given), 0)` }).from(donorsTable).where(eq(donorsTable.tier, "major"));
-
-  const raised = Number(totals?.raised ?? 0);
-  const goal = Number(goalTotals?.goal ?? 0);
-  const pledgePending = Number(pledgeTotals?.pending ?? 0);
+  const donations = (await db.select().from(donationsTable)).filter(d => isMakueniWard(d.ward) && !isOutOfCountyText([d.donorName, d.notes, d.reference].join(" ")));
+  const donors = (await db.select().from(donorsTable)).filter(d => isMakueniWard(d.ward) && !isOutOfCountyText([d.name, d.email, d.notes, ...(d.tags ?? [])].join(" ")));
+  const donorIds = new Set(donors.map(d => d.id));
+  const pledges = (await db.select().from(pledgesTable)).filter(p => p.donorId != null && donorIds.has(p.donorId));
+  const campaigns = (await db.select().from(fundraisingCampaignsTable)).filter(c => !isOutOfCountyText([c.name, c.description].join(" ")) && c.status === "active");
+  const raised = donations.reduce((sum, d) => sum + Number(d.amount ?? 0), 0);
+  const goal = campaigns.reduce((sum, c) => sum + Number(c.goalAmount ?? 0), 0);
+  const pledgePending = pledges.filter(p => p.status === "pending").reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
+  const majorDonors = donors.filter(d => d.tier === "major");
+  const majorTotal = majorDonors.reduce((sum, d) => sum + Number(d.totalGiven ?? 0), 0);
   const gap = Math.max(0, goal - raised);
   const pct = goal > 0 ? Math.round((raised / goal) * 100) : 0;
-
   const insights = [
-    {
-      type: pct >= 80 ? "success" : pct >= 50 ? "info" : "warning",
-      title: `${pct}% of active campaign goals reached`,
-      body: `KES ${raised.toLocaleString()} raised of KES ${goal.toLocaleString()} target. Gap: KES ${gap.toLocaleString()}`,
-      action: pct < 80 ? "Accelerate outreach to major donors" : "On track — maintain momentum",
-    },
-    {
-      type: "info",
-      title: `${Number(pledgeTotals?.count ?? 0)} pending pledges totalling KES ${pledgePending.toLocaleString()}`,
-      body: "Follow up on outstanding pledges to convert to confirmed donations",
-      action: "Run pledge conversion call — target highest value pledges first",
-    },
-    {
-      type: Number(majorDonors?.count ?? 0) < 5 ? "warning" : "success",
-      title: `${Number(majorDonors?.count ?? 0)} major donors — KES ${Number(majorDonors?.total ?? 0).toLocaleString()} contributed`,
-      body: `Major donors contribute ${raised > 0 ? Math.round((Number(majorDonors?.total ?? 0) / raised) * 100) : 0}% of total raised`,
-      action: "Review recorded contributions and reconcile all verified entries",
-    },
-    {
-      type: "info",
-      title: `${Number(donorCount?.count ?? 0)} registered donors across Makueni County`,
-      body: "Donor registry supports county-wide finance reconciliation and transparent reporting",
-      action: "Map donors by ward — identify coverage gaps and grassroots opportunities",
-    },
+    { type: pct >= 80 ? "success" : pct >= 50 ? "info" : "warning", title: `${pct}% of active county campaign goals reached`, body: `KES ${raised.toLocaleString()} raised of KES ${goal.toLocaleString()} target. Gap: KES ${gap.toLocaleString()}`, action: "Reconcile and verify recorded transactions" },
+    { type: "info", title: `${pledges.filter(p => p.status === "pending").length} pending pledges totalling KES ${pledgePending.toLocaleString()}`, body: "Pending pledges are limited to donors assigned to Makueni County wards.", action: "Verify pledge records and follow up through approved finance procedures" },
+    { type: majorDonors.length < 5 ? "warning" : "success", title: `${majorDonors.length} major donors — KES ${majorTotal.toLocaleString()} recorded`, body: `Major donors account for ${raised > 0 ? Math.round((majorTotal / raised) * 100) : 0}% of recorded Makueni donations.`, action: "Check donor records and reconcile contributions" },
   ];
-
-  res.json({ insights, raised, goal, pct, gap, pledgePending, donorCount: Number(donorCount?.count ?? 0) });
-});
+  res.json({ insights, raised, goal, pct, gap, pledgePending, donorCount: donors.length });
+});;
 
 export default router;
