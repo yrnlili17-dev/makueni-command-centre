@@ -11,7 +11,38 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+const WARDS = [
+  "Tulimani",
+  "Mbooni",
+  "Kithungo/Kitundu",
+  "Kiteta/Kisau",
+  "Kako/Waia",
+  "Kalawa",
+  "Kiima Kiu/Kalanzoni",
+  "Mukaa",
+  "Kasikeu",
+  "Kee",
+  "Kilungu",
+  "Ilima",
+  "Ukia",
+  "Nzaui/Kilili/Kalamba",
+  "Muvau/Kikumini",
+  "Kathonzweni",
+  "Mavindini",
+  "Kitise/Kithuki",
+  "Wote",
+  "Mbitini",
+  "Makindu",
+  "Kikumbulyu North",
+  "Kikumbulyu South",
+  "Nguumo",
+  "Nguu/Masumba",
+  "Emali/Mulala",
+  "Masongaleni",
+  "Mtito Andei",
+  "Thange",
+  "Ivingoni/Nzambani"
+];
 const ROLES = ["canvasser", "team_lead", "coordinator", "phone_banker", "data_entry", "mobilizer", "agent"];
 const TASK_CATEGORIES = ["canvassing", "voter_registration", "distribution", "mobilization", "data_collection", "media", "logistics", "security"];
 const PRIORITIES = ["low", "medium", "high", "critical"];
