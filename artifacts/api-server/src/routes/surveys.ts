@@ -18,6 +18,7 @@ router.post("/polls", async (req, res) => {
   const { title, description, category = "general", ward = "all", options = [], deadline, createdBy = "County team" } = req.body;
   if (!title || !options.length) { res.status(400).json({ error: "title and options required" }); return; }
   if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
   const opts = (options as string[]).map((label: string) => ({ label, votes: 0 }));
   const [poll] = await db.insert(opinionPollsTable).values({ title, description, category, ward, options: opts, deadline, createdBy, status: "active", totalVotes: 0 }).returning();
   res.status(201).json(poll);
