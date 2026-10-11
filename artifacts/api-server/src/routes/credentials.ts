@@ -60,6 +60,8 @@ router.get("/achievements", async (req, res) => {
 router.post("/achievements", async (req, res) => {
   const { title, description, category = "infrastructure", ward = "all", year, status = "completed", impactMetric, impactValue, budget, fundingSource, partnerAgencies = [], published = false, featured = false } = req.body;
   if (!title || !description || !year) { res.status(400).json({ error: "title, description, year required" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
+  if (isOutOfCountyText([title, description, fundingSource, ...(partnerAgencies ?? [])].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
   const [item] = await db.insert(achievementsTable).values({ title, description, category, ward, year, status, impactMetric, impactValue, budget, fundingSource, partnerAgencies, photos: [], published, featured }).returning();
   res.status(201).json(item);
 });
@@ -68,6 +70,8 @@ router.patch("/achievements/:id", async (req, res) => {
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   const fields = ["title","description","category","ward","year","status","impactMetric","impactValue","budget","fundingSource","partnerAgencies","published","featured"];
   fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+  if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
+  if (isOutOfCountyText([updates.title, updates.description, updates.fundingSource, ...(Array.isArray(updates.partnerAgencies) ? updates.partnerAgencies : [])].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
   const [item] = await db.update(achievementsTable).set(updates).where(eq(achievementsTable.id, parseInt(req.params.id))).returning();
   if (!item) { res.status(404).json({ error: "Not found" }); return; }
   res.json(item);
@@ -257,9 +261,9 @@ Query: ${query}
 
 Please provide:
 1. A concise research summary (3-5 paragraphs)
-2. Key talking points (bullet list of 5-7 points) that the MNA can use
+2. Key findings and implications for county services
 3. Relevant benchmarks or comparisons (how does Makueni County compare nationally?)
-4. Suggested legislation or motions related to this topic
+4. Relevant county plans, budgets, policies or assembly records
 5. Evidence sources to cite
 
 Format your response with clear section headers using **bold** for headers.`;
@@ -285,14 +289,14 @@ Format your response with clear section headers using **bold** for headers.`;
   } catch (_) { /* fall through to template */ }
 
   if (!aiGenerated) {
-    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni County and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Makueni County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. Makueni County, as part of Makueni County, receives equitable share allocations directed towards ${topic}-related development.\n\n**Key Recommendations**\n\nFor Makueni County to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
+    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni County and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Makueni County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. County governments receive equitable share allocations for devolved functions; verify Makueni County figures against published budget documents.\n\n**Key Recommendations**\n\nFor Makueni County to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
     keyPoints = [
       `Makueni's ${topic} needs align with national development priorities`,
       `Constitutional mandate under Chapter Eleven supports county action on ${topic}`,
-      `CDF allocations can be directed to ${topic} projects in all 30 wards`,
-      `Sponsoring a bill on ${topic} builds legislative credentials`,
+      `Verify funding source and government responsibility for ${topic} projects`,
+      `Check official County Assembly records for policy action on ${topic}`,
       `Committee engagement on ${topic} demonstrates subject matter expertise`,
-      `Cross-party collaboration on ${topic} broadens political appeal`,
+      `Compare county indicators using official published data`,
     ];
     sources = [
       { title: "Constitution of Kenya, 2010", type: "Legal", relevance: "Fourth Schedule — Division of Functions" },
