@@ -52,12 +52,13 @@ router.get("/", async (req, res) => {
 
   const conditions = [inArray(voterRegistryTable.ward, WARDS)];
   if (search) {
-    conditions.push(or(
+    const searchCondition = or(
       ilike(voterRegistryTable.fullName, `%${search}%`),
       ilike(voterRegistryTable.nationalId, `%${search}%`),
       ilike(voterRegistryTable.voterNumber, `%${search}%`),
       ilike(voterRegistryTable.phone, `%${search}%`),
-    ));
+    );
+    if (searchCondition) conditions.push(searchCondition);
   }
   if (ward) { if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } conditions.push(eq(voterRegistryTable.ward, ward)); }
   if (status) conditions.push(eq(voterRegistryTable.status, status));
