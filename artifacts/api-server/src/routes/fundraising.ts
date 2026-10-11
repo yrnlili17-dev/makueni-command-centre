@@ -4,7 +4,7 @@ import { eq, sql, desc, ilike, or } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
 const ALLOWED_WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
 const isMakueniWard = (ward: unknown) => typeof ward === "string" && (ALLOWED_WARDS.includes(ward) || ward === "county-wide");
-const isOutOfCountyText = (value: unknown) => /\\b(matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\\b/i.test(String(value ?? ""));
+const isOutOfCountyText = (value: unknown) => /\b(mule|matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\b/i.test(String(value ?? ""));
 
 const router = Router();
 
