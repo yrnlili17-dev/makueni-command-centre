@@ -308,8 +308,8 @@ export default function CampaignPlan() {
     const report = await apiFetch("/report");
     const lines: string[] = [
       "═══════════════════════════════════════════════════════",
-      "  MAKUENI COMMAND CENTRE — CAMPAIGN PLAN REPORT",
-      "  HON. STEPHEN MULE — MATUNGULU CONSTITUENCY",
+      "  MAKUENI COMMAND CENTRE — COUNTY PROJECT PLAN REPORT",
+      "  MAKUENI COUNTY · PROJECT DELIVERY PLAN",
       "═══════════════════════════════════════════════════════",
       `  Generated: ${new Date().toLocaleString("en-KE")}`,
       `  Election Date: ${report.electionDate ?? "Not set"}`,
@@ -415,8 +415,8 @@ export default function CampaignPlan() {
         {/* Header */}
         <div className="flex items-center justify-between no-print">
           <div>
-            <h1 className="text-xl font-bold tracking-widest">CAMPAIGN COUNTDOWN</h1>
-            <p className="text-[10px] font-mono text-muted-foreground mt-0.5">MISSION PLANNING · MILESTONES · READINESS · MATUNGULU CONSTITUENCY</p>
+            <h1 className="text-xl font-bold tracking-widest">COUNTY PROJECT DELIVERY</h1>
+            <p className="text-[10px] font-mono text-muted-foreground mt-0.5">MISSION PLANNING · MILESTONES · READINESS · MAKUENI COUNTY</p>
           </div>
           <div className="flex gap-2">
             <button onClick={handlePrint} className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs hover:bg-secondary"><Printer className="w-3 h-3" /> PRINT</button>
@@ -438,7 +438,7 @@ export default function CampaignPlan() {
         {/* Print header (only visible when printing) */}
         <div className="hidden print:block mb-6">
           <h1 className="text-2xl font-bold">MAKUENI COMMAND CENTRE — CAMPAIGN PLAN</h1>
-          <p className="text-sm">Hon. Stephen Mule · Makueni Constituency · Generated {new Date().toLocaleString("en-KE")}</p>
+          <p className="text-sm">Makueni County · Project Delivery · Generated {new Date().toLocaleString("en-KE")}</p>
         </div>
 
         {/* Stats bar */}
