@@ -131,7 +131,7 @@ router.post("/login", async (req, res) => {
 
     res.status(503).json({
       error:
-        "The database login service is temporarily unavailable. Use the emergency administrator account.",
+        "The login service is temporarily unavailable. Please try again later or contact your system administrator.",
     });
   }
 });
