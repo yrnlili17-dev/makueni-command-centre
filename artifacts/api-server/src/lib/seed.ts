@@ -280,12 +280,19 @@ export async function seedDefaultConfig(): Promise<void> {
 }
 
 // Bootstrap the initial super-admin so the system is never locked out.
-// Uses the long-standing demo credentials so existing access keeps working.
-const BOOTSTRAP_EMAIL = "demo@mwanamule.ke";
-const BOOTSTRAP_USERNAME = "demo";
-const BOOTSTRAP_PASSWORD = "Komboa2027";
+// Bootstrap credentials must be explicitly configured in the hosting environment.
+// Never ship a public, hard-coded administrator password.
+const BOOTSTRAP_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+const BOOTSTRAP_USERNAME = process.env.BOOTSTRAP_ADMIN_USERNAME?.trim() ?? "";
+const BOOTSTRAP_PASSWORD = process.env.BOOTSTRAP_ADMIN_PASSWORD ?? "";
 
 export async function ensureBootstrapAdmin(): Promise<void> {
+  if (!BOOTSTRAP_EMAIL || !BOOTSTRAP_USERNAME || BOOTSTRAP_PASSWORD.length < 16) {
+    // Existing administrator accounts continue to work; don't create or reset a
+    // predictable bootstrap account when secure credentials aren't configured.
+    return;
+  }
+
   const [existing] = await db
     .select()
     .from(adminUsersTable)
@@ -319,21 +326,8 @@ export async function ensureBootstrapAdmin(): Promise<void> {
     }).where(eq(adminUsersTable.id, existing.id));
   }
 
-  // Lockout self-heal: the system must always have at least one active
-  // super-admin. If none exists (e.g. the bootstrap admin was suspended and no
-  // replacement was created), reactivate the bootstrap admin.
-  const activeSupers = await db
-    .select({ id: adminUsersTable.id })
-    .from(adminUsersTable)
-    .where(and(eq(adminUsersTable.role, "super-admin"), eq(adminUsersTable.status, "active")))
-    .limit(1);
-  if (activeSupers.length === 0) {
-    await db.update(adminUsersTable).set({
-      role: "super-admin",
-      status: "active",
-      updatedAt: new Date(),
-    }).where(eq(adminUsersTable.email, BOOTSTRAP_EMAIL));
-  }
+  // Do not silently reactivate disabled administrator accounts. Recovery must
+  // be performed deliberately by an authorized administrator or operator.
 }
 
 export async function ensureSeeded(): Promise<void> {
