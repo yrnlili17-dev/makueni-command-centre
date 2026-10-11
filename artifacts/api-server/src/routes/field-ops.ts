@@ -3,7 +3,7 @@ import { db, canvassSessionsTable, canvassVisitsTable } from "@workspace/db";
 import { eq, sql, inArray } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
 
-const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 const isMakueniWard = (ward: unknown): ward is string => typeof ward === "string" && WARDS.includes(ward);
 
 const router = Router();
