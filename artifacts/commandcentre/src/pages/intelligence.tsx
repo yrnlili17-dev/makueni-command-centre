@@ -49,7 +49,7 @@ const NARRATIVE_PLAYBOOK = [
   { tag: "COMMUNITY", title: "Community Issues", core: "Collect service requests and publish verified responses without political targeting.", lines: [{ lang: "EN", text: "Makueni County: report a service issue and follow its verified status." }, { lang: "SW", text: "Makueni County: ripoti tatizo la huduma na ufuatilie hali yake." }], why: "Keep updates factual, accessible and focused on residents and services." },
 ] as const;
 
-const PLAYBOOK_WARDS = WARDS.map(ward => ({ ward, focus: "County services, development projects and public accountability" }));;
+const PLAYBOOK_WARDS = WARDS.map(ward => ({ ward, focus: "County services, development projects and public accountability" }));
 
 const PLAYBOOK_CHANNELS = [
   { channel: "Official website", guidance: "Publish verified county updates with source links and dates." },
@@ -916,7 +916,7 @@ export default function Intelligence() {
                 fields: [
                   { key: "rssUrl", label: "GOOGLE ALERTS RSS URL", placeholder: "https://www.google.com/alerts/feeds/…" },
                 ],
-                hint: "Set up a Google Alert for 'Stephen Mule' or 'Makueni county administration', then paste the RSS feed URL here."
+                hint: "Add a verified Makueni County Government or public-service RSS feed URL here."
               },
               {
                 key: "news_rss", label: "NEWS MEDIA RSS", icon: <Newspaper className="w-4 h-4 text-yellow-400" />,
