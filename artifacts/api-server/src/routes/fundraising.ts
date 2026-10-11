@@ -249,6 +249,6 @@ router.get("/insights", async (req, res) => {
     { type: majorDonors.length < 5 ? "warning" : "success", title: `${majorDonors.length} major donors — KES ${majorTotal.toLocaleString()} recorded`, body: `Major donors account for ${raised > 0 ? Math.round((majorTotal / raised) * 100) : 0}% of recorded Makueni donations.`, action: "Check donor records and reconcile contributions" },
   ];
   res.json({ insights, raised, goal, pct, gap, pledgePending, donorCount: donors.length });
-});;
+});
 
 export default router;
