@@ -205,15 +205,16 @@ router.get("/daily-report", async (req, res) => {
   const volunteers = await db.select().from(volunteersTable).where(sql`${volunteersTable.ward} = ANY(${WARDS})`).orderBy(volunteersTable.ward, volunteersTable.lastName);
 
   // all tasks
-  const allTasks = await db.select().from(volunteerTasksTable);
+  const volunteerIds = volunteers.map(v => v.id);
+  const allTasks = volunteerIds.length ? await db.select().from(volunteerTasksTable).where(sql`${volunteerTasksTable.volunteerId} = ANY(${volunteerIds})`) : [];
 
   // today's progress logs
-  const todayLogs = await db.select().from(volunteerProgressLogsTable)
-    .where(eq(volunteerProgressLogsTable.logDate, today));
+  const todayLogs = volunteerIds.length ? await db.select().from(volunteerProgressLogsTable)
+    .where(and(eq(volunteerProgressLogsTable.logDate, today), sql`${volunteerProgressLogsTable.volunteerId} = ANY(${volunteerIds})`)) : [];
 
   // open issues
   const openIssues = await db.select().from(volunteerIssuesTable)
-    .where(eq(volunteerIssuesTable.status, "open"))
+    .where(and(eq(volunteerIssuesTable.status, "open"), sql`${volunteerIssuesTable.ward} = ANY(${WARDS})`))
     .orderBy(desc(volunteerIssuesTable.reportedAt));
 
   // task stats
