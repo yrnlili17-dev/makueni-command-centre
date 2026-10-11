@@ -202,9 +202,8 @@ const MODULES = [
 ];
 
 export async function seedDefaultRoles(): Promise<void> {
-  const existing = await db.select().from(adminRolesTable).limit(1);
-  if (existing.length > 0) return;
-
+  // Seed missing system roles on existing databases without overwriting
+  // administrator-customized permissions or role metadata.
   const defaultRoles = [
     {
       name: "super-admin", description: "Full system access — reserved for campaign director", color: "#DB143C", isSystem: true,
@@ -213,6 +212,26 @@ export async function seedDefaultRoles(): Promise<void> {
     {
       name: "campaign-manager", description: "Full operational access, no system config", color: "#f97316", isSystem: true,
       permissions: Object.fromEntries(MODULES.filter(m => m !== "admin").map(m => [m, "write"]).concat([["admin", "none"]])),
+    },
+    {
+      name: "manager", description: "Operational coordination across Makueni modules; no user administration", color: "#f97316", isSystem: true,
+      permissions: Object.fromEntries(MODULES.filter(m => m !== "admin").map(m => [m, "write"]).concat([["admin", "none"]])),
+    },
+    {
+      name: "coordinator", description: "Coordinate assigned field, event, volunteer and reporting operations", color: "#0ea5e9", isSystem: true,
+      permissions: { dashboard: "read", voters: "read", constituents: "read", segmentation: "read", messaging: "none", "field-ops": "write", volunteers: "write", intelligence: "read", events: "write", narrative: "none", "campaign-plan": "read", kol: "none", finance: "none", "election-day": "write", credentials: "none", admin: "none" },
+    },
+    {
+      name: "analyst", description: "Read-only reporting and operational analysis", color: "#8b5cf6", isSystem: true,
+      permissions: Object.fromEntries(MODULES.filter(m => m !== "admin").map(m => [m, "read"]).concat([["admin", "none"]])),
+    },
+    {
+      name: "candidate", description: "Read-only overview and approved reports", color: "#DB143C", isSystem: true,
+      permissions: { dashboard: "read", voters: "none", constituents: "read", segmentation: "none", messaging: "none", "field-ops": "read", volunteers: "read", intelligence: "read", events: "read", narrative: "read", "campaign-plan": "read", kol: "read", finance: "read", "election-day": "read", credentials: "none", admin: "none" },
+    },
+    {
+      name: "officer", description: "Field and election-day reporting", color: "#22c55e", isSystem: true,
+      permissions: { dashboard: "read", voters: "read", constituents: "read", segmentation: "none", messaging: "none", "field-ops": "write", volunteers: "write", intelligence: "read", events: "read", narrative: "none", "campaign-plan": "read", kol: "none", finance: "none", "election-day": "write", credentials: "none", admin: "none" },
     },
     {
       name: "field-officer", description: "Field operations, volunteers, surveys", color: "#22c55e", isSystem: true,
