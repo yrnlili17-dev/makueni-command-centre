@@ -4,7 +4,7 @@ import { eq, and, sql, desc, gte } from "drizzle-orm";
 import { z } from "zod/v4";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
 
-const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 const isMakueniWard = (ward: unknown): ward is string => typeof ward === "string" && WARDS.includes(ward);
 
 const router = Router();
