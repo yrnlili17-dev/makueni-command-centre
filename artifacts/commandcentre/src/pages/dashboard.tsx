@@ -101,16 +101,14 @@ export default function Dashboard() {
               </div>
               <span className="font-mono text-[9px] border border-primary/30 px-2 py-0.5 text-primary shrink-0">2027</span>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               {[
-                ["OFFICE", "Governor of Makueni County"],
-                ["ELECTION", "2027"],
-                ["COUNTY", "Makueni"],
-                ["PROFILE", "Update details in Administration"],
-                ["CONTACT", "Not configured"],
-                ["SOCIAL LINKS", "Not configured"],
-                ["PARTY", "UDA"],
-                ["HEADQUARTERS", "Wote, Makueni County"],
+                ["WORKSPACE", "Makueni County"],
+                ["CONSTITUENCIES", "6"],
+                ["COUNTY ASSEMBLY WARDS", "30"],
+                ["ADMINISTRATIVE DIVISIONS", "16"],
+                ["LOCATIONS", "63"],
+                ["SUB-LOCATIONS", "127"],
               ].map(([k, v]) => (
                 <div key={k}>
                   <p className="font-mono text-[8px] text-muted-foreground">{k}</p>
@@ -119,8 +117,8 @@ export default function Dashboard() {
               ))}
             </div>
             <div className="pt-2 border-t border-border">
-              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">PROFILE STATUS</p>
-              <p className="font-mono text-[10px] text-muted-foreground">Candidate profile: Prof. Philip Kaloki · Makueni Governor 2027 · UDA.</p>
+              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">DATA STATUS</p>
+              <p className="font-mono text-[10px] text-muted-foreground">Makueni workspace reference. Live operational counts come from the database, not these administrative reference totals.</p>
             </div>
           </div>
         </div>
@@ -131,59 +129,24 @@ export default function Dashboard() {
             <span className="font-mono text-xs tracking-widest">CONSTITUENCY_INTEL</span>
           </div>
           <div className="p-4 space-y-3">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {[
-                { label: "POPULATION", value: "187,600" },
-                { label: "REG. VOTERS", value: "78,000" },
-                { label: "WARDS", value: "5" },
-                { label: "POLL. STATIONS", value: "165" },
-                { label: "POLL. STREAMS", value: "117" },
-                { label: "YOUTH", value: "75,000" },
-              ].map(({ label, value }) => (
-                <div key={label} className="bg-secondary/50 px-2 py-2">
+                { label: "CONSTITUENCIES", value: "6" },
+                { label: "ASSEMBLY WARDS", value: "30" },
+                { label: "SUB-WARDS", value: "60" },
+                { label: "POLLING STATIONS", value: "1,129", note: "IEBC / KNBS · 2022 snapshot" },
+              ].map(({ label, value, note }) => (
+                <div key={label} className="bg-secondary/50 px-3 py-3">
                   <p className="font-mono text-[8px] text-muted-foreground">{label}</p>
-                  <p className="font-bold text-sm tabular-nums text-primary">{value}</p>
+                  <p className="font-bold text-lg tabular-nums text-primary">{value}</p>
+                  {note && <p className="font-mono text-[8px] text-muted-foreground mt-1">{note}</p>}
                 </div>
               ))}
             </div>
-            <div>
-              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-2">POLLING STATIONS BY WARD</p>
-              <div className="space-y-1.5">
-                {[
-                  { ward: "Tala",             stations: 40  },
-                  { ward: "Makueni West",   stations: 55  },
-                  { ward: "Makueni North",  stations: 26  },
-                  { ward: "Makueni East",   stations: 24  },
-                  { ward: "Kyeleni",          stations: 20  },
-                ].map(({ ward, stations }) => (
-                  <div key={ward} className="flex items-center gap-2">
-                    <span className="font-mono text-[9px] text-muted-foreground w-32 shrink-0">{ward.toUpperCase()}</span>
-                    <div className="flex-1 bg-secondary/50 h-2 relative">
-                      <div
-                        className="absolute inset-y-0 left-0 bg-primary/60"
-                        style={{ width: `${(stations / 55) * 100}%` }}
-                      />
-                    </div>
-                    <span className="font-mono text-[9px] text-primary font-bold w-6 text-right">{stations}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">KEY ISSUES</p>
-              <div className="flex flex-wrap gap-1">
-                {["Clean Water", "Road Infrastructure", "Employment", "Security"].map(i => (
-                  <span key={i} className="font-mono text-[9px] border border-red-400/30 px-2 py-0.5 text-red-400">[ {i.toUpperCase()} ]</span>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">ECONOMIC ACTIVITIES</p>
-              <p className="font-mono text-[9px] text-muted-foreground">Coffee farming · Maize & beans · Horticulture · Quarry stones · Ballast</p>
-            </div>
-            <div>
-              <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">RELIGIOUS GROUPS</p>
-              <p className="font-mono text-[9px] text-muted-foreground">Christianity · Islam</p>
+            <div className="border-t border-border pt-2 space-y-1">
+              <p className="font-mono text-[9px] text-muted-foreground">LEGACY FIGURES REMOVED</p>
+              <p className="font-mono text-[9px] text-muted-foreground">Ward-level polling station and voter data will appear only after verified IEBC records are imported. The county total is a 2022 reference, not a live count.</p>
+              <a className="font-mono text-[9px] text-primary underline" href="https://www.iebc.or.ke/docs/rov_per_polling_station.pdf" target="_blank" rel="noreferrer">OPEN OFFICIAL IEBC 2022 REGISTER</a>
             </div>
           </div>
         </div>
