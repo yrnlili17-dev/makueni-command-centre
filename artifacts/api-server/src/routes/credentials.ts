@@ -279,16 +279,11 @@ Format your response with clear section headers using **bold** for headers.`;
     aiGenerated = true;
     const lines = response.split("\n");
     keyPoints = lines.filter((l: string) => l.trim().match(/^[-•*]\s+/)).map((l: string) => l.replace(/^[-•*]\s+/, "").trim()).slice(0, 7);
-    sources = [
-      { title: "Kenya National Assembly Hansard", type: "Official Record", relevance: "Primary legislative source" },
-      { title: "Kenya Gazette", type: "Government Publication", relevance: "Official government notices" },
-      { title: "CRA Equitable Share Reports", type: "Financial Data", relevance: "Constituency fund allocations" },
-      { title: "Kenya National Bureau of Statistics", type: "Data", relevance: "Population & development indicators" },
-    ];
+    sources = []; // No sources are listed until URLs have actually been retrieved and checked.
   } catch (_) { /* fall through to template */ }
 
   if (!aiGenerated) {
-    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni County and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Makueni County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. County governments receive equitable share allocations for devolved functions; verify Makueni County figures against published budget documents.\n\n**Key Recommendations**\n\nFor Makueni County to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
+    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni County and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Makueni County.\n\n**Legislative Context**\n\nReview the Makueni County Assembly record for documented policy action on ${topic}. County governments share responsibility with the national government under Article 186 of the Constitution. County governments receive equitable share allocations for devolved functions; verify Makueni County figures against published budget documents.\n\n**Key Recommendations**\n\nFor Makueni County, consult the official CIDP, approved budget, County Assembly records and Controller of Budget reports before reporting outcomes.`;
     keyPoints = [
       `Makueni's ${topic} needs align with national development priorities`,
       `Constitutional mandate under Chapter Eleven supports county action on ${topic}`,
@@ -297,13 +292,7 @@ Format your response with clear section headers using **bold** for headers.`;
       `Committee engagement on ${topic} demonstrates subject matter expertise`,
       `Compare county indicators using official published data`,
     ];
-    sources = [
-      { title: "Constitution of Kenya, 2010", type: "Legal", relevance: "Fourth Schedule — Division of Functions" },
-      { title: "National Assembly Standing Orders", type: "Procedure", relevance: "Bill sponsorship and motion process" },
-      { title: "CDF Act 2013 (Amended 2016)", type: "Legislation", relevance: "Constituency development fund mandate" },
-      { title: "Makueni County CIDP", type: "Planning", relevance: "County integrated development plan" },
-      { title: "Kenya National Bureau of Statistics", type: "Data", relevance: "Makueni county demographic indicators" },
-    ];
+    sources = []; // This fallback has no verified source URLs.
   }
 
   const [session] = await db.insert(researchSessionsTable).values({ topic, query, response, keyPoints, sources }).returning();
