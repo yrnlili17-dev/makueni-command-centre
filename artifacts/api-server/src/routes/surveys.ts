@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { db, surveysTable, surveyResponsesTable, opinionPollsTable, pollVotesTable, topicalIssuesTable } from "@workspace/db";
-import { eq, sql, desc, and } from "drizzle-orm";
+import { eq, sql, desc, and, inArray } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
+const isMakueniWard = (ward: unknown): ward is string => typeof ward === "string" && (WARDS.includes(ward) || ward === "county-wide" || ward === "all");
 
 const router = Router();
 
@@ -12,8 +15,9 @@ router.get("/polls", async (req, res) => {
 });
 
 router.post("/polls", async (req, res) => {
-  const { title, description, category = "general", ward = "all", options = [], deadline, createdBy = "Campaign Manager" } = req.body;
+  const { title, description, category = "general", ward = "all", options = [], deadline, createdBy = "County team" } = req.body;
   if (!title || !options.length) { res.status(400).json({ error: "title and options required" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
   const opts = (options as string[]).map((label: string) => ({ label, votes: 0 }));
   const [poll] = await db.insert(opinionPollsTable).values({ title, description, category, ward, options: opts, deadline, createdBy, status: "active", totalVotes: 0 }).returning();
   res.status(201).json(poll);
@@ -190,7 +194,7 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const { title, description, questions = [] } = req.body;
+  const { title, description, questions = [], ward = "county-wide" } = req.body;
   if (!title) { res.status(400).json({ error: "title required" }); return; }
   if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a Makueni County ward or county-wide" }); return; }
   const [survey] = await db.insert(surveysTable).values({ title, description, questions, status: "active", responseCount: 0 }).returning();
