@@ -136,7 +136,33 @@ export async function permissionsForRole(roleName: string): Promise<Record<strin
     .from(adminRolesTable)
     .where(sql`lower(replace(replace(${adminRolesTable.name}, '_', '-'), ' ', '-')) = ${normalizedRole}`)
     .limit(1);
-  return (role?.permissions as Record<string, PermLevel>) ?? {};
+  const stored = (role?.permissions as Record<string, PermLevel>) ?? {};
+
+  // The UI has accumulated route-level names while older role records use
+  // canonical module names. Mirror permissions both ways so valid users do not
+  // authenticate successfully and then hit ACCESS_DENIED on a renamed route.
+  const aliases: Record<string, string[]> = {
+    voters: ["members"],
+    constituents: ["voters-db"],
+    segmentation: ["segments"],
+    intelligence: ["surveys", "social-listening", "swot"],
+    narrative: ["intelligence"],
+    finance: ["fundraising"],
+    "election-day": ["turnout"],
+    messaging: ["speeches"],
+    dashboard: ["analytics", "strategist"],
+  };
+  const resolved: Record<string, PermLevel> = { ...stored };
+  for (const [canonical, routeNames] of Object.entries(aliases)) {
+    const levels = [stored[canonical], ...routeNames.map((name) => stored[name])]
+      .filter((level): level is PermLevel => level === "none" || level === "read" || level === "write");
+    const effective: PermLevel = levels.includes("write") ? "write" : levels.includes("read") ? "read" : "none";
+    if (levels.length > 0) {
+      resolved[canonical] = effective;
+      for (const routeName of routeNames) resolved[routeName] = effective;
+    }
+  }
+  return resolved;
 }
 
 export function sanitizeUser(user: AdminUser): Omit<AdminUser, "passwordHash"> {
