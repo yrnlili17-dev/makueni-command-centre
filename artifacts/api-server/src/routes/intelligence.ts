@@ -78,37 +78,19 @@ async function openAiGenerateResponse(content: string, platform: string, threatL
 // ─── Narrative Score ─────────────────────────────────────────────────────────
 
 router.get("/narrative-score", async (req, res) => {
-  const [stats] = await db.select({
-    open: sql<number>`sum(case when ${narrativeMentionsTable.status} = 'open' then 1 else 0 end)`,
-    critical: sql<number>`sum(case when ${narrativeMentionsTable.threatLevel} = 'critical' then 1 else 0 end)`,
-    high: sql<number>`sum(case when ${narrativeMentionsTable.threatLevel} = 'high' then 1 else 0 end)`,
-    total: sql<number>`count(*)`,
-    responded: sql<number>`sum(case when ${narrativeMentionsTable.status} = 'responded' then 1 else 0 end)`,
-    negative: sql<number>`sum(case when ${narrativeMentionsTable.sentiment} = 'negative' then 1 else 0 end)`,
-    positive: sql<number>`sum(case when ${narrativeMentionsTable.sentiment} = 'positive' then 1 else 0 end)`,
-  }).from(narrativeMentionsTable);
-  const byPlatformRaw = await db.select({ label: narrativeMentionsTable.platform, count: sql<number>`count(*)` }).from(narrativeMentionsTable).groupBy(narrativeMentionsTable.platform);
-  const [pendingApproval] = await db.select({ count: sql<number>`count(*)` }).from(narrativeResponsesTable).where(eq(narrativeResponsesTable.status, "pending_approval"));
-  const open = Number(stats?.open ?? 0);
-  const responded = Number(stats?.responded ?? 0);
-  const total = Number(stats?.total ?? 0);
-  const criticalCount = Number(stats?.critical ?? 0);
+  const mentions = (await db.select().from(narrativeMentionsTable)).filter(m => !isOutOfCountyText([m.author, m.content, m.url].join(" ")));
+  const responses = await db.select().from(narrativeResponsesTable).where(eq(narrativeResponsesTable.status, "pending_approval"));
+  const open = mentions.filter(m => m.status === "open").length;
+  const criticalCount = mentions.filter(m => m.threatLevel === "critical").length;
+  const responded = mentions.filter(m => m.status === "responded").length;
+  const positive = mentions.filter(m => m.sentiment === "positive").length;
+  const negative = mentions.filter(m => m.sentiment === "negative").length;
+  const byPlatformMap = new Map<string, number>();
+  for (const m of mentions) byPlatformMap.set(m.platform, (byPlatformMap.get(m.platform) ?? 0) + 1);
+  const byPlatform = Array.from(byPlatformMap, ([label, count]) => ({ label, count }));
   const score = Math.max(0, Math.min(100, 100 - open * 5 - criticalCount * 10));
-  res.json({
-    score,
-    trend: open > 5 ? "down" : open < 2 ? "up" : "stable",
-    openThreats: open,
-    criticalThreats: criticalCount,
-    highThreats: Number(stats?.high ?? 0),
-    pendingApproval: Number(pendingApproval?.count ?? 0),
-    negativeMentions: Number(stats?.negative ?? 0),
-    positiveMentions: Number(stats?.positive ?? 0),
-    avgResponseTimeHours: responded > 0 ? 1.8 : 0,
-    mentionsByPlatform: byPlatformRaw.map(r => ({ label: r.label, count: Number(r.count) })),
-    aiEnabled: true,
-  });
+  res.json({ score, trend: open > 5 ? "down" : open < 2 ? "up" : "stable", openThreats: open, criticalThreats: criticalCount, totalMentions: mentions.length, responded, positive, negative, byPlatform, pendingApproval: responses.length });
 });
-
 // ─── Mentions ────────────────────────────────────────────────────────────────
 
 router.get("/mentions", async (req, res) => {
@@ -124,6 +106,7 @@ router.get("/mentions", async (req, res) => {
 router.post("/mentions", async (req, res) => {
   const { platform, content, author, url, threatLevel, source = "manual", engagementCount = 0 } = req.body;
   if (!platform || !content) { res.status(400).json({ error: "platform and content required" }); return; }
+  if (isOutOfCountyText(content)) { res.status(400).json({ error: "Only Makueni County public-service content is accepted" }); return; }
   const analysis = heuristicAnalysis(content);
   const [mention] = await db.insert(narrativeMentionsTable).values({
     platform, content, author, url,
@@ -250,7 +233,7 @@ router.get("/responses", async (req, res) => {
   const { status } = req.query as Record<string, string>;
   const conditions = status ? [eq(narrativeResponsesTable.status, status)] : [];
   const where = conditions.length ? and(...conditions) : undefined;
-  const responses = await db.select().from(narrativeResponsesTable).where(where).orderBy(desc(narrativeResponsesTable.createdAt));
+  const responses = (await db.select().from(narrativeResponsesTable).where(where).orderBy(desc(narrativeResponsesTable.createdAt))).filter(r => !isOutOfCountyText([r.content, r.platform].join(" ")));
   res.json(responses);
 });
 
@@ -336,7 +319,7 @@ router.post("/scan", async (req, res) => {
 });
 
 router.get("/scans", async (req, res) => {
-  const scans = await db.select().from(narrativeScansTable).orderBy(desc(narrativeScansTable.createdAt)).limit(20);
+  const scans = (await db.select().from(narrativeScansTable).orderBy(desc(narrativeScansTable.createdAt))).filter(scan => !isOutOfCountyText(scan.query)).slice(0, 20);
   res.json(scans);
 });
 
@@ -350,6 +333,7 @@ router.get("/competitors", async (req, res) => {
 router.post("/competitors", async (req, res) => {
   const { name, party, constituency, strengths = [], weaknesses = [], promisesMade = [] } = req.body;
   if (!name) { res.status(400).json({ error: "name required" }); return; }
+  if (isOutOfCountyText([name, constituency].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
   const [competitor] = await db.insert(competitorsTable).values({ name, party, constituency, strengths, weaknesses, promisesMade, promisesKept: 0, promisesBroken: 0 }).returning();
   res.status(201).json(competitor);
 });
@@ -357,7 +341,7 @@ router.post("/competitors", async (req, res) => {
 // ─── War Room Briefs ─────────────────────────────────────────────────────────
 
 router.get("/briefs", async (req, res) => {
-  const briefs = await db.select().from(warRoomBriefsTable).orderBy(desc(warRoomBriefsTable.createdAt));
+  const briefs = (await db.select().from(warRoomBriefsTable).orderBy(desc(warRoomBriefsTable.createdAt))).filter(b => !isOutOfCountyText([b.title, b.summary].join(" ")));
   res.json(briefs);
 });
 
