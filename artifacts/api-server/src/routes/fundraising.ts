@@ -202,79 +202,33 @@ router.delete("/pledges/:id", async (req, res) => {
 
 // ── Pipeline ───────────────────────────────────────────────────────────────
 router.get("/pipeline", async (req, res) => {
-  const [donorBreakdown] = await db
-    .select({
-      major: sql<number>`count(*) filter (where tier = 'major')`,
-      regular: sql<number>`count(*) filter (where tier = 'regular')`,
-      grassroots: sql<number>`count(*) filter (where tier = 'grassroots')`,
-    })
-    .from(donorsTable);
-
-  const wardBreakdown = await db
-    .select({
-      ward: donorsTable.ward,
-      count: sql<number>`count(*)`,
-      total: sql<number>`coalesce(sum(total_given), 0)`,
-    })
-    .from(donorsTable)
-    .where(sql`ward is not null`)
-    .groupBy(donorsTable.ward)
-    .orderBy(sql`sum(total_given) desc`);
-
-  const typeBreakdown = await db
-    .select({
-      type: donorsTable.type,
-      count: sql<number>`count(*)`,
-      total: sql<number>`coalesce(sum(total_given), 0)`,
-    })
-    .from(donorsTable)
-    .groupBy(donorsTable.type);
-
-  const pendingPledges = await db.select().from(pledgesTable).where(eq(pledgesTable.status, "pending")).orderBy(desc(pledgesTable.amount));
-  const topDonors = await db.select().from(donorsTable).orderBy(desc(donorsTable.totalGiven)).limit(10);
-
-  const monthlyTrend = await db
-    .select({
-      month: sql<string>`to_char(received_at, 'YYYY-MM')`,
-      total: sql<number>`coalesce(sum(amount), 0)`,
-      count: sql<number>`count(*)`,
-    })
-    .from(donationsTable)
-    .groupBy(sql`to_char(received_at, 'YYYY-MM')`)
-    .orderBy(sql`to_char(received_at, 'YYYY-MM')`);
-
+  const donors = (await db.select().from(donorsTable)).filter(d => isMakueniWard(d.ward) && !isOutOfCountyText([d.name, d.email, d.notes, ...(d.tags ?? [])].join(" ")));
+  const donorIds = new Set(donors.map(d => d.id));
+  const pledges = (await db.select().from(pledgesTable)).filter(p => p.donorId != null && donorIds.has(p.donorId));
+  const donations = (await db.select().from(donationsTable)).filter(d => isMakueniWard(d.ward) && !isOutOfCountyText([d.donorName, d.notes, d.reference].join(" ")));
+  const donorBreakdown = { major: donors.filter(d => d.tier === "major").length, regular: donors.filter(d => d.tier === "regular").length, grassroots: donors.filter(d => d.tier === "grassroots").length };
+  const wardMap = new Map<string, { count: number; total: number }>();
+  for (const d of donors) { const key = d.ward ?? "county-wide"; const row = wardMap.get(key) ?? { count: 0, total: 0 }; row.count++; row.total += Number(d.totalGiven ?? 0); wardMap.set(key, row); }
+  const wardBreakdown = Array.from(wardMap, ([ward, v]) => ({ ward, count: v.count, total: v.total })).sort((a, b) => b.total - a.total);
+  const typeMap = new Map<string, { count: number; total: number }>();
+  for (const d of donors) { const row = typeMap.get(d.type) ?? { count: 0, total: 0 }; row.count++; row.total += Number(d.totalGiven ?? 0); typeMap.set(d.type, row); }
+  const typeBreakdown = Array.from(typeMap, ([type, v]) => ({ type, count: v.count, total: v.total }));
+  const pendingPledges = pledges.filter(p => p.status === "pending").sort((a, b) => Number(b.amount) - Number(a.amount));
+  const topDonors = [...donors].sort((a, b) => Number(b.totalGiven) - Number(a.totalGiven)).slice(0, 10);
+  const monthMap = new Map<string, { total: number; count: number }>();
+  for (const d of donations) { const month = new Date(d.receivedAt).toISOString().slice(0, 7); const row = monthMap.get(month) ?? { total: 0, count: 0 }; row.total += Number(d.amount ?? 0); row.count++; monthMap.set(month, row); }
+  const monthlyTrend = Array.from(monthMap, ([month, v]) => ({ month, total: v.total, count: v.count })).sort((a, b) => a.month.localeCompare(b.month));
   res.json({ donorBreakdown, wardBreakdown, typeBreakdown, pendingPledges, topDonors, monthlyTrend });
 });
-
 // ── Reconciliation ─────────────────────────────────────────────────────────
 router.get("/reconciliation", async (req, res) => {
-  const all = await db.select().from(donationsTable).orderBy(desc(donationsTable.receivedAt));
+  const all = (await db.select().from(donationsTable).orderBy(desc(donationsTable.receivedAt))).filter(d => isMakueniWard(d.ward) && !isOutOfCountyText([d.donorName, d.notes, d.reference].join(" ")));
   const reconciled = all.filter(d => d.reconciled === 1);
   const unreconciled = all.filter(d => d.reconciled !== 1);
-
-  const byChannel = await db
-    .select({
-      channel: donationsTable.channel,
-      total: sql<number>`coalesce(sum(amount), 0)`,
-      reconciled: sql<number>`coalesce(sum(case when reconciled = 1 then amount else 0 end), 0)`,
-      unreconciled: sql<number>`coalesce(sum(case when reconciled != 1 or reconciled is null then amount else 0 end), 0)`,
-      count: sql<number>`count(*)`,
-    })
-    .from(donationsTable)
-    .groupBy(donationsTable.channel);
-
-  res.json({
-    total: all.length,
-    reconciled: reconciled.length,
-    unreconciled: unreconciled.length,
-    totalAmount: all.reduce((s, d) => s + d.amount, 0),
-    reconciledAmount: reconciled.reduce((s, d) => s + d.amount, 0),
-    unreconciledAmount: unreconciled.reduce((s, d) => s + d.amount, 0),
-    byChannel,
-    unreconciledDonations: unreconciled,
-  });
+  const channelMap = new Map<string, { total: number; reconciled: number; unreconciled: number; count: number }>();
+  for (const d of all) { const row = channelMap.get(d.channel) ?? { total: 0, reconciled: 0, unreconciled: 0, count: 0 }; const amount = Number(d.amount ?? 0); row.total += amount; row.count++; if (d.reconciled === 1) row.reconciled += amount; else row.unreconciled += amount; channelMap.set(d.channel, row); }
+  res.json({ total: all.length, reconciled: reconciled.length, unreconciled: unreconciled.length, totalAmount: all.reduce((sum, d) => sum + Number(d.amount ?? 0), 0), reconciledAmount: reconciled.reduce((sum, d) => sum + Number(d.amount ?? 0), 0), unreconciledAmount: unreconciled.reduce((sum, d) => sum + Number(d.amount ?? 0), 0), byChannel: Array.from(channelMap, ([channel, v]) => ({ channel, ...v })), unreconciledDonations: unreconciled });
 });
-
 // ── Insights (computed) ─────────────────────────────────────────────────────
 router.get("/insights", async (req, res) => {
   const [totals] = await db.select({ raised: sql<number>`coalesce(sum(amount), 0)`, count: sql<number>`count(*)` }).from(donationsTable);
