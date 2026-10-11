@@ -232,7 +232,7 @@ router.post("/research", async (req, res) => {
 
   try {
     const systemPrompt = `You are a legislative research assistant for Makueni County, focused on Makueni County, Kenya.
-Your role is to help research legislative topics, provide context on Kenya's parliamentary procedures, compare with regional and national benchmarks, and suggest talking points that strengthen the candidate's credentials.
+Your role is to research Makueni County policies, budgets, services and documented development outcomes using verifiable primary sources.
 Always provide structured, factual responses with clear sections.`;
 
     const userPrompt = `Research Topic: ${topic}
