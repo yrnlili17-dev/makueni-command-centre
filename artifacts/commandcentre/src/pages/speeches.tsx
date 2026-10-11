@@ -33,12 +33,8 @@ interface GeneratedDocument {
   createdAt: string;
 }
 
-const OCCASIONS = [
-  "Campaign Rally", "Baraza (Public Forum)", "Campaign Launch", "Church Service",
-  "Funeral", "Wedding", "Harambee (Fundraiser)", "Youth Event", "Women's Group Meeting",
-  "Market Visit", "Radio Address", "Endorsement Event", "Victory Speech",
-];
-const WARDS = ["Makueni", "Tala", "Makueni West", "Makueni North", "Makueni East", "Kyeleni"];
+const OCCASIONS = ["County Service Update", "Public Participation Forum", "Water Service Notice", "Road Maintenance Update", "Health Service Announcement", "Budget Briefing", "Agriculture Advisory", "Community Meeting", "Emergency Notice", "Radio Public Information"];
+const WARDS = ["county-wide","Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa","Kiima Kiu/Kalanzoni","Mukaa","Kasikeu","Kee","Kilungu","Ilima","Ukia","Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini","Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala","Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"];
 const LANGUAGES = ["English", "Swahili", "English + Swahili mix"];
 const TONES = ["Inspirational", "Fiery / Passionate", "Solemn / Respectful", "Warm / Personal", "Statesmanlike", "Conversational"];
 const LENGTHS = [
@@ -196,7 +192,7 @@ export default function Speeches() {
           <Sparkles className="w-5 h-5 text-primary" /> AI SPEECH &amp; MANIFESTO GENERATOR
         </h1>
         <p className="font-mono text-[11px] text-muted-foreground mt-1">
-          Draft campaign speeches and the official manifesto for Hon. Stephen Mule · grounded in Makueni context
+          Prepare Makueni County public-service announcements and development briefs using verified information
         </p>
       </div>
 
