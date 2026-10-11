@@ -4,7 +4,7 @@ import { eq, sql, and, desc } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
-const isOutOfCountyText = (value: unknown) => /\\b(mule|matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\\b/i.test(String(value ?? ""));
+const isOutOfCountyText = (value: unknown) => /\b(mule|matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\b/i.test(String(value ?? ""));
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
