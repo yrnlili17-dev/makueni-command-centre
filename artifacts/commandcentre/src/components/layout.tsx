@@ -203,12 +203,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <header className="h-14 border-b border-border flex items-center px-6 justify-between shrink-0 bg-card/50">
           <div className="flex items-center gap-4">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="font-mono text-xs text-muted-foreground tracking-widest">MWANAMULE · MATUNGULU MNA · WIPER PATRIOTIC FRONT</span>
+            <span className="font-mono text-xs text-muted-foreground tracking-widest">MAKUENI COUNTY · COMMAND CENTRE</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="font-mono text-[10px] text-muted-foreground">TIME: {new Date().toISOString()}</span>
             <div className="px-2 py-1 bg-primary/10 text-primary font-mono text-[10px] border border-primary/30">
-              KOMBOA KENYA
+              COUNTY OPERATIONS · 2027
             </div>
           </div>
         </header>
