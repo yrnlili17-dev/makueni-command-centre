@@ -6,8 +6,6 @@ const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
 
 const router = Router();
 
-const CANDIDATES: Array<{ name: string; party: string }> = [];
-
 // ── Summary / HQ Tally ─────────────────────────────────────────────────────
 router.get("/summary", async (req, res) => {
   const totalStations = await db.select({ count: sql<number>`count(*)` }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
