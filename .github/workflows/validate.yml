@@ -29,4 +29,5 @@ jobs:
       - name: Typecheck and build
         env:
           PORT: "3000"
+          BASE_PATH: "/"
         run: pnpm run build
