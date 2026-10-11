@@ -49,6 +49,7 @@ router.get("/prediction", async (req, res) => {
     })
     .from(pollingStationsTable)
     .leftJoin(tallyResultsTable, eq(pollingStationsTable.code, tallyResultsTable.stationCode))
+    .where(inArray(pollingStationsTable.ward, WARDS))
     .groupBy(pollingStationsTable.ward);
   const actMap = new Map(actualRows.map((a) => [a.ward, a]));
 
@@ -56,7 +57,7 @@ router.get("/prediction", async (req, res) => {
     const registered = Number(w.registered);
     const asmp = aMap.get(w.ward);
     const baseTurnout = asmp?.expectedTurnoutRate ?? DEFAULT_TURNOUT;
-    const baseSupport = asmp?.candidateSupportShare ?? DEFAULT_SUPPORT;
+    const baseSupport = asmp?.muleSupportShare ?? DEFAULT_SUPPORT;
     const turnoutRate = clamp(baseTurnout + turnoutDelta);
     const supportShare = clamp(baseSupport + supportDelta);
     const predictedVotes = Math.round((registered * turnoutRate) / 100);
@@ -111,7 +112,7 @@ router.get("/prediction", async (req, res) => {
       registered: totalRegistered,
       predictedVotes: totalPredictedVotes,
       predictedTurnoutRate: totalRegistered ? Math.round((totalPredictedVotes / totalRegistered) * 100) : 0,
-      predictedMuleVotes: totalCandidateVotes,
+      predictedCandidateVotes: totalCandidateVotes,
       predictedCandidateShare: totalPredictedVotes ? Math.round((totalCandidateVotes / totalPredictedVotes) * 100) : 0,
       topGotvWard: topGotv?.ward ?? null,
       topGotvUpside: topGotv?.gotvUpside ?? 0,
@@ -121,21 +122,21 @@ router.get("/prediction", async (req, res) => {
 
 // ── Assumptions ────────────────────────────────────────────────────────────
 router.get("/assumptions", async (_req, res) => {
-  const rows = await db.select().from(turnoutAssumptionsTable);
+  const rows = (await db.select().from(turnoutAssumptionsTable)).filter(a => WARDS.includes(a.ward)).map(a => ({ ward: a.ward, expectedTurnoutRate: a.expectedTurnoutRate, candidateSupportShare: a.muleSupportShare, updatedAt: a.updatedAt }));
   res.json(rows);
 });
 
 const assumptionSchema = z.object({
   ward: z.string().min(1),
   expectedTurnoutRate: z.number().int().min(0).max(100),
-  muleSupportShare: z.number().int().min(0).max(100),
+  candidateSupportShare: z.number().int().min(0).max(100),
 });
 const putSchema = z.object({ assumptions: z.array(assumptionSchema).min(1) });
 
 router.put("/assumptions", async (req, res) => {
   const parsed = putSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Invalid assumptions", details: parsed.error.issues });
+  if (!parsed.success || parsed.data.assumptions.some(a => !WARDS.includes(a.ward))) {
+    res.status(400).json({ error: "Invalid assumptions", details: parsed.success ? "Only official Makueni wards are accepted" : parsed.error.issues });
     return;
   }
 
@@ -145,7 +146,7 @@ router.put("/assumptions", async (req, res) => {
       .values({
         ward: a.ward,
         expectedTurnoutRate: a.expectedTurnoutRate,
-        muleSupportShare: a.muleSupportShare,
+        muleSupportShare: a.candidateSupportShare,
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
