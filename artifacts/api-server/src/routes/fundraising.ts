@@ -10,54 +10,27 @@ const router = Router();
 
 // ── Summary ────────────────────────────────────────────────────────────────
 router.get("/summary", async (req, res) => {
-  const [totals] = await db
-    .select({
-      totalRaised: sql<number>`coalesce(sum(amount), 0)`,
-      donorCount: sql<number>`count(*)`,
-    })
-    .from(donationsTable);
-
-  const [goalTotals] = await db
-    .select({
-      totalGoal: sql<number>`coalesce(sum(goal_amount), 0)`,
-      activeCampaigns: sql<number>`count(*) filter (where status = 'active')`,
-    })
-    .from(fundraisingCampaignsTable);
-
-  const channelBreakdown = await db
-    .select({
-      channel: donationsTable.channel,
-      total: sql<number>`coalesce(sum(amount), 0)`,
-      count: sql<number>`count(*)`,
-    })
-    .from(donationsTable)
-    .groupBy(donationsTable.channel);
-
-  const [pledgeTotals] = await db
-    .select({
-      totalPledged: sql<number>`coalesce(sum(amount), 0)`,
-      pendingPledges: sql<number>`count(*) filter (where status = 'pending')`,
-      fulfilledPledges: sql<number>`count(*) filter (where status = 'fulfilled')`,
-    })
-    .from(pledgesTable);
-
-  const [donorStats] = await db
-    .select({ total: sql<number>`count(*)` })
-    .from(donorsTable);
-
+  const donations = (await db.select().from(donationsTable)).filter(d => isMakueniWard(d.ward) && !isOutOfCountyText([d.donorName, d.notes, d.reference].join(" ")));
+  const donors = (await db.select().from(donorsTable)).filter(d => isMakueniWard(d.ward) && !isOutOfCountyText([d.name, d.email, d.notes, ...(d.tags ?? [])].join(" ")));
+  const donorIds = new Set(donors.map(d => d.id));
+  const pledges = (await db.select().from(pledgesTable)).filter(p => p.donorId != null && donorIds.has(p.donorId));
+  const campaigns = (await db.select().from(fundraisingCampaignsTable)).filter(c => !isOutOfCountyText([c.name, c.description].join(" ")));
+  const totalRaised = donations.reduce((sum, d) => sum + Number(d.amount ?? 0), 0);
+  const totalPledged = pledges.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
+  const channelMap = new Map<string, { total: number; count: number }>();
+  for (const d of donations) { const row = channelMap.get(d.channel) ?? { total: 0, count: 0 }; row.total += Number(d.amount ?? 0); row.count += 1; channelMap.set(d.channel, row); }
   res.json({
-    totalRaised: Number(totals?.totalRaised ?? 0),
-    donorCount: Number(totals?.donorCount ?? 0),
-    totalDonors: Number(donorStats?.total ?? 0),
-    totalGoal: Number(goalTotals?.totalGoal ?? 0),
-    activeCampaigns: Number(goalTotals?.activeCampaigns ?? 0),
-    channelBreakdown,
-    totalPledged: Number(pledgeTotals?.totalPledged ?? 0),
-    pendingPledges: Number(pledgeTotals?.pendingPledges ?? 0),
-    fulfilledPledges: Number(pledgeTotals?.fulfilledPledges ?? 0),
+    totalRaised,
+    donorCount: donations.length,
+    totalDonors: donors.length,
+    totalGoal: campaigns.reduce((sum, c) => sum + Number(c.goalAmount ?? 0), 0),
+    activeCampaigns: campaigns.filter(c => c.status === "active").length,
+    channelBreakdown: Array.from(channelMap, ([channel, v]) => ({ channel, total: v.total, count: v.count })),
+    totalPledged,
+    pendingPledges: pledges.filter(p => p.status === "pending").length,
+    fulfilledPledges: pledges.filter(p => p.status === "fulfilled").length,
   });
 });
-
 // ── Campaigns ──────────────────────────────────────────────────────────────
 router.get("/campaigns", async (req, res) => {
   const campaigns = await db.select().from(fundraisingCampaignsTable).orderBy(desc(fundraisingCampaignsTable.createdAt));
