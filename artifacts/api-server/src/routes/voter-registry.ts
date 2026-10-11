@@ -74,7 +74,7 @@ router.get("/", async (req, res) => {
   const [countRow] = await db
     .select({ count: sql<number>`count(*)` })
     .from(voterRegistryTable)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   res.json({ data: rows, total: Number(countRow?.count ?? 0), limit, offset });
 });
