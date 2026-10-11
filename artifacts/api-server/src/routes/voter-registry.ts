@@ -293,6 +293,8 @@ router.post("/iebc/sync", async (req, res) => {
       : [];
 
     for (const v of voters) {
+      const rowWard = v["ward"] ?? ward;
+      if (!isMakueniWard(rowWard)) continue;
       const natId = v["national_id"] ?? v["nationalId"];
       if (natId) {
         const [existing] = await db.select({ id: voterRegistryTable.id })
