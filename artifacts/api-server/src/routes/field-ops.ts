@@ -91,27 +91,23 @@ router.get("/coverage", async (req, res) => {
     .leftJoin(canvassVisitsTable, eq(canvassVisitsTable.sessionId, canvassSessionsTable.id))
     .groupBy(canvassSessionsTable.ward);
 
-  const WARD_VOTERS: Record<string, number> = {
-    "Tala": 19000, "Makueni West": 26000,
-    "Makueni North": 15000, "Makueni East": 12000, "Kyeleni": 10000,
-  };
-
-  res.json(rows.map(r => {
-    const knocked = Number(r.total);
-    const voters = WARD_VOTERS[r.ward] ?? 10000;
+  const rowsByWard = new Map(rows.map(r => [r.ward, r]));
+  // Include every official ward, but never invent electorate denominators.
+  res.json(MAKUENI_WARDS.map(({ ward }) => {
+    const r = rowsByWard.get(ward);
     return {
-      ward: r.ward,
-      doorsKnocked: knocked,
-      doorsTotal: voters,
-      coveragePercent: Math.min((knocked / voters) * 100, 100),
-      supportCount: Number(r.support ?? 0),
-      opposeCount: Number(r.oppose ?? 0),
-      undecidedCount: Number(r.undecided ?? 0),
-      notHomeCount: Number(r.notHome ?? 0),
-      sessions: Number(r.sessions),
+      ward,
+      doorsKnocked: Number(r?.total ?? 0),
+      doorsTotal: null,
+      coveragePercent: null,
+      supportCount: Number(r?.support ?? 0),
+      opposeCount: Number(r?.oppose ?? 0),
+      undecidedCount: Number(r?.undecided ?? 0),
+      notHomeCount: Number(r?.notHome ?? 0),
+      sessions: Number(r?.sessions ?? 0),
+      denominatorStatus: "not_loaded",
     };
-  }));
-});
+  });;
 
 router.get("/stats", async (req, res) => {
   const sessions = await db.select().from(canvassSessionsTable).where(inArray(canvassSessionsTable.ward, WARDS));
