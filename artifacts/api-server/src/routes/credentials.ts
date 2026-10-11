@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { db, legislativeRecordsTable, achievementsTable, researchSessionsTable } from "@workspace/db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, inArray } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+const ALLOWED_WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const isMakueniWard = (ward: unknown) => typeof ward === "string" && (ALLOWED_WARDS.includes(ward) || ward === "county-wide" || ward === "all");
+const isOutOfCountyText = (value: unknown) => /\b(matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\b/i.test(String(value ?? ""));
 import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
@@ -16,7 +20,7 @@ router.get("/records", async (req, res) => {
   if (published === "true") conditions.push(eq(legislativeRecordsTable.published, true));
   const where = conditions.length ? and(...conditions) : undefined;
   const records = await db.select().from(legislativeRecordsTable).where(where).orderBy(desc(legislativeRecordsTable.date));
-  res.json(records);
+  res.json(records.filter(r => !isOutOfCountyText([r.title, r.description, r.session, ...(r.tags ?? [])].join(" "))));
 });
 
 router.post("/records", async (req, res) => {
@@ -44,13 +48,13 @@ router.delete("/records/:id", async (req, res) => {
 
 router.get("/achievements", async (req, res) => {
   const { category, ward, published } = req.query as Record<string, string>;
-  const conditions = [];
+  const conditions = [inArray(achievementsTable.ward, [...ALLOWED_WARDS, "county-wide", "all"])];
   if (category) conditions.push(eq(achievementsTable.category, category));
-  if (ward && ward !== "all") conditions.push(eq(achievementsTable.ward, ward));
+  if (ward && ward !== "all") { if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } conditions.push(eq(achievementsTable.ward, ward)); }
   if (published === "true") conditions.push(eq(achievementsTable.published, true));
   const where = conditions.length ? and(...conditions) : undefined;
   const items = await db.select().from(achievementsTable).where(where).orderBy(desc(achievementsTable.year), desc(achievementsTable.createdAt));
-  res.json(items);
+  res.json(items.filter(r => !isOutOfCountyText([r.title, r.description, r.fundingSource, ...(r.partnerAgencies ?? [])].join(" "))));
 });
 
 router.post("/achievements", async (req, res) => {
@@ -138,7 +142,7 @@ Output ONLY compact raw JSON. No markdown. No extra whitespace. No explanations.
 Schema (strict, all fields required, keep ALL text fields under 120 characters):
 {"achievements":[{"title":"string","description":"string max 120 chars","category":"infrastructure|education|health|water|security|youth|women|agriculture|environment|governance|economy|housing","ward":"Tulimani|Mbooni|Kithungo/Kitundu|Kiteta/Kisau|Kako/Waia|Kalawa|Kiima Kiu/Kalanzoni|Mukaa|Kasikeu|Kee|Kilungu|Ilima|Ukia|Nzaui/Kilili/Kalamba|Muvau/Kikumini|Kathonzweni|Mavindini|Kitise/Kithuki|Wote|Mbitini|Makindu|Kikumbulyu North|Kikumbulyu South|Nguumo|Nguu/Masumba|Emali/Mulala|Masongaleni|Mtito Andei|Thange|Ivingoni/Nzambani|county-wide","year":"2022|2023|2024|2025|2026","status":"completed|ongoing|planned","impactMetric":"string","impactValue":"string","budget":"number as string","fundingSource":"string","partnerAgencies":["string"],"published":true,"featured":false}]}
 
-Generate 8 achievements. Cover all 30 wards (min 1 each). Categories: infrastructure, water, health, education, youth, women, agriculture. Vary years 2022–2026. Mark 2 as featured:true. Use only verified place names within Makueni County.`;
+Return only documented Makueni County projects supported by primary-source evidence. Do not invent budgets, impact metrics, dates or achievements. Omit unsupported items.`;
 
     const [recResponse, achResponse] = await Promise.all([
       openai.chat.completions.create({
