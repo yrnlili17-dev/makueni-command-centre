@@ -33,13 +33,14 @@ router.get("/summary", async (req, res) => {
 });
 // ── Campaigns ──────────────────────────────────────────────────────────────
 router.get("/campaigns", async (req, res) => {
-  const campaigns = await db.select().from(fundraisingCampaignsTable).orderBy(desc(fundraisingCampaignsTable.createdAt));
+  const campaigns = (await db.select().from(fundraisingCampaignsTable).orderBy(desc(fundraisingCampaignsTable.createdAt))).filter(c => !isOutOfCountyText([c.name, c.description].join(" ")));
   res.json(campaigns);
 });
 
 router.post("/campaigns", async (req, res) => {
   const { name, description, goalAmount, startDate, endDate } = req.body;
   if (!name) { res.status(400).json({ error: "name required" }); return; }
+  if (isOutOfCountyText([name, description].join(" "))) { res.status(400).json({ error: "Only Makueni County campaigns are accepted" }); return; }
   if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
   if (isOutOfCountyText([name, email, notes, ...(tags ?? [])].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
   const [campaign] = await db.insert(fundraisingCampaignsTable)
@@ -59,6 +60,7 @@ router.patch("/campaigns/:id", async (req, res) => {
   ["name", "description", "goalAmount", "status", "startDate", "endDate"].forEach(f => {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   });
+  if (isOutOfCountyText([updates.name, updates.description].join(" "))) { res.status(400).json({ error: "Only Makueni County campaigns are accepted" }); return; }
   const [campaign] = await db.update(fundraisingCampaignsTable).set(updates).where(eq(fundraisingCampaignsTable.id, parseInt(req.params.id))).returning();
   if (!campaign) { res.status(404).json({ error: "Not found" }); return; }
   res.json(campaign);
@@ -170,7 +172,9 @@ router.delete("/donations/:id", async (req, res) => {
 // ── Pledges ────────────────────────────────────────────────────────────────
 router.get("/pledges", async (req, res) => {
   const { status, campaignId } = req.query as Record<string, string>;
-  let rows = await db.select().from(pledgesTable).orderBy(desc(pledgesTable.createdAt));
+  const donors = (await db.select().from(donorsTable)).filter(d => isMakueniWard(d.ward) && !isOutOfCountyText([d.name, d.email, d.notes, ...(d.tags ?? [])].join(" ")));
+  const donorIds = new Set(donors.map(d => d.id));
+  let rows = (await db.select().from(pledgesTable).orderBy(desc(pledgesTable.createdAt))).filter(p => p.donorId != null && donorIds.has(p.donorId));
   if (status) rows = rows.filter(r => r.status === status);
   if (campaignId) rows = rows.filter(r => r.campaignId === parseInt(campaignId));
   res.json(rows);
