@@ -11,8 +11,8 @@ const CANDIDATES: Array<{ name: string; party: string }> = [];
 // ── Summary / HQ Tally ─────────────────────────────────────────────────────
 router.get("/summary", async (req, res) => {
   const totalStations = await db.select({ count: sql<number>`count(*)` }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
-  const submittedStations = await db.select({ count: sql<number>`count(distinct station_code)` }).from(tallyResultsTable);
-  const verifiedStations = await db.select({ count: sql<number>`count(distinct station_code)` }).from(tallyResultsTable).where(eq(tallyResultsTable.status, "verified"));
+  const submittedStations = await db.select({ count: sql<number>`count(distinct ${tallyResultsTable.stationCode})` }).from(tallyResultsTable).innerJoin(pollingStationsTable, eq(tallyResultsTable.stationCode, pollingStationsTable.code)).where(inArray(pollingStationsTable.ward, WARDS));
+  const verifiedStations = await db.select({ count: sql<number>`count(distinct ${tallyResultsTable.stationCode})` }).from(tallyResultsTable).innerJoin(pollingStationsTable, eq(tallyResultsTable.stationCode, pollingStationsTable.code)).where(and(eq(tallyResultsTable.status, "verified"), inArray(pollingStationsTable.ward, WARDS)));
 
   const tallyByCandidate = await db
     .select({
@@ -22,6 +22,8 @@ router.get("/summary", async (req, res) => {
       verifiedVotes: sql<number>`coalesce(sum(case when status = 'verified' then votes else 0 end), 0)`,
     })
     .from(tallyResultsTable)
+    .innerJoin(pollingStationsTable, eq(tallyResultsTable.stationCode, pollingStationsTable.code))
+    .where(inArray(pollingStationsTable.ward, WARDS))
     .groupBy(tallyResultsTable.candidateName, tallyResultsTable.party)
     .orderBy(sql`sum(votes) desc`);
 
@@ -33,10 +35,11 @@ router.get("/summary", async (req, res) => {
     })
     .from(pollingStationsTable)
     .leftJoin(tallyResultsTable, eq(pollingStationsTable.code, tallyResultsTable.stationCode))
+    .where(inArray(pollingStationsTable.ward, WARDS))
     .groupBy(pollingStationsTable.ward);
 
   const totalRegistered = await db.select({ total: sql<number>`coalesce(sum(registered_voters), 0)` }).from(pollingStationsTable);
-  const totalVotesCast = await db.select({ total: sql<number>`coalesce(sum(votes), 0)` }).from(tallyResultsTable);
+  const totalVotesCast = await db.select({ total: sql<number>`coalesce(sum(votes), 0)` }).from(tallyResultsTable).innerJoin(pollingStationsTable, eq(tallyResultsTable.stationCode, pollingStationsTable.code)).where(inArray(pollingStationsTable.ward, WARDS));
 
   res.json({
     totalStations: Number(totalStations[0]?.count ?? 0),
@@ -51,10 +54,10 @@ router.get("/summary", async (req, res) => {
 // ── Stations ───────────────────────────────────────────────────────────────
 router.get("/stations", async (req, res) => {
   const { ward, status } = req.query as Record<string, string>;
-  let query = db.select().from(pollingStationsTable).orderBy(pollingStationsTable.ward, pollingStationsTable.code);
+  let query = db.select().from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS)).orderBy(pollingStationsTable.ward, pollingStationsTable.code);
   const rows = await query;
   let filtered = rows;
-  if (ward) filtered = filtered.filter(r => r.ward === ward);
+  if (ward) { if (!WARDS.includes(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } filtered = filtered.filter(r => r.ward === ward); }
   if (status) filtered = filtered.filter(r => r.status === status);
   res.json(filtered);
 });
