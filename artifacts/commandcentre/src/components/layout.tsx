@@ -107,7 +107,7 @@ const PATH_MODULE: Record<string, string> = {
   "/volunteers": "volunteers",
   "/surveys": "surveys",
   "/events": "events",
-  "/intelligence": "intelligence",
+  "/intelligence": "narrative",
   "/social-listening": "social-listening",
   "/swot": "swot",
   "/campaign-plan": "campaign-plan",
