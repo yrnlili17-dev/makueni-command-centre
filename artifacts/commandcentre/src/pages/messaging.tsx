@@ -150,7 +150,7 @@ function SmsConfig({ provider, onSaved }: { provider?: Provider; onSaved: () => 
                 <FieldInput label="API KEY" required type="password" placeholder="AT_API_KEY_..." value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />
                 <FieldInput label="USERNAME" required placeholder="sandbox or your username" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />
                 <div className="col-span-2">
-                  <FieldInput label="SENDER ID (SHORTCODE / ALPHANUMERIC)" placeholder="e.g. MULE or 40100" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />
+                  <FieldInput label="SENDER ID (SHORTCODE / ALPHANUMERIC)" placeholder="e.g. verified sender ID or shortcode" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />
                   <p className="font-mono text-[9px] text-muted-foreground mt-1">Africa's Talking registered sender ID. Leave blank to use default shared shortcode.</p>
                 </div>
               </div>
@@ -171,7 +171,7 @@ function SmsConfig({ provider, onSaved }: { provider?: Provider; onSaved: () => 
                 <FieldInput label="API KEY" required type="password" placeholder="App xxxxxxxxxxxx" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />
                 <FieldInput label="BASE URL" placeholder="xxxxx.api.infobip.com" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />
                 <div className="col-span-2">
-                  <FieldInput label="SENDER NAME / NUMBER" placeholder="MULE2027" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />
+                  <FieldInput label="SENDER NAME / NUMBER" placeholder="Enter verified sender ID" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />
                 </div>
               </div>
             )}
@@ -392,8 +392,8 @@ function EmailConfig({ provider, onSaved }: { provider?: Provider; onSaved: () =
                 {providerVal === "ses" && (
                   <FieldInput label="AWS SECRET KEY" required type="password" placeholder="aws_secret_access_key" value={form.apiSecret} onChange={e => setForm(p => ({ ...p, apiSecret: e.target.value }))} />
                 )}
-                <FieldInput label="FROM EMAIL" required type="email" placeholder="campaign@mule2027.ke" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
-                <FieldInput label="FROM NAME" placeholder="Hon. Stephen Mule Campaign" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
+                <FieldInput label="FROM EMAIL" required type="email" placeholder="communications@example.org" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
+                <FieldInput label="FROM NAME" placeholder="Makueni County Communications" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
               </div>
             )}
 
