@@ -97,7 +97,7 @@ export default function Dashboard() {
             <div className="flex items-start justify-between mb-1">
               <div>
                 <p className="font-bold text-sm tracking-wide">PROF. PHILIP KALOKI</p>
-                <p className="font-mono text-[10px] text-primary tracking-widest mt-0.5">MAKUENI COUNTY · GUBERNATORIAL PROFILE</p>
+                <p className="font-mono text-[10px] text-primary tracking-widest mt-0.5">MAKUENI GOVERNOR · 2027</p>
               </div>
               <span className="font-mono text-[9px] border border-primary/30 px-2 py-0.5 text-primary shrink-0">2027</span>
             </div>
@@ -109,7 +109,7 @@ export default function Dashboard() {
                 ["PROFILE", "Update details in Administration"],
                 ["CONTACT", "Not configured"],
                 ["SOCIAL LINKS", "Not configured"],
-                ["PARTY", "Not configured"],
+                ["PARTY", "UDA"],
                 ["HEADQUARTERS", "Wote, Makueni County"],
               ].map(([k, v]) => (
                 <div key={k}>
@@ -120,7 +120,7 @@ export default function Dashboard() {
             </div>
             <div className="pt-2 border-t border-border">
               <p className="font-mono text-[8px] text-muted-foreground tracking-widest mb-1">PROFILE STATUS</p>
-              <p className="font-mono text-[10px] text-muted-foreground">Legacy profile details removed. Add verified public information through Administration.</p>
+              <p className="font-mono text-[10px] text-muted-foreground">Candidate profile: Prof. Philip Kaloki · Makueni Governor 2027 · UDA.</p>
             </div>
           </div>
         </div>
