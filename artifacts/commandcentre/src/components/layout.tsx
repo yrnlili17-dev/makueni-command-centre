@@ -206,7 +206,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="font-mono text-xs text-muted-foreground tracking-widest">MAKUENI COUNTY · COMMAND CENTRE</span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="font-mono text-[10px] text-muted-foreground">TIME: {new Date().toISOString()}</span>
+            <span className="font-mono text-[10px] text-muted-foreground">TIME: {new Date().toLocaleString("en-KE", { timeZone: "Africa/Nairobi", hour12: false })}</span>
             <div className="px-2 py-1 bg-primary/10 text-primary font-mono text-[10px] border border-primary/30">
               COUNTY OPERATIONS · 2027
             </div>
