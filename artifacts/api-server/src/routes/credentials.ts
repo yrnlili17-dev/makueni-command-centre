@@ -85,8 +85,8 @@ router.delete("/achievements/:id", async (req, res) => {
 // ─── Summary / Overview ───────────────────────────────────────────────────────
 
 router.get("/summary", async (req, res) => {
-  const records = (await db.select().from(legislativeRecordsTable)).filter(r => !isOutOfCountyText([r.title, r.description, r.session, ...(r.tags ?? [])].join(" ")));
-  const achievements = (await db.select().from(achievementsTable)).filter(r => isMakueniWard(r.ward) && !isOutOfCountyText([r.title, r.description, r.fundingSource, ...(r.partnerAgencies ?? [])].join(" ")));
+  const records = (await db.select().from(legislativeRecordsTable)).filter(r => !isOutOfCountyText([r.title, r.description, r.session, ...(Array.isArray(r.tags) ? r.tags : [])].join(" ")));
+  const achievements = (await db.select().from(achievementsTable)).filter(r => isMakueniWard(r.ward) && !isOutOfCountyText([r.title, r.description, r.fundingSource, ...(Array.isArray(r.partnerAgencies) ? r.partnerAgencies : [])].join(" ")));
   const recentSessions = (await db.select().from(researchSessionsTable)).filter(r => !isOutOfCountyText([r.topic, r.query, r.response].join(" "))).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3);
   const byCategoryMap = new Map<string, number>();
   for (const r of records) byCategoryMap.set(r.category, (byCategoryMap.get(r.category) ?? 0) + 1);
