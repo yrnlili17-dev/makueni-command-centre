@@ -148,7 +148,7 @@ function WarRoomTab() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {isLeading && <span className="text-yellow-400 font-mono text-[10px]">▶ LEADING</span>}
-                    <span className={`font-semibold text-sm ${(false ? "text-primary" : ""}`}>{c.candidateName}</span>
+                    <span className="font-semibold text-sm">{c.candidateName}</span>
                     <span className="font-mono text-[10px] text-muted-foreground">{c.party}</span>
                   </div>
                   <div className="flex items-center gap-4">
@@ -161,7 +161,7 @@ function WarRoomTab() {
                 </div>
                 <div className="w-full h-2 bg-secondary">
                   <div
-                    className={`h-full ${(false ? "bg-primary" : "bg-muted-foreground/40"}`}
+                    className="h-full bg-muted-foreground/40"
                     style={{ width: `${share}%` }}
                   />
                 </div>
@@ -700,7 +700,7 @@ function PublishResultsTab() {
               <tbody>
                 {pub.totals.map((c, i) => (
                   <tr key={c.candidateName} className={`border-b border-border/50 ${i === 0 ? "bg-primary/5" : ""}`}>
-                    <td className={`px-4 py-3 font-semibold ${(false ? "text-primary" : ""}`}>
+                    <td className="px-4 py-3 font-semibold">
                       {i === 0 && <span className="text-yellow-400 mr-2">▶</span>}{c.candidateName}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{c.party}</td>
