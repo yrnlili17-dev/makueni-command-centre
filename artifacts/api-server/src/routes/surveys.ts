@@ -35,6 +35,7 @@ router.delete("/polls/:id", async (req, res) => {
 router.post("/polls/:id/vote", async (req, res) => {
   const pollId = parseInt(req.params.id);
   const { optionIndex, respondentName, ward, ageGroup, gender } = req.body;
+  if (!WARDS.includes(ward)) { res.status(400).json({ error: "A valid Makueni County ward is required to submit a response" }); return; }
   if (optionIndex === undefined) { res.status(400).json({ error: "optionIndex required" }); return; }
   const [poll] = await db.select().from(opinionPollsTable).where(eq(opinionPollsTable.id, pollId));
   if (!poll || !isMakueniWard(poll.ward)) { res.status(404).json({ error: "Makueni poll not found" }); return; }
