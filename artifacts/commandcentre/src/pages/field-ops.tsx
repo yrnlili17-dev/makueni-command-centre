@@ -14,7 +14,38 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
-const WARDS = ["Tala", "Makueni West", "Makueni North", "Makueni East", "Kyeleni"];
+const WARDS = [
+  "Tulimani",
+  "Mbooni",
+  "Kithungo/Kitundu",
+  "Kiteta/Kisau",
+  "Kako/Waia",
+  "Kalawa",
+  "Kiima Kiu/Kalanzoni",
+  "Mukaa",
+  "Kasikeu",
+  "Kee",
+  "Kilungu",
+  "Ilima",
+  "Ukia",
+  "Nzaui/Kilili/Kalamba",
+  "Muvau/Kikumini",
+  "Kathonzweni",
+  "Mavindini",
+  "Kitise/Kithuki",
+  "Wote",
+  "Mbitini",
+  "Makindu",
+  "Kikumbulyu North",
+  "Kikumbulyu South",
+  "Nguumo",
+  "Nguu/Masumba",
+  "Emali/Mulala",
+  "Masongaleni",
+  "Mtito Andei",
+  "Thange",
+  "Ivingoni/Nzambani"
+];
 const OUTCOMES = ["support", "oppose", "undecided", "not_home", "refused"] as const;
 
 const SESSION_TYPES = [
