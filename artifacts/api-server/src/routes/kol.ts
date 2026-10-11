@@ -24,6 +24,7 @@ router.post("/", async (req, res) => {
   const { name, platform, handle, tier, influenceScore = 0, followerCount, alignment, ward, notes } = req.body;
   if (!name || !platform || !tier || followerCount === undefined) { res.status(400).json({ error: "name, platform, tier, followerCount required" }); return; }
   if (ward != null && ward !== "" && !isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
+  if (ward != null && ward !== "" && !isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   const [kol] = await db.insert(kolTable).values({ name, platform, handle, tier, influenceScore, followerCount, alignment: alignment ?? "neutral", ward, notes }).returning();
   res.status(201).json(kol);
 });
