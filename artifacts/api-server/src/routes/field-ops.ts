@@ -110,7 +110,7 @@ router.get("/coverage", async (req, res) => {
   }));
 });
 
-router.get("/stats, async (req, res) => {
+router.get("/stats", async (req, res) => {
   const sessions = await db.select().from(canvassSessionsTable).where(inArray(canvassSessionsTable.ward, WARDS));
   const validSessions = await db.select({ id: canvassSessionsTable.id }).from(canvassSessionsTable).where(inArray(canvassSessionsTable.ward, WARDS));
   const validSessionIds = validSessions.map(s => s.id);
