@@ -94,7 +94,7 @@ Generate 30-40 checklist items covering ALL of these domains:
 - Technology & Data (voter database, SMS platform, WhatsApp broadcast, reporting tools)
 - Candidate Welfare (schedule, security, transportation, health)
 
-Each item must be specific to Makueni Constituency and Hon. Stephen Mule's campaign. Assign weight "high" to critical pre-election requirements, "medium" to important items, "low" to nice-to-haves.`,
+Each item must relate to Makueni County services, public reporting, or operational readiness. Assign weight "high" to critical pre-election requirements, "medium" to important items, "low" to nice-to-haves.`,
         },
         {
           role: "user",
