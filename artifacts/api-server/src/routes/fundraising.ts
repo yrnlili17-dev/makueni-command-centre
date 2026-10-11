@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { db, fundraisingCampaignsTable, donationsTable, donorsTable, pledgesTable } from "@workspace/db";
 import { eq, sql, desc, ilike, or } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+const ALLOWED_WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const isMakueniWard = (ward: unknown) => typeof ward === "string" && (ALLOWED_WARDS.includes(ward) || ward === "county-wide");
+const isOutOfCountyText = (value: unknown) => /\\b(matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\\b/i.test(String(value ?? ""));
 
 const router = Router();
 
@@ -63,6 +67,8 @@ router.get("/campaigns", async (req, res) => {
 router.post("/campaigns", async (req, res) => {
   const { name, description, goalAmount, startDate, endDate } = req.body;
   if (!name) { res.status(400).json({ error: "name required" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
+  if (isOutOfCountyText([name, email, notes, ...(tags ?? [])].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
   const [campaign] = await db.insert(fundraisingCampaignsTable)
     .values({ name, description, goalAmount: goalAmount ?? 0, startDate, endDate, status: "active", raisedAmount: 0 })
     .returning();
@@ -93,7 +99,7 @@ router.delete("/campaigns/:id", async (req, res) => {
 // ── Donors ─────────────────────────────────────────────────────────────────
 router.get("/donors", async (req, res) => {
   const { search, ward, tier, type } = req.query as Record<string, string>;
-  let rows = await db.select().from(donorsTable).orderBy(desc(donorsTable.totalGiven));
+  let rows = (await db.select().from(donorsTable).orderBy(desc(donorsTable.totalGiven))).filter(d => isMakueniWard(d.ward) && !isOutOfCountyText([d.name, d.email, d.notes, ...(d.tags ?? [])].join(" ")));
   if (search) {
     const s = search.toLowerCase();
     rows = rows.filter(d => d.name.toLowerCase().includes(s) || (d.phone ?? "").includes(s) || (d.email ?? "").toLowerCase().includes(s));
@@ -118,6 +124,8 @@ router.patch("/donors/:id", async (req, res) => {
   ["name", "phone", "email", "ward", "type", "tier", "notes", "tags"].forEach(f => {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   });
+  if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
+  if (isOutOfCountyText([updates.name, updates.email, updates.notes, ...(Array.isArray(updates.tags) ? updates.tags : [])].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
   const [donor] = await db.update(donorsTable).set(updates).where(eq(donorsTable.id, parseInt(req.params.id))).returning();
   if (!donor) { res.status(404).json({ error: "Not found" }); return; }
   res.json(donor);
@@ -131,7 +139,7 @@ router.delete("/donors/:id", async (req, res) => {
 // ── Donations ──────────────────────────────────────────────────────────────
 router.get("/donations", async (req, res) => {
   const { campaignId, donorId } = req.query as Record<string, string>;
-  let rows = await db.select().from(donationsTable).orderBy(desc(donationsTable.receivedAt));
+  let rows = (await db.select().from(donationsTable).orderBy(desc(donationsTable.receivedAt))).filter(d => isMakueniWard(d.ward) && !isOutOfCountyText([d.donorName, d.notes, d.reference].join(" ")));
   if (campaignId) rows = rows.filter(r => r.campaignId === parseInt(campaignId));
   if (donorId) rows = rows.filter(r => r.donorId === parseInt(donorId));
   res.json(rows);
@@ -140,6 +148,8 @@ router.get("/donations", async (req, res) => {
 router.post("/donations", async (req, res) => {
   const { campaignId, donorId, donorName, amount, channel, reference, ward, notes } = req.body;
   if (!donorName || !amount) { res.status(400).json({ error: "donorName and amount required" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
+  if (isOutOfCountyText([donorName, notes, reference].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
 
   const [donation] = await db.insert(donationsTable)
     .values({ campaignId: campaignId ?? null, donorId: donorId ?? null, donorName, amount: parseInt(amount), channel: channel ?? "cash", reference, ward, notes })
@@ -323,12 +333,12 @@ router.get("/insights", async (req, res) => {
       type: Number(majorDonors?.count ?? 0) < 5 ? "warning" : "success",
       title: `${Number(majorDonors?.count ?? 0)} major donors — KES ${Number(majorDonors?.total ?? 0).toLocaleString()} contributed`,
       body: `Major donors contribute ${raised > 0 ? Math.round((Number(majorDonors?.total ?? 0) / raised) * 100) : 0}% of total raised`,
-      action: "Identify and cultivate 3 more major donor prospects from KOL network",
+      action: "Review recorded contributions and reconcile all verified entries",
     },
     {
       type: "info",
-      title: `${Number(donorCount?.count ?? 0)} registered donors across 5 wards`,
-      body: "Donor registry enables repeat-giving and targeted outreach",
+      title: `${Number(donorCount?.count ?? 0)} registered donors across Makueni County`,
+      body: "Donor registry supports county-wide finance reconciliation and transparent reporting",
       action: "Map donors by ward — identify coverage gaps and grassroots opportunities",
     },
   ];
