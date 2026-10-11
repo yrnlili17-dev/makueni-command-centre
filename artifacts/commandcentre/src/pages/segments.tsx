@@ -33,7 +33,7 @@ const DEMOGRAPHIC_TYPES = [
   { key: "diaspora",         label: "DIASPORA VOTERS",    icon: "Plane",        description: "Nairobi-based, return to vote",       color: "#22D3EE" },
   { key: "opinion_leaders",  label: "OPINION LEADERS",    icon: "Star",         description: "Chiefs, headteachers, pastors",       color: "#A78BFA" },
   { key: "wiper_loyalists",  label: "WIPER LOYALISTS",    icon: "Shield",       description: "Wiper party card holders",            color: "#DB143C" },
-  { key: "market_traders",   label: "MARKET TRADERS",     icon: "ShoppingBag",  description: "Tala, Katangi & Mbiuni markets",      color: "#FB923C" },
+  { key: "market_traders",   label: "MARKET TRADERS",     icon: "ShoppingBag",  description: "Wote, Makindu and county markets",      color: "#FB923C" },
 ] as const;
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -158,7 +158,7 @@ export default function Segments() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-base font-bold tracking-widest">AUDIENCE SEGMENTATION</h1>
-          <p className="text-[9px] font-mono text-muted-foreground mt-1 tracking-widest">TARGETING ENGINE · MATUNGULU CONSTITUENCY</p>
+          <p className="text-[9px] font-mono text-muted-foreground mt-1 tracking-widest">SEGMENT MANAGEMENT · MAKUENI COUNTY</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
@@ -253,7 +253,7 @@ export default function Segments() {
                 <label className="text-[10px] font-mono text-muted-foreground">WARD</label>
                 <select value={form._ward ?? ""} onChange={e => setForm(p => ({ ...p, _ward: e.target.value }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
                   <option value="">ALL WARDS</option>
-                  {["Tala","Makueni West","Makueni North","Makueni East","Kyeleni"].map(w => <option key={w} value={w}>{w}</option>)}
+                  {WARDS.map(w => <option key={w} value={w}>{w}</option>)}
                 </select>
               </div>
             )}
@@ -291,7 +291,7 @@ export default function Segments() {
                   <label className="text-[10px] font-mono text-muted-foreground">WARD FILTER</label>
                   <select value={form._ward ?? ""} onChange={e => setForm(p => ({ ...p, _ward: e.target.value }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
                     <option value="">ALL WARDS</option>
-                    {["Tala","Makueni West","Makueni North","Makueni East","Kyeleni"].map(w => <option key={w} value={w}>{w}</option>)}
+                    {WARDS.map(w => <option key={w} value={w}>{w}</option>)}
                   </select>
                 </div>
                 {segmentType === "behavioral" && (
