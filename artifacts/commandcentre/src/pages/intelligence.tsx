@@ -41,77 +41,21 @@ type Tab = "feed" | "queue" | "rebuttal" | "platforms" | "competitors" | "warroo
 // ─── narrative playbook (core storylines; also grounds all AI generation) ─────
 
 const NARRATIVE_PLAYBOOK = [
-  {
-    tag: "PRIMARY",
-    title: "Development & Reliability",
-    core: "A trusted engineer to fix Makueni's basics — water, roads, jobs.",
-    lines: [
-      { lang: "EN", text: "Mwanamule: Mhandisi wa Maendeleo, Komboa Makueni." },
-      { lang: "EN", text: "Under the Umbrella, Makueni Must Move Forward." },
-      { lang: "SW/KAM", text: "Mwanamule, Mhandisi wa Kweli – Tũkomboe Makueni, tũtwe na maji, njia na kasi ya kazi." },
-      { lang: "KAM", text: "Mwanamule: Mũtumia wa nesa, twambie Makueni ĩĩsye mbele." },
-    ],
-    why: "Links his biomedical engineer credibility to fixing water, roads, health — concrete issues every ward feels.",
-  },
-  {
-    tag: "YOUTH",
-    title: "Youth & Jobs",
-    core: "The youth are the engine; the MP is the connector.",
-    lines: [
-      { lang: "EN", text: "Mwanamule: Empowering Youth, Building Makueni's Future." },
-      { lang: "SW/KAM", text: "Vijana Kwanza, Kazi Kwanza – Mwanamule aũsya matalanta ma Makueni." },
-      { lang: "SW/KAM", text: "Mwanamule na Vijana: Tũsye na Kazi, Siyo Ahadi Tupu." },
-    ],
-    why: "Speaks to 75,000 youth; keeps it about practical empowerment (skills, hustles, bodaboda, ICT).",
-  },
-  {
-    tag: "ISSUE",
-    title: "Water & Roads",
-    core: "No more excuses on water and roads.",
-    lines: [
-      { lang: "EN", text: "Maji, Barabara, Kazi – Mwanamule Delivers for Makueni." },
-      { lang: "SW/KAM", text: "Maji kwa Boma, Barabara kwa Soko – Mwanamule Atũnge Makueni." },
-      { lang: "KAM", text: "Tũtandĩkĩe na Maji na Barabara – Mũtumia ni Mwanamule." },
-    ],
-    why: "Directly matches top grievances: clean water and infrastructure.",
-  },
-  {
-    tag: "INTEGRITY",
-    title: "Integrity & Oversight",
-    core: "A serious MP who fights for Makueni's share in Nairobi.",
-    lines: [
-      { lang: "EN", text: "Your Voice in Nairobi, Your Defender in Makueni." },
-      { lang: "EN", text: "Mwanamule: Maendeleo Bila Ulaghai." },
-      { lang: "SW/KAM", text: "Mwanamule: Sauti ya Makueni Bungeni, Mlinzi wa Fedha za Wenyeji." },
-      { lang: "SW/KAM", text: "Maendeleo na Ukweli – Sio Siasa za Porojo." },
-    ],
-    why: "Distinguishes him from 'holiday MPs'; ties to constitutional mandate pillar.",
-  },
-  {
-    tag: "LOCAL PRIDE",
-    title: "Homegrown Leadership",
-    core: "One of us, who knows our roads, our churches, our quarries.",
-    lines: [
-      { lang: "EN", text: "From Makueni, For Makueni – Mwanamule Under the Umbrella." },
-      { lang: "SW/KAM", text: "Mwanamule wa Kitũi kya Makueni – Twĩtwe na Mũtumia ĩtũ." },
-      { lang: "KAM", text: "Mwanamule: Mwana wa Makueni, Mwana wa Kila Kijiji." },
-    ],
-    why: "Taps into local patronage and home-ward advantage (Makueni West).",
-  },
-] as const;
+  { tag: "WATER", title: "Water Services", core: "Publish verified updates on water access, repairs and project timelines.", lines: [{ lang: "EN", text: "Makueni County: verified water-service updates and next steps." }, { lang: "SW", text: "Makueni County: taarifa zilizothibitishwa kuhusu huduma za maji." }], why: "Use source-backed public-service information and clearly identify unresolved issues." },
+  { tag: "ROADS", title: "Roads & Infrastructure", core: "Track road maintenance, access and documented project progress.", lines: [{ lang: "EN", text: "Makueni County: road maintenance updates based on official records." }, { lang: "SW", text: "Makueni County: taarifa za matengenezo ya barabara kutoka rekodi rasmi." }], why: "Report verified status, responsible department and the date of the latest update." },
+  { tag: "HEALTH", title: "Health Services", core: "Share confirmed facility, staffing and service-delivery updates.", lines: [{ lang: "EN", text: "Makueni County: confirmed health-service information." }, { lang: "SW", text: "Makueni County: taarifa zilizothibitishwa kuhusu huduma za afya." }], why: "Distinguish official information from unverified reports." },
+  { tag: "BUDGET", title: "Budgets & Accountability", core: "Link public claims to approved budgets, reports and source documents.", lines: [{ lang: "EN", text: "Makueni County: follow the evidence, budget and published results." }, { lang: "SW", text: "Makueni County: fuatilia ushahidi, bajeti na matokeo yaliyochapishwa." }], why: "Support transparent public understanding of county services." },
+  { tag: "COMMUNITY", title: "Community Issues", core: "Collect service requests and publish verified responses without political targeting.", lines: [{ lang: "EN", text: "Makueni County: report a service issue and follow its verified status." }, { lang: "SW", text: "Makueni County: ripoti tatizo la huduma na ufuatilie hali yake." }], why: "Keep updates factual, accessible and focused on residents and services." },
+] as const;;
 
-const PLAYBOOK_WARDS = [
-  { ward: "Tala", focus: "Markets, youth, bodaboda, security" },
-  { ward: "Makueni West / North / East", focus: "Water, coffee prices, roads, bursaries" },
-  { ward: "Kyeleni", focus: "Water, feeder roads, security, quarry safety" },
-] as const;
+const PLAYBOOK_WARDS = WARDS.map(ward => ({ ward, focus: "County services, development projects and public accountability" })) as const;;
 
 const PLAYBOOK_CHANNELS = [
-  { channel: "Posters / Billboards", guidance: "Short bilingual lines. Top: \"Komboa Kenya\" · Bottom: \"Komboa Makueni na Mwanamule – Maji, Barabara, Kazi.\"" },
-  { channel: "Barazas / Church", guidance: "Candidate leans into Kikamba versions; MC uses Kiswahili and English." },
-  { channel: "Online", guidance: "Youth variant: \"Vijana Kwanza, Kazi Kwanza – Mwanamule Makueni 2027.\"" },
-  { channel: "Offline (markets)", guidance: "Water / roads + integrity lines." },
-] as const;
+  { channel: "Official website", guidance: "Publish verified county updates with source links and dates." },
+  { channel: "Public notices", guidance: "Use accessible language and identify the responsible county department." },
+  { channel: "Community meetings", guidance: "Record questions, decisions and follow-up actions neutrally." },
+  { channel: "Online channels", guidance: "Correct misinformation with evidence and avoid unverified claims." },
+] as const;;
 
 // ─── severity ────────────────────────────────────────────────────────────────
 
