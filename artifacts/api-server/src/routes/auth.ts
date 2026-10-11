@@ -144,6 +144,13 @@ router.get("/me", async (req, res) => {
     return;
   }
 
+  if (!isEmergencySession(req) && (user.status === "suspended" || user.status === "inactive")) {
+    req.session.destroy(() => {});
+    res.clearCookie("connect.sid");
+    res.status(403).json({ error: "Account disabled" });
+    return;
+  }
+
   if (isEmergencySession(req)) {
     res.json({
       user: sanitizeUser(user),

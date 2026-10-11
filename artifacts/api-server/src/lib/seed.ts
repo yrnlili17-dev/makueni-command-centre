@@ -238,12 +238,20 @@ export async function seedDefaultRoles(): Promise<void> {
 }
 
 export async function seedDefaultConfig(): Promise<void> {
+  // Migrate only untouched legacy defaults; preserve any administrator-customized values.
+  await db.execute(sql`UPDATE ${systemConfigTable} SET value = 'Prof. Philip Kaloki', updated_at = now()
+    WHERE key = 'candidate.name' AND value = 'Hon. Stephen Mule'`);
+  await db.execute(sql`UPDATE ${systemConfigTable} SET value = 'Gubernatorial Candidate — Makueni County 2027', updated_at = now()
+    WHERE key = 'candidate.title' AND value = 'MNA — Makueni Constituency'`);
+  await db.execute(sql`UPDATE ${systemConfigTable} SET value = 'Wote, Makueni County', updated_at = now()
+    WHERE key = 'campaign.headquarters' AND value = 'Tala, Makueni Constituency'`);
+
   const existing = await db.select().from(systemConfigTable).limit(1);
   if (existing.length > 0) return;
 
   const defaults = [
-    { key: "candidate.name", value: "Hon. Stephen Mule", category: "campaign", description: "Candidate's full name displayed across the system" },
-    { key: "candidate.title", value: "MNA — Makueni Constituency", category: "campaign", description: "Candidate's title and constituency label" },
+    { key: "candidate.name", value: "Prof. Philip Kaloki", category: "campaign", description: "Candidate's full name displayed across the system" },
+    { key: "candidate.title", value: "Gubernatorial Candidate — Makueni County 2027", category: "campaign", description: "Candidate's title and county label" },
     { key: "candidate.party", value: "", category: "campaign", description: "Political party affiliation" },
     { key: "campaign.election_date", value: "2027-08-10", category: "campaign", description: "Target election date (YYYY-MM-DD)" },
     { key: "campaign.slogan", value: "", category: "campaign", description: "Campaign slogan displayed on reports and exports" },

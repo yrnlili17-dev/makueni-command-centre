@@ -5,7 +5,16 @@ import {
   Download, ChevronRight, Link, Wifi, WifiOff, BarChart2, Filter,
 } from "lucide-react";
 
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+const GEOGRAPHY = [
+  { constituency: "Mbooni", wards: ["Tulimani", "Mbooni", "Kithungo/Kitundu", "Kiteta/Kisau", "Kako/Waia", "Kalawa"] },
+  { constituency: "Kilome", wards: ["Kiima Kiu/Kalanzoni", "Mukaa", "Kasikeu"] },
+  { constituency: "Kaiti", wards: ["Kee", "Kilungu", "Ilima", "Ukia"] },
+  { constituency: "Makueni", wards: ["Nzaui/Kilili/Kalamba", "Muvau/Kikumini", "Kathonzweni", "Mavindini", "Kitise/Kithuki", "Wote", "Mbitini"] },
+  { constituency: "Kibwezi West", wards: ["Makindu", "Kikumbulyu North", "Kikumbulyu South", "Nguumo", "Nguu/Masumba", "Emali/Mulala"] },
+  { constituency: "Kibwezi East", wards: ["Masongaleni", "Mtito Andei", "Thange", "Ivingoni/Nzambani"] },
+] as const;
+const CONSTITUENCIES = GEOGRAPHY.map(({ constituency }) => constituency);
+const WARDS = GEOGRAPHY.flatMap(({ wards }) => [...wards]);
 const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 const API = `${BASE_URL}/api/voter-registry`;
 
@@ -430,7 +439,7 @@ function CaptureTab() {
                 <option value="">— Ward —</option>
                 {WARDS.map(w => <option key={w}>{w}</option>)}
               </Select>
-              <Input label="SUB-COUNTY" placeholder="Makueni" value={form.subCounty ?? ""} onChange={e => setForm(p => ({ ...p, subCounty: e.target.value }))} />
+              <Select label="CONSTITUENCY / SUB-COUNTY" value={form.subCounty ?? ""} onChange={e => setForm(p => ({ ...p, subCounty: e.target.value }))}><option value="">— Constituency —</option>{CONSTITUENCIES.map(c => <option key={c} value={c}>{c}</option>)}</Select>
               <div className="col-span-2">
                 <Input label="POLLING STATION" placeholder="Tala Primary School" value={form.pollingStation ?? ""} onChange={e => setForm(p => ({ ...p, pollingStation: e.target.value }))} />
               </div>
@@ -905,7 +914,7 @@ export default function VotersDb() {
           </p>
         </div>
         <div className="font-mono text-[10px] text-muted-foreground border border-border px-3 py-1.5 bg-card">
-          MATUNGULU — 5 WARDS · 165 POLLING STATIONS
+          MAKUENI COUNTY — 6 CONSTITUENCIES · 30 WARDS
         </div>
       </div>
 

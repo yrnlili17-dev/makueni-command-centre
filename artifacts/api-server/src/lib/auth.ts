@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import type { Request, Response, NextFunction } from "express";
 import { db, adminUsersTable, adminRolesTable } from "@workspace/db";
 import type { AdminUser } from "@workspace/db";
-import { eq, or } from "drizzle-orm";
+import { eq, or, sql } from "drizzle-orm";
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -154,10 +154,16 @@ export async function getSessionUser(req: Request): Promise<AdminUser | null> {
 
 export async function findByIdentifier(identifier: string): Promise<AdminUser | null> {
   const id = identifier.trim();
+  const normalized = id.toLowerCase();
   const [user] = await db
     .select()
     .from(adminUsersTable)
-    .where(or(eq(adminUsersTable.username, id.toLowerCase()), eq(adminUsersTable.email, id)))
+    .where(
+      or(
+        sql`lower(${adminUsersTable.username}) = ${normalized}`,
+        sql`lower(${adminUsersTable.email}) = ${normalized}`,
+      ),
+    )
     .limit(1);
   return user ?? null;
 }
