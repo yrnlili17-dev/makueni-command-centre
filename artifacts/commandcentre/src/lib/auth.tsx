@@ -74,9 +74,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const can = useCallback((module: string, level: PermLevel = "read") => {
+    // Older database rows may store the system role as SUPER_ADMIN,
+    // super_admin, or super-admin. Normalize those variants in the UI too.
+    const normalizedRole = (user?.role ?? "").trim().toLowerCase().replace(/[_\\s]+/g, "-");
+    if (normalizedRole === "super-admin" || normalizedRole === "superadmin") return true;
     const have = permissions[module] ?? "none";
     return level === "read" ? have === "read" || have === "write" : have === "write";
-  }, [permissions]);
+  }, [permissions, user?.role]);
 
   return (
     <AuthContext.Provider value={{ user, permissions, loading, login, logout, refresh, can }}>
