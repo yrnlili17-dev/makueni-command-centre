@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db, fundraisingCampaignsTable, donationsTable, donorsTable, pledgesTable } from "@workspace/db";
 import { eq, sql, desc, ilike, or } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
-const ALLOWED_WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const ALLOWED_WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 const isMakueniWard = (ward: unknown) => typeof ward === "string" && (ALLOWED_WARDS.includes(ward) || ward === "county-wide");
 const isOutOfCountyText = (value: unknown) => /\b(mule|matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\b/i.test(String(value ?? ""));
 
@@ -41,8 +41,6 @@ router.post("/campaigns", async (req, res) => {
   const { name, description, goalAmount, startDate, endDate } = req.body;
   if (!name) { res.status(400).json({ error: "name required" }); return; }
   if (isOutOfCountyText([name, description].join(" "))) { res.status(400).json({ error: "Only Makueni County campaigns are accepted" }); return; }
-  if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
-  if (isOutOfCountyText([name, email, notes, ...(tags ?? [])].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
   const [campaign] = await db.insert(fundraisingCampaignsTable)
     .values({ name, description, goalAmount: goalAmount ?? 0, startDate, endDate, status: "active", raisedAmount: 0 })
     .returning();
