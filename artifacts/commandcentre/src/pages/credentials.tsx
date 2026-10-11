@@ -13,7 +13,38 @@ const RECORD_CATEGORIES = ["agriculture", "education", "health", "infrastructure
 const RECORD_STATUSES = ["passed", "pending", "defeated", "withdrawn", "in_committee", "enacted"] as const;
 const ACH_CATEGORIES = ["infrastructure", "education", "health", "water", "security", "youth", "women", "agriculture", "environment", "governance", "economy", "housing"];
 const ACH_STATUSES = ["completed", "ongoing", "planned"] as const;
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+const WARDS = [
+  "Tulimani",
+  "Mbooni",
+  "Kithungo/Kitundu",
+  "Kiteta/Kisau",
+  "Kako/Waia",
+  "Kalawa",
+  "Kiima Kiu/Kalanzoni",
+  "Mukaa",
+  "Kasikeu",
+  "Kee",
+  "Kilungu",
+  "Ilima",
+  "Ukia",
+  "Nzaui/Kilili/Kalamba",
+  "Muvau/Kikumini",
+  "Kathonzweni",
+  "Mavindini",
+  "Kitise/Kithuki",
+  "Wote",
+  "Mbitini",
+  "Makindu",
+  "Kikumbulyu North",
+  "Kikumbulyu South",
+  "Nguumo",
+  "Nguu/Masumba",
+  "Emali/Mulala",
+  "Masongaleni",
+  "Mtito Andei",
+  "Thange",
+  "Ivingoni/Nzambani"
+];
 const RESEARCH_TOPICS = ["Infrastructure Development", "Education Policy", "Health Services", "Water & Sanitation", "Youth Employment", "Women Empowerment", "Agriculture", "Security", "Devolution", "Fiscal Policy", "Environment", "Housing"];
 
 type Tab = "overview" | "records" | "achievements" | "research";
@@ -220,7 +251,7 @@ export default function Credentials() {
     const lines: string[] = [
       "═══════════════════════════════════════════════════════════════",
       "  LEGISLATIVE CREDENTIALS HUB",
-      "  HON. STEPHEN MULE — MATUNGULU CONSTITUENCY, MACHAKOS COUNTY",
+      "  MAKUENI COUNTY · SIX CONSTITUENCIES · THIRTY WARDS",
       "═══════════════════════════════════════════════════════════════",
       `  Generated: ${new Date().toLocaleString("en-KE")}`,
       "",
@@ -290,7 +321,7 @@ export default function Credentials() {
         <div className="flex items-start justify-between no-print">
           <div>
             <h1 className="text-xl font-bold tracking-widest">LEGISLATIVE CREDENTIALS HUB</h1>
-            <p className="text-[10px] font-mono text-muted-foreground mt-0.5">RECORD · ORGANISE · PUBLISH · HON. STEPHEN MULE MNA</p>
+            <p className="text-[10px] font-mono text-muted-foreground mt-0.5">MAKUENI COUNTY DEVELOPMENT & PUBLIC RECORDS</p>
           </div>
           <div className="flex gap-2 flex-wrap justify-end">
             <button onClick={handlePrint} className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs hover:bg-secondary"><Printer className="w-3 h-3" /> PRINT</button>
@@ -322,7 +353,7 @@ export default function Credentials() {
               <div>
                 <p className="font-mono text-xs tracking-wider text-primary font-bold">AI RESEARCH IN PROGRESS</p>
                 <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
-                  Analysing Hon. Stephen Mule's 13th Parliament record · Generating legislative credentials & achievements · This takes 20–40 seconds
+                  Researching Makueni County development records · Only verified, source-backed information should be recorded
                 </p>
               </div>
             </div>
@@ -413,10 +444,10 @@ export default function Credentials() {
                       <BookOpen className="w-6 h-6 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h2 className="font-bold tracking-wider mb-1">HON. STEPHEN MULE</h2>
-                      <p className="font-mono text-[10px] text-muted-foreground mb-2">MEMBER OF THE NATIONAL ASSEMBLY · MATUNGULU CONSTITUENCY · MACHAKOS COUNTY</p>
+                      <h2 className="font-bold tracking-wider mb-1">MAKUENI COUNTY</h2>
+                      <p className="font-mono text-[10px] text-muted-foreground mb-2">COUNTY DEVELOPMENT RECORDS · MAKUENI COUNTY, KENYA</p>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        This hub records, organises, and publishes the legislative achievements and development credentials of Hon. Stephen Mule. All records are evidence-backed and ready for campaign use, media release, and public accountability reporting.
+                        This hub organises Makueni County public records, development projects, service-delivery milestones and evidence-backed reports for county-level accountability.
                       </p>
                       <div className="flex gap-4 mt-3">
                         <div><p className="text-xl font-bold">{summary?.records?.total ?? 0}</p><p className="font-mono text-[9px] text-muted-foreground">RECORDS</p></div>
@@ -724,7 +755,7 @@ export default function Credentials() {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2 space-y-1">
                     <label className="text-[10px] font-mono text-muted-foreground">TITLE *</label>
-                    <input value={achForm.title ?? ""} onChange={e => setAchForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Tala–Ikombe Road Tarmacking, Phase 1" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+                    <input value={achForm.title ?? ""} onChange={e => setAchForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Wote water supply rehabilitation (attach official source)" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-mono text-muted-foreground">YEAR *</label>
