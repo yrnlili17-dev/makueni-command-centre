@@ -24,11 +24,11 @@ interface WardPrediction {
   turnoutRate: number;
   effectiveSupportShare: number;
   predictedVotes: number;
-  predictedMuleVotes: number;
+  predictedCandidateVotes: number;
   gotvUpside: number;
   gotvRank: number;
   actualVotesCast: number;
-  actualMuleVotes: number;
+  actualCandidateVotes: number;
   actualTurnoutRate: number;
   reportingStations: number;
 }
@@ -42,8 +42,8 @@ interface Prediction {
     registered: number;
     predictedVotes: number;
     predictedTurnoutRate: number;
-    predictedMuleVotes: number;
-    predictedMuleShare: number;
+    predictedCandidateVotes: number;
+    predictedCandidateShare: number;
     topGotvWard: string | null;
     topGotvUpside: number;
   };
@@ -92,7 +92,7 @@ export default function Turnout() {
           assumptions: Object.entries(edits).map(([ward, v]) => ({
             ward,
             expectedTurnoutRate: v.turnout,
-            muleSupportShare: v.support,
+            candidateSupportShare: v.support,
           })),
         }),
       }),
@@ -114,7 +114,7 @@ export default function Turnout() {
             <TrendingUp className="w-5 h-5 text-primary" /> VOTER TURNOUT FORECAST
           </h1>
           <p className="font-mono text-[11px] text-muted-foreground mt-1">
-            Ward-level projection · registered voters × expected turnout × support · Hon. Stephen Mule
+            Makueni County ward-level turnout estimates · based on registered-voter records
           </p>
         </div>
         <button
@@ -139,15 +139,15 @@ export default function Turnout() {
               sub={`${fmt(data.totals.predictedVotes)} OF ${fmt(data.totals.registered)} VOTERS`}
             />
             <StatCard
-              label="PROJECTED MULE VOTES"
-              value={fmt(data.totals.predictedMuleVotes)}
-              sub={`${data.totals.predictedMuleShare}% PROJECTED VOTE SHARE`}
+              label="PROJECTED CANDIDATE VOTES"
+              value={fmt(data.totals.predictedCandidateVotes)}
+              sub={`${data.totals.predictedCandidateShare}% PROJECTED VOTE SHARE`}
               accent="text-green-400"
             />
             <StatCard
               label="REGISTERED VOTERS"
               value={fmt(data.totals.registered)}
-              sub={`${data.wards.length} WARDS · MATUNGULU`}
+              sub={`${data.wards.length} WARDS · MAKUENI COUNTY`}
             />
             <StatCard
               label="TOP GOTV PRIORITY"
@@ -254,7 +254,7 @@ export default function Turnout() {
                           />
                         </td>
                         <td className="p-3 text-right font-mono">{fmt(w.predictedVotes)}</td>
-                        <td className="p-3 text-right font-mono text-green-400">{fmt(w.predictedMuleVotes)}</td>
+                        <td className="p-3 text-right font-mono text-green-400">{fmt(w.predictedCandidateVotes)}</td>
                         <td className="p-3 text-right font-mono text-yellow-400">+{fmt(w.gotvUpside)}</td>
                         {hasTally && (
                           <td className="p-3 text-right font-mono text-muted-foreground">
@@ -270,9 +270,9 @@ export default function Turnout() {
                     <td className="p-3 font-bold tracking-wider">TOTAL</td>
                     <td className="p-3 text-right font-bold">{fmt(data.totals.registered)}</td>
                     <td className="p-3 text-center font-bold">{data.totals.predictedTurnoutRate}%</td>
-                    <td className="p-3 text-center font-bold">{data.totals.predictedMuleShare}%</td>
+                    <td className="p-3 text-center font-bold">{data.totals.predictedCandidateShare}%</td>
                     <td className="p-3 text-right font-bold">{fmt(data.totals.predictedVotes)}</td>
-                    <td className="p-3 text-right font-bold text-green-400">{fmt(data.totals.predictedMuleVotes)}</td>
+                    <td className="p-3 text-right font-bold text-green-400">{fmt(data.totals.predictedCandidateVotes)}</td>
                     <td className="p-3 text-right font-bold text-yellow-400">
                       +{fmt(data.wards.reduce((s, w) => s + w.gotvUpside, 0))}
                     </td>

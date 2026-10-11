@@ -1,21 +1,16 @@
 import { Router } from "express";
 import { db, pollingStationsTable, tallyResultsTable, electionEventsTable } from "@workspace/db";
 import { eq, sql, desc, and, inArray } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 
 const router = Router();
 
-const CANDIDATES = [
-  { name: "Hon. Stephen Mule", party: "ODM" },
-  { name: "Hon. Julius Malombe", party: "UDA" },
-  { name: "George Mutisya Mwangi", party: "Independent" },
-  { name: "Lucy Ndunda Muema", party: "Wiper" },
-];
-
 // ── Summary / HQ Tally ─────────────────────────────────────────────────────
 router.get("/summary", async (req, res) => {
-  const totalStations = await db.select({ count: sql<number>`count(*)` }).from(pollingStationsTable);
-  const submittedStations = await db.select({ count: sql<number>`count(distinct station_code)` }).from(tallyResultsTable);
-  const verifiedStations = await db.select({ count: sql<number>`count(distinct station_code)` }).from(tallyResultsTable).where(eq(tallyResultsTable.status, "verified"));
+  const totalStations = await db.select({ count: sql<number>`count(*)` }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
+  const submittedStations = await db.select({ count: sql<number>`count(distinct ${tallyResultsTable.stationCode})` }).from(tallyResultsTable).innerJoin(pollingStationsTable, eq(tallyResultsTable.stationCode, pollingStationsTable.code)).where(inArray(pollingStationsTable.ward, WARDS));
+  const verifiedStations = await db.select({ count: sql<number>`count(distinct ${tallyResultsTable.stationCode})` }).from(tallyResultsTable).innerJoin(pollingStationsTable, eq(tallyResultsTable.stationCode, pollingStationsTable.code)).where(and(eq(tallyResultsTable.status, "verified"), inArray(pollingStationsTable.ward, WARDS)));
 
   const tallyByCandidate = await db
     .select({
@@ -25,6 +20,8 @@ router.get("/summary", async (req, res) => {
       verifiedVotes: sql<number>`coalesce(sum(case when status = 'verified' then votes else 0 end), 0)`,
     })
     .from(tallyResultsTable)
+    .innerJoin(pollingStationsTable, eq(tallyResultsTable.stationCode, pollingStationsTable.code))
+    .where(inArray(pollingStationsTable.ward, WARDS))
     .groupBy(tallyResultsTable.candidateName, tallyResultsTable.party)
     .orderBy(sql`sum(votes) desc`);
 
@@ -36,10 +33,11 @@ router.get("/summary", async (req, res) => {
     })
     .from(pollingStationsTable)
     .leftJoin(tallyResultsTable, eq(pollingStationsTable.code, tallyResultsTable.stationCode))
+    .where(inArray(pollingStationsTable.ward, WARDS))
     .groupBy(pollingStationsTable.ward);
 
-  const totalRegistered = await db.select({ total: sql<number>`coalesce(sum(registered_voters), 0)` }).from(pollingStationsTable);
-  const totalVotesCast = await db.select({ total: sql<number>`coalesce(sum(votes), 0)` }).from(tallyResultsTable).where(eq(tallyResultsTable.candidateName, CANDIDATES[0]!.name));
+  const totalRegistered = await db.select({ total: sql<number>`coalesce(sum(registered_voters), 0)` }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
+  const totalVotesCast = await db.select({ total: sql<number>`coalesce(sum(votes), 0)` }).from(tallyResultsTable).innerJoin(pollingStationsTable, eq(tallyResultsTable.stationCode, pollingStationsTable.code)).where(inArray(pollingStationsTable.ward, WARDS));
 
   res.json({
     totalStations: Number(totalStations[0]?.count ?? 0),
@@ -54,10 +52,10 @@ router.get("/summary", async (req, res) => {
 // ── Stations ───────────────────────────────────────────────────────────────
 router.get("/stations", async (req, res) => {
   const { ward, status } = req.query as Record<string, string>;
-  let query = db.select().from(pollingStationsTable).orderBy(pollingStationsTable.ward, pollingStationsTable.code);
+  let query = db.select().from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS)).orderBy(pollingStationsTable.ward, pollingStationsTable.code);
   const rows = await query;
   let filtered = rows;
-  if (ward) filtered = filtered.filter(r => r.ward === ward);
+  if (ward) { if (!WARDS.includes(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } filtered = filtered.filter(r => r.ward === ward); }
   if (status) filtered = filtered.filter(r => r.status === status);
   res.json(filtered);
 });
@@ -74,6 +72,7 @@ router.patch("/stations/:id", async (req, res) => {
   ["code", "name", "ward", "registeredVoters", "streamCount", "agentName", "agentPhone", "status", "notes"].forEach(f => {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   });
+  if (updates.ward !== undefined && !WARDS.includes(String(updates.ward))) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   const [station] = await db.update(pollingStationsTable).set(updates).where(eq(pollingStationsTable.id, parseInt(req.params.id))).returning();
   if (!station) { res.status(404).json({ error: "Not found" }); return; }
   res.json(station);
@@ -82,7 +81,9 @@ router.patch("/stations/:id", async (req, res) => {
 // ── Tally Results ──────────────────────────────────────────────────────────
 router.get("/results", async (req, res) => {
   const { stationCode, status } = req.query as Record<string, string>;
-  let rows = await db.select().from(tallyResultsTable).orderBy(desc(tallyResultsTable.submittedAt));
+  const validStations = await db.select({ code: pollingStationsTable.code }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
+  const validCodes = new Set(validStations.map(station => station.code));
+  let rows = (await db.select().from(tallyResultsTable).orderBy(desc(tallyResultsTable.submittedAt))).filter(row => validCodes.has(row.stationCode));
   if (stationCode) rows = rows.filter(r => r.stationCode === stationCode);
   if (status) rows = rows.filter(r => r.status === status);
   res.json(rows);
@@ -95,7 +96,7 @@ router.post("/results", async (req, res) => {
   }
 
   const [station] = await db.select().from(pollingStationsTable).where(eq(pollingStationsTable.code, stationCode));
-  if (!station) { res.status(404).json({ error: "Station not found" }); return; }
+  if (!station || !WARDS.includes(station.ward)) { res.status(404).json({ error: "Makueni polling station not found" }); return; }
 
   await db.delete(tallyResultsTable).where(eq(tallyResultsTable.stationCode, stationCode));
 
@@ -141,7 +142,7 @@ router.delete("/results/:id", async (req, res) => {
 
 // ── Election Events ────────────────────────────────────────────────────────
 router.get("/events", async (req, res) => {
-  const rows = await db.select().from(electionEventsTable).orderBy(desc(electionEventsTable.createdAt));
+  const rows = (await db.select().from(electionEventsTable).orderBy(desc(electionEventsTable.createdAt))).filter(event => !event.ward || WARDS.includes(event.ward));
   res.json(rows);
 });
 
@@ -162,11 +163,13 @@ router.patch("/events/:id", async (req, res) => {
 
 // ── Workqueue ──────────────────────────────────────────────────────────────
 router.get("/workqueue", async (req, res) => {
-  const submittedCodes = (await db.select({ code: tallyResultsTable.stationCode }).from(tallyResultsTable).groupBy(tallyResultsTable.stationCode)).map(r => r.code);
+  const validStations = await db.select({ code: pollingStationsTable.code }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
+  const validCodes = new Set(validStations.map(s => s.code));
+  const submittedCodes = (await db.select({ code: tallyResultsTable.stationCode }).from(tallyResultsTable).groupBy(tallyResultsTable.stationCode)).map(r => r.code).filter(code => validCodes.has(code));
 
-  const unsubmittedStations = await db.select().from(pollingStationsTable).where(inArray(pollingStationsTable.status, ["pending", "open"]));
+  const unsubmittedStations = await db.select().from(pollingStationsTable).where(and(inArray(pollingStationsTable.status, ["pending", "open"]), inArray(pollingStationsTable.ward, WARDS)));
 
-  const pendingVerification = await db.select().from(tallyResultsTable).where(eq(tallyResultsTable.status, "submitted")).orderBy(tallyResultsTable.stationCode, desc(tallyResultsTable.submittedAt));
+  const pendingVerification = (await db.select().from(tallyResultsTable).where(eq(tallyResultsTable.status, "submitted")).orderBy(tallyResultsTable.stationCode, desc(tallyResultsTable.submittedAt))).filter(row => validCodes.has(row.stationCode));
 
   const uniquePending = Object.values(
     pendingVerification.reduce((acc, r) => { if (!acc[r.stationCode]) acc[r.stationCode] = r; return acc; }, {} as Record<string, typeof pendingVerification[0]>)
@@ -177,7 +180,9 @@ router.get("/workqueue", async (req, res) => {
 
 // ── Published Results ──────────────────────────────────────────────────────
 router.get("/published", async (req, res) => {
-  const verified = await db.select().from(tallyResultsTable).where(eq(tallyResultsTable.status, "verified")).orderBy(tallyResultsTable.candidateName);
+  const validStations = await db.select({ code: pollingStationsTable.code }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
+  const validCodes = new Set(validStations.map(station => station.code));
+  const verified = (await db.select().from(tallyResultsTable).where(eq(tallyResultsTable.status, "verified")).orderBy(tallyResultsTable.candidateName)).filter(row => validCodes.has(row.stationCode));
   const byCandidate: Record<string, { candidateName: string; party: string; totalVotes: number; stationCount: number }> = {};
   for (const r of verified) {
     if (!byCandidate[r.candidateName]) {

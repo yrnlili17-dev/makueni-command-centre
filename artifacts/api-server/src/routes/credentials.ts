@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { db, legislativeRecordsTable, achievementsTable, researchSessionsTable } from "@workspace/db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, inArray } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+const ALLOWED_WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
+const isMakueniWard = (ward: unknown) => typeof ward === "string" && (ALLOWED_WARDS.includes(ward) || ward === "county-wide" || ward === "all");
+const isOutOfCountyText = (value: unknown) => /\b(mule|matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\b/i.test(String(value ?? ""));
 import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
@@ -16,7 +20,7 @@ router.get("/records", async (req, res) => {
   if (published === "true") conditions.push(eq(legislativeRecordsTable.published, true));
   const where = conditions.length ? and(...conditions) : undefined;
   const records = await db.select().from(legislativeRecordsTable).where(where).orderBy(desc(legislativeRecordsTable.date));
-  res.json(records);
+  res.json(records.filter(r => !isOutOfCountyText([r.title, r.description, r.session, ...(Array.isArray(r.tags) ? r.tags : [])].join(" "))));
 });
 
 router.post("/records", async (req, res) => {
@@ -44,18 +48,20 @@ router.delete("/records/:id", async (req, res) => {
 
 router.get("/achievements", async (req, res) => {
   const { category, ward, published } = req.query as Record<string, string>;
-  const conditions = [];
+  const conditions = [inArray(achievementsTable.ward, [...ALLOWED_WARDS, "county-wide", "all"])];
   if (category) conditions.push(eq(achievementsTable.category, category));
-  if (ward && ward !== "all") conditions.push(eq(achievementsTable.ward, ward));
+  if (ward && ward !== "all") { if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } conditions.push(eq(achievementsTable.ward, ward)); }
   if (published === "true") conditions.push(eq(achievementsTable.published, true));
   const where = conditions.length ? and(...conditions) : undefined;
   const items = await db.select().from(achievementsTable).where(where).orderBy(desc(achievementsTable.year), desc(achievementsTable.createdAt));
-  res.json(items);
+  res.json(items.filter(r => !isOutOfCountyText([r.title, r.description, r.fundingSource, ...(Array.isArray(r.partnerAgencies) ? r.partnerAgencies : [])].join(" "))));
 });
 
 router.post("/achievements", async (req, res) => {
   const { title, description, category = "infrastructure", ward = "all", year, status = "completed", impactMetric, impactValue, budget, fundingSource, partnerAgencies = [], published = false, featured = false } = req.body;
   if (!title || !description || !year) { res.status(400).json({ error: "title, description, year required" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
+  if (isOutOfCountyText([title, description, fundingSource, ...(partnerAgencies ?? [])].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
   const [item] = await db.insert(achievementsTable).values({ title, description, category, ward, year, status, impactMetric, impactValue, budget, fundingSource, partnerAgencies, photos: [], published, featured }).returning();
   res.status(201).json(item);
 });
@@ -64,6 +70,8 @@ router.patch("/achievements/:id", async (req, res) => {
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   const fields = ["title","description","category","ward","year","status","impactMetric","impactValue","budget","fundingSource","partnerAgencies","published","featured"];
   fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+  if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
+  if (isOutOfCountyText([updates.title, updates.description, updates.fundingSource, ...(Array.isArray(updates.partnerAgencies) ? updates.partnerAgencies : [])].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
   const [item] = await db.update(achievementsTable).set(updates).where(eq(achievementsTable.id, parseInt(req.params.id))).returning();
   if (!item) { res.status(404).json({ error: "Not found" }); return; }
   res.json(item);
@@ -77,81 +85,48 @@ router.delete("/achievements/:id", async (req, res) => {
 // ─── Summary / Overview ───────────────────────────────────────────────────────
 
 router.get("/summary", async (req, res) => {
-  const [recStats] = await db.select({
-    total: sql<number>`count(*)`,
-    published: sql<number>`sum(case when ${legislativeRecordsTable.published} then 1 else 0 end)`,
-    passed: sql<number>`sum(case when ${legislativeRecordsTable.status} = 'passed' then 1 else 0 end)`,
-    bills: sql<number>`sum(case when ${legislativeRecordsTable.type} = 'bill' then 1 else 0 end)`,
-    motions: sql<number>`sum(case when ${legislativeRecordsTable.type} = 'motion' then 1 else 0 end)`,
-  }).from(legislativeRecordsTable);
-
-  const [achStats] = await db.select({
-    total: sql<number>`count(*)`,
-    published: sql<number>`sum(case when ${achievementsTable.published} then 1 else 0 end)`,
-    completed: sql<number>`sum(case when ${achievementsTable.status} = 'completed' then 1 else 0 end)`,
-  }).from(achievementsTable);
-
-  const byCategory = await db.select({
-    category: legislativeRecordsTable.category,
-    count: sql<number>`count(*)`,
-  }).from(legislativeRecordsTable).groupBy(legislativeRecordsTable.category).orderBy(desc(sql`count(*)`));
-
-  const featuredRecords = await db.select().from(legislativeRecordsTable).where(eq(legislativeRecordsTable.featured, true)).orderBy(desc(legislativeRecordsTable.date)).limit(5);
-  const featuredAchievements = await db.select().from(achievementsTable).where(eq(achievementsTable.featured, true)).orderBy(desc(achievementsTable.year)).limit(5);
-  const recentSessions = await db.select().from(researchSessionsTable).orderBy(desc(researchSessionsTable.createdAt)).limit(3);
-
+  const records = (await db.select().from(legislativeRecordsTable)).filter(r => !isOutOfCountyText([r.title, r.description, r.session, ...(Array.isArray(r.tags) ? r.tags : [])].join(" ")));
+  const achievements = (await db.select().from(achievementsTable)).filter(r => isMakueniWard(r.ward) && !isOutOfCountyText([r.title, r.description, r.fundingSource, ...(Array.isArray(r.partnerAgencies) ? r.partnerAgencies : [])].join(" ")));
+  const recentSessions = (await db.select().from(researchSessionsTable)).filter(r => !isOutOfCountyText([r.topic, r.query, r.response].join(" "))).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3);
+  const byCategoryMap = new Map<string, number>();
+  for (const r of records) byCategoryMap.set(r.category, (byCategoryMap.get(r.category) ?? 0) + 1);
   res.json({
-    records: { total: Number(recStats?.total ?? 0), published: Number(recStats?.published ?? 0), passed: Number(recStats?.passed ?? 0), bills: Number(recStats?.bills ?? 0), motions: Number(recStats?.motions ?? 0) },
-    achievements: { total: Number(achStats?.total ?? 0), published: Number(achStats?.published ?? 0), completed: Number(achStats?.completed ?? 0) },
-    byCategory: byCategory.map(r => ({ category: r.category, count: Number(r.count) })),
-    featuredRecords,
-    featuredAchievements,
+    records: { total: records.length, published: records.filter(r => r.published).length, passed: records.filter(r => r.status === "passed").length, bills: records.filter(r => r.type === "bill").length, motions: records.filter(r => r.type === "motion").length },
+    achievements: { total: achievements.length, published: achievements.filter(a => a.published).length, completed: achievements.filter(a => a.status === "completed").length },
+    byCategory: Array.from(byCategoryMap, ([category, count]) => ({ category, count })),
+    featuredRecords: records.filter(r => r.featured).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5),
+    featuredAchievements: achievements.filter(a => a.featured).sort((a, b) => Number(b.year) - Number(a.year)).slice(0, 5),
     recentSessions,
   });
 });
-
 // ─── AI Auto-Populate ─────────────────────────────────────────────────────────
 
-const CANDIDATE_BRIEF = `
-CANDIDATE: Hon. Stephen Mutinda Mule (Mwanamule)
-ROLE: Member of the National Assembly, Makueni Constituency, Machakos County, Kenya
-PARTY: Wiper Democratic Movement (Patriotic Front) | Symbol: Umbrella | Slogan: "Komboa Kenya"
-PROFESSION: Biomedical Engineer (15+ years) | Entrepreneur | Community leader
-HOME WARD: Makueni West
-CONSTITUENCY: 78,000 registered voters | 5 wards: Tala (19k), Makueni West (26k), Makueni North (15k), Makueni East (12k), Kyeleni (10k) | 165 polling stations
-KEY LOCAL ISSUES: Water access, rural road rehabilitation, youth unemployment, quality health facilities, agriculture support
-ECONOMIC BASE: Coffee, maize & beans, horticulture, quarry stones, ballast mining
-PARLIAMENTARY TERM: 13th Parliament (2022–2027)
-COMMITTEES: Transport, Public Works & Housing; Health; Devolution & ASALs (approximate from constituency profile)
-CDF ALLOCATION: ~KES 120M/year | Has overseen 40+ CDF projects
-NOTABLE: Engineer background — strong on infrastructure bills; close ties with Ukambani region MPs; actively engaged on water and roads for Makueni
-`.trim();
+const COUNTY_BRIEF = "SCOPE: Makueni County, Kenya. Six constituencies: Mbooni, Kilome, Kaiti, Makueni, Kibwezi West and Kibwezi East; 30 county assembly wards. Organise county development records and service delivery. Never invent projects, budgets, dates, statistics or legislative records. Omit claims without primary-source evidence. Prefer official county publications, County Assembly records, Controller of Budget reports and KNBS.";
 
 router.post("/ai-populate", async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
 
   try {
     // Run both AI calls in parallel — strict compact schema to stay within token budget
-    const RECORDS_PROMPT = `You are a database builder for a Kenyan MNA credentials system.
+    const RECORDS_PROMPT = `You are a public-records assistant for Makueni County, Kenya.
 
-${CANDIDATE_BRIEF}
+${COUNTY_BRIEF}
 
 Output ONLY compact raw JSON. No markdown. No extra whitespace. No explanations.
 Schema (strict, all fields required, keep ALL text fields under 120 characters):
 {"records":[{"title":"string","type":"bill|motion|petition|speech|committee|question|statement|amendment","description":"string max 120 chars","date":"YYYY-MM-DD","session":"string","status":"passed|pending|defeated|withdrawn|in_committee|second_reading|first_reading|responded|answered|completed","category":"agriculture|education|health|infrastructure|security|finance|environment|youth|women|governance|water|housing|general","impact":"string max 80 chars","tags":["tag"],"published":true,"featured":false}]}
 
-Generate 8 records in this order: 2 bills, 2 motions, 1 question, 1 statement, 1 committee, 1 petition.
-Dates between 2022-09-20 and ${today}. Mark 2 as featured:true. Use KeNHA, WaSREB, NHIF where relevant.`;
+Only include records supported by verified official source material and dated on or before ${today}. Do not fabricate bills, motions, dates or outcomes. Return an empty records array if evidence is unavailable.`;
 
-    const ACHIEVEMENTS_PROMPT = `You are a database builder for a Kenyan MNA achievements system.
+    const ACHIEVEMENTS_PROMPT = `You are a county development records assistant for Makueni County, Kenya.
 
-${CANDIDATE_BRIEF}
+${COUNTY_BRIEF}
 
 Output ONLY compact raw JSON. No markdown. No extra whitespace. No explanations.
 Schema (strict, all fields required, keep ALL text fields under 120 characters):
-{"achievements":[{"title":"string","description":"string max 120 chars","category":"infrastructure|education|health|water|security|youth|women|agriculture|environment|governance|economy|housing","ward":"Tala|Makueni West|Makueni North|Makueni East|Kyeleni|all","year":"2022|2023|2024|2025|2026","status":"completed|ongoing|planned","impactMetric":"string","impactValue":"string","budget":"number as string","fundingSource":"string","partnerAgencies":["string"],"published":true,"featured":false}]}
+{"achievements":[{"title":"string","description":"string max 120 chars","category":"infrastructure|education|health|water|security|youth|women|agriculture|environment|governance|economy|housing","ward":"Tulimani|Mbooni|Kithungo/Kitundu|Kiteta/Kisau|Kako/Waia|Kalawa|Kiima Kiu/Kalanzoni|Mukaa|Kasikeu|Kee|Kilungu|Ilima|Ukia|Nzaui/Kilili/Kalamba|Muvau/Kikumini|Kathonzweni|Mavindini|Kitise/Kithuki|Wote|Mbitini|Makindu|Kikumbulyu North|Kikumbulyu South|Nguumo|Nguu/Masumba|Emali/Mulala|Masongaleni|Mtito Andei|Thange|Ivingoni/Nzambani|county-wide","year":"2022|2023|2024|2025|2026","status":"completed|ongoing|planned","impactMetric":"string","impactValue":"string","budget":"number as string","fundingSource":"string","partnerAgencies":["string"],"published":true,"featured":false}]}
 
-Generate 8 achievements. Cover all 5 wards (min 1 each). Categories: infrastructure, water, health, education, youth, women, agriculture. Vary years 2022–2026. Mark 2 as featured:true. Use real place names: Tala, Mbee, Katangi, Mbuni, Kyeleni, Kangundo.`;
+Return only documented Makueni County projects supported by primary-source evidence. Do not invent budgets, impact metrics, dates or achievements. Omit unsupported items.`;
 
     const [recResponse, achResponse] = await Promise.all([
       openai.chat.completions.create({
@@ -256,8 +231,8 @@ router.post("/research", async (req, res) => {
   let aiGenerated = false;
 
   try {
-    const systemPrompt = `You are a legislative research assistant for Hon. Stephen Mule, Member of the National Assembly for Makueni Constituency, Kenya.
-Your role is to help research legislative topics, provide context on Kenya's parliamentary procedures, compare with regional and national benchmarks, and suggest talking points that strengthen the candidate's credentials.
+    const systemPrompt = `You are a legislative research assistant for Makueni County, focused on Makueni County, Kenya.
+Your role is to research Makueni County policies, budgets, services and documented development outcomes using verifiable primary sources.
 Always provide structured, factual responses with clear sections.`;
 
     const userPrompt = `Research Topic: ${topic}
@@ -266,9 +241,9 @@ Query: ${query}
 
 Please provide:
 1. A concise research summary (3-5 paragraphs)
-2. Key talking points (bullet list of 5-7 points) that the MNA can use
-3. Relevant benchmarks or comparisons (how does Makueni/Machakos compare nationally?)
-4. Suggested legislation or motions related to this topic
+2. Key findings and implications for county services
+3. Relevant benchmarks or comparisons (how does Makueni County compare nationally?)
+4. Relevant county plans, budgets, policies or assembly records
 5. Evidence sources to cite
 
 Format your response with clear section headers using **bold** for headers.`;
@@ -285,31 +260,20 @@ Format your response with clear section headers using **bold** for headers.`;
     aiGenerated = true;
     const lines = response.split("\n");
     keyPoints = lines.filter((l: string) => l.trim().match(/^[-•*]\s+/)).map((l: string) => l.replace(/^[-•*]\s+/, "").trim()).slice(0, 7);
-    sources = [
-      { title: "Kenya National Assembly Hansard", type: "Official Record", relevance: "Primary legislative source" },
-      { title: "Kenya Gazette", type: "Government Publication", relevance: "Official government notices" },
-      { title: "CRA Equitable Share Reports", type: "Financial Data", relevance: "Constituency fund allocations" },
-      { title: "Kenya National Bureau of Statistics", type: "Data", relevance: "Population & development indicators" },
-    ];
+    sources = []; // No sources are listed until URLs have actually been retrieved and checked.
   } catch (_) { /* fall through to template */ }
 
   if (!aiGenerated) {
-    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni Constituency and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Machakos County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. Makueni Constituency, as part of Machakos County, receives equitable share allocations directed towards ${topic}-related development.\n\n**Key Recommendations**\n\nFor Hon. Stephen Mule to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
+    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni County and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Makueni County.\n\n**Legislative Context**\n\nReview the Makueni County Assembly record for documented policy action on ${topic}. County governments share responsibility with the national government under Article 186 of the Constitution. County governments receive equitable share allocations for devolved functions; verify Makueni County figures against published budget documents.\n\n**Key Recommendations**\n\nFor Makueni County, consult the official CIDP, approved budget, County Assembly records and Controller of Budget reports before reporting outcomes.`;
     keyPoints = [
       `Makueni's ${topic} needs align with national development priorities`,
       `Constitutional mandate under Chapter Eleven supports county action on ${topic}`,
-      `CDF allocations can be directed to ${topic} projects in all 5 wards`,
-      `Sponsoring a bill on ${topic} builds legislative credentials`,
+      `Verify funding source and government responsibility for ${topic} projects`,
+      `Check official County Assembly records for policy action on ${topic}`,
       `Committee engagement on ${topic} demonstrates subject matter expertise`,
-      `Cross-party collaboration on ${topic} broadens political appeal`,
+      `Compare county indicators using official published data`,
     ];
-    sources = [
-      { title: "Constitution of Kenya, 2010", type: "Legal", relevance: "Fourth Schedule — Division of Functions" },
-      { title: "National Assembly Standing Orders", type: "Procedure", relevance: "Bill sponsorship and motion process" },
-      { title: "CDF Act 2013 (Amended 2016)", type: "Legislation", relevance: "Constituency development fund mandate" },
-      { title: "Machakos County CIDP", type: "Planning", relevance: "County integrated development plan" },
-      { title: "Kenya National Bureau of Statistics", type: "Data", relevance: "Makueni constituency demographics" },
-    ];
+    sources = []; // This fallback has no verified source URLs.
   }
 
   const [session] = await db.insert(researchSessionsTable).values({ topic, query, response, keyPoints, sources }).returning();

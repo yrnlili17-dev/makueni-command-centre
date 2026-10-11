@@ -257,24 +257,21 @@ export async function seedDefaultRoles(): Promise<void> {
 }
 
 export async function seedDefaultConfig(): Promise<void> {
-  // Migrate only untouched legacy defaults; preserve any administrator-customized values.
-  await db.execute(sql`UPDATE ${systemConfigTable} SET value = 'Prof. Philip Kaloki', updated_at = now()
-    WHERE key = 'candidate.name' AND value = 'Hon. Stephen Mule'`);
-  await db.execute(sql`UPDATE ${systemConfigTable} SET value = 'Gubernatorial Candidate — Makueni County 2027', updated_at = now()
-    WHERE key = 'candidate.title' AND value = 'MNA — Makueni Constituency'`);
-  await db.execute(sql`UPDATE ${systemConfigTable} SET value = 'Wote, Makueni County', updated_at = now()
-    WHERE key = 'campaign.headquarters' AND value = 'Tala, Makueni Constituency'`);
+  // Canonical identity and headquarters for this single-county deployment.
+  await db.execute(sql`UPDATE ${systemConfigTable} SET value = 'Prof. Philip Kaloki', updated_at = now() WHERE key = 'candidate.name'`);
+  await db.execute(sql`UPDATE ${systemConfigTable} SET value = 'Governor — Makueni County', updated_at = now() WHERE key = 'candidate.title'`);
+  await db.execute(sql`UPDATE ${systemConfigTable} SET value = 'Wote, Makueni County', updated_at = now() WHERE key = 'campaign.headquarters'`);
 
   const existing = await db.select().from(systemConfigTable).limit(1);
   if (existing.length > 0) return;
 
   const defaults = [
     { key: "candidate.name", value: "Prof. Philip Kaloki", category: "campaign", description: "Candidate's full name displayed across the system" },
-    { key: "candidate.title", value: "Gubernatorial Candidate — Makueni County 2027", category: "campaign", description: "Candidate's title and county label" },
+    { key: "candidate.title", value: "Governor — Makueni County", category: "campaign", description: "Candidate's title and county label" },
     { key: "candidate.party", value: "", category: "campaign", description: "Political party affiliation" },
     { key: "campaign.election_date", value: "2027-08-10", category: "campaign", description: "Target election date (YYYY-MM-DD)" },
     { key: "campaign.slogan", value: "", category: "campaign", description: "Campaign slogan displayed on reports and exports" },
-    { key: "campaign.headquarters", value: "Tala, Makueni Constituency", category: "campaign", description: "Campaign HQ address" },
+    { key: "campaign.headquarters", value: "Wote, Makueni County", category: "campaign", description: "Campaign HQ address" },
     { key: "campaign.contact_email", value: "", category: "campaign", description: "Primary campaign contact email" },
     { key: "campaign.contact_phone", value: "", category: "campaign", description: "Primary campaign contact phone" },
     { key: "security.session_timeout_hours", value: "24", category: "security", description: "How long a session remains active (hours)" },

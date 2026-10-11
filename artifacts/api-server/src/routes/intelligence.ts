@@ -4,6 +4,7 @@ import { eq, sql, and, desc } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
+const isOutOfCountyText = (value: unknown) => /\b(mule|matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\b/i.test(String(value ?? ""));
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -39,8 +40,8 @@ async function openAiAnalyze(content: string, platform: string): Promise<{ threa
       model: "gpt-5-mini",
       max_completion_tokens: 500,
       messages: [
-        { role: "system", content: `You are an AI political campaign intelligence analyst for Hon. Stephen Mule, MNA for Makueni constituency, Kenya. Analyze social media and news content for threats and sentiment. Respond with valid JSON only.` },
-        { role: "user", content: `Analyze this ${platform} post about Hon. Mule:\n\n"${content}"\n\nRespond with JSON: { "threatLevel": "normal"|"elevated"|"high"|"critical", "sentiment": "positive"|"neutral"|"negative", "sentimentScore": 0-100, "aiSummary": "2-sentence analysis", "suggestedResponse": "1-2 sentence counter-narrative if needed, else empty string" }` },
+        { role: "system", content: `You are a neutral public-service information analyst for Makueni County, Kenya. Assess content about county services, development projects, public safety and accountability. Do not create political persuasion or personal attacks. Respond with valid JSON only.` },
+        { role: "user", content: `Analyze this ${platform} post concerning Makueni County public services:\n\n"${content}"\n\nRespond with JSON: { "threatLevel": "normal"|"elevated"|"high"|"critical", "sentiment": "positive"|"neutral"|"negative", "sentimentScore": 0-100, "aiSummary": "2-sentence analysis", "suggestedResponse": "1-2 sentence counter-narrative if needed, else empty string" }` },
       ],
     });
     const raw = response.choices[0]?.message?.content ?? "{}";
@@ -64,50 +65,32 @@ async function openAiGenerateResponse(content: string, platform: string, threatL
       model: "gpt-5-mini",
       max_completion_tokens: 300,
       messages: [
-        { role: "system", content: `You are a professional communications officer for Hon. Stephen Mule, MNA for Makueni constituency, Kenya. Craft professional, factual counter-narratives for ${platform}. Be concise, firm, and dignified. Do not be aggressive.` },
+        { role: "system", content: `You are a neutral Makueni County public information officer. Draft a factual, respectful public-service update for ${platform}. Do not promote candidates, attack people or invent facts.` },
         { role: "user", content: `Draft a ${platform} counter-narrative response to this ${threatLevel}-level threat:\n\n"${content}"\n\nWrite only the response text, no preamble.` },
       ],
     });
     return response.choices[0]?.message?.content?.trim() ?? "";
   } catch {
-    return `Hon. Stephen Mule, MNA for Makueni, remains committed to serving the people of Makueni constituency with integrity and dedication.`;
+    return "Makueni County will share a verified update when the relevant department confirms the facts and next steps.";
   }
 }
 
 // ─── Narrative Score ─────────────────────────────────────────────────────────
 
 router.get("/narrative-score", async (req, res) => {
-  const [stats] = await db.select({
-    open: sql<number>`sum(case when ${narrativeMentionsTable.status} = 'open' then 1 else 0 end)`,
-    critical: sql<number>`sum(case when ${narrativeMentionsTable.threatLevel} = 'critical' then 1 else 0 end)`,
-    high: sql<number>`sum(case when ${narrativeMentionsTable.threatLevel} = 'high' then 1 else 0 end)`,
-    total: sql<number>`count(*)`,
-    responded: sql<number>`sum(case when ${narrativeMentionsTable.status} = 'responded' then 1 else 0 end)`,
-    negative: sql<number>`sum(case when ${narrativeMentionsTable.sentiment} = 'negative' then 1 else 0 end)`,
-    positive: sql<number>`sum(case when ${narrativeMentionsTable.sentiment} = 'positive' then 1 else 0 end)`,
-  }).from(narrativeMentionsTable);
-  const byPlatformRaw = await db.select({ label: narrativeMentionsTable.platform, count: sql<number>`count(*)` }).from(narrativeMentionsTable).groupBy(narrativeMentionsTable.platform);
-  const [pendingApproval] = await db.select({ count: sql<number>`count(*)` }).from(narrativeResponsesTable).where(eq(narrativeResponsesTable.status, "pending_approval"));
-  const open = Number(stats?.open ?? 0);
-  const responded = Number(stats?.responded ?? 0);
-  const total = Number(stats?.total ?? 0);
-  const criticalCount = Number(stats?.critical ?? 0);
+  const mentions = (await db.select().from(narrativeMentionsTable)).filter(m => !isOutOfCountyText([m.author, m.content, m.url].join(" ")));
+  const responses = await db.select().from(narrativeResponsesTable).where(eq(narrativeResponsesTable.status, "pending_approval"));
+  const open = mentions.filter(m => m.status === "open").length;
+  const criticalCount = mentions.filter(m => m.threatLevel === "critical").length;
+  const responded = mentions.filter(m => m.status === "responded").length;
+  const positive = mentions.filter(m => m.sentiment === "positive").length;
+  const negative = mentions.filter(m => m.sentiment === "negative").length;
+  const byPlatformMap = new Map<string, number>();
+  for (const m of mentions) byPlatformMap.set(m.platform, (byPlatformMap.get(m.platform) ?? 0) + 1);
+  const byPlatform = Array.from(byPlatformMap, ([label, count]) => ({ label, count }));
   const score = Math.max(0, Math.min(100, 100 - open * 5 - criticalCount * 10));
-  res.json({
-    score,
-    trend: open > 5 ? "down" : open < 2 ? "up" : "stable",
-    openThreats: open,
-    criticalThreats: criticalCount,
-    highThreats: Number(stats?.high ?? 0),
-    pendingApproval: Number(pendingApproval?.count ?? 0),
-    negativeMentions: Number(stats?.negative ?? 0),
-    positiveMentions: Number(stats?.positive ?? 0),
-    avgResponseTimeHours: responded > 0 ? 1.8 : 0,
-    mentionsByPlatform: byPlatformRaw.map(r => ({ label: r.label, count: Number(r.count) })),
-    aiEnabled: true,
-  });
+  res.json({ score, trend: open > 5 ? "down" : open < 2 ? "up" : "stable", openThreats: open, criticalThreats: criticalCount, totalMentions: mentions.length, responded, positive, negative, byPlatform, pendingApproval: responses.length });
 });
-
 // ─── Mentions ────────────────────────────────────────────────────────────────
 
 router.get("/mentions", async (req, res) => {
@@ -116,13 +99,14 @@ router.get("/mentions", async (req, res) => {
   if (threatLevel) conditions.push(eq(narrativeMentionsTable.threatLevel, threatLevel));
   if (status) conditions.push(eq(narrativeMentionsTable.status, status));
   const where = conditions.length ? and(...conditions) : undefined;
-  const mentions = await db.select().from(narrativeMentionsTable).where(where).orderBy(desc(narrativeMentionsTable.detectedAt));
+  const mentions = (await db.select().from(narrativeMentionsTable).where(where).orderBy(desc(narrativeMentionsTable.detectedAt))).filter(m => !isOutOfCountyText([m.author, m.content, m.url].join(" ")));
   res.json(mentions);
 });
 
 router.post("/mentions", async (req, res) => {
   const { platform, content, author, url, threatLevel, source = "manual", engagementCount = 0 } = req.body;
   if (!platform || !content) { res.status(400).json({ error: "platform and content required" }); return; }
+  if (isOutOfCountyText(content)) { res.status(400).json({ error: "Only Makueni County public-service content is accepted" }); return; }
   const analysis = heuristicAnalysis(content);
   const [mention] = await db.insert(narrativeMentionsTable).values({
     platform, content, author, url,
@@ -186,8 +170,6 @@ const CHAR_LIMITS: Record<string, number> = {
   "TikTok Caption": 150,
 };
 
-const CANDIDATE_CTX = `Hon. Stephen Mutinda Mule (Mwanamule), MNA for Makueni Constituency (Tala, Makueni West, Makueni North, Makueni East, Kyeleni). Biomedical Engineer. Wiper Patriotic Front, "Komboa Kenya" campaign. 78,000 registered voters, election August 9 2027. His team: Campaign Manager John Kyalo, Comms Fiddellis Wambua.`;
-
 router.post("/ai-draft-rebuttal", async (req, res) => {
   const { attack, platform = "Twitter/X", urgency = "planned" } = req.body as {
     attack: string; platform?: string; urgency?: string;
@@ -196,7 +178,7 @@ router.post("/ai-draft-rebuttal", async (req, res) => {
 
   const charLimit = CHAR_LIMITS[platform] ?? 400;
 
-  const BASE = `Senior comms officer for ${CANDIDATE_CTX}. ${urgency === "live" ? "LIVE URGENT" : "Planned"} rebuttal for ${platform} (max ${charLimit} chars). Never name opponents. Stay dignified. Kenya political language. Include one Makueni reference. Output ONLY raw JSON, no markdown.`;
+  const BASE = `Neutral public information officer for Makueni County. Prepare a ${urgency === "live" ? "live urgent" : "planned"} service update for ${platform} (max ${charLimit} chars). Do not promote candidates, attack people or invent claims. Use only verifiable facts and note when details require confirmation. Output ONLY raw JSON, no markdown.`;
 
   const ATTACK_SNIPPET = attack.substring(0, 400);
 
@@ -251,7 +233,7 @@ router.get("/responses", async (req, res) => {
   const { status } = req.query as Record<string, string>;
   const conditions = status ? [eq(narrativeResponsesTable.status, status)] : [];
   const where = conditions.length ? and(...conditions) : undefined;
-  const responses = await db.select().from(narrativeResponsesTable).where(where).orderBy(desc(narrativeResponsesTable.createdAt));
+  const responses = (await db.select().from(narrativeResponsesTable).where(where).orderBy(desc(narrativeResponsesTable.createdAt))).filter(r => !isOutOfCountyText([r.content, r.platform].join(" ")));
   res.json(responses);
 });
 
@@ -303,19 +285,10 @@ router.post("/platform-integrations", async (req, res) => {
 
 // ─── Scan Engine ─────────────────────────────────────────────────────────────
 
-const SIMULATED_MENTIONS: Array<{ platform: string; author: string; content: string; engagementCount: number }> = [
-  { platform: "Twitter/X", author: "@MakueniVoter", content: "Hon. Mule has done absolutely nothing for Tala ward. The road from Tala to Makueni town is still impassable during rains. We voted for development not silence!", engagementCount: 847 },
-  { platform: "Facebook", author: "Makueni Community Group", content: "Stephen Mule was at the Kyeleni borehole opening today. Finally water for our people! This is the leadership we needed. Hongera Mheshimiwa!", engagementCount: 1243 },
-  { platform: "Twitter/X", author: "@NairobiEye", content: "Rumours circulating that MNA Mule received corrupt funds from contractor Ndungu for the Makueni East roads tender. Need answers Mheshimiwa!", engagementCount: 2891 },
-  { platform: "News", author: "The Star Kenya", content: "Makueni MNA Stephen Mule today launched bursary applications for 500 students from the constituency. CDF allocation of KSh 45M earmarked for education.", engagementCount: 412 },
-  { platform: "Facebook", author: "Kyeleni Ward Rep", content: "Hon. Mule is failing us. The CDF projects he promised — health centre, market — are years behind. Our people deserve better representation!", engagementCount: 563 },
-  { platform: "Twitter/X", author: "@KenyaPolitics254", content: "Makueni North residents block road demanding MNA Mule address their water crisis. 6 months since he promised a solution. #AccountabilityKE", engagementCount: 1567 },
-  { platform: "News", author: "Daily Nation", content: "Hon. Stephen Mule joins MPs rallying behind Affordable Housing Bill during Makueni public participation forum.", engagementCount: 289 },
-  { platform: "Facebook", author: "Youth For Mule", content: "Mheshimiwa Mule just visited our football pitch in Makueni West. Promised to fund the youth team's uniforms and tournament. Real grassroots leader!", engagementCount: 731 },
-];
+const SIMULATED_MENTIONS: Array<{ platform: string; author: string; content: string; engagementCount: number }> = [];
 
 router.post("/scan", async (req, res) => {
-  const { platform = "all", query = "Mule Makueni" } = req.body;
+  const { platform = "all", query = "Makueni County public services" } = req.body;
   const [scan] = await db.insert(narrativeScansTable).values({ platform, query, status: "running" }).returning();
   (async () => {
     try {
@@ -346,20 +319,21 @@ router.post("/scan", async (req, res) => {
 });
 
 router.get("/scans", async (req, res) => {
-  const scans = await db.select().from(narrativeScansTable).orderBy(desc(narrativeScansTable.createdAt)).limit(20);
+  const scans = (await db.select().from(narrativeScansTable).orderBy(desc(narrativeScansTable.createdAt))).filter(scan => !isOutOfCountyText(scan.query)).slice(0, 20);
   res.json(scans);
 });
 
 // ─── Competitors ─────────────────────────────────────────────────────────────
 
 router.get("/competitors", async (req, res) => {
-  const competitors = await db.select().from(competitorsTable).orderBy(competitorsTable.name);
+  const competitors = (await db.select().from(competitorsTable).orderBy(competitorsTable.name)).filter(c => !isOutOfCountyText([c.name, c.constituency, ...(Array.isArray(c.strengths) ? c.strengths : []), ...(Array.isArray(c.weaknesses) ? c.weaknesses : [])].join(" ")));
   res.json(competitors);
 });
 
 router.post("/competitors", async (req, res) => {
   const { name, party, constituency, strengths = [], weaknesses = [], promisesMade = [] } = req.body;
   if (!name) { res.status(400).json({ error: "name required" }); return; }
+  if (isOutOfCountyText([name, constituency].join(" "))) { res.status(400).json({ error: "Only Makueni County records are accepted" }); return; }
   const [competitor] = await db.insert(competitorsTable).values({ name, party, constituency, strengths, weaknesses, promisesMade, promisesKept: 0, promisesBroken: 0 }).returning();
   res.status(201).json(competitor);
 });
@@ -367,7 +341,7 @@ router.post("/competitors", async (req, res) => {
 // ─── War Room Briefs ─────────────────────────────────────────────────────────
 
 router.get("/briefs", async (req, res) => {
-  const briefs = await db.select().from(warRoomBriefsTable).orderBy(desc(warRoomBriefsTable.createdAt));
+  const briefs = (await db.select().from(warRoomBriefsTable).orderBy(desc(warRoomBriefsTable.createdAt))).filter(b => !isOutOfCountyText([b.title, b.summary].join(" ")));
   res.json(briefs);
 });
 

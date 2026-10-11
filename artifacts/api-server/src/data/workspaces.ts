@@ -24,26 +24,12 @@ export const WORKSPACES: readonly WorkspaceDefinition[] = [
 ] as const;
 
 /**
- * Planned future workspaces are intentionally not included in WORKSPACES.
+ * Future workspaces are intentionally excluded from this deployment.
  * They must not be shown in the Makueni interface or accepted as active
  * workspace IDs until their geography, data isolation, and permissions are
  * implemented and verified.
  */
-export const PLANNED_WORKSPACES: readonly WorkspaceDefinition[] = [
-  {
-    id: "machakos",
-    label: "Machakos County",
-    level: "county",
-    geographyReady: false,
-  },
-  {
-    id: "matungulu",
-    label: "Matungulu",
-    level: "sub-county",
-    geographyReady: false,
-    parentWorkspaceId: "machakos",
-  },
-] as const;
+export const PLANNED_WORKSPACES: readonly WorkspaceDefinition[] = [] as const;
 
 export const DEFAULT_WORKSPACE_ID = "makueni";
 

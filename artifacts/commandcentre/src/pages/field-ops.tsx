@@ -14,7 +14,38 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
-const WARDS = ["Tala", "Makueni West", "Makueni North", "Makueni East", "Kyeleni"];
+const WARDS = [
+  "Tulimani",
+  "Mbooni",
+  "Kithungo/Kitundu",
+  "Kiteta/Kisau",
+  "Kako/Waia",
+  "Kalawa",
+  "Kiima Kiu/Kalanzoni",
+  "Mukaa",
+  "Kasikeu",
+  "Kee",
+  "Kilungu",
+  "Ilima",
+  "Ukia",
+  "Nzaui/Kilili/Kalamba",
+  "Muvau/Kikumini",
+  "Kathonzweni",
+  "Mavindini",
+  "Kitise/Kithuki",
+  "Wote",
+  "Mbitini",
+  "Makindu",
+  "Kikumbulyu North",
+  "Kikumbulyu South",
+  "Nguumo",
+  "Nguu/Masumba",
+  "Emali/Mulala",
+  "Masongaleni",
+  "Mtito Andei",
+  "Thange",
+  "Ivingoni/Nzambani"
+];
 const OUTCOMES = ["support", "oppose", "undecided", "not_home", "refused"] as const;
 
 const SESSION_TYPES = [
@@ -36,7 +67,7 @@ const PLAYBOOK = [
     key: "baraza", label: "COMMUNITY BARAZA", icon: Megaphone, color: "#3B82F6",
     tagline: "Most powerful tool in rural Kenya",
     why: "Face-to-face with 50–300 residents at once. Chiefs endorse, crowds question, votes crystallise. A good baraza moves 10–15% of undecideds.",
-    tip: "Hold at market days (Mon/Thu/Sat in Tala). Always bring the candidate.",
+    tip: "Hold at market days (Mon/Thu/Sat in Wote). Always bring the candidate.",
   },
   {
     key: "door-to-door", label: "DOOR-TO-DOOR CANVASS", icon: Home, color: "#DB143C",
@@ -47,7 +78,7 @@ const PLAYBOOK = [
   {
     key: "market-blitz", label: "MARKET DAY BLITZ", icon: ShoppingBag, color: "#F97316",
     tagline: "High-density contact in hours",
-    why: "Tala market (Mon/Thu/Sat) draws 600–1,200 people. Branded tent + music + merchandise = 300+ contacts per session with minimal travel.",
+    why: "Wote market (Mon/Thu/Sat) draws 600–1,200 people. Branded tent + music + merchandise = 300+ contacts per session with minimal travel.",
     tip: "Arrive by 7 AM before crowds peak. Branded umbrellas and wristbands drive visibility.",
   },
   {
@@ -100,10 +131,6 @@ const STATUS_CLS: Record<string, string> = {
   cancelled: "text-red-400 border-red-400/30",
 };
 
-const WARD_VOTERS: Record<string, number> = {
-  "Tala": 19000, "Makueni West": 26000,
-  "Makueni North": 15000, "Makueni East": 12000, "Kyeleni": 10000,
-};
 
 function TypeBadge({ type }: { type: string }) {
   const cfg = TYPE_CFG[type] ?? { color: "#6B7280", label: type.toUpperCase() };
@@ -166,7 +193,7 @@ export default function FieldOps() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-widest">FIELD OPERATIONS</h1>
-          <p className="text-[10px] font-mono text-muted-foreground mt-1 tracking-widest">GROUND GAME COMMAND · 165 POLLING STATIONS · MATUNGULU CONSTITUENCY</p>
+          <p className="text-[10px] font-mono text-muted-foreground mt-1 tracking-widest">FIELD OPERATIONS · MAKUENI COUNTY · SIX CONSTITUENCIES · 30 WARDS</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -266,7 +293,7 @@ export default function FieldOps() {
             </div>
             <div className="col-span-2 space-y-1">
               <label className="text-[10px] font-mono text-muted-foreground">SESSION NAME *</label>
-              <input required value={sessionForm.name ?? ""} onChange={e => setSessionForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Tala Market Friday Baraza" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+              <input required value={sessionForm.name ?? ""} onChange={e => setSessionForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Wote Market Friday Baraza" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-mono text-muted-foreground">VOLUNTEERS</label>
@@ -478,14 +505,13 @@ export default function FieldOps() {
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <BarChart2 className="w-3 h-3 text-primary" />
             <span className="font-mono text-[10px] tracking-widest">WARD COVERAGE REPORT</span>
-            <span className="font-mono text-[9px] text-muted-foreground border border-border px-1.5 py-0.5">CONTACTS AS % OF VOTER UNIVERSE</span>
+            <span className="font-mono text-[9px] text-muted-foreground border border-border px-1.5 py-0.5">RECORDED FIELD ACTIVITY · IEBC DENOMINATORS NOT LOADED</span>
           </div>
           <div className="p-4 space-y-3">
             {WARDS.map(ward => {
               const w = (coverage as any[]).find((c: any) => c.ward === ward);
               if (!w) return null;
-              const voters = WARD_VOTERS[ward] ?? 10000;
-              const pct = Math.min(w.coveragePercent, 100);
+              const contacts = Number(w.doorsKnocked ?? 0);
               return (
                 <div key={ward} className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -494,14 +520,13 @@ export default function FieldOps() {
                       <span className="text-green-400">{(w.supportCount || 0).toLocaleString()} SUP</span>
                       <span className="text-yellow-400">{(w.undecidedCount || 0).toLocaleString()} UND</span>
                       <span className="text-red-400">{(w.opposeCount || 0).toLocaleString()} OPP</span>
-                      <span className="text-muted-foreground">{w.doorsKnocked.toLocaleString()} / {voters.toLocaleString()}</span>
-                      <span className="font-bold text-foreground w-10 text-right">{pct.toFixed(1)}%</span>
+                      <span className="text-muted-foreground">{contacts.toLocaleString()} recorded contacts</span>
                     </div>
                   </div>
                   <div className="h-2 bg-secondary flex overflow-hidden">
-                    <div className="h-full bg-green-400/70 transition-all" style={{ width: `${Math.min((w.supportCount || 0) / voters * 100, 100)}%` }} />
-                    <div className="h-full bg-yellow-400/70 transition-all" style={{ width: `${Math.min((w.undecidedCount || 0) / voters * 100, 100)}%` }} />
-                    <div className="h-full bg-red-400/50 transition-all" style={{ width: `${Math.min((w.opposeCount || 0) / voters * 100, 100)}%` }} />
+                    <div className="h-full bg-green-400/70 transition-all" style={{ width: `${contacts > 0 ? Math.min((w.supportCount || 0) / contacts * 100, 100) : 0}%` }} />
+                    <div className="h-full bg-yellow-400/70 transition-all" style={{ width: `${contacts > 0 ? Math.min((w.undecidedCount || 0) / contacts * 100, 100) : 0}%` }} />
+                    <div className="h-full bg-red-400/50 transition-all" style={{ width: `${contacts > 0 ? Math.min((w.opposeCount || 0) / contacts * 100, 100) : 0}%` }} />
                   </div>
                 </div>
               );

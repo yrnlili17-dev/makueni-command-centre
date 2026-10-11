@@ -1,15 +1,16 @@
 import { Router } from "express";
 import { db, pollingStationsTable, tallyResultsTable, turnoutAssumptionsTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, inArray } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 import { z } from "zod/v4";
 
 const router = Router();
 
-// The campaign principal whose vote share we forecast.
-const PRINCIPAL = "Hon. Stephen Mule";
+// Candidate identity is not hardcoded in county turnout reporting.
 
 // Baseline assumptions used for any ward that has no saved override.
-// ~65% reflects recent Machakos County general-election turnout; support is
+// These are configurable modelling defaults, not observed Makueni turnout; support is
 // intentionally neutral (50%) until the team sets ward-level estimates.
 const DEFAULT_TURNOUT = 65;
 const DEFAULT_SUPPORT = 50;
@@ -32,6 +33,7 @@ router.get("/prediction", async (req, res) => {
       stations: sql<number>`count(*)`,
     })
     .from(pollingStationsTable)
+    .where(inArray(pollingStationsTable.ward, WARDS))
     .groupBy(pollingStationsTable.ward);
 
   const assumptions = await db.select().from(turnoutAssumptionsTable);
@@ -42,11 +44,12 @@ router.get("/prediction", async (req, res) => {
     .select({
       ward: pollingStationsTable.ward,
       totalVotes: sql<number>`coalesce(sum(${tallyResultsTable.votes}), 0)`,
-      muleVotes: sql<number>`coalesce(sum(case when ${tallyResultsTable.candidateName} = ${PRINCIPAL} then ${tallyResultsTable.votes} else 0 end), 0)`,
+      candidateVotes: sql<number>`coalesce(sum(${tallyResultsTable.votes}), 0)`,
       reporting: sql<number>`count(distinct ${tallyResultsTable.stationCode})`,
     })
     .from(pollingStationsTable)
     .leftJoin(tallyResultsTable, eq(pollingStationsTable.code, tallyResultsTable.stationCode))
+    .where(inArray(pollingStationsTable.ward, WARDS))
     .groupBy(pollingStationsTable.ward);
   const actMap = new Map(actualRows.map((a) => [a.ward, a]));
 
@@ -58,14 +61,14 @@ router.get("/prediction", async (req, res) => {
     const turnoutRate = clamp(baseTurnout + turnoutDelta);
     const supportShare = clamp(baseSupport + supportDelta);
     const predictedVotes = Math.round((registered * turnoutRate) / 100);
-    const predictedMuleVotes = Math.round((predictedVotes * supportShare) / 100);
+    const predictedCandidateVotes = Math.round((predictedVotes * supportShare) / 100);
     // Mobilization upside: expected supporters who are NOT projected to vote.
     // High values flag where GOTV effort converts to the most extra votes.
     const gotvUpside = Math.round(registered * (supportShare / 100) * (1 - turnoutRate / 100));
 
     const act = actMap.get(w.ward);
     const actualVotesCast = Number(act?.totalVotes ?? 0);
-    const actualMuleVotes = Number(act?.muleVotes ?? 0);
+    const actualCandidateVotes = Number(act?.candidateVotes ?? 0);
     const reportingStations = Number(act?.reporting ?? 0);
 
     return {
@@ -77,10 +80,10 @@ router.get("/prediction", async (req, res) => {
       turnoutRate,
       effectiveSupportShare: supportShare,
       predictedVotes,
-      predictedMuleVotes,
+      predictedCandidateVotes,
       gotvUpside,
       actualVotesCast,
-      actualMuleVotes,
+      actualCandidateVotes,
       actualTurnoutRate: registered ? Math.round((actualVotesCast / registered) * 100) : 0,
       reportingStations,
     };
@@ -97,11 +100,11 @@ router.get("/prediction", async (req, res) => {
 
   const totalRegistered = wardsOut.reduce((s, w) => s + w.registered, 0);
   const totalPredictedVotes = wardsOut.reduce((s, w) => s + w.predictedVotes, 0);
-  const totalMuleVotes = wardsOut.reduce((s, w) => s + w.predictedMuleVotes, 0);
+  const totalCandidateVotes = wardsOut.reduce((s, w) => s + w.predictedCandidateVotes, 0);
   const topGotv = [...wardsOut].sort((a, b) => b.gotvUpside - a.gotvUpside)[0];
 
   res.json({
-    principal: PRINCIPAL,
+    scope: "Makueni County",
     scenario: { turnoutDelta, supportDelta },
     defaults: { turnout: DEFAULT_TURNOUT, support: DEFAULT_SUPPORT },
     wards: wardsOut,
@@ -109,8 +112,8 @@ router.get("/prediction", async (req, res) => {
       registered: totalRegistered,
       predictedVotes: totalPredictedVotes,
       predictedTurnoutRate: totalRegistered ? Math.round((totalPredictedVotes / totalRegistered) * 100) : 0,
-      predictedMuleVotes: totalMuleVotes,
-      predictedMuleShare: totalPredictedVotes ? Math.round((totalMuleVotes / totalPredictedVotes) * 100) : 0,
+      predictedCandidateVotes: totalCandidateVotes,
+      predictedCandidateShare: totalPredictedVotes ? Math.round((totalCandidateVotes / totalPredictedVotes) * 100) : 0,
       topGotvWard: topGotv?.ward ?? null,
       topGotvUpside: topGotv?.gotvUpside ?? 0,
     },
@@ -119,21 +122,21 @@ router.get("/prediction", async (req, res) => {
 
 // ── Assumptions ────────────────────────────────────────────────────────────
 router.get("/assumptions", async (_req, res) => {
-  const rows = await db.select().from(turnoutAssumptionsTable);
+  const rows = (await db.select().from(turnoutAssumptionsTable)).filter(a => WARDS.includes(a.ward)).map(a => ({ ward: a.ward, expectedTurnoutRate: a.expectedTurnoutRate, candidateSupportShare: a.muleSupportShare, updatedAt: a.updatedAt }));
   res.json(rows);
 });
 
 const assumptionSchema = z.object({
   ward: z.string().min(1),
   expectedTurnoutRate: z.number().int().min(0).max(100),
-  muleSupportShare: z.number().int().min(0).max(100),
+  candidateSupportShare: z.number().int().min(0).max(100),
 });
 const putSchema = z.object({ assumptions: z.array(assumptionSchema).min(1) });
 
 router.put("/assumptions", async (req, res) => {
   const parsed = putSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Invalid assumptions", details: parsed.error.issues });
+  if (!parsed.success || parsed.data.assumptions.some(a => !WARDS.includes(a.ward))) {
+    res.status(400).json({ error: "Invalid assumptions", details: parsed.success ? "Only official Makueni wards are accepted" : parsed.error.issues });
     return;
   }
 
@@ -143,14 +146,14 @@ router.put("/assumptions", async (req, res) => {
       .values({
         ward: a.ward,
         expectedTurnoutRate: a.expectedTurnoutRate,
-        muleSupportShare: a.muleSupportShare,
+        muleSupportShare: a.candidateSupportShare,
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
         target: turnoutAssumptionsTable.ward,
         set: {
           expectedTurnoutRate: a.expectedTurnoutRate,
-          muleSupportShare: a.muleSupportShare,
+          muleSupportShare: a.candidateSupportShare,
           updatedAt: new Date(),
         },
       });

@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { db, voterRegistryTable, voterSyncLogsTable, iebcCredentialsTable } from "@workspace/db";
-import { eq, sql, desc, ilike, or, and } from "drizzle-orm";
+import { eq, sql, desc, ilike, or, and, inArray } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
+const isMakueniWard = (ward: unknown): ward is string => typeof ward === "string" && WARDS.includes(ward);
 
 const router = Router();
 
@@ -14,11 +17,12 @@ router.get("/stats", async (req, res) => {
     fromUpload: sql<number>`count(*) filter (where source = 'upload')`,
     fromApi: sql<number>`count(*) filter (where source = 'api')`,
     fromManual: sql<number>`count(*) filter (where source = 'manual')`,
-  }).from(voterRegistryTable);
+  }).from(voterRegistryTable).where(inArray(voterRegistryTable.ward, WARDS));
 
   const wardBreakdown = await db
     .select({ ward: voterRegistryTable.ward, count: sql<number>`count(*)` })
     .from(voterRegistryTable)
+    .where(inArray(voterRegistryTable.ward, WARDS))
     .groupBy(voterRegistryTable.ward);
 
   const recentLogs = await db
@@ -46,23 +50,24 @@ router.get("/", async (req, res) => {
   const limit = parseInt(limitStr ?? "100");
   const offset = parseInt(offsetStr ?? "0");
 
-  const conditions = [];
+  const conditions = [inArray(voterRegistryTable.ward, WARDS)];
   if (search) {
-    conditions.push(or(
+    const searchCondition = or(
       ilike(voterRegistryTable.fullName, `%${search}%`),
       ilike(voterRegistryTable.nationalId, `%${search}%`),
       ilike(voterRegistryTable.voterNumber, `%${search}%`),
       ilike(voterRegistryTable.phone, `%${search}%`),
-    ));
+    );
+    if (searchCondition) conditions.push(searchCondition);
   }
-  if (ward) conditions.push(eq(voterRegistryTable.ward, ward));
+  if (ward) { if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } conditions.push(eq(voterRegistryTable.ward, ward)); }
   if (status) conditions.push(eq(voterRegistryTable.status, status));
   if (source) conditions.push(eq(voterRegistryTable.source, source));
 
   const rows = await db
     .select()
     .from(voterRegistryTable)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(desc(voterRegistryTable.createdAt))
     .limit(limit)
     .offset(offset);
@@ -70,7 +75,7 @@ router.get("/", async (req, res) => {
   const [countRow] = await db
     .select({ count: sql<number>`count(*)` })
     .from(voterRegistryTable)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   res.json({ data: rows, total: Number(countRow?.count ?? 0), limit, offset });
 });
@@ -83,6 +88,7 @@ router.post("/", async (req, res) => {
   } = req.body;
 
   if (!fullName) { res.status(400).json({ error: "fullName required" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "A valid Makueni County ward is required" }); return; }
 
   const [record] = await db.insert(voterRegistryTable).values({
     nationalId, voterNumber, fullName, phone, gender, dateOfBirth,
@@ -115,7 +121,7 @@ router.post("/upload", async (req, res) => {
   let dupCount = 0;
 
   for (const r of records) {
-    if (!r.fullName) continue;
+    if (!r.fullName || !isMakueniWard(r.ward)) continue;
 
     // Check for duplicate by nationalId or voterNumber
     let isDup = false;
@@ -155,11 +161,12 @@ router.patch("/:id", async (req, res) => {
   ["status", "reviewNotes", "fullName", "nationalId", "voterNumber", "phone", "ward", "pollingStation", "gender"].forEach(f => {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   });
+  if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   updates.updatedAt = new Date();
 
   const [record] = await db.update(voterRegistryTable)
     .set(updates)
-    .where(eq(voterRegistryTable.id, parseInt(req.params.id)))
+    .where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), inArray(voterRegistryTable.ward, WARDS)))
     .returning();
 
   if (!record) { res.status(404).json({ error: "Not found" }); return; }
@@ -181,7 +188,7 @@ router.post("/bulk-review", async (req, res) => {
 
 // ── Delete ─────────────────────────────────────────────────────────────────
 router.delete("/:id", async (req, res) => {
-  await db.delete(voterRegistryTable).where(eq(voterRegistryTable.id, parseInt(req.params.id)));
+  await db.delete(voterRegistryTable).where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), inArray(voterRegistryTable.ward, WARDS)));
   res.status(204).send();
 });
 
@@ -288,6 +295,8 @@ router.post("/iebc/sync", async (req, res) => {
       : [];
 
     for (const v of voters) {
+      const rowWard = v["ward"] ?? ward;
+      if (!isMakueniWard(rowWard)) continue;
       const natId = v["national_id"] ?? v["nationalId"];
       if (natId) {
         const [existing] = await db.select({ id: voterRegistryTable.id })
@@ -301,7 +310,7 @@ router.post("/iebc/sync", async (req, res) => {
         phone: v["phone"],
         gender: v["gender"],
         dateOfBirth: v["date_of_birth"] ?? v["dob"],
-        ward: v["ward"] ?? ward,
+        ward: rowWard,
         subCounty: v["sub_county"] ?? v["subCounty"],
         pollingStation: v["polling_station"] ?? v["pollingStation"] ?? pollingStation,
         pollingStationCode: v["station_code"] ?? v["pollingStationCode"],

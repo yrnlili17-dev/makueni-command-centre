@@ -138,15 +138,16 @@ export async function permissionsForRole(roleName: string): Promise<Record<strin
     .limit(1);
   const stored = (role?.permissions as Record<string, PermLevel>) ?? {};
 
-  // The UI has accumulated route-level names while older role records use
-  // canonical module names. Mirror permissions both ways so valid users do not
-  // authenticate successfully and then hit ACCESS_DENIED on a renamed route.
+  // Keep canonical permissions independent. A route-specific value (including
+  // explicit "none") takes precedence over its legacy canonical alias; never
+  // combine aliases by taking the highest permission, which can escalate access.
+  // "intelligence" is a canonical module and a legacy route name, so narrative
+  // must stay mapped to its own permission instead of sharing that key.
   const aliases: Record<string, string[]> = {
     voters: ["members"],
     constituents: ["voters-db"],
     segmentation: ["segments"],
     intelligence: ["surveys", "social-listening", "swot"],
-    narrative: ["intelligence"],
     finance: ["fundraising"],
     "election-day": ["turnout"],
     messaging: ["speeches"],
@@ -154,12 +155,8 @@ export async function permissionsForRole(roleName: string): Promise<Record<strin
   };
   const resolved: Record<string, PermLevel> = { ...stored };
   for (const [canonical, routeNames] of Object.entries(aliases)) {
-    const levels = [stored[canonical], ...routeNames.map((name) => stored[name])]
-      .filter((level): level is PermLevel => level === "none" || level === "read" || level === "write");
-    const effective: PermLevel = levels.includes("write") ? "write" : levels.includes("read") ? "read" : "none";
-    if (levels.length > 0) {
-      resolved[canonical] = effective;
-      for (const routeName of routeNames) resolved[routeName] = effective;
+    for (const routeName of routeNames) {
+      resolved[routeName] = stored[routeName] ?? stored[canonical] ?? "none";
     }
   }
   return resolved;

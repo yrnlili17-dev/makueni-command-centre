@@ -50,7 +50,38 @@ type Tab = "donors" | "donations" | "campaigns" | "pledges" | "pipeline" | "insi
 const BASE = import.meta.env.BASE_URL;
 
 const CHANNELS = ["cash", "mpesa", "bank", "cheque", "online"] as const;
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+const WARDS = [
+  "Tulimani",
+  "Mbooni",
+  "Kithungo/Kitundu",
+  "Kiteta/Kisau",
+  "Kako/Waia",
+  "Kalawa",
+  "Kiima Kiu/Kalanzoni",
+  "Mukaa",
+  "Kasikeu",
+  "Kee",
+  "Kilungu",
+  "Ilima",
+  "Ukia",
+  "Nzaui/Kilili/Kalamba",
+  "Muvau/Kikumini",
+  "Kathonzweni",
+  "Mavindini",
+  "Kitise/Kithuki",
+  "Wote",
+  "Mbitini",
+  "Makindu",
+  "Kikumbulyu North",
+  "Kikumbulyu South",
+  "Nguumo",
+  "Nguu/Masumba",
+  "Emali/Mulala",
+  "Masongaleni",
+  "Mtito Andei",
+  "Thange",
+  "Ivingoni/Nzambani"
+];
 
 function fmt(n: number | null | undefined) { return `KES ${(n ?? 0).toLocaleString()}`; }
 function pct(a: number, b: number) { if (!b) return 0; return Math.min(100, Math.round((a / b) * 100)); }
@@ -900,8 +931,8 @@ function ReconciliationTab() {
 
 // ── PAYMENT SETUP TAB ────────────────────────────────────────────────────────
 function PaymentSetupTab() {
-  const [mpesa, setMpesa] = useState({ paybill: "123456", account: "MULE2027", shortcode: "400200", tillNumber: "" });
-  const [bank, setBank] = useState({ bank: "Kenya Commercial Bank", branch: "Tala Branch", account: "1234567890", swift: "KCBLKENX" });
+  const [mpesa, setMpesa] = useState({ paybill: "", account: "", shortcode: "", tillNumber: "" });
+  const [bank, setBank] = useState({ bank: "", branch: "", account: "", swift: "" });
   const [saved, setSaved] = useState(false);
 
   function handleSave(e: React.FormEvent) {
@@ -912,11 +943,11 @@ function PaymentSetupTab() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div className="font-mono text-[10px] text-muted-foreground tracking-widest">PAYMENT CHANNELS CONFIGURATION</div>
+      <div className="font-mono text-[10px] text-muted-foreground tracking-widest">PAYMENT CHANNELS CONFIGURATION · NO VERIFIED DETAILS CONFIGURED</div>
 
       {saved && (
         <div className="bg-green-500/10 border border-green-500/30 text-green-400 font-mono text-xs p-3">
-          ✓ PAYMENT CONFIGURATION SAVED
+          This form is not connected to persistent settings. No payment configuration has been saved.
         </div>
       )}
 
@@ -927,9 +958,9 @@ function PaymentSetupTab() {
             <div className="font-mono text-[10px] text-green-400 tracking-widest font-bold">M-PESA CONFIGURATION</div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="PAYBILL NUMBER" value={mpesa.paybill} onChange={e => setMpesa(p => ({ ...p, paybill: e.target.value }))} placeholder="123456" />
-            <Input label="ACCOUNT NUMBER" value={mpesa.account} onChange={e => setMpesa(p => ({ ...p, account: e.target.value }))} placeholder="MULE2027" />
-            <Input label="SHORTCODE (TILL)" value={mpesa.shortcode} onChange={e => setMpesa(p => ({ ...p, shortcode: e.target.value }))} placeholder="400200" />
+            <Input label="PAYBILL NUMBER" value={mpesa.paybill} onChange={e => setMpesa(p => ({ ...p, paybill: e.target.value }))} placeholder="Not configured" />
+            <Input label="ACCOUNT NUMBER" value={mpesa.account} onChange={e => setMpesa(p => ({ ...p, account: e.target.value }))} placeholder="Enter verified account reference" />
+            <Input label="SHORTCODE (TILL)" value={mpesa.shortcode} onChange={e => setMpesa(p => ({ ...p, shortcode: e.target.value }))} placeholder="Not configured" />
             <Input label="TILL NUMBER (OPTIONAL)" value={mpesa.tillNumber} onChange={e => setMpesa(p => ({ ...p, tillNumber: e.target.value }))} placeholder="—" />
           </div>
           <div className="bg-secondary border border-border p-3 font-mono text-[10px] text-muted-foreground">
@@ -943,10 +974,10 @@ function PaymentSetupTab() {
             <div className="font-mono text-[10px] text-blue-400 tracking-widest font-bold">BANK TRANSFER CONFIGURATION</div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="BANK NAME" value={bank.bank} onChange={e => setBank(p => ({ ...p, bank: e.target.value }))} placeholder="Kenya Commercial Bank" />
-            <Input label="BRANCH" value={bank.branch} onChange={e => setBank(p => ({ ...p, branch: e.target.value }))} placeholder="Tala Branch" />
-            <Input label="ACCOUNT NUMBER" value={bank.account} onChange={e => setBank(p => ({ ...p, account: e.target.value }))} placeholder="1234567890" />
-            <Input label="SWIFT CODE" value={bank.swift} onChange={e => setBank(p => ({ ...p, swift: e.target.value }))} placeholder="KCBLKENX" />
+            <Input label="BANK NAME" value={bank.bank} onChange={e => setBank(p => ({ ...p, bank: e.target.value }))} placeholder="Enter verified bank name" />
+            <Input label="BRANCH" value={bank.branch} onChange={e => setBank(p => ({ ...p, branch: e.target.value }))} placeholder="Enter Makueni branch, if applicable" />
+            <Input label="ACCOUNT NUMBER" value={bank.account} onChange={e => setBank(p => ({ ...p, account: e.target.value }))} placeholder="Enter verified account number" />
+            <Input label="SWIFT CODE" value={bank.swift} onChange={e => setBank(p => ({ ...p, swift: e.target.value }))} placeholder="Enter verified SWIFT code" />
           </div>
         </div>
 
@@ -956,8 +987,8 @@ function PaymentSetupTab() {
             <div className="font-mono text-[10px] text-cyan-400 tracking-widest font-bold">DIASPORA / ONLINE GIVING</div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="PAYPAL EMAIL" placeholder="fundraising@stephenmule.com" />
-            <Input label="WESTERN UNION REFERENCE" placeholder="MULE2027 KE" />
+            <Input label="PAYPAL EMAIL" placeholder="Enter verified payment email" />
+            <Input label="WESTERN UNION REFERENCE" placeholder="Enter verified reference" />
           </div>
           <div className="bg-secondary border border-border p-3 font-mono text-[10px] text-muted-foreground">
             For international wire transfers: SWIFT {bank.swift} · {bank.bank} · Acc {bank.account}
@@ -1180,7 +1211,7 @@ export default function Fundraising() {
             <Banknote className="w-5 h-5 text-primary" />
             FINANCE OPS
           </h1>
-          <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">CAMPAIGN FUNDRAISING COMMAND — HON. STEPHEN MULE</p>
+          <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">MAKUENI COUNTY FINANCE & DONATION RECORDS</p>
         </div>
         {summary && (
           <div className="grid grid-cols-4 gap-3 text-center">

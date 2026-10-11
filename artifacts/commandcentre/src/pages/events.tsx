@@ -8,6 +8,38 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus, X, Check, Trash2, Calendar, MapPin, Users } from "lucide-react";
 
 const EVENT_TYPES = ["rally", "townhall", "canvass", "fundraiser", "debate", "training", "press_conference", "community"];
+const WARDS = [
+  "Tulimani",
+  "Mbooni",
+  "Kithungo/Kitundu",
+  "Kiteta/Kisau",
+  "Kako/Waia",
+  "Kalawa",
+  "Kiima Kiu/Kalanzoni",
+  "Mukaa",
+  "Kasikeu",
+  "Kee",
+  "Kilungu",
+  "Ilima",
+  "Ukia",
+  "Nzaui/Kilili/Kalamba",
+  "Muvau/Kikumini",
+  "Kathonzweni",
+  "Mavindini",
+  "Kitise/Kithuki",
+  "Wote",
+  "Mbitini",
+  "Makindu",
+  "Kikumbulyu North",
+  "Kikumbulyu South",
+  "Nguumo",
+  "Nguu/Masumba",
+  "Emali/Mulala",
+  "Masongaleni",
+  "Mtito Andei",
+  "Thange",
+  "Ivingoni/Nzambani"
+];
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
@@ -62,7 +94,7 @@ export default function Events() {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-mono text-muted-foreground">WARD</label>
-              <input value={form.ward ?? ""} onChange={e => setForm(p => ({ ...p, ward: e.target.value }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+              <select value={form.ward ?? ""} onChange={e => setForm(p => ({ ...p, ward: e.target.value }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary"><option value="">COUNTY-WIDE / NOT WARD-SPECIFIC</option>{WARDS.map(ward => <option key={ward} value={ward}>{ward}</option>)}</select>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-mono text-muted-foreground">START DATE *</label>

@@ -1,14 +1,18 @@
 import { Router } from "express";
 import { db, canvassSessionsTable, canvassVisitsTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, inArray } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+
+const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
+const isMakueniWard = (ward: unknown): ward is string => typeof ward === "string" && WARDS.includes(ward);
 
 const router = Router();
 
 router.get("/sessions", async (req, res) => {
   const { type, ward, status } = req.query as Record<string, string>;
-  let sessions = await db.select().from(canvassSessionsTable).orderBy(canvassSessionsTable.date);
+  let sessions = await db.select().from(canvassSessionsTable).where(inArray(canvassSessionsTable.ward, WARDS)).orderBy(canvassSessionsTable.date);
   if (type) sessions = sessions.filter(s => s.type === type);
-  if (ward) sessions = sessions.filter(s => s.ward === ward);
+  if (ward) { if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } sessions = sessions.filter(s => s.ward === ward); }
   if (status) sessions = sessions.filter(s => s.status === status);
   res.json(sessions);
 });
@@ -16,6 +20,7 @@ router.get("/sessions", async (req, res) => {
 router.post("/sessions", async (req, res) => {
   const { name, type = "door-to-door", ward, date, doorsTarget = 0, assignedVolunteers = 0, notes } = req.body;
   if (!name || !ward || !date) { res.status(400).json({ error: "name, ward, date required" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "A valid Makueni County ward is required" }); return; }
   const [session] = await db.insert(canvassSessionsTable).values({
     name, type, ward, date, doorsTarget, assignedVolunteers, notes,
     status: "planned", doorsCompleted: 0
@@ -25,14 +30,16 @@ router.post("/sessions", async (req, res) => {
 
 router.get("/sessions/:id", async (req, res) => {
   const [session] = await db.select().from(canvassSessionsTable).where(eq(canvassSessionsTable.id, parseInt(req.params.id)));
+  if (session && !isMakueniWard(session.ward)) { res.status(404).json({ error: "Not found in Makueni workspace" }); return; }
   if (!session) { res.status(404).json({ error: "Not found" }); return; }
   res.json(session);
 });
 
 router.patch("/sessions/:id", async (req, res) => {
   const id = parseInt(req.params.id);
-  const { status, assignedVolunteers, doorsTarget, doorsCompleted, notes } = req.body;
+  const { status, assignedVolunteers, doorsTarget, doorsCompleted, notes, ward } = req.body;
   const updates: Record<string, unknown> = {};
+  if (ward !== undefined) { if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } updates.ward = ward; }
   if (status !== undefined) updates.status = status;
   if (assignedVolunteers !== undefined) updates.assignedVolunteers = assignedVolunteers;
   if (doorsTarget !== undefined) updates.doorsTarget = doorsTarget;
@@ -52,15 +59,19 @@ router.delete("/sessions/:id", async (req, res) => {
 
 router.get("/visits", async (req, res) => {
   const { sessionId } = req.query as Record<string, string>;
+  const validSessions = await db.select({ id: canvassSessionsTable.id }).from(canvassSessionsTable).where(inArray(canvassSessionsTable.ward, WARDS));
+  const validSessionIds = validSessions.map(s => s.id);
   const visits = sessionId
-    ? await db.select().from(canvassVisitsTable).where(eq(canvassVisitsTable.sessionId, parseInt(sessionId))).orderBy(canvassVisitsTable.visitedAt)
-    : await db.select().from(canvassVisitsTable).orderBy(canvassVisitsTable.visitedAt);
+    ? (validSessionIds.includes(parseInt(sessionId)) ? await db.select().from(canvassVisitsTable).where(eq(canvassVisitsTable.sessionId, parseInt(sessionId))).orderBy(canvassVisitsTable.visitedAt) : [])
+    : validSessionIds.length ? await db.select().from(canvassVisitsTable).where(inArray(canvassVisitsTable.sessionId, validSessionIds)).orderBy(canvassVisitsTable.visitedAt) : [];
   res.json(visits);
 });
 
 router.post("/visits", async (req, res) => {
   const { sessionId, memberId, address, outcome, supportLevel, notes } = req.body;
   if (!sessionId || !address || !outcome) { res.status(400).json({ error: "sessionId, address, outcome required" }); return; }
+  const [parentSession] = await db.select().from(canvassSessionsTable).where(eq(canvassSessionsTable.id, sessionId));
+  if (!parentSession || !isMakueniWard(parentSession.ward)) { res.status(400).json({ error: "A valid Makueni field session is required" }); return; }
   const [visit] = await db.insert(canvassVisitsTable).values({ sessionId, memberId, address, outcome, supportLevel, notes }).returning();
   await db.update(canvassSessionsTable).set({ doorsCompleted: sql`${canvassSessionsTable.doorsCompleted} + 1` }).where(eq(canvassSessionsTable.id, sessionId));
   res.status(201).json(visit);
@@ -78,33 +89,33 @@ router.get("/coverage", async (req, res) => {
   })
     .from(canvassSessionsTable)
     .leftJoin(canvassVisitsTable, eq(canvassVisitsTable.sessionId, canvassSessionsTable.id))
+    .where(inArray(canvassSessionsTable.ward, WARDS))
     .groupBy(canvassSessionsTable.ward);
 
-  const WARD_VOTERS: Record<string, number> = {
-    "Tala": 19000, "Makueni West": 26000,
-    "Makueni North": 15000, "Makueni East": 12000, "Kyeleni": 10000,
-  };
-
-  res.json(rows.map(r => {
-    const knocked = Number(r.total);
-    const voters = WARD_VOTERS[r.ward] ?? 10000;
+  const rowsByWard = new Map(rows.map(r => [r.ward, r]));
+  // Include every official ward, but never invent electorate denominators.
+  res.json(MAKUENI_WARDS.map(({ ward }) => {
+    const r = rowsByWard.get(ward);
     return {
-      ward: r.ward,
-      doorsKnocked: knocked,
-      doorsTotal: voters,
-      coveragePercent: Math.min((knocked / voters) * 100, 100),
-      supportCount: Number(r.support ?? 0),
-      opposeCount: Number(r.oppose ?? 0),
-      undecidedCount: Number(r.undecided ?? 0),
-      notHomeCount: Number(r.notHome ?? 0),
-      sessions: Number(r.sessions),
+      ward,
+      doorsKnocked: Number(r?.total ?? 0),
+      doorsTotal: 0,
+      coveragePercent: 0,
+      supportCount: Number(r?.support ?? 0),
+      opposeCount: Number(r?.oppose ?? 0),
+      undecidedCount: Number(r?.undecided ?? 0),
+      notHomeCount: Number(r?.notHome ?? 0),
+      sessions: Number(r?.sessions ?? 0),
+      denominatorStatus: "not_loaded",
     };
   }));
 });
 
 router.get("/stats", async (req, res) => {
-  const sessions = await db.select().from(canvassSessionsTable);
-  const visits = await db.select().from(canvassVisitsTable);
+  const sessions = await db.select().from(canvassSessionsTable).where(inArray(canvassSessionsTable.ward, WARDS));
+  const validSessions = await db.select({ id: canvassSessionsTable.id }).from(canvassSessionsTable).where(inArray(canvassSessionsTable.ward, WARDS));
+  const validSessionIds = validSessions.map(s => s.id);
+  const visits = validSessionIds.length ? await db.select().from(canvassVisitsTable).where(inArray(canvassVisitsTable.sessionId, validSessionIds)) : [];
   const supporters = visits.filter(v => v.outcome === "support").length;
   const undecided = visits.filter(v => v.outcome === "undecided").length;
   const oppose = visits.filter(v => v.outcome === "oppose").length;

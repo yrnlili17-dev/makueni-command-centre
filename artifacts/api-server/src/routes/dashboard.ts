@@ -1,20 +1,22 @@
 import { Router } from "express";
 import { db, membersTable, volunteersTable, messageCampaignsTable, canvassVisitsTable, canvassSessionsTable, narrativeMentionsTable, milestonesTable, campaignEventsTable, campaignSettingsTable, warRoomBriefsTable } from "@workspace/db";
-import { sql, eq, gte } from "drizzle-orm";
+import { sql, eq, gte, inArray, and, or, isNull } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
 
 const router = Router();
 
 router.get("/summary", async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   const [members, volunteers, messages, doors, wards, threats, milestones, events, settings] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(membersTable),
-    db.select({ count: sql<number>`count(*)` }).from(volunteersTable).where(eq(volunteersTable.status, "active")),
+    db.select({ count: sql<number>`count(*)` }).from(membersTable).where(inArray(membersTable.ward, WARDS)),
+    db.select({ count: sql<number>`count(*)` }).from(volunteersTable).where(and(eq(volunteersTable.status, "active"), inArray(volunteersTable.ward, WARDS))),
     db.select({ total: sql<number>`sum(${messageCampaignsTable.recipientCount})` }).from(messageCampaignsTable),
-    db.select({ total: sql<number>`count(*)` }).from(canvassVisitsTable),
-    db.select({ ward: canvassSessionsTable.ward }).from(canvassSessionsTable).groupBy(canvassSessionsTable.ward),
+    db.select({ total: sql<number>`count(*)` }).from(canvassVisitsTable).innerJoin(canvassSessionsTable, eq(canvassVisitsTable.sessionId, canvassSessionsTable.id)).where(inArray(canvassSessionsTable.ward, WARDS)),
+    db.select({ ward: canvassSessionsTable.ward }).from(canvassSessionsTable).where(inArray(canvassSessionsTable.ward, WARDS)).groupBy(canvassSessionsTable.ward),
     db.select({ count: sql<number>`count(*)` }).from(narrativeMentionsTable).where(eq(narrativeMentionsTable.status, "open")),
     db.select({ total: sql<number>`count(*)`, completed: sql<number>`sum(case when ${milestonesTable.status} = 'completed' then 1 else 0 end)` }).from(milestonesTable),
-    db.select({ count: sql<number>`count(*)` }).from(campaignEventsTable).where(gte(campaignEventsTable.startDate, today)),
+    db.select({ count: sql<number>`count(*)` }).from(campaignEventsTable).where(and(gte(campaignEventsTable.startDate, today), or(isNull(campaignEventsTable.ward), inArray(campaignEventsTable.ward, WARDS)))),
     db.select().from(campaignSettingsTable).where(eq(campaignSettingsTable.key, "election_date")),
   ]);
 
