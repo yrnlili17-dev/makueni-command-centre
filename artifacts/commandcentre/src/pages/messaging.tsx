@@ -402,8 +402,8 @@ function EmailConfig({ provider, onSaved }: { provider?: Provider; onSaved: () =
                 <div className="col-span-2">
                   <FieldInput label="MANDRILL / MAILCHIMP API KEY" required type="password" placeholder="md-xxxxxxxxxxxxxxxxxxxxxxxx" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />
                 </div>
-                <FieldInput label="FROM EMAIL" required type="email" placeholder="campaign@mule2027.ke" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
-                <FieldInput label="FROM NAME" placeholder="Hon. Stephen Mule Campaign" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
+                <FieldInput label="FROM EMAIL" required type="email" placeholder="communications@example.org" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
+                <FieldInput label="FROM NAME" placeholder="Makueni County Communications" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
               </div>
             )}
 
@@ -411,10 +411,10 @@ function EmailConfig({ provider, onSaved }: { provider?: Provider; onSaved: () =
               <div className="grid grid-cols-2 gap-3">
                 <FieldInput label="SMTP HOST" required placeholder="smtp.gmail.com" value={form.smtpHost} onChange={e => setForm(p => ({ ...p, smtpHost: e.target.value }))} />
                 <FieldInput label="PORT" required placeholder="587" value={form.smtpPort} onChange={e => setForm(p => ({ ...p, smtpPort: e.target.value }))} />
-                <FieldInput label="SMTP USERNAME" required placeholder="campaign@mule2027.ke" value={form.smtpUser} onChange={e => setForm(p => ({ ...p, smtpUser: e.target.value }))} />
+                <FieldInput label="SMTP USERNAME" required placeholder="communications@example.org" value={form.smtpUser} onChange={e => setForm(p => ({ ...p, smtpUser: e.target.value }))} />
                 <FieldInput label="SMTP PASSWORD" required type="password" placeholder="app_password_here" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />
-                <FieldInput label="FROM EMAIL" required type="email" placeholder="campaign@mule2027.ke" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
-                <FieldInput label="FROM NAME" placeholder="Hon. Stephen Mule Campaign" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
+                <FieldInput label="FROM EMAIL" required type="email" placeholder="communications@example.org" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
+                <FieldInput label="FROM NAME" placeholder="Makueni County Communications" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
               </div>
             )}
 
