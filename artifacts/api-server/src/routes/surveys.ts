@@ -7,7 +7,7 @@ const router = Router();
 // ─── Opinion Polls ────────────────────────────────────────────────────────────
 
 router.get("/polls", async (req, res) => {
-  const polls = await db.select().from(opinionPollsTable).orderBy(desc(opinionPollsTable.createdAt));
+  const polls = (await db.select().from(opinionPollsTable).orderBy(desc(opinionPollsTable.createdAt))).filter(p => isMakueniWard(p.ward));
   res.json(polls);
 });
 
@@ -37,7 +37,7 @@ router.post("/polls/:id/vote", async (req, res) => {
   const { optionIndex, respondentName, ward, ageGroup, gender } = req.body;
   if (optionIndex === undefined) { res.status(400).json({ error: "optionIndex required" }); return; }
   const [poll] = await db.select().from(opinionPollsTable).where(eq(opinionPollsTable.id, pollId));
-  if (!poll) { res.status(404).json({ error: "Poll not found" }); return; }
+  if (!poll || !isMakueniWard(poll.ward)) { res.status(404).json({ error: "Makueni poll not found" }); return; }
   if (poll.status !== "active") { res.status(400).json({ error: "Poll is not active" }); return; }
 
   const [vote] = await db.insert(pollVotesTable).values({ pollId, optionIndex, respondentName, ward, ageGroup, gender }).returning();
@@ -58,7 +58,7 @@ router.get("/polls/:id/results", async (req, res) => {
   const opts = poll.options as Array<{ label: string; votes: number }>;
   const total = poll.totalVotes;
 
-  const wards = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"];
+  const wards = WARDS;
   const wardBreakdown = wards.map(ward => {
     const wardVotes = votes.filter(v => v.ward === ward);
     const optCounts = opts.map((_, idx) => wardVotes.filter(v => v.optionIndex === idx).length);
@@ -89,8 +89,8 @@ router.get("/polls/:id/results", async (req, res) => {
 
 router.get("/issues", async (req, res) => {
   const { ward, urgency, status, category } = req.query as Record<string, string>;
-  const conditions = [];
-  if (ward && ward !== "all") conditions.push(eq(topicalIssuesTable.ward, ward));
+  const conditions = [inArray(topicalIssuesTable.ward, [...WARDS, "all", "county-wide"])];
+  if (ward && ward !== "all") { if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a Makueni County ward" }); return; } conditions.push(eq(topicalIssuesTable.ward, ward)); }
   if (urgency) conditions.push(eq(topicalIssuesTable.urgency, urgency));
   if (status) conditions.push(eq(topicalIssuesTable.status, status));
   if (category) conditions.push(eq(topicalIssuesTable.category, category));
@@ -111,6 +111,7 @@ router.patch("/issues/:id", async (req, res) => {
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   const fields = ["title","description","category","urgency","ward","status","reportedBy","affectedPopulation","tags","resolution"];
   fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+  if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a Makueni County ward or county-wide" }); return; }
   if (req.body.status === "resolved") updates.resolvedAt = new Date();
   const [issue] = await db.update(topicalIssuesTable).set(updates).where(eq(topicalIssuesTable.id, id)).returning();
   if (!issue) { res.status(404).json({ error: "Not found" }); return; }
@@ -190,6 +191,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const { title, description, questions = [] } = req.body;
   if (!title) { res.status(400).json({ error: "title required" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a Makueni County ward or county-wide" }); return; }
   const [survey] = await db.insert(surveysTable).values({ title, description, questions, status: "active", responseCount: 0 }).returning();
   res.status(201).json(survey);
 });
