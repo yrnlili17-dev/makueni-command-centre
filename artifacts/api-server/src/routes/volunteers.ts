@@ -2,6 +2,10 @@ import { Router } from "express";
 import { db, volunteersTable, volunteerAssignmentsTable, volunteerTasksTable, volunteerProgressLogsTable, volunteerIssuesTable } from "@workspace/db";
 import { eq, and, sql, desc, gte } from "drizzle-orm";
 import { z } from "zod/v4";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+
+const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const isMakueniWard = (ward: unknown): ward is string => typeof ward === "string" && WARDS.includes(ward);
 
 const router = Router();
 
@@ -12,7 +16,7 @@ const registrationSchema = z.object({
   lastName: z.string().trim().min(1, "Last name is required").max(100),
   phone: z.string().trim().min(7, "A valid phone number is required").max(40),
   email: z.string().trim().email().max(200).optional().or(z.literal("")),
-  ward: z.string().trim().max(100).optional().or(z.literal("")),
+  ward: z.string().trim().refine((ward) => isMakueniWard(ward), "Select a valid Makueni County ward"),
   interests: z.string().trim().max(500).optional().or(z.literal("")),
   availability: z.string().trim().max(200).optional().or(z.literal("")),
   message: z.string().trim().max(2000).optional().or(z.literal("")),
@@ -64,7 +68,7 @@ router.post("/register", async (req, res) => {
     lastName: d.lastName,
     phone: d.phone,
     email: d.email || null,
-    ward: d.ward || null,
+    ward: d.ward,
     interests: d.interests || null,
     availability: d.availability || null,
     message: d.message || null,
@@ -79,13 +83,14 @@ router.post("/register", async (req, res) => {
 // ─── Assignments (before /:id wildcard) ──────────────────────────────────────
 
 router.get("/assignments", async (req, res) => {
-  const assignments = await db.select().from(volunteerAssignmentsTable).orderBy(volunteerAssignmentsTable.assignedAt);
+  const assignments = await db.select().from(volunteerAssignmentsTable).where(sql`${volunteerAssignmentsTable.ward} = ANY(${WARDS})`).orderBy(volunteerAssignmentsTable.assignedAt);
   res.json(assignments);
 });
 
 router.post("/assignments", async (req, res) => {
   const { volunteerId, ward, sessionId } = req.body;
   if (!volunteerId || !ward) { res.status(400).json({ error: "volunteerId and ward required" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "A valid Makueni County ward is required" }); return; }
   const [assignment] = await db.insert(volunteerAssignmentsTable).values({ volunteerId, ward, sessionId }).returning();
   res.status(201).json(assignment);
 });
@@ -118,6 +123,7 @@ router.patch("/tasks/:id", async (req, res) => {
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   const fields = ["title","description","category","ward","priority","status","targetMetric","targetValue","currentValue","dueDate","notes","assignedBy"];
   fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+  if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   if (req.body.status === "completed") updates.completedAt = new Date();
   const [task] = await db.update(volunteerTasksTable).set(updates).where(eq(volunteerTasksTable.id, id)).returning();
   if (!task) { res.status(404).json({ error: "Not found" }); return; }
@@ -196,7 +202,7 @@ router.get("/daily-report", async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
 
   // all volunteers with their task counts
-  const volunteers = await db.select().from(volunteersTable).orderBy(volunteersTable.ward, volunteersTable.lastName);
+  const volunteers = await db.select().from(volunteersTable).where(sql`${volunteersTable.ward} = ANY(${WARDS})`).orderBy(volunteersTable.ward, volunteersTable.lastName);
 
   // all tasks
   const allTasks = await db.select().from(volunteerTasksTable);
@@ -242,7 +248,7 @@ router.get("/daily-report", async (req, res) => {
   });
 
   // ward breakdown
-  const wardBreakdown = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni"].map(ward => {
+  const wardBreakdown = WARDS.map(ward => {
     const wardVols = volunteers.filter(v => v.ward === ward);
     const wardTasks = allTasks.filter(t => wardVols.some(v => v.id === t.volunteerId));
     const wardLogs = todayLogs.filter(l => wardVols.some(v => v.id === l.volunteerId));
@@ -280,6 +286,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const { firstName, lastName, email, phone, ward, role = "canvasser" } = req.body;
   if (!firstName || !lastName) { res.status(400).json({ error: "firstName and lastName required" }); return; }
+  if (!isMakueniWard(ward)) { res.status(400).json({ error: "A valid Makueni County ward is required" }); return; }
   const [volunteer] = await db.insert(volunteersTable).values({ firstName, lastName, email, phone, ward, role, status: "active", doorsKnocked: 0, hoursLogged: 0 }).returning();
   res.status(201).json(volunteer);
 });
