@@ -27,4 +27,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Typecheck and build
+        env:
+          PORT: "3000"
         run: pnpm run build
