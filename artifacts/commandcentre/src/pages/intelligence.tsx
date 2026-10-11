@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
+const WARDS = ["Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa","Kiima Kiu/Kalanzoni","Mukaa","Kasikeu","Kee","Kilungu","Ilima","Ukia","Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini","Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala","Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"];
 
 type Tab = "feed" | "queue" | "rebuttal" | "platforms" | "competitors" | "warroom" | "playbook";
 
@@ -46,16 +47,16 @@ const NARRATIVE_PLAYBOOK = [
   { tag: "HEALTH", title: "Health Services", core: "Share confirmed facility, staffing and service-delivery updates.", lines: [{ lang: "EN", text: "Makueni County: confirmed health-service information." }, { lang: "SW", text: "Makueni County: taarifa zilizothibitishwa kuhusu huduma za afya." }], why: "Distinguish official information from unverified reports." },
   { tag: "BUDGET", title: "Budgets & Accountability", core: "Link public claims to approved budgets, reports and source documents.", lines: [{ lang: "EN", text: "Makueni County: follow the evidence, budget and published results." }, { lang: "SW", text: "Makueni County: fuatilia ushahidi, bajeti na matokeo yaliyochapishwa." }], why: "Support transparent public understanding of county services." },
   { tag: "COMMUNITY", title: "Community Issues", core: "Collect service requests and publish verified responses without political targeting.", lines: [{ lang: "EN", text: "Makueni County: report a service issue and follow its verified status." }, { lang: "SW", text: "Makueni County: ripoti tatizo la huduma na ufuatilie hali yake." }], why: "Keep updates factual, accessible and focused on residents and services." },
-] as const;;
+] as const;
 
-const PLAYBOOK_WARDS = WARDS.map(ward => ({ ward, focus: "County services, development projects and public accountability" })) as const;;
+const PLAYBOOK_WARDS = WARDS.map(ward => ({ ward, focus: "County services, development projects and public accountability" }));;
 
 const PLAYBOOK_CHANNELS = [
   { channel: "Official website", guidance: "Publish verified county updates with source links and dates." },
   { channel: "Public notices", guidance: "Use accessible language and identify the responsible county department." },
   { channel: "Community meetings", guidance: "Record questions, decisions and follow-up actions neutrally." },
   { channel: "Online channels", guidance: "Correct misinformation with evidence and avoid unverified claims." },
-] as const;;
+] as const;
 
 // ─── severity ────────────────────────────────────────────────────────────────
 
@@ -306,7 +307,7 @@ export default function Intelligence() {
         <div>
           <h1 className="text-xl font-bold tracking-widest">NARRATIVE COMMAND</h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
-            AI-POWERED SENTIMENT INTELLIGENCE · HON. STEPHEN MULE · MATUNGULU MNA
+            AI-POWERED PUBLIC-SERVICE INTELLIGENCE · MAKUENI COUNTY
             {score?.aiEnabled ? (
               <span className="ml-3 text-green-400">[ AI_ONLINE ]</span>
             ) : (
@@ -614,14 +615,10 @@ export default function Intelligence() {
       {/* ── AI REBUTTAL CENTER ── */}
       {tab === "rebuttal" && (() => {
         const ATTACK_TEMPLATES = [
-          { label: "CDF Misused", text: "Hon. Mule has misused CDF funds meant for Makueni projects. Where did the money go? No accountability whatsoever!" },
-          { label: "Roads Not Built", text: "Mule promised to tarmac the Tala–Makueni road in 2022. It is now 2026 and the road is still a muddy mess. Empty promises!" },
-          { label: "Water Crisis Ignored", text: "Makueni North residents are still fetching water from rivers. Our MNA has done NOTHING about the water crisis despite 4 years in office." },
-          { label: "Parliament Absentee", text: "Mule has one of the worst parliamentary attendance records. He takes his salary but skips debates that affect Makueni." },
-          { label: "Corruption Allegation", text: "Sources confirm Hon. Mule received kickbacks from the Makueni East roads contractor. This must be investigated immediately!" },
-          { label: "Nepotism Claim", text: "All tenders in Makueni constituency go to Mule's relatives and close allies. This is corruption and must stop." },
-          { label: "Youth Jobs Failure", text: "Mule promised 5,000 jobs for Makueni youth. Three years later, youth unemployment in the constituency is worse than ever." },
-          { label: "Health Neglect", text: "Makueni West dispensary has had no doctor for 8 months. Our MNA is busy with politics while people die from treatable diseases." },
+          { label: "Water service update", text: "Please provide the official status, responsible department and next update date for this Makueni County water-service issue." },
+          { label: "Road maintenance status", text: "What verified information is available on this Makueni County road maintenance request, including timeline and source?" },
+          { label: "Budget accountability", text: "Please link the approved Makueni County budget line and published implementation report for this project." },
+          { label: "Health facility services", text: "Please confirm the current service status with the relevant Makueni County health department and cite an official update." },
         ];
 
         const PLATFORMS = ["Twitter/X", "Facebook", "WhatsApp", "Press Statement", "Baraza Speech", "SMS", "TikTok Caption"];
@@ -919,7 +916,7 @@ export default function Intelligence() {
                 fields: [
                   { key: "rssUrl", label: "GOOGLE ALERTS RSS URL", placeholder: "https://www.google.com/alerts/feeds/…" },
                 ],
-                hint: "Set up a Google Alert for 'Stephen Mule' or 'Makueni MNA', then paste the RSS feed URL here."
+                hint: "Set up a Google Alert for 'Stephen Mule' or 'Makueni county administration', then paste the RSS feed URL here."
               },
               {
                 key: "news_rss", label: "NEWS MEDIA RSS", icon: <Newspaper className="w-4 h-4 text-yellow-400" />,
@@ -1054,13 +1051,13 @@ export default function Intelligence() {
           <div className="bg-card border border-border">
             <div className="px-4 py-3 border-b border-border flex items-center gap-2">
               <Shield className="w-3 h-3 text-primary" />
-              <span className="font-mono text-[10px] tracking-widest">SWOT ANALYSIS · HON. STEPHEN MULE · MATUNGULU MNA</span>
+              <span className="font-mono text-[10px] tracking-widest">SERVICE DELIVERY REVIEW · MAKUENI COUNTY</span>
             </div>
             <div className="grid grid-cols-2 divide-x divide-y divide-border">
               <div className="p-4">
                 <p className="font-mono text-[9px] text-green-400 tracking-widest mb-2">[ STRENGTHS ]</p>
                 <ul className="space-y-1">
-                  {["Personal etiquette & interpersonal relations","15 years leadership experience","Courage and strong presentation skills","Trust from constituents","Financial stability","Local media coverage","Improved education infrastructure record"].map(s => (
+                  {["Published county plans and budgets","Documented service delivery updates","Official public participation records","Accessible county information","Auditable project documentation"].map(s => (
                     <li key={s} className="font-mono text-[9px] text-muted-foreground flex items-start gap-1.5"><span className="text-green-400 shrink-0">+</span>{s}</li>
                   ))}
                 </ul>
@@ -1068,7 +1065,7 @@ export default function Intelligence() {
               <div className="p-4">
                 <p className="font-mono text-[9px] text-red-400 tracking-widest mb-2">[ WEAKNESSES ]</p>
                 <ul className="space-y-1">
-                  {["Poor NGCDF committee performance","Low electricity connectivity in constituency"].map(s => (
+                  {["Missing or outdated public records","Unverified service status reports"].map(s => (
                     <li key={s} className="font-mono text-[9px] text-muted-foreground flex items-start gap-1.5"><span className="text-red-400 shrink-0">−</span>{s}</li>
                   ))}
                 </ul>
@@ -1076,7 +1073,7 @@ export default function Intelligence() {
               <div className="p-4">
                 <p className="font-mono text-[9px] text-blue-400 tracking-widest mb-2">[ OPPORTUNITIES ]</p>
                 <ul className="space-y-1">
-                  {["Wiper party popularity in Ukambani","Many opponent aspirants splitting opposition vote","Long-service advantage: well-known brand"].map(s => (
+                  {["Better access to county service information","Clear project progress reporting","Public feedback and accountability channels"].map(s => (
                     <li key={s} className="font-mono text-[9px] text-muted-foreground flex items-start gap-1.5"><span className="text-blue-400 shrink-0">↑</span>{s}</li>
                   ))}
                 </ul>
@@ -1084,7 +1081,7 @@ export default function Intelligence() {
               <div className="p-4">
                 <p className="font-mono text-[9px] text-orange-400 tracking-widest mb-2">[ THREATS ]</p>
                 <ul className="space-y-1">
-                  {["Low voter turnout risk","Negative social media, cyber bullying & defamation","Ruling party candidate with high financing"].map(s => (
+                  {["Unverified claims spreading online","Delayed responses to service issues","Incomplete or inconsistent source records"].map(s => (
                     <li key={s} className="font-mono text-[9px] text-muted-foreground flex items-start gap-1.5"><span className="text-orange-400 shrink-0">!</span>{s}</li>
                   ))}
                 </ul>
@@ -1132,8 +1129,8 @@ export default function Intelligence() {
           <div className="bg-primary/5 border border-primary/30 px-4 py-3 flex items-start gap-3">
             <Megaphone className="w-4 h-4 text-primary mt-0.5 shrink-0" />
             <div>
-              <p className="font-mono text-[11px] tracking-widest text-foreground">CORE STORYLINES · KOMBOA MATUNGULU</p>
-              <p className="font-mono text-[10px] text-muted-foreground mt-1">These localized narratives ground every AI draft (speeches, messaging, rebuttals). Test in vernacular and English.</p>
+              <p className="font-mono text-[11px] tracking-widest text-foreground">COUNTY PUBLIC INFORMATION · MAKUENI</p>
+              <p className="font-mono text-[10px] text-muted-foreground mt-1">These templates guide factual public-service updates. Cite official sources and mark unverified details clearly.</p>
             </div>
           </div>
 
