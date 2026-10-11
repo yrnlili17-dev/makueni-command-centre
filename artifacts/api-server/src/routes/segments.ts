@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { db, segmentsTable, membersTable } from "@workspace/db";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql, and, inArray } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
+const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
 
 const router = Router();
 
@@ -18,13 +20,14 @@ async function computeMemberCount(criteria: Record<string, any>) {
 }
 
 router.get("/", async (req, res) => {
-  const segs = await db.select().from(segmentsTable).orderBy(segmentsTable.createdAt);
+  const segs = (await db.select().from(segmentsTable).orderBy(segmentsTable.createdAt)).filter(seg => !seg.criteria?.ward || seg.criteria.ward === "all" || seg.criteria.ward === "county-wide" || WARDS.includes(seg.criteria.ward));
   res.json(segs);
 });
 
 router.post("/", async (req, res) => {
   const { name, description, criteria = {}, isLocked = false } = req.body;
   if (!name) { res.status(400).json({ error: "name required" }); return; }
+  if (criteria.ward && criteria.ward !== "all" && criteria.ward !== "county-wide" && !WARDS.includes(criteria.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   const memberCount = await computeMemberCount(criteria);
   const [seg] = await db.insert(segmentsTable).values({ name, description, criteria, memberCount, isLocked }).returning();
   res.status(201).json(seg);
