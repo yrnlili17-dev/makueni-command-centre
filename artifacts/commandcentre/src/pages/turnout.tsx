@@ -114,7 +114,7 @@ export default function Turnout() {
             <TrendingUp className="w-5 h-5 text-primary" /> VOTER TURNOUT FORECAST
           </h1>
           <p className="font-mono text-[11px] text-muted-foreground mt-1">
-            Ward-level projection · registered voters × expected turnout × support · Hon. Stephen Mule
+            Makueni County ward-level turnout estimates · based on registered-voter records
           </p>
         </div>
         <button
@@ -139,7 +139,7 @@ export default function Turnout() {
               sub={`${fmt(data.totals.predictedVotes)} OF ${fmt(data.totals.registered)} VOTERS`}
             />
             <StatCard
-              label="PROJECTED MULE VOTES"
+              label="PROJECTED CANDIDATE VOTES"
               value={fmt(data.totals.predictedMuleVotes)}
               sub={`${data.totals.predictedMuleShare}% PROJECTED VOTE SHARE`}
               accent="text-green-400"
@@ -147,7 +147,7 @@ export default function Turnout() {
             <StatCard
               label="REGISTERED VOTERS"
               value={fmt(data.totals.registered)}
-              sub={`${data.wards.length} WARDS · MATUNGULU`}
+              sub={`${data.wards.length} WARDS · MAKUENI COUNTY`}
             />
             <StatCard
               label="TOP GOTV PRIORITY"
