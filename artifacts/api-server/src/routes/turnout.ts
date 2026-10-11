@@ -153,7 +153,7 @@ router.put("/assumptions", async (req, res) => {
         target: turnoutAssumptionsTable.ward,
         set: {
           expectedTurnoutRate: a.expectedTurnoutRate,
-          muleSupportShare: a.muleSupportShare,
+          muleSupportShare: a.candidateSupportShare,
           updatedAt: new Date(),
         },
       });
