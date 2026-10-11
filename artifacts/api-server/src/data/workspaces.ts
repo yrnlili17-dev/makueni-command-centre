@@ -1,10 +1,9 @@
 /**
- * Workspace registry for future multi-area deployments.
+ * Active workspace registry for the Makueni Command Centre.
  *
- * Makueni remains the active workspace. Additional workspace entries are
- * deliberately marked as geography-not-configured until verified local
- * administrative reference data is supplied; this prevents accidental
- * cross-county data mixing or invented wards.
+ * Only Makueni is exposed by the running application. Future workspaces are
+ * documented separately so they cannot appear in active selectors or be
+ * accepted as active workspace IDs until explicitly configured and reviewed.
  */
 export type WorkspaceDefinition = {
   id: string;
@@ -14,6 +13,7 @@ export type WorkspaceDefinition = {
   parentWorkspaceId?: string;
 };
 
+/** Workspaces visible/usable in the current deployment. Keep Makueni only. */
 export const WORKSPACES: readonly WorkspaceDefinition[] = [
   {
     id: "makueni",
@@ -21,6 +21,15 @@ export const WORKSPACES: readonly WorkspaceDefinition[] = [
     level: "county",
     geographyReady: true,
   },
+] as const;
+
+/**
+ * Planned future workspaces are intentionally not included in WORKSPACES.
+ * They must not be shown in the Makueni interface or accepted as active
+ * workspace IDs until their geography, data isolation, and permissions are
+ * implemented and verified.
+ */
+export const PLANNED_WORKSPACES: readonly WorkspaceDefinition[] = [
   {
     id: "machakos",
     label: "Machakos County",
@@ -45,6 +54,7 @@ export function getWorkspace(id: string): WorkspaceDefinition | undefined {
 /**
  * Keep future records tenant/workspace scoped. Call this when adding workspace
  * IDs to database-backed records; do not infer a workspace from a ward label.
+ * Unknown or not-yet-enabled workspace IDs safely resolve to Makueni.
  */
 export function normalizeWorkspaceId(value: unknown): string {
   if (typeof value !== "string") return DEFAULT_WORKSPACE_ID;
