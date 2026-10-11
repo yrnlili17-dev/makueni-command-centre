@@ -180,6 +180,8 @@ router.get("/workqueue", async (req, res) => {
 
 // ── Published Results ──────────────────────────────────────────────────────
 router.get("/published", async (req, res) => {
+  const validStations = await db.select({ code: pollingStationsTable.code }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS));
+  const validCodes = new Set(validStations.map(station => station.code));
   const verified = (await db.select().from(tallyResultsTable).where(eq(tallyResultsTable.status, "verified")).orderBy(tallyResultsTable.candidateName)).filter(row => validCodes.has(row.stationCode));
   const byCandidate: Record<string, { candidateName: string; party: string; totalVotes: number; stationCount: number }> = {};
   for (const r of verified) {
