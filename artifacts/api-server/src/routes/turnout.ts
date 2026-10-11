@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db, pollingStationsTable, tallyResultsTable, turnoutAssumptionsTable } from "@workspace/db";
 import { eq, sql, inArray } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
-const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 import { z } from "zod/v4";
 
 const router = Router();
