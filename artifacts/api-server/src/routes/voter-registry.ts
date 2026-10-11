@@ -160,6 +160,7 @@ router.patch("/:id", async (req, res) => {
   ["status", "reviewNotes", "fullName", "nationalId", "voterNumber", "phone", "ward", "pollingStation", "gender"].forEach(f => {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   });
+  if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   updates.updatedAt = new Date();
 
   const [record] = await db.update(voterRegistryTable)
