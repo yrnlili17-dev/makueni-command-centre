@@ -273,7 +273,7 @@ function SubmitResultsTab() {
           {CANDIDATES.map(c => (
             <div key={c.name} className="flex items-center gap-4">
               <div className="flex-1">
-                <div className={`text-xs font-semibold ${false ? "text-primary" : ""}`}>{c.name}</div>
+                <div className="text-xs font-semibold">{c.name}</div>
                 <div className="font-mono text-[10px] text-muted-foreground">{c.party}</div>
               </div>
               <input
@@ -676,7 +676,7 @@ function PublishResultsTab() {
           {winner && (
             <div className="border border-primary/30 bg-primary/5 p-6 text-center">
               <div className="font-mono text-[10px] text-muted-foreground mb-2 tracking-widest">LEADING CANDIDATE</div>
-              <div className={`text-2xl font-bold ${(false ? "text-primary" : ""}`}>{winner.candidateName}</div>
+              <div className="text-2xl font-bold">{winner.candidateName}</div>
               <div className="font-mono text-sm text-muted-foreground">{winner.party}</div>
               <div className="text-4xl font-bold mt-3">{fmt(winner.totalVotes ?? 0)}</div>
               <div className="font-mono text-[10px] text-muted-foreground mt-1">{pct(winner.totalVotes ?? 0, grandTotal)}% OF VERIFIED VOTES</div>
