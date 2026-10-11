@@ -161,12 +161,11 @@ router.patch("/:id", async (req, res) => {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   });
   if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
-  if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   updates.updatedAt = new Date();
 
   const [record] = await db.update(voterRegistryTable)
     .set(updates)
-    .where(eq(voterRegistryTable.id, parseInt(req.params.id)))
+    .where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), inArray(voterRegistryTable.ward, WARDS)))
     .returning();
 
   if (!record) { res.status(404).json({ error: "Not found" }); return; }
