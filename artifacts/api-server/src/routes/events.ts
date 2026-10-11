@@ -3,7 +3,7 @@ import { db, campaignEventsTable } from "@workspace/db";
 import { eq, gte, sql, inArray } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
 
-const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 const isMakueniWard = (ward: unknown): ward is string => typeof ward === "string" && WARDS.includes(ward);
 
 const router = Router();
