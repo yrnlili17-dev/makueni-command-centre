@@ -112,29 +112,16 @@ router.get("/summary", async (req, res) => {
 
 // ─── AI Auto-Populate ─────────────────────────────────────────────────────────
 
-const CANDIDATE_BRIEF = `
-CANDIDATE: Hon. Stephen Mutinda Mule (Mwanamule)
-ROLE: Member of the National Assembly, Makueni Constituency, Machakos County, Kenya
-PARTY: Wiper Democratic Movement (Patriotic Front) | Symbol: Umbrella | Slogan: "Komboa Kenya"
-PROFESSION: Biomedical Engineer (15+ years) | Entrepreneur | Community leader
-HOME WARD: Makueni West
-CONSTITUENCY: 78,000 registered voters | 5 wards: Tala (19k), Makueni West (26k), Makueni North (15k), Makueni East (12k), Kyeleni (10k) | 165 polling stations
-KEY LOCAL ISSUES: Water access, rural road rehabilitation, youth unemployment, quality health facilities, agriculture support
-ECONOMIC BASE: Coffee, maize & beans, horticulture, quarry stones, ballast mining
-PARLIAMENTARY TERM: 13th Parliament (2022–2027)
-COMMITTEES: Transport, Public Works & Housing; Health; Devolution & ASALs (approximate from constituency profile)
-CDF ALLOCATION: ~KES 120M/year | Has overseen 40+ CDF projects
-NOTABLE: Engineer background — strong on infrastructure bills; close ties with Ukambani region MPs; actively engaged on water and roads for Makueni
-`.trim();
+const COUNTY_BRIEF = "SCOPE: Makueni County, Kenya. Six constituencies: Mbooni, Kilome, Kaiti, Makueni, Kibwezi West and Kibwezi East; 30 county assembly wards. Organise county development records and service delivery. Never invent projects, budgets, dates, statistics or legislative records. Omit claims without primary-source evidence. Prefer official county publications, County Assembly records, Controller of Budget reports and KNBS.";
 
 router.post("/ai-populate", async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
 
   try {
     // Run both AI calls in parallel — strict compact schema to stay within token budget
-    const RECORDS_PROMPT = `You are a database builder for a Kenyan MNA credentials system.
+    const RECORDS_PROMPT = `You are a public-records assistant for Makueni County, Kenya.
 
-${CANDIDATE_BRIEF}
+${COUNTY_BRIEF}
 
 Output ONLY compact raw JSON. No markdown. No extra whitespace. No explanations.
 Schema (strict, all fields required, keep ALL text fields under 120 characters):
@@ -143,15 +130,15 @@ Schema (strict, all fields required, keep ALL text fields under 120 characters):
 Generate 8 records in this order: 2 bills, 2 motions, 1 question, 1 statement, 1 committee, 1 petition.
 Dates between 2022-09-20 and ${today}. Mark 2 as featured:true. Use KeNHA, WaSREB, NHIF where relevant.`;
 
-    const ACHIEVEMENTS_PROMPT = `You are a database builder for a Kenyan MNA achievements system.
+    const ACHIEVEMENTS_PROMPT = `You are a county development records assistant for Makueni County, Kenya.
 
-${CANDIDATE_BRIEF}
+${COUNTY_BRIEF}
 
 Output ONLY compact raw JSON. No markdown. No extra whitespace. No explanations.
 Schema (strict, all fields required, keep ALL text fields under 120 characters):
 {"achievements":[{"title":"string","description":"string max 120 chars","category":"infrastructure|education|health|water|security|youth|women|agriculture|environment|governance|economy|housing","ward":"Tala|Makueni West|Makueni North|Makueni East|Kyeleni|all","year":"2022|2023|2024|2025|2026","status":"completed|ongoing|planned","impactMetric":"string","impactValue":"string","budget":"number as string","fundingSource":"string","partnerAgencies":["string"],"published":true,"featured":false}]}
 
-Generate 8 achievements. Cover all 5 wards (min 1 each). Categories: infrastructure, water, health, education, youth, women, agriculture. Vary years 2022–2026. Mark 2 as featured:true. Use real place names: Tala, Mbee, Katangi, Mbuni, Kyeleni, Kangundo.`;
+Generate 8 achievements. Cover all 30 wards (min 1 each). Categories: infrastructure, water, health, education, youth, women, agriculture. Vary years 2022–2026. Mark 2 as featured:true. Use only verified place names within Makueni County.`;
 
     const [recResponse, achResponse] = await Promise.all([
       openai.chat.completions.create({
@@ -256,7 +243,7 @@ router.post("/research", async (req, res) => {
   let aiGenerated = false;
 
   try {
-    const systemPrompt = `You are a legislative research assistant for Hon. Stephen Mule, Member of the National Assembly for Makueni Constituency, Kenya.
+    const systemPrompt = `You are a legislative research assistant for Makueni County, focused on Makueni County, Kenya.
 Your role is to help research legislative topics, provide context on Kenya's parliamentary procedures, compare with regional and national benchmarks, and suggest talking points that strengthen the candidate's credentials.
 Always provide structured, factual responses with clear sections.`;
 
@@ -267,7 +254,7 @@ Query: ${query}
 Please provide:
 1. A concise research summary (3-5 paragraphs)
 2. Key talking points (bullet list of 5-7 points) that the MNA can use
-3. Relevant benchmarks or comparisons (how does Makueni/Machakos compare nationally?)
+3. Relevant benchmarks or comparisons (how does Makueni County compare nationally?)
 4. Suggested legislation or motions related to this topic
 5. Evidence sources to cite
 
@@ -294,11 +281,11 @@ Format your response with clear section headers using **bold** for headers.`;
   } catch (_) { /* fall through to template */ }
 
   if (!aiGenerated) {
-    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni Constituency and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Machakos County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. Makueni Constituency, as part of Machakos County, receives equitable share allocations directed towards ${topic}-related development.\n\n**Key Recommendations**\n\nFor Hon. Stephen Mule to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
+    response = `**Research Summary: ${topic}**\n\nThis research covers ${topic} as it relates to Makueni County and Kenya's legislative framework. Key considerations include the constitutional mandate under the Fourth Schedule, devolution of relevant functions, and historical budget allocations to Makueni County.\n\n**Legislative Context**\n\nThe National Assembly has addressed ${topic} through various bills and motions. County governments share responsibility with the national government under Article 186 of the Constitution. Makueni County, as part of Makueni County, receives equitable share allocations directed towards ${topic}-related development.\n\n**Key Recommendations**\n\nFor Makueni County to strengthen credentials on ${topic}: sponsor a private member's bill or motion, table a statement to the relevant committee, and engage the relevant ministry through written questions.`;
     keyPoints = [
       `Makueni's ${topic} needs align with national development priorities`,
       `Constitutional mandate under Chapter Eleven supports county action on ${topic}`,
-      `CDF allocations can be directed to ${topic} projects in all 5 wards`,
+      `CDF allocations can be directed to ${topic} projects in all 30 wards`,
       `Sponsoring a bill on ${topic} builds legislative credentials`,
       `Committee engagement on ${topic} demonstrates subject matter expertise`,
       `Cross-party collaboration on ${topic} broadens political appeal`,
@@ -307,8 +294,8 @@ Format your response with clear section headers using **bold** for headers.`;
       { title: "Constitution of Kenya, 2010", type: "Legal", relevance: "Fourth Schedule — Division of Functions" },
       { title: "National Assembly Standing Orders", type: "Procedure", relevance: "Bill sponsorship and motion process" },
       { title: "CDF Act 2013 (Amended 2016)", type: "Legislation", relevance: "Constituency development fund mandate" },
-      { title: "Machakos County CIDP", type: "Planning", relevance: "County integrated development plan" },
-      { title: "Kenya National Bureau of Statistics", type: "Data", relevance: "Makueni constituency demographics" },
+      { title: "Makueni County CIDP", type: "Planning", relevance: "County integrated development plan" },
+      { title: "Kenya National Bureau of Statistics", type: "Data", relevance: "Makueni county demographic indicators" },
     ];
   }
 
