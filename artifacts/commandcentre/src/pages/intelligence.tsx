@@ -1142,7 +1142,7 @@ export default function Intelligence() {
                     <span className="font-mono text-[10px] text-primary shrink-0">{String(i + 1).padStart(2, "0")}</span>
                     <span className="font-bold text-sm truncate">{n.title}</span>
                   </div>
-                  <span className={`font-mono text-[9px] border px-1.5 py-0.5 shrink-0 ${n.tag === "PRIMARY" ? "text-primary border-primary/40 bg-primary/10" : "text-muted-foreground border-border"}`}>[ {n.tag} ]</span>
+                  <span className={`font-mono text-[9px] border px-1.5 py-0.5 shrink-0 ${n.tag === "WATER" ? "text-primary border-primary/40 bg-primary/10" : "text-muted-foreground border-border"}`}>[ {n.tag} ]</span>
                 </div>
                 <div className="p-4 space-y-3 flex-1">
                   <p className="text-xs text-foreground italic">"{n.core}"</p>
