@@ -276,8 +276,8 @@ router.get("/daily-report", async (req, res) => {
 
 router.get("/", async (req, res) => {
   const { ward, status } = req.query as Record<string, string>;
-  const conditions = [];
-  if (ward) conditions.push(eq(volunteersTable.ward, ward));
+  const conditions = [sql`${volunteersTable.ward} = ANY(${WARDS})`];
+  if (ward) { if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } conditions.push(eq(volunteersTable.ward, ward)); }
   if (status) conditions.push(eq(volunteersTable.status, status));
   const where = conditions.length ? and(...conditions) : undefined;
   const volunteers = await db.select().from(volunteersTable).where(where).orderBy(volunteersTable.ward, volunteersTable.lastName);
@@ -302,6 +302,7 @@ router.patch("/:id", async (req, res) => {
   const updates: Record<string, unknown> = {};
   const fields = ["firstName","lastName","email","phone","ward","status","role","hoursLogged","doorsKnocked"];
   fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+  if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   const [volunteer] = await db.update(volunteersTable).set(updates).where(eq(volunteersTable.id, parseInt(req.params.id))).returning();
   if (!volunteer) { res.status(404).json({ error: "Not found" }); return; }
   res.json(volunteer);
