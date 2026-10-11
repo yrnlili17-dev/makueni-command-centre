@@ -4,6 +4,7 @@ import { eq, sql, and, desc } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
+const isOutOfCountyText = (value: unknown) => /\\b(mule|matungulu|kangundo|tala|kyeleni|machakos county|makueni north|makueni east|makueni west)\\b/i.test(String(value ?? ""));
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -39,8 +40,8 @@ async function openAiAnalyze(content: string, platform: string): Promise<{ threa
       model: "gpt-5-mini",
       max_completion_tokens: 500,
       messages: [
-        { role: "system", content: `You are an AI political campaign intelligence analyst for Hon. Stephen Mule, MNA for Makueni constituency, Kenya. Analyze social media and news content for threats and sentiment. Respond with valid JSON only.` },
-        { role: "user", content: `Analyze this ${platform} post about Hon. Mule:\n\n"${content}"\n\nRespond with JSON: { "threatLevel": "normal"|"elevated"|"high"|"critical", "sentiment": "positive"|"neutral"|"negative", "sentimentScore": 0-100, "aiSummary": "2-sentence analysis", "suggestedResponse": "1-2 sentence counter-narrative if needed, else empty string" }` },
+        { role: "system", content: `You are a neutral public-service information analyst for Makueni County, Kenya. Assess content about county services, development projects, public safety and accountability. Do not create political persuasion or personal attacks. Respond with valid JSON only.` },
+        { role: "user", content: `Analyze this ${platform} post concerning Makueni County public services:\n\n"${content}"\n\nRespond with JSON: { "threatLevel": "normal"|"elevated"|"high"|"critical", "sentiment": "positive"|"neutral"|"negative", "sentimentScore": 0-100, "aiSummary": "2-sentence analysis", "suggestedResponse": "1-2 sentence counter-narrative if needed, else empty string" }` },
       ],
     });
     const raw = response.choices[0]?.message?.content ?? "{}";
@@ -64,13 +65,13 @@ async function openAiGenerateResponse(content: string, platform: string, threatL
       model: "gpt-5-mini",
       max_completion_tokens: 300,
       messages: [
-        { role: "system", content: `You are a professional communications officer for Hon. Stephen Mule, MNA for Makueni constituency, Kenya. Craft professional, factual counter-narratives for ${platform}. Be concise, firm, and dignified. Do not be aggressive.` },
+        { role: "system", content: `You are a neutral Makueni County public information officer. Draft a factual, respectful public-service update for ${platform}. Do not promote candidates, attack people or invent facts.` },
         { role: "user", content: `Draft a ${platform} counter-narrative response to this ${threatLevel}-level threat:\n\n"${content}"\n\nWrite only the response text, no preamble.` },
       ],
     });
     return response.choices[0]?.message?.content?.trim() ?? "";
   } catch {
-    return `Hon. Stephen Mule, MNA for Makueni, remains committed to serving the people of Makueni constituency with integrity and dedication.`;
+    return "Makueni County will share a verified update when the relevant department confirms the facts and next steps.";
   }
 }
 
@@ -116,7 +117,7 @@ router.get("/mentions", async (req, res) => {
   if (threatLevel) conditions.push(eq(narrativeMentionsTable.threatLevel, threatLevel));
   if (status) conditions.push(eq(narrativeMentionsTable.status, status));
   const where = conditions.length ? and(...conditions) : undefined;
-  const mentions = await db.select().from(narrativeMentionsTable).where(where).orderBy(desc(narrativeMentionsTable.detectedAt));
+  const mentions = (await db.select().from(narrativeMentionsTable).where(where).orderBy(desc(narrativeMentionsTable.detectedAt))).filter(m => !isOutOfCountyText([m.author, m.content, m.url].join(" ")));
   res.json(mentions);
 });
 
@@ -186,8 +187,6 @@ const CHAR_LIMITS: Record<string, number> = {
   "TikTok Caption": 150,
 };
 
-const CANDIDATE_CTX = `Hon. Stephen Mutinda Mule (Mwanamule), MNA for Makueni Constituency (Tala, Makueni West, Makueni North, Makueni East, Kyeleni). Biomedical Engineer. Wiper Patriotic Front, "Komboa Kenya" campaign. 78,000 registered voters, election August 9 2027. His team: Campaign Manager John Kyalo, Comms Fiddellis Wambua.`;
-
 router.post("/ai-draft-rebuttal", async (req, res) => {
   const { attack, platform = "Twitter/X", urgency = "planned" } = req.body as {
     attack: string; platform?: string; urgency?: string;
@@ -196,7 +195,7 @@ router.post("/ai-draft-rebuttal", async (req, res) => {
 
   const charLimit = CHAR_LIMITS[platform] ?? 400;
 
-  const BASE = `Senior comms officer for ${CANDIDATE_CTX}. ${urgency === "live" ? "LIVE URGENT" : "Planned"} rebuttal for ${platform} (max ${charLimit} chars). Never name opponents. Stay dignified. Kenya political language. Include one Makueni reference. Output ONLY raw JSON, no markdown.`;
+  const BASE = `Neutral public information officer for Makueni County. Prepare a ${urgency === "live" ? "live urgent" : "planned"} service update for ${platform} (max ${charLimit} chars). Do not promote candidates, attack people or invent claims. Use only verifiable facts and note when details require confirmation. Output ONLY raw JSON, no markdown.`;
 
   const ATTACK_SNIPPET = attack.substring(0, 400);
 
@@ -303,19 +302,10 @@ router.post("/platform-integrations", async (req, res) => {
 
 // ─── Scan Engine ─────────────────────────────────────────────────────────────
 
-const SIMULATED_MENTIONS: Array<{ platform: string; author: string; content: string; engagementCount: number }> = [
-  { platform: "Twitter/X", author: "@MakueniVoter", content: "Hon. Mule has done absolutely nothing for Tala ward. The road from Tala to Makueni town is still impassable during rains. We voted for development not silence!", engagementCount: 847 },
-  { platform: "Facebook", author: "Makueni Community Group", content: "Stephen Mule was at the Kyeleni borehole opening today. Finally water for our people! This is the leadership we needed. Hongera Mheshimiwa!", engagementCount: 1243 },
-  { platform: "Twitter/X", author: "@NairobiEye", content: "Rumours circulating that MNA Mule received corrupt funds from contractor Ndungu for the Makueni East roads tender. Need answers Mheshimiwa!", engagementCount: 2891 },
-  { platform: "News", author: "The Star Kenya", content: "Makueni MNA Stephen Mule today launched bursary applications for 500 students from the constituency. CDF allocation of KSh 45M earmarked for education.", engagementCount: 412 },
-  { platform: "Facebook", author: "Kyeleni Ward Rep", content: "Hon. Mule is failing us. The CDF projects he promised — health centre, market — are years behind. Our people deserve better representation!", engagementCount: 563 },
-  { platform: "Twitter/X", author: "@KenyaPolitics254", content: "Makueni North residents block road demanding MNA Mule address their water crisis. 6 months since he promised a solution. #AccountabilityKE", engagementCount: 1567 },
-  { platform: "News", author: "Daily Nation", content: "Hon. Stephen Mule joins MPs rallying behind Affordable Housing Bill during Makueni public participation forum.", engagementCount: 289 },
-  { platform: "Facebook", author: "Youth For Mule", content: "Mheshimiwa Mule just visited our football pitch in Makueni West. Promised to fund the youth team's uniforms and tournament. Real grassroots leader!", engagementCount: 731 },
-];
+const SIMULATED_MENTIONS: Array<{ platform: string; author: string; content: string; engagementCount: number }> = [];
 
 router.post("/scan", async (req, res) => {
-  const { platform = "all", query = "Mule Makueni" } = req.body;
+  const { platform = "all", query = "Makueni County public services" } = req.body;
   const [scan] = await db.insert(narrativeScansTable).values({ platform, query, status: "running" }).returning();
   (async () => {
     try {
@@ -353,7 +343,7 @@ router.get("/scans", async (req, res) => {
 // ─── Competitors ─────────────────────────────────────────────────────────────
 
 router.get("/competitors", async (req, res) => {
-  const competitors = await db.select().from(competitorsTable).orderBy(competitorsTable.name);
+  const competitors = (await db.select().from(competitorsTable).orderBy(competitorsTable.name)).filter(c => !isOutOfCountyText([c.name, c.constituency, ...(c.strengths ?? []), ...(c.weaknesses ?? [])].join(" ")));
   res.json(competitors);
 });
 
