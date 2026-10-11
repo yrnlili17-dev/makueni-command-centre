@@ -120,10 +120,21 @@ export async function generateUsername(name: string, email: string): Promise<str
 // ── Roles / permissions ───────────────────────────────────────────────────────
 
 export async function permissionsForRole(roleName: string): Promise<Record<string, PermLevel>> {
+  const normalizedRole = roleName.trim().toLowerCase().replace(/[_\s]+/g, "-");
+  // Preserve full access for the system administrator regardless of legacy role spelling.
+  if (normalizedRole === "super-admin" || normalizedRole === "superadmin") {
+    return Object.fromEntries([
+      "dashboard", "voters", "constituents", "segmentation", "messaging", "field-ops",
+      "volunteers", "intelligence", "events", "narrative", "campaign-plan", "kol",
+      "finance", "election-day", "credentials", "admin", "analytics", "insights",
+      "ai", "speeches", "social", "di", "strategist",
+    ].map((module) => [module, "write" as PermLevel]));
+  }
+
   const [role] = await db
     .select()
     .from(adminRolesTable)
-    .where(eq(adminRolesTable.name, roleName))
+    .where(sql`lower(replace(replace(${adminRolesTable.name}, '_', '-'), ' ', '-')) = ${normalizedRole}`)
     .limit(1);
   return (role?.permissions as Record<string, PermLevel>) ?? {};
 }
