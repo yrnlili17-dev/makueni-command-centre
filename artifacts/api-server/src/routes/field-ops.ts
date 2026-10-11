@@ -89,6 +89,7 @@ router.get("/coverage", async (req, res) => {
   })
     .from(canvassSessionsTable)
     .leftJoin(canvassVisitsTable, eq(canvassVisitsTable.sessionId, canvassSessionsTable.id))
+    .where(inArray(canvassSessionsTable.ward, WARDS))
     .groupBy(canvassSessionsTable.ward);
 
   const rowsByWard = new Map(rows.map(r => [r.ward, r]));
