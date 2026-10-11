@@ -188,7 +188,7 @@ router.post("/bulk-review", async (req, res) => {
 
 // ── Delete ─────────────────────────────────────────────────────────────────
 router.delete("/:id", async (req, res) => {
-  await db.delete(voterRegistryTable).where(eq(voterRegistryTable.id, parseInt(req.params.id)));
+  await db.delete(voterRegistryTable).where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), inArray(voterRegistryTable.ward, WARDS)));
   res.status(204).send();
 });
 
