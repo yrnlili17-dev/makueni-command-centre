@@ -176,6 +176,36 @@ router.post("/webhooks/twilio", async (req, res) => {
   res.json({ ok: true });
 });
 
+// Africa's Talking delivery report callback. Configure the provider callback to send
+// the shared webhook secret in X-Webhook-Secret; never accept unauthenticated receipts.
+router.post("/webhooks/africastalking", async (req, res) => {
+  const suppliedSecret = String(req.header("x-webhook-secret") ?? "");
+  const [provider] = await db.select().from(messagingProvidersTable)
+    .where(and(eq(messagingProvidersTable.provider, "africastalking"), eq(messagingProvidersTable.isActive, true)));
+  if (!provider?.webhookSecret || !suppliedSecret || !safeEqual(suppliedSecret, provider.webhookSecret)) {
+    res.status(403).json({ error: "Invalid delivery callback credentials" }); return;
+  }
+  const payload = req.body as Record<string, unknown>;
+  const messageId = String(payload.id ?? payload.messageId ?? "");
+  const providerStatus = String(payload.status ?? "").toLowerCase();
+  if (!messageId || !providerStatus) { res.status(400).json({ error: "Message id and status required" }); return; }
+  const status = ["success", "delivered"].includes(providerStatus) ? "delivered"
+    : ["failed", "rejected", "undelivered"].includes(providerStatus) ? "failed"
+    : ["sent", "submitted", "buffered", "pending"].includes(providerStatus) ? "sent" : null;
+  if (!status) { res.status(200).json({ ok: true, ignored: true }); return; }
+  const [delivery] = await db.select().from(messageDeliveriesTable)
+    .where(eq(messageDeliveriesTable.providerMessageId, messageId));
+  if (!delivery) { res.status(200).json({ ok: true, unmatched: true }); return; }
+  await db.update(messageDeliveriesTable).set({
+    status,
+    deliveredAt: status === "delivered" ? new Date() : delivery.deliveredAt,
+    errorMessage: status === "failed" ? String(payload.failureReason ?? providerStatus).slice(0, 500) : delivery.errorMessage,
+    updatedAt: new Date(),
+  }).where(eq(messageDeliveriesTable.id, delivery.id));
+  await updateCampaignDeliveryCounts(delivery.campaignId);
+  res.json({ ok: true });
+});
+
 router.post("/:id/send", async (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
   if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid campaign id" }); return; }
