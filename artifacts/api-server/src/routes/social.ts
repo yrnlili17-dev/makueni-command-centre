@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { z } from "zod/v4";
-import { db, socialMentionsTable } from "@workspace/db";
+import { db, socialMentionsTable, socialSourceHealthTable } from "@workspace/db";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { requireAuth, requirePermission } from "../lib/auth";
 
 const router = Router();
+router.use(requireAuth);
 
 const SENTIMENTS = new Set(["positive", "negative", "neutral"]);
 
@@ -63,7 +65,7 @@ function asStr(v: unknown): string | null {
   return typeof v === "string" && v.trim().length > 0 ? v.trim() : null;
 }
 
-router.post("/scan", async (req, res) => {
+router.post("/scan", requirePermission("social", "write"), async (req, res) => {
   if (scanInFlight) {
     return res.status(429).json({ error: "A scan is already in progress. Please wait." });
   }
@@ -148,7 +150,12 @@ router.post("/scan", async (req, res) => {
   }
 });
 
-router.get("/mentions", async (req, res) => {
+router.get("/source-health", requirePermission("social", "read"), async (_req, res) => {
+  const rows = await db.select().from(socialSourceHealthTable).orderBy(socialSourceHealthTable.sourceKey);
+  res.json(rows);
+});
+
+router.get("/mentions", requirePermission("social", "read"), async (req, res) => {
   const parsed = mentionsQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid query parameters" });
@@ -167,7 +174,7 @@ router.get("/mentions", async (req, res) => {
   return res.json(mentions);
 });
 
-router.delete("/mentions/:id", async (req, res) => {
+router.delete("/mentions/:id", requirePermission("social", "write"), async (req, res) => {
   const parsed = idParamSchema.safeParse(req.params);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid mention id" });
