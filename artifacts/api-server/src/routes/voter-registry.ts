@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { db, voterRegistryTable, voterSyncLogsTable, iebcCredentialsTable } from "@workspace/db";
 import { eq, sql, desc, ilike, or, and, inArray } from "drizzle-orm";
-import { MAKUENI_WARDS } from "../data/makueni-geography";
+import { MAKUENI_CONSTITUENCIES, MAKUENI_WARDS } from "../data/makueni-geography";
 const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
+const CONSTITUENCIES: string[] = [...MAKUENI_CONSTITUENCIES];
+const isMakueniConstituency = (value: unknown): value is string => typeof value === "string" && CONSTITUENCIES.includes(value);
 const isMakueniWard = (ward: unknown): ward is string => typeof ward === "string" && WARDS.includes(ward);
 
 const router = Router();
@@ -89,6 +91,7 @@ router.post("/", async (req, res) => {
 
   if (!fullName) { res.status(400).json({ error: "fullName required" }); return; }
   if (!isMakueniWard(ward)) { res.status(400).json({ error: "A valid Makueni County ward is required" }); return; }
+  if (subCounty && !isMakueniConstituency(subCounty)) { res.status(400).json({ error: "Select a valid Makueni County constituency" }); return; }
 
   const [record] = await db.insert(voterRegistryTable).values({
     nationalId, voterNumber, fullName, phone, gender, dateOfBirth,
@@ -121,7 +124,7 @@ router.post("/upload", async (req, res) => {
   let dupCount = 0;
 
   for (const r of records) {
-    if (!r.fullName || !isMakueniWard(r.ward)) continue;
+    if (!r.fullName || !isMakueniWard(r.ward) || (r.subCounty && !isMakueniConstituency(r.subCounty))) continue;
 
     // Check for duplicate by nationalId or voterNumber
     let isDup = false;
@@ -158,10 +161,11 @@ router.post("/upload", async (req, res) => {
 // ── Review: update status ──────────────────────────────────────────────────
 router.patch("/:id", async (req, res) => {
   const updates: Record<string, unknown> = {};
-  ["status", "reviewNotes", "fullName", "nationalId", "voterNumber", "phone", "ward", "pollingStation", "gender"].forEach(f => {
+  ["status", "reviewNotes", "fullName", "nationalId", "voterNumber", "phone", "ward", "subCounty", "pollingStation", "gender"].forEach(f => {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   });
   if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
+  if (updates.subCounty !== undefined && !isMakueniConstituency(updates.subCounty)) { res.status(400).json({ error: "Select a valid Makueni County constituency" }); return; }
   updates.updatedAt = new Date();
 
   const [record] = await db.update(voterRegistryTable)
