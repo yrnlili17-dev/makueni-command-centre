@@ -1,10 +1,30 @@
 import { Router } from "express";
-import { db, messageCampaignsTable, membersTable, segmentsTable, messagingProvidersTable } from "@workspace/db";
-import { eq, sql, and } from "drizzle-orm";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { db, messageCampaignsTable, messageDeliveriesTable, membersTable, segmentsTable, messagingProvidersTable } from "@workspace/db";
+import { eq, sql, and, inArray } from "drizzle-orm";
+import { MAKUENI_WARDS } from "../data/makueni-geography";
 
 const router = Router();
+const ALLOWED_WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
 
-router.get("/stats", async (req, res) => {
+function safeEqual(a: string, b: string): boolean {
+  const aa = Buffer.from(a);
+  const bb = Buffer.from(b);
+  return aa.length === bb.length && timingSafeEqual(aa, bb);
+}
+
+async function updateCampaignDeliveryCounts(campaignId: number) {
+  const [counts] = await db.select({
+    total: sql<number>`count(*)`,
+    delivered: sql<number>`sum(case when ${messageDeliveriesTable.status} = 'delivered' then 1 else 0 end)`,
+  }).from(messageDeliveriesTable).where(eq(messageDeliveriesTable.campaignId, campaignId));
+  await db.update(messageCampaignsTable).set({
+    recipientCount: Number(counts?.total ?? 0),
+    deliveredCount: Number(counts?.delivered ?? 0),
+  }).where(eq(messageCampaignsTable.id, campaignId));
+}
+
+router.get("/stats", async (_req, res) => {
   const [totals] = await db.select({
     totalSent: sql<number>`sum(${messageCampaignsTable.recipientCount})`,
     totalDelivered: sql<number>`sum(${messageCampaignsTable.deliveredCount})`,
@@ -20,56 +40,55 @@ router.get("/stats", async (req, res) => {
   const totalDelivered = Number(totals?.totalDelivered ?? 0);
   const totalOpened = Number(totals?.totalOpened ?? 0);
   res.json({
-    totalSent,
-    totalDelivered,
-    totalOpened,
+    totalSent, totalDelivered, totalOpened,
     deliveryRate: totalSent > 0 ? totalDelivered / totalSent : 0,
     openRate: totalDelivered > 0 ? totalOpened / totalDelivered : 0,
     byChannel: byChannelRaw.map(r => ({
-      channel: r.channel,
-      sent: Number(r.sent),
-      delivered: Number(r.delivered),
+      channel: r.channel, sent: Number(r.sent), delivered: Number(r.delivered),
       openRate: Number(r.delivered) > 0 ? Number(r.opened) / Number(r.delivered) : 0,
     })),
   });
 });
 
-// ── Provider config — MUST be before /:id routes ───────────────────────────
-router.get("/providers", async (req, res) => {
+// Provider config — MUST be before /:id routes. Never return secrets to the browser.
+router.get("/providers", async (_req, res) => {
   const providers = await db.select().from(messagingProvidersTable);
-  res.json(providers);
+  res.json(providers.map(({ apiKey, apiSecret, username, smtpPassword, webhookSecret, ...safe }) => ({
+    ...safe,
+    hasApiKey: Boolean(apiKey), hasApiSecret: Boolean(apiSecret),
+    hasUsername: Boolean(username), hasSmtpPassword: Boolean(smtpPassword),
+    hasWebhookSecret: Boolean(webhookSecret),
+  })));
 });
 
 router.post("/providers", async (req, res) => {
   const {
-    channel, provider,
-    apiKey, apiSecret, username, senderId,
+    channel, provider, apiKey, apiSecret, username, senderId,
     phoneNumber, phoneNumberId, businessAccountId, webhookSecret,
-    smtpHost, smtpPort, smtpUser, smtpPassword, fromEmail, fromName,
-    isActive,
+    smtpHost, smtpPort, smtpUser, smtpPassword, fromEmail, fromName, isActive,
   } = req.body;
   if (!channel || !provider) { res.status(400).json({ error: "channel and provider required" }); return; }
-
-  const [existing] = await db.select().from(messagingProvidersTable).where(eq(messagingProvidersTable.channel, channel));
+  const existingRows = await db.select().from(messagingProvidersTable).where(eq(messagingProvidersTable.channel, channel));
+  const existing = existingRows[0];
   const values = {
     channel, provider,
-    apiKey: apiKey || null, apiSecret: apiSecret || null, username: username || null,
+    apiKey: apiKey || existing?.apiKey || null,
+    apiSecret: apiSecret || existing?.apiSecret || null,
+    username: username || existing?.username || null,
     senderId: senderId || null, phoneNumber: phoneNumber || null,
     phoneNumberId: phoneNumberId || null, businessAccountId: businessAccountId || null,
-    webhookSecret: webhookSecret || null,
-    smtpHost: smtpHost || null, smtpPort: smtpPort || null,
-    smtpUser: smtpUser || null, smtpPassword: smtpPassword || null,
+    webhookSecret: webhookSecret || existing?.webhookSecret || null,
+    smtpHost: smtpHost || null, smtpPort: smtpPort || null, smtpUser: smtpUser || null,
+    smtpPassword: smtpPassword || existing?.smtpPassword || null,
     fromEmail: fromEmail || null, fromName: fromName || null,
-    isActive: isActive !== false,
-    updatedAt: new Date(),
+    isActive: isActive !== false, updatedAt: new Date(),
   };
-
   if (existing) {
     const [updated] = await db.update(messagingProvidersTable).set(values).where(eq(messagingProvidersTable.id, existing.id)).returning();
-    res.json(updated);
+    res.json({ ...updated, apiKey: undefined, apiSecret: undefined, username: undefined, smtpPassword: undefined, webhookSecret: undefined });
   } else {
     const [created] = await db.insert(messagingProvidersTable).values(values).returning();
-    res.status(201).json(created);
+    res.status(201).json({ ...created, apiKey: undefined, apiSecret: undefined, username: undefined, smtpPassword: undefined, webhookSecret: undefined });
   }
 });
 
@@ -78,7 +97,6 @@ router.delete("/providers/:id", async (req, res) => {
   res.status(204).send();
 });
 
-// ── Campaigns ──────────────────────────────────────────────────────────────
 router.get("/", async (req, res) => {
   const { channel, status } = req.query as Record<string, string>;
   const conditions = [];
@@ -92,6 +110,9 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const { name, channel, messageBody, segmentId, scheduledAt } = req.body;
   if (!name || !channel || !messageBody) { res.status(400).json({ error: "name, channel, messageBody required" }); return; }
+  if (!["sms", "whatsapp"].includes(channel)) {
+    res.status(400).json({ error: "Real sending is currently enabled for SMS and WhatsApp only." }); return;
+  }
   const [campaign] = await db.insert(messageCampaignsTable).values({
     name, channel, messageBody, segmentId, status: "draft",
     scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
@@ -107,10 +128,11 @@ router.get("/:id", async (req, res) => {
 });
 
 router.patch("/:id", async (req, res) => {
-  const updates: any = {};
-  const fields = ["name","messageBody","segmentId","scheduledAt","status"];
-  fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
-  if (updates.scheduledAt) updates.scheduledAt = new Date(updates.scheduledAt);
+  const updates: Record<string, unknown> = {};
+  for (const f of ["name", "messageBody", "segmentId", "scheduledAt"]) {
+    if (req.body[f] !== undefined) updates[f] = req.body[f];
+  }
+  if (updates.scheduledAt) updates.scheduledAt = new Date(String(updates.scheduledAt));
   const [campaign] = await db.update(messageCampaignsTable).set(updates).where(eq(messageCampaignsTable.id, parseInt(req.params.id))).returning();
   if (!campaign) { res.status(404).json({ error: "Not found" }); return; }
   res.json(campaign);
@@ -121,24 +143,130 @@ router.delete("/:id", async (req, res) => {
   res.status(204).send();
 });
 
+// Twilio callback: validates X-Twilio-Signature and updates delivery receipts.
+router.post("/webhooks/twilio", async (req, res) => {
+  const signature = String(req.header("x-twilio-signature") ?? "");
+  const token = String(process.env.TWILIO_AUTH_TOKEN ?? "");
+  const publicBase = String(process.env.PUBLIC_BASE_URL ?? "").replace(/\/$/, "");
+  if (!token || !publicBase || !signature) { res.status(401).json({ error: "Webhook validation is not configured" }); return; }
+  const url = `${publicBase}/api/messages/webhooks/twilio`;
+  const params = req.body as Record<string, string>;
+  const data = Object.keys(params).sort().map(key => key + String(params[key] ?? "")).join("");
+  const expected = createHmac("sha1", token).update(url + data).digest("base64");
+  if (!safeEqual(signature, expected)) { res.status(403).json({ error: "Invalid webhook signature" }); return; }
+  const sid = String(params.MessageSid ?? params.SmsSid ?? "");
+  const providerStatus = String(params.MessageStatus ?? params.SmsStatus ?? "").toLowerCase();
+  if (!sid || !providerStatus) { res.status(400).json({ error: "MessageSid and MessageStatus required" }); return; }
+  const status = ["delivered", "read"].includes(providerStatus) ? "delivered"
+    : ["failed", "undelivered"].includes(providerStatus) ? "failed"
+    : ["queued", "accepted", "sending", "sent"].includes(providerStatus) ? "sent" : null;
+  if (!status) { res.status(200).json({ ok: true, ignored: true }); return; }
+  const [delivery] = await db.select().from(messageDeliveriesTable).where(eq(messageDeliveriesTable.providerMessageId, sid));
+  if (!delivery) { res.status(200).json({ ok: true, unmatched: true }); return; }
+  await db.update(messageDeliveriesTable).set({
+    status, deliveredAt: status === "delivered" ? new Date() : delivery.deliveredAt,
+    updatedAt: new Date(), errorMessage: params.ErrorMessage ? String(params.ErrorMessage).slice(0, 500) : delivery.errorMessage,
+  }).where(eq(messageDeliveriesTable.id, delivery.id));
+  await updateCampaignDeliveryCounts(delivery.campaignId);
+  res.json({ ok: true });
+});
+
 router.post("/:id/send", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid campaign id" }); return; }
   const [campaign] = await db.select().from(messageCampaignsTable).where(eq(messageCampaignsTable.id, id));
   if (!campaign) { res.status(404).json({ error: "Not found" }); return; }
-  let recipientCount = 0;
-  if (campaign.segmentId) {
-    const [seg] = await db.select().from(segmentsTable).where(eq(segmentsTable.id, campaign.segmentId));
-    recipientCount = seg?.memberCount ?? 0;
-  } else {
-    const [r] = await db.select({ count: sql<number>`count(*)` }).from(membersTable);
-    recipientCount = Number(r?.count ?? 0);
+  if (!["sms", "whatsapp"].includes(campaign.channel)) { res.status(400).json({ error: "Unsupported channel for live sending" }); return; }
+  if (!["draft", "failed"].includes(campaign.status)) { res.status(409).json({ error: "Campaign is already processing or sent" }); return; }
+  const [provider] = await db.select().from(messagingProvidersTable)
+    .where(and(eq(messagingProvidersTable.channel, campaign.channel), eq(messagingProvidersTable.isActive, true)));
+  if (!provider) { res.status(409).json({ error: `No active ${campaign.channel} provider configured` }); return; }
+  const supported = campaign.channel === "sms"
+    ? ["africastalking", "twilio"].includes(provider.provider)
+    : ["twilio_wa"].includes(provider.provider);
+  if (!supported) { res.status(409).json({ error: "The configured provider is not supported for live sending yet" }); return; }
+  if (provider.provider === "twilio" || provider.provider === "twilio_wa") {
+    if (!provider.username || !provider.apiKey || !provider.senderId) { res.status(409).json({ error: "Twilio requires Account SID, Auth Token and sender phone number" }); return; }
+  } else if (!provider.apiKey || !provider.username) {
+    res.status(409).json({ error: "Africa's Talking requires API key and username" }); return;
   }
-  const delivered = Math.round(recipientCount * 0.92);
-  const opened = Math.round(delivered * 0.35);
-  const [updated] = await db.update(messageCampaignsTable).set({
-    status: "sent", sentAt: new Date(), recipientCount, deliveredCount: delivered, openedCount: opened, clickedCount: Math.round(opened * 0.2),
-  }).where(eq(messageCampaignsTable.id, id)).returning();
-  res.json(updated);
+
+  let candidates = await db.select().from(membersTable)
+    .where(and(inArray(membersTable.ward, ALLOWED_WARDS), eq(membersTable.status, "active")));
+  if (campaign.segmentId) {
+    const [segment] = await db.select().from(segmentsTable).where(eq(segmentsTable.id, campaign.segmentId));
+    if (!segment) { res.status(400).json({ error: "Selected segment does not exist" }); return; }
+    const criteria = (segment.criteria ?? {}) as Record<string, unknown>;
+    if (typeof criteria.ward === "string" && criteria.ward !== "all" && criteria.ward !== "county-wide") {
+      if (!ALLOWED_WARDS.includes(criteria.ward)) { res.status(400).json({ error: "Segment contains invalid Makueni geography" }); return; }
+      candidates = candidates.filter(m => m.ward === criteria.ward);
+    }
+    if (typeof criteria.supportLevel === "string") candidates = candidates.filter(m => m.supportLevel === criteria.supportLevel);
+  }
+  const consentField = campaign.channel === "whatsapp" ? "whatsappConsent" : "smsConsent";
+  const contactField = campaign.channel === "whatsapp" ? "phone" : "phone";
+  const recipients = candidates.filter(m => Boolean(m[consentField]) && Boolean(m[contactField]?.trim()));
+  if (!recipients.length) { res.status(409).json({ error: "No active Makueni recipients with valid contact details and explicit channel consent" }); return; }
+
+  await db.update(messageCampaignsTable).set({ status: "sending", recipientCount: recipients.length, deliveredCount: 0, openedCount: 0, clickedCount: 0 }).where(eq(messageCampaignsTable.id, id));
+  let accepted = 0;
+  let failed = 0;
+  for (const member of recipients) {
+    const recipient = member.phone!.trim();
+    try {
+      let providerMessageId = "";
+      if (provider.provider === "twilio" || provider.provider === "twilio_wa") {
+        const accountSid = provider.username!;
+        const from = provider.provider === "twilio_wa" ? `whatsapp:${provider.senderId}` : provider.senderId!;
+        const to = provider.provider === "twilio_wa" ? `whatsapp:${recipient}` : recipient;
+        const form = new URLSearchParams({ To: to, From: from, Body: campaign.messageBody });
+        const publicBase = String(process.env.PUBLIC_BASE_URL ?? "").replace(/\/$/, "");
+        if (publicBase) form.set("StatusCallback", `${publicBase}/api/messages/webhooks/twilio`);
+        const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+          method: "POST", headers: {
+            Authorization: `Basic ${Buffer.from(`${accountSid}:${provider.apiKey}`).toString("base64")}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          }, body: form,
+        });
+        const payload = await response.json() as { sid?: string; status?: string; message?: string; code?: number };
+        if (!response.ok || !payload.sid) throw new Error(payload.message ?? `Twilio HTTP ${response.status}`);
+        providerMessageId = payload.sid;
+      } else {
+        const form = new URLSearchParams({ username: provider.username!, to: recipient, message: campaign.messageBody });
+        if (provider.senderId) form.set("from", provider.senderId);
+        const response = await fetch("https://api.africastalking.com/version1/messaging", {
+          method: "POST", headers: { apiKey: provider.apiKey!, Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+          body: form,
+        });
+        const payload = await response.json() as { SMSMessageData?: { Recipients?: Array<{ messageId?: string; status?: string; statusCode?: number }> } };
+        const result = payload.SMSMessageData?.Recipients?.[0];
+        if (!response.ok || !result?.messageId || (result.statusCode !== undefined && result.statusCode >= 400)) {
+          throw new Error(result?.status ?? `Africa's Talking HTTP ${response.status}`);
+        }
+        providerMessageId = result.messageId;
+      }
+      await db.insert(messageDeliveriesTable).values({
+        campaignId: id, memberId: member.id, channel: campaign.channel, recipient,
+        provider: provider.provider, providerMessageId, status: "sent", sentAt: new Date(), updatedAt: new Date(),
+      });
+      accepted++;
+    } catch (error) {
+      await db.insert(messageDeliveriesTable).values({
+        campaignId: id, memberId: member.id, channel: campaign.channel, recipient,
+        provider: provider.provider, status: "failed",
+        errorMessage: String(error instanceof Error ? error.message : error).slice(0, 500), updatedAt: new Date(),
+      });
+      failed++;
+    }
+  }
+  await db.update(messageCampaignsTable).set({
+    status: failed === recipients.length ? "failed" : "sent",
+    sentAt: accepted > 0 ? new Date() : null,
+    recipientCount: recipients.length,
+  }).where(eq(messageCampaignsTable.id, id));
+  await updateCampaignDeliveryCounts(id);
+  const [updated] = await db.select().from(messageCampaignsTable).where(eq(messageCampaignsTable.id, id));
+  res.status(accepted > 0 ? 200 : 502).json({ ...updated, accepted, failed, message: "Provider acceptance is not the same as confirmed handset delivery; delivery counts update from provider receipts." });
 });
 
 export default router;
