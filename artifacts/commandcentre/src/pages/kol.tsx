@@ -48,7 +48,7 @@ export default function KOL() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-widest">KOL INFLUENCE NETWORK</h1>
-          <p className="text-[10px] font-mono text-muted-foreground mt-1">KEY OPINION LEADER TRACKING</p>
+          <p className="text-[10px] font-mono text-muted-foreground mt-1">PUBLIC OPINION LEADER & COMMUNITY INFLUENCE NETWORK · MAKUENI COUNTY</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setViewLeaderboard(!viewLeaderboard)} className={`flex items-center gap-2 border px-4 py-2 font-mono text-xs transition-colors ${viewLeaderboard ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
