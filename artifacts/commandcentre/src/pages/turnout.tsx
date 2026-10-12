@@ -210,7 +210,7 @@ export default function Turnout() {
                     <th className="text-center p-3">TURNOUT %</th>
                     <th className="text-center p-3">SUPPORT %</th>
                     <th className="text-right p-3">PROJ. VOTES</th>
-                    <th className="text-right p-3">PROJ. MULE</th>
+                    <th className="text-right p-3">PROJ. CANDIDATE</th>
                     <th className="text-right p-3">GOTV UPSIDE</th>
                     {hasTally && <th className="text-right p-3">ACTUAL T/O</th>}
                   </tr>
@@ -295,7 +295,7 @@ export default function Turnout() {
               <Vote className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
               <div>
                 <div className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">SUPPORT SHARE</div>
-                <p className="text-xs text-muted-foreground">Set your best ward-level estimate for Mule; defaults to {data.defaults.support}%.</p>
+                <p className="text-xs text-muted-foreground">Set the ward-level candidate share assumption; defaults to {data.defaults.support}%.</p>
               </div>
             </div>
             <div className="bg-card border border-border p-4 flex items-start gap-3">
