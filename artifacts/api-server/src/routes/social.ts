@@ -76,6 +76,7 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
     });
   }
   scanInFlight = true;
+  const failedCategories = new Set<string>();
   try {
   const perCategory = await Promise.all(
     SCAN_CATEGORIES.map(async (cat) => {
@@ -92,6 +93,7 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
         if (!Array.isArray(arr)) return [];
         return (arr as RawMention[]).map((raw) => ({ raw, category: cat.key }));
       } catch (err) {
+        failedCategories.add(cat.key);
         req.log.error({ err, category: cat.key }, "social scan category failed");
         return [];
       }
@@ -141,6 +143,33 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
   if (toInsert.length > 0) {
     inserted = await db.insert(socialMentionsTable).values(toInsert).returning();
   }
+
+  const now = new Date();
+  await Promise.all(SCAN_CATEGORIES.map(async (cat) => {
+    const failed = failedCategories.has(cat.key);
+    const count = deduped.filter((mention) => mention.category === cat.key).length;
+    await db.insert(socialSourceHealthTable).values({
+      sourceKey: cat.key,
+      sourceType: "openai_web_search",
+      status: failed ? "error" : "healthy",
+      lastAttemptAt: now,
+      lastSuccessAt: failed ? undefined : now,
+      lastItemCount: count,
+      lastError: failed ? "Web search scan failed for this category; inspect API logs and credentials." : null,
+      updatedAt: now,
+    }).onConflictDoUpdate({
+      target: socialSourceHealthTable.sourceKey,
+      set: {
+        sourceType: "openai_web_search",
+        status: failed ? "error" : "healthy",
+        lastAttemptAt: now,
+        ...(failed ? {} : { lastSuccessAt: now }),
+        lastItemCount: count,
+        lastError: failed ? "Web search scan failed for this category; inspect API logs and credentials." : null,
+        updatedAt: now,
+      },
+    });
+  }));
 
   req.log.info({ scanned: deduped.length, inserted: inserted.length }, "social scan complete");
   return res.json({ scanned: deduped.length, inserted: inserted.length, mentions: inserted });
