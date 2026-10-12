@@ -156,6 +156,256 @@ export async function ensureDiTables(): Promise<void> {
   } else {
     builtinId = (builtin.rows[0] as { id: number }).id;
   }
+  // Seed official Makueni geography into the built-in dataset once. These are
+  // reference records, not voter-level or campaign-support data.
+  const geographyCount = await db.execute(sql`SELECT count(*)::int AS count FROM "di_dataset_rows" WHERE "dataset_id" = ${builtinId} AND row->>'record_type' = 'geography_reference'`);
+  if (Number((geographyCount.rows[0] as { count: number }).count) === 0) {
+    const makueniWards = [
+      {
+        "county": "Makueni",
+        "constituency": "Makueni",
+        "ward": "Kitise/Kithuki",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Makueni",
+        "ward": "Mavindini",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Makueni",
+        "ward": "Kathonzweni",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Makueni",
+        "ward": "Muvau/Kikumini",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Makueni",
+        "ward": "Wote",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Makueni",
+        "ward": "Nzaui/Kilili/Kalamba",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Makueni",
+        "ward": "Mbitini",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Mbooni",
+        "ward": "Kalawa",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Mbooni",
+        "ward": "Kako/Waia",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Mbooni",
+        "ward": "Kisau/Kiteta",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Mbooni",
+        "ward": "Tulimani",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Mbooni",
+        "ward": "Mbooni",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Mbooni",
+        "ward": "Kithungo/Kitundu",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kaiti",
+        "ward": "Ukia",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kaiti",
+        "ward": "Kee",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kaiti",
+        "ward": "Kilungu",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kaiti",
+        "ward": "Ilima",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kilome",
+        "ward": "Kiima Kiu/Kalanzoni",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kilome",
+        "ward": "Mukaa",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kilome",
+        "ward": "Kasikeu",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kibwezi West",
+        "ward": "Makindu",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kibwezi West",
+        "ward": "Kikumbulyu North",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kibwezi West",
+        "ward": "Kikumbulyu South",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kibwezi West",
+        "ward": "Nguumo",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kibwezi West",
+        "ward": "Nguu/Masumba",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kibwezi West",
+        "ward": "Emali/Mulala",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kibwezi East",
+        "ward": "Masongaleni",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kibwezi East",
+        "ward": "Mtito Andei",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kibwezi East",
+        "ward": "Thange",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      },
+      {
+        "county": "Makueni",
+        "constituency": "Kibwezi East",
+        "ward": "Ivingoni/Nzambani",
+        "record_type": "geography_reference",
+        "source": "Makueni County Government CIDP III 2023–2027",
+        "source_url": "https://makueni.go.ke/sandbox/site/files/2024/10/CIDP-III-2023-2027-1.pdf"
+      }
+    ];
+    for (const ward of makueniWards) {
+      await db.execute(sql`INSERT INTO "di_dataset_rows" ("dataset_id", "row") VALUES (${builtinId}, ${JSON.stringify(ward)}::jsonb)`);
+    }
+  }
   await db.execute(sql`UPDATE "di_questions" SET "dataset_id" = ${builtinId} WHERE "dataset_id" IS NULL`);
   await db.execute(sql`UPDATE "di_briefings" SET "dataset_id" = ${builtinId} WHERE "dataset_id" IS NULL`);
   await db.execute(sql`UPDATE "di_snapshots" SET "dataset_id" = ${builtinId} WHERE "dataset_id" IS NULL`);
