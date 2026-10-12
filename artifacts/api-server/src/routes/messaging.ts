@@ -5,7 +5,7 @@ import { eq, sql, and, inArray } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
 
 const router = Router();
-const ALLOWED_WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+const ALLOWED_WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 
 function safeEqual(a: string, b: string): boolean {
   const aa = Buffer.from(a);
