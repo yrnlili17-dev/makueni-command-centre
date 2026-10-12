@@ -1,4 +1,5 @@
 import { pgTable, serial, text, timestamp, integer, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -32,7 +33,7 @@ export const messageDeliveriesTable = pgTable("message_deliveries", {
   deliveredAt: timestamp("delivered_at"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => ({
-  providerMessageUnique: uniqueIndex("message_deliveries_provider_message_id_unique").on(table.providerMessageId),
+  providerMessageUnique: uniqueIndex("message_deliveries_provider_message_id_unique").on(table.providerMessageId).where(sql`${table.providerMessageId} is not null`),
 }));
 
 export const insertMessageCampaignSchema = createInsertSchema(messageCampaignsTable).omit({ id: true, createdAt: true });
