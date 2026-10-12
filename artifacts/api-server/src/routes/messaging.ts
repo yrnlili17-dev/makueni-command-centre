@@ -146,14 +146,19 @@ router.delete("/:id", async (req, res) => {
 // Twilio callback: validates X-Twilio-Signature and updates delivery receipts.
 router.post("/webhooks/twilio", async (req, res) => {
   const signature = String(req.header("x-twilio-signature") ?? "");
-  const token = String(process.env.TWILIO_AUTH_TOKEN ?? "");
   const publicBase = String(process.env.PUBLIC_BASE_URL ?? "").replace(/\/$/, "");
-  if (!token || !publicBase || !signature) { res.status(401).json({ error: "Webhook validation is not configured" }); return; }
-  const url = `${publicBase}/api/messages/webhooks/twilio`;
   const params = req.body as Record<string, string>;
+  if (!publicBase || !signature) { res.status(401).json({ error: "Webhook validation is not configured" }); return; }
+  const url = `${publicBase}/api/messages/webhooks/twilio`;
+  const twilioProviders = await db.select().from(messagingProvidersTable)
+    .where(and(eq(messagingProvidersTable.isActive, true), inArray(messagingProvidersTable.provider, ["twilio", "twilio_wa"])));
   const data = Object.keys(params).sort().map(key => key + String(params[key] ?? "")).join("");
-  const expected = createHmac("sha1", token).update(url + data).digest("base64");
-  if (!safeEqual(signature, expected)) { res.status(403).json({ error: "Invalid webhook signature" }); return; }
+  const validSignature = twilioProviders.some(provider => {
+    if (!provider.apiKey) return false;
+    const expected = createHmac("sha1", provider.apiKey).update(url + data).digest("base64");
+    return safeEqual(signature, expected);
+  });
+  if (!validSignature) { res.status(403).json({ error: "Invalid webhook signature" }); return; }
   const sid = String(params.MessageSid ?? params.SmsSid ?? "");
   const providerStatus = String(params.MessageStatus ?? params.SmsStatus ?? "").toLowerCase();
   if (!sid || !providerStatus) { res.status(400).json({ error: "MessageSid and MessageStatus required" }); return; }
