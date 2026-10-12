@@ -305,7 +305,7 @@ export default function Intelligence() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-widest">NARRATIVE COMMAND</h1>
+          <h1 className="text-xl font-bold tracking-widest">POLITICAL INTELLIGENCE</h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
             AI-POWERED PUBLIC-SERVICE INTELLIGENCE · MAKUENI COUNTY
             {score?.aiEnabled ? (
