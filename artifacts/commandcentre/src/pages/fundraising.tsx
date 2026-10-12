@@ -773,7 +773,7 @@ function InsightsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="font-mono text-[10px] text-muted-foreground tracking-widest">◆ AI FINANCE INTELLIGENCE — COMPUTED FROM LIVE DATA</div>
         <button onClick={() => refetch()} className="flex items-center gap-1.5 font-mono text-[10px] border border-border px-3 py-1.5 hover:border-primary hover:text-primary">
           <RefreshCw className={`w-3 h-3 ${isFetching ? "animate-spin" : ""}`} /> REFRESH
@@ -1209,11 +1209,11 @@ export default function Fundraising() {
         <div>
           <h1 className="text-xl font-bold tracking-widest flex items-center gap-3">
             <Banknote className="w-5 h-5 text-primary" />
-            FINANCE OPS
+            PLEDGES & FUNDRAISING
           </h1>
-          <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">MAKUENI COUNTY FINANCE & DONATION RECORDS</p>
+          <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">PROF. PHILIP KALOKI · PLEDGES, DONATIONS & FUNDRAISING</p>
         </div>
-        {summary && (
+        <a href="https://philip-kaloki-2027.onrender.com/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-primary/40 px-3 py-2 text-primary font-mono text-[10px] tracking-widest hover:bg-primary/10">OPEN PROF. KALOKI WEBSITE ↗</a>\n        {summary && (
           <div className="grid grid-cols-4 gap-3 text-center">
             {[
               { label: "RAISED", value: fmt(summary.totalRaised) },
