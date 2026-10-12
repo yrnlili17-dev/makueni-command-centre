@@ -1213,7 +1213,8 @@ export default function Fundraising() {
           </h1>
           <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">PROF. PHILIP KALOKI · PLEDGES, DONATIONS & FUNDRAISING</p>
         </div>
-        <a href="https://philip-kaloki-2027.onrender.com/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-primary/40 px-3 py-2 text-primary font-mono text-[10px] tracking-widest hover:bg-primary/10">OPEN PROF. KALOKI WEBSITE ↗</a>\n        {summary && (
+        <a href="https://philip-kaloki-2027.onrender.com/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-primary/40 px-3 py-2 text-primary font-mono text-[10px] tracking-widest hover:bg-primary/10">OPEN PROF. KALOKI WEBSITE ↗</a>
+        {summary && (
           <div className="grid grid-cols-4 gap-3 text-center">
             {[
               { label: "RAISED", value: fmt(summary.totalRaised) },
