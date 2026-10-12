@@ -79,7 +79,7 @@ export default function SocialListening() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-widest flex items-center gap-2">
-            <Radio className="w-5 h-5 text-primary" /> SOCIAL LISTENING
+            <Radio className="w-5 h-5 text-primary" /> POLITICAL SOCIAL LISTENING
           </h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5 tracking-wider">
             POLITICAL INTELLIGENCE · PUBLIC WEB SIGNALS · SENTIMENT · TRENDING ISSUES · MAKUENI COUNTY
