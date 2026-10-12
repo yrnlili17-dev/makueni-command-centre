@@ -82,7 +82,7 @@ export default function SocialListening() {
             <Radio className="w-5 h-5 text-primary" /> SOCIAL LISTENING
           </h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5 tracking-wider">
-            AI WEB-SCAN · MENTIONS · SENTIMENT · TRENDING ISSUES · MATUNGULU
+            POLITICAL INTELLIGENCE · PUBLIC WEB SIGNALS · SENTIMENT · TRENDING ISSUES · MAKUENI COUNTY
           </p>
         </div>
         <button
