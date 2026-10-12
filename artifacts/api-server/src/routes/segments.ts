@@ -1,8 +1,18 @@
 import { Router } from "express";
 import { db, segmentsTable, membersTable } from "@workspace/db";
-import { eq, sql, and, inArray } from "drizzle-orm";
-import { MAKUENI_WARDS } from "../data/makueni-geography";
+import { eq, sql, and } from "drizzle-orm";
+import { MAKUENI_CONSTITUENCIES, MAKUENI_WARDS } from "../data/makueni-geography";
 const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
+const CONSTITUENCIES: string[] = [...MAKUENI_CONSTITUENCIES];
+
+function hasValidMakueniGeography(criteria: unknown): boolean {
+  if (!criteria || typeof criteria !== "object" || Array.isArray(criteria)) return true;
+  const value = criteria as Record<string, unknown>;
+  if (typeof value.ward === "string" && !["all", "county-wide"].includes(value.ward) && !WARDS.includes(value.ward)) return false;
+  if (typeof value.constituency === "string" && !CONSTITUENCIES.includes(value.constituency)) return false;
+  if (typeof value.county === "string" && !["makueni", "makueni county"].includes(value.county.toLowerCase())) return false;
+  return true;
+}
 
 const router = Router();
 
@@ -19,15 +29,16 @@ async function computeMemberCount(criteria: Record<string, any>) {
   return Number(result?.count ?? 0);
 }
 
-router.get("/", async (req, res) => {
-  const segs = (await db.select().from(segmentsTable).orderBy(segmentsTable.createdAt)).filter(seg => { const criteria = seg.criteria as Record<string, unknown> | null; const ward = criteria?.ward; return !ward || ward === "all" || ward === "county-wide" || (typeof ward === "string" && WARDS.includes(ward)); });
+router.get("/", async (_req, res) => {
+  const segs = (await db.select().from(segmentsTable).orderBy(segmentsTable.createdAt))
+    .filter(seg => hasValidMakueniGeography(seg.criteria));
   res.json(segs);
 });
 
 router.post("/", async (req, res) => {
   const { name, description, criteria = {}, isLocked = false } = req.body;
   if (!name) { res.status(400).json({ error: "name required" }); return; }
-  if (criteria.ward && criteria.ward !== "all" && criteria.ward !== "county-wide" && !WARDS.includes(criteria.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
+  if (!hasValidMakueniGeography(criteria)) { res.status(400).json({ error: "Select a valid Makueni County constituency and ward" }); return; }
   const memberCount = await computeMemberCount(criteria);
   const [seg] = await db.insert(segmentsTable).values({ name, description, criteria, memberCount, isLocked }).returning();
   res.status(201).json(seg);
@@ -35,7 +46,7 @@ router.post("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   const [seg] = await db.select().from(segmentsTable).where(eq(segmentsTable.id, parseInt(req.params.id)));
-  if (!seg) { res.status(404).json({ error: "Not found" }); return; }
+  if (!seg || !hasValidMakueniGeography(seg.criteria)) { res.status(404).json({ error: "Not found" }); return; }
   const memberCount = await computeMemberCount(seg.criteria as any);
   res.json({ ...seg, memberCount });
 });
@@ -45,6 +56,7 @@ router.patch("/:id", async (req, res) => {
   if (req.body.name !== undefined) updates.name = req.body.name;
   if (req.body.description !== undefined) updates.description = req.body.description;
   if (req.body.criteria !== undefined) {
+    if (!hasValidMakueniGeography(req.body.criteria)) { res.status(400).json({ error: "Select a valid Makueni County constituency and ward" }); return; }
     updates.criteria = req.body.criteria;
     updates.memberCount = await computeMemberCount(req.body.criteria);
   }
