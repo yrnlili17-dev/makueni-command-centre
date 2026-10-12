@@ -441,7 +441,7 @@ function CaptureTab() {
               </Select>
               <Select label="CONSTITUENCY / SUB-COUNTY" value={form.subCounty ?? ""} onChange={e => setForm(p => ({ ...p, subCounty: e.target.value }))}><option value="">— Constituency —</option>{CONSTITUENCIES.map(c => <option key={c} value={c}>{c}</option>)}</Select>
               <div className="col-span-2">
-                <Input label="POLLING STATION" placeholder="Tala Primary School" value={form.pollingStation ?? ""} onChange={e => setForm(p => ({ ...p, pollingStation: e.target.value }))} />
+                <Input label="POLLING STATION" placeholder="Wote Primary School" value={form.pollingStation ?? ""} onChange={e => setForm(p => ({ ...p, pollingStation: e.target.value }))} />
               </div>
               <Input label="STATION CODE" placeholder="TAL-001" value={form.pollingStationCode ?? ""} onChange={e => setForm(p => ({ ...p, pollingStationCode: e.target.value }))} />
               <Input label="STREAM" placeholder="1" value={form.stream ?? ""} onChange={e => setForm(p => ({ ...p, stream: e.target.value }))} />
@@ -652,7 +652,7 @@ function RegistryApiTab() {
               <option value="">All Wards</option>
               {WARDS.map(w => <option key={w}>{w}</option>)}
             </Select>
-            <Input label="POLLING STATION (OPTIONAL)" value={syncOpts.pollingStation} onChange={e => setSyncOpts(p => ({ ...p, pollingStation: e.target.value }))} placeholder="Tala Primary" />
+            <Input label="POLLING STATION (OPTIONAL)" value={syncOpts.pollingStation} onChange={e => setSyncOpts(p => ({ ...p, pollingStation: e.target.value }))} placeholder="Wote Primary" />
             <Input label="RECORD LIMIT" type="number" value={syncOpts.limit} onChange={e => setSyncOpts(p => ({ ...p, limit: e.target.value }))} placeholder="500" />
           </div>
 
@@ -910,7 +910,7 @@ export default function VotersDb() {
             CONSTITUENT DATABASE
           </h1>
           <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest">
-            VOTER REGISTRY MANAGEMENT — MATUNGULU CONSTITUENCY · IEBC INTEGRATION
+            VOTER REGISTRY MANAGEMENT — MAKUENI COUNTY · IEBC INTEGRATION
           </p>
         </div>
         <div className="font-mono text-[10px] text-muted-foreground border border-border px-3 py-1.5 bg-card">
