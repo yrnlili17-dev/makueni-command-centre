@@ -34,7 +34,7 @@ const navGroups = [
       { href: "/messaging", label: "MESSAGING", icon: MessageSquare },
       { href: "/speeches", label: "SPEECH & MANIFESTO", icon: Mic },
       { href: "/events", label: "EVENT LOGISTICS", icon: Calendar },
-      { href: "/kol", label: "KOL INFLUENCE", icon: Star },
+      { href: "/kol", label: "KOL INFLUENCE NETWORK", icon: Star },
     ],
   },
   {
@@ -47,9 +47,9 @@ const navGroups = [
   {
     title: "INTELLIGENCE",
     items: [
-      { href: "/surveys", label: "INTELLIGENCE GATHERING", icon: FileText },
-      { href: "/intelligence", label: "NARRATIVE COMMAND", icon: ShieldAlert },
-      { href: "/social-listening", label: "SOCIAL LISTENING", icon: Radio },
+      { href: "/surveys", label: "OPINION POLLS & SURVEYS", icon: FileText },
+      { href: "/intelligence", label: "POLITICAL INTELLIGENCE", icon: ShieldAlert },
+      { href: "/social-listening", label: "POLITICAL SOCIAL LISTENING", icon: Radio },
       { href: "/swot", label: "SWOT ANALYSIS", icon: Crosshair },
     ],
   },
@@ -63,7 +63,7 @@ const navGroups = [
   {
     title: "ADMINISTRATION",
     items: [
-      { href: "/fundraising", label: "FINANCE OPS", icon: Banknote },
+      { href: "/fundraising", label: "PLEDGES & FUNDRAISING", icon: Banknote },
       { href: "/credentials", label: "CREDENTIALS HUB", icon: Award },
       { href: "/admin", label: "SYSTEM ADMIN", icon: Settings },
     ],
@@ -147,7 +147,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="p-6 flex items-center gap-3 border-b border-border">
           <img src={brandIcon} alt="CommandCentre OS" className="w-8 h-8 object-contain" />
           <div className="flex flex-col">
-            <span className="font-bold tracking-widest text-sm">MAKUENI COMMAND CENTRE</span>
+            <span className="font-bold tracking-widest text-sm">PRO KALOKI COMMAND CENTRE</span>
             <span className="text-[10px] text-primary font-mono tracking-widest">[ SYSTEM_ACTIVE ]</span>
           </div>
         </div>
@@ -203,12 +203,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <header className="h-14 border-b border-border flex items-center px-6 justify-between shrink-0 bg-card/50">
           <div className="flex items-center gap-4">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="font-mono text-xs text-muted-foreground tracking-widest">MAKUENI COUNTY · COMMAND CENTRE</span>
+            <span className="font-mono text-xs text-muted-foreground tracking-widest">PROF. KALOKI · MAKUENI COUNTY COMMAND CENTRE</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="font-mono text-[10px] text-muted-foreground">TIME: {new Date().toLocaleString("en-KE", { timeZone: "Africa/Nairobi", hour12: false })}</span>
             <div className="px-2 py-1 bg-primary/10 text-primary font-mono text-[10px] border border-primary/30">
-              COUNTY OPERATIONS · 2027
+              PRO KALOKI COMMAND CENTRE · 2027
             </div>
           </div>
         </header>
