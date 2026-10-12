@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { z } from "zod/v4";
-import { db, socialMentionsTable } from "@workspace/db";
+import { db, socialMentionsTable, socialSourceHealthTable } from "@workspace/db";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { requireAuth, requirePermission } from "../lib/auth";
 
 const router = Router();
+router.use(requireAuth);
 
 const SENTIMENTS = new Set(["positive", "negative", "neutral"]);
 
@@ -63,7 +65,7 @@ function asStr(v: unknown): string | null {
   return typeof v === "string" && v.trim().length > 0 ? v.trim() : null;
 }
 
-router.post("/scan", async (req, res) => {
+router.post("/scan", requirePermission("social", "write"), async (req, res) => {
   if (scanInFlight) {
     return res.status(429).json({ error: "A scan is already in progress. Please wait." });
   }
@@ -74,6 +76,7 @@ router.post("/scan", async (req, res) => {
     });
   }
   scanInFlight = true;
+  const failedCategories = new Set<string>();
   try {
   const perCategory = await Promise.all(
     SCAN_CATEGORIES.map(async (cat) => {
@@ -90,6 +93,7 @@ router.post("/scan", async (req, res) => {
         if (!Array.isArray(arr)) return [];
         return (arr as RawMention[]).map((raw) => ({ raw, category: cat.key }));
       } catch (err) {
+        failedCategories.add(cat.key);
         req.log.error({ err, category: cat.key }, "social scan category failed");
         return [];
       }
@@ -140,6 +144,33 @@ router.post("/scan", async (req, res) => {
     inserted = await db.insert(socialMentionsTable).values(toInsert).returning();
   }
 
+  const now = new Date();
+  await Promise.all(SCAN_CATEGORIES.map(async (cat) => {
+    const failed = failedCategories.has(cat.key);
+    const count = deduped.filter((mention) => mention.category === cat.key).length;
+    await db.insert(socialSourceHealthTable).values({
+      sourceKey: cat.key,
+      sourceType: "openai_web_search",
+      status: failed ? "error" : "healthy",
+      lastAttemptAt: now,
+      lastSuccessAt: failed ? undefined : now,
+      lastItemCount: count,
+      lastError: failed ? "Web search scan failed for this category; inspect API logs and credentials." : null,
+      updatedAt: now,
+    }).onConflictDoUpdate({
+      target: socialSourceHealthTable.sourceKey,
+      set: {
+        sourceType: "openai_web_search",
+        status: failed ? "error" : "healthy",
+        lastAttemptAt: now,
+        ...(failed ? {} : { lastSuccessAt: now }),
+        lastItemCount: count,
+        lastError: failed ? "Web search scan failed for this category; inspect API logs and credentials." : null,
+        updatedAt: now,
+      },
+    });
+  }));
+
   req.log.info({ scanned: deduped.length, inserted: inserted.length }, "social scan complete");
   return res.json({ scanned: deduped.length, inserted: inserted.length, mentions: inserted });
   } finally {
@@ -148,7 +179,12 @@ router.post("/scan", async (req, res) => {
   }
 });
 
-router.get("/mentions", async (req, res) => {
+router.get("/source-health", requirePermission("social", "read"), async (_req, res) => {
+  const rows = await db.select().from(socialSourceHealthTable).orderBy(socialSourceHealthTable.sourceKey);
+  res.json(rows);
+});
+
+router.get("/mentions", requirePermission("social", "read"), async (req, res) => {
   const parsed = mentionsQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid query parameters" });
@@ -167,7 +203,7 @@ router.get("/mentions", async (req, res) => {
   return res.json(mentions);
 });
 
-router.delete("/mentions/:id", async (req, res) => {
+router.delete("/mentions/:id", requirePermission("social", "write"), async (req, res) => {
   const parsed = idParamSchema.safeParse(req.params);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid mention id" });
