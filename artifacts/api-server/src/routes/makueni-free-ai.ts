@@ -144,55 +144,76 @@ export function buildFreeMakueniSpeech(input: {
   const language = (input.language ?? "English").trim() || "English";
   const minutes = Math.max(1, Math.min(15, Number(input.minutes) || 3));
   const areaLabel = wardExamples[area] ?? area;
+  const lowerTopic = topic.toLowerCase();
+
+  const policySection = /water|borehole|dam|irrigat|pipe|dry tap/.test(lowerTopic)
+    ? [
+        "First, water must last beyond the rainy season. If elected, my plan will put the repair and maintenance of existing water sources first, protect dams and sand dams from siltation, strengthen storage and extend distribution closer to homes. We will need a clear record of which sources work, which have broken down, who is responsible for maintenance and how quickly repairs are completed.",
+        "Water for homes must also support farms and livelihoods. I will pursue practical links between maintained storage, farm ponds and small-scale irrigation, while publishing progress so residents can see what has been repaired, what remains outstanding and what resources have been approved."
+      ]
+    : /market|price|farmer|agricultur|livelihood|livestock|drought|crop/.test(lowerTopic)
+    ? [
+        "My plan is to help farmers earn a fairer return for their work. That means improving aggregation, grading and weighing, strengthening storage so farmers are not forced to sell immediately after harvest, and making reliable market-price information easier to access. We will work with producer groups and cooperatives and verify what support is available before announcing it.",
+        "Agriculture must be supported before the season is lost. I will prioritise timely access to farm inputs, extension officers who can be contacted by local communities, livestock and veterinary services, and practical water-for-production measures that can withstand dry periods. Progress should be measured by the service farmers receive and the value they can retain—not by announcements alone."
+      ]
+    : /health|hospital|clinic|medicine|ambulance|diagnostic|maternity/.test(lowerTopic)
+    ? [
+        "My plan is for healthcare to work when a resident arrives. If elected, I will push for transparent reporting on staffing, essential medicines, functioning diagnostics, maternity capacity, water and power at facilities, and the time it takes to complete a referral.",
+        "An ambulance journey is only useful when the receiving facility can provide the care needed. I will prioritise reliable ambulance operations, clear dispatch and referral procedures, and regular public reporting on the gaps that are fixed and those that still require action. Specific facility claims will be based on verified records."
+      ]
+    : /market|trade|price|electricity|energy|land|business|youth|employment/.test(lowerTopic)
+    ? [
+        "My plan is to make markets places where producers, traders and young people can build sustainable livelihoods. I will pursue better aggregation and storage, transparent market information, durable market infrastructure, reliable energy where it is needed and clearer land-use planning.",
+        "Young people need practical routes into work and enterprise. The plan will connect skills development with real local demand, including opportunities in construction, technology, services and value addition, while following applicable procurement rules and quality standards."
+      ]
+    : [
+        "My plan for Makueni is built around five connected priorities: development where people are; markets, price and opportunity; water that lasts; agriculture and livelihoods; and healthcare that works when residents arrive. Open and accountable government must connect every one of these priorities.",
+        "If elected, I will work to move development decisions closer to communities through village-cluster priorities, stronger ward-level follow-up and clear responsibility for each project. Residents should be able to ask what was promised, what was budgeted, what has been delivered, what remains unfinished and when they will receive the next update.",
+        "I will also pursue practical improvements in markets and farm incomes, reliable water infrastructure, stronger agricultural extension and functioning health services. These are plans to work towards through lawful county processes, budgets and partnerships—not claims that the work has already been completed."
+      ];
+
   const speech = [
-    "REMARKS ON LOCAL SERVICE DELIVERY",
+    "RESTORE THE PROMISE",
+    "PROF. PHILIP KALOKI",
+    "Makueni County Governor Candidate — 2027",
     "",
     `Occasion: ${occasion}`,
     `Area: ${areaLabel}, Makueni County`,
-    `Topic: ${topic}`,
-    `Draft language: ${language}`,
+    `Address: ${topic}`,
+    `Prepared language: ${language}`,
     "",
-    "Protocol observed. County officers, local leaders, community representatives, and residents, good morning.",
+    "Protocol observed. Elders, community leaders, residents, women, young people, persons with disabilities and all our guests, good morning.",
     "",
-    `Thank you for coming together in ${areaLabel}. This meeting is an opportunity to listen carefully, share verified information and agree on practical next steps concerning ${topic}.`,
+    `I am grateful to join you here in ${areaLabel}. I have come to listen, to explain the direction I believe Makueni should take, and to hear what must change in our communities. I am presenting a plan for what I intend to work on if you elect me—not a claim that these improvements have already happened.`,
     "",
-    "The draft policy framework, Restore the Promise: Makueni County 2027–2032, is organised around five pillars: development where people are; markets, prices and opportunity; water that lasts; agriculture and livelihoods; and healthcare that works when people arrive. Open and accountable government is the foundation that connects them. These are proposed commitments in a draft document, not proof that projects have been funded or delivered.",
+    "My guiding promise is simple: development must reach people where they live, and public service must be judged by results that residents can see and verify. A project should not be measured only by the announcement, the launch or the money allocated. We must ask whether it works, whom it serves, how it is maintained and whether the public can track its progress.",
     "",
-    ...(/water|borehole|dam|irrigat|pipe|dry tap/i.test(topic) ? [
-      "On water, the draft puts repair and maintenance before new drilling, alongside protecting dams and sand dams, improving storage and extending distribution closer to homes. A useful local discussion should identify which source is broken, who maintains it, the repair status and the date residents can expect an update."
-    ] : /market|price|farmer|agricultur|livelihood|livestock|drought/i.test(topic) ? [
-      "On agriculture and livelihoods, the draft proposes timely farm inputs, stronger extension support, livestock services, aggregation, grading, storage and clearer market-price information. Any local example should be checked against current records and the season before it is presented as fact."
-    ] : /health|hospital|clinic|medicine|ambulance|diagnostic/i.test(topic) ? [
-      "On healthcare, the draft focuses on staffing, essential medicines, diagnostics, reliable ambulances and referral systems that connect patients to facilities able to treat them. Before making a specific claim, verify the facility, service gap and latest dated report."
-    ] : /market|trade|price|electricity|energy|land/i.test(topic) ? [
-      "On markets and opportunity, the draft proposes better aggregation and storage, transparent price information, reliable market infrastructure, energy access and clearer land planning. Specific figures, costs and implementation status must be verified before delivery."
-    ] : [
-      "Across all five pillars, the draft emphasises practical delivery, local participation and transparent follow-up. The strongest speech will connect the theme of this meeting to a specific service issue, explain the proposed action, and identify what evidence and follow-up are still needed."
-    ]),
+    ...policySection,
     "",
-    "Our discussion should begin with the facts on the ground. We should identify the service or project, the location it serves, the responsible office, the latest documented progress and the issues residents still experience. Where information is not yet confirmed, we should say so openly and commit to checking it rather than make promises based on assumptions.",
+    "The foundation for this plan is open and accountable government. I will advocate for meaningful public participation, published priorities, transparent budget and project information, clear service standards and regular progress updates. Communities must be able to follow a project from the priority they raised, through budgeting and implementation, to the evidence that it is complete and working.",
     "",
-    "I encourage residents to raise concerns respectfully and to describe the specific location and impact. County teams should record each issue, identify the office responsible, set a realistic follow-up date and report back to the community. Progress should be measured by evidence of service improvement, not by announcements alone.",
+    `For ${areaLabel}, I want this conversation to produce practical next steps. Let us identify the three most urgent service issues, the exact places affected, the office responsible, the evidence we need and a date for reporting back. Where the facts are not yet confirmed, we will verify them openly rather than mislead residents with figures or promises we cannot support.`,
     "",
-    "We should also make sure that young people, older residents, persons with disabilities, women and people in remote areas have an accessible opportunity to participate. Personal information shared during follow-up must be handled carefully and should not be disclosed unnecessarily.",
+    "I will not pretend that every problem can be solved overnight or that a county can act alone on every issue. The work must be prioritised, costed through the proper budget process, implemented lawfully and monitored with the people it is meant to serve. Where national-government or partner action is required, we must be clear about the responsibility and pursue the necessary cooperation.",
     "",
-    "Before we conclude, let us agree on the three most urgent issues, who will follow up each one, what evidence is needed and when the community will receive an update. The resulting action list should be shared through the appropriate public channels.",
+    "My commitment is to keep listening, to explain the choices, to report progress honestly and to make accountability part of delivery—not something we remember only when there is a problem. I ask you to hold this plan to a high standard: ask questions, examine the records and judge progress by the difference services make in people's lives.",
     "",
-    "Thank you for your time and contribution. Let us continue working together with openness, respect and accountability for the people of Makueni.",
+    "Together, let us restore the promise: development that reaches every part of Makueni, opportunity for our farmers and young people, water that lasts, healthcare that works and a government that answers to its people.",
+    "",
+    "Thank you. May God bless you, and may God bless Makueni County."
   ].join("\n");
+
   return {
-    title: `${topic} — ${areaLabel}`,
+    title: `Prof. Philip Kaloki — ${topic} — ${areaLabel}`,
     speech,
     notes: [
-      `This template is designed for approximately ${minutes} minute(s); shorten or expand to fit the event.`,
-      "The five-pillar language is drawn from the confidential draft manifesto; confirm approval before circulating or delivering it publicly.",
-      "Add only verified local project names, budget figures and progress updates before delivery.",
-      "Confirm names, titles, dates and official announcements from primary sources.",
-      "Generated in deterministic no-token mode; no paid AI model was called.",
+      `Prepared as a campaign-plan speech for approximately ${minutes} minute(s); review aloud and shorten or expand to fit the occasion.`,
+      "This speech presents proposed actions if elected; it does not claim that the commitments are already funded or delivered.",
+      "Verify local project names, statistics, costs, legal responsibilities and current status before delivery.",
+      "The manifesto themes are attributed to Prof. Philip Kaloki's Makueni County 2027 platform."
     ],
   };
 }
-
 
 type PublicSourceSnapshot = {
   title: string;
