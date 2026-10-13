@@ -395,9 +395,12 @@ function CaptureTab() {
 
       const fieldMap: Record<string, string> = {
         "full_name": "fullName", "name": "fullName", "names": "fullName", "fullname": "fullName",
+        "first_name": "firstName", "firstname": "firstName", "given_name": "firstName",
+        "second_name": "secondName", "middlename": "secondName", "middle_name": "secondName",
+        "last_name": "lastName", "lastname": "lastName", "surname": "lastName", "family_name": "lastName",
         "national_id": "nationalId", "national_id_no": "nationalId", "id": "nationalId", "id_no": "nationalId", "id_number": "nationalId", "idno": "nationalId", "nationalid": "nationalId",
         "voter_number": "voterNumber", "voter_no": "voterNumber", "voter_id": "voterNumber", "voter_id_number": "voterNumber", "serial_number": "voterNumber",
-        "phone": "phone", "mobile": "phone", "telephone": "phone",
+        "phone": "phone", "mobile": "phone", "mobile_number": "phone", "phone_number": "phone", "telephone": "phone",
         "gender": "gender", "sex": "gender",
         "date_of_birth": "dateOfBirth", "dob": "dateOfBirth", "birth_date": "dateOfBirth",
         "ward": "ward",
@@ -414,8 +417,13 @@ function CaptureTab() {
           const value = (cols[i] ?? "").trim();
           if (value) record[mapped] = value;
         });
-        if (!record.fullName && (record.first_name || record.firstName || record.last_name || record.lastName)) {
-          record.fullName = [record.first_name ?? record.firstName, record.last_name ?? record.lastName].filter(Boolean).join(" ");
+        if (!record.fullName && (record.firstName || record.secondName || record.lastName)) {
+          record.fullName = [record.firstName, record.secondName, record.lastName].filter(Boolean).join(" ");
+        }
+        if (record.ward) {
+          const wardInput = record.ward.trim().replace(/\\s+ward$/i, "").trim().toLowerCase();
+          const canonicalWard = WARDS.find(w => w.toLowerCase() === wardInput);
+          if (canonicalWard) record.ward = canonicalWard;
         }
         return record;
       }).filter(r => r.fullName || r.nationalId || r.voterNumber);
