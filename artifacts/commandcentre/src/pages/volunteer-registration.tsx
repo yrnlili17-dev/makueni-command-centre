@@ -57,7 +57,6 @@ export default function VolunteerRegistration() {
           <div className="flex items-center gap-3 mb-5">
             <div className="border border-primary/40 p-3"><UserPlus className="w-6 h-6 text-primary" /></div>
             <div>
-              <p className="font-mono text-[10px] tracking-widest text-primary">MAKUENI COUNTY</p>
               <h1 className="text-xl font-bold tracking-wide">PROF. PHILIP KALOKI SUPPORTERS</h1>
               <p className="text-xs text-muted-foreground mt-1">Makueni County supporter and volunteer registration.</p>
             </div>
