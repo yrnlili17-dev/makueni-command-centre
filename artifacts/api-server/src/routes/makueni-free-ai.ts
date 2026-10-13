@@ -135,6 +135,7 @@ export function buildFreeMakueniSpeech(input: {
   area?: string;
   occasion?: string;
   topic?: string;
+  currentGaps?: string;
   language?: string;
   minutes?: number;
 }): { title: string; speech: string; notes: string[] } {
@@ -145,6 +146,7 @@ export function buildFreeMakueniSpeech(input: {
   const minutes = Math.max(1, Math.min(15, Number(input.minutes) || 3));
   const areaLabel = wardExamples[area] ?? area;
   const lowerTopic = topic.toLowerCase();
+  const currentGaps = (input.currentGaps ?? "").trim().slice(0, 1600);
 
   const policySection = /water|borehole|dam|irrigat|pipe|dry tap/.test(lowerTopic)
     ? [
@@ -196,6 +198,14 @@ export function buildFreeMakueniSpeech(input: {
     "",
     "I will not pretend that every problem can be solved overnight or that a county can act alone on every issue. The work must be prioritised, costed through the proper budget process, implemented lawfully and monitored with the people it is meant to serve. Where national-government or partner action is required, we must be clear about the responsibility and pursue the necessary cooperation.",
     "",
+    ...(currentGaps ? [
+      "On the current administration's record, the following concerns have been supplied for public scrutiny:",
+      currentGaps,
+      "These concerns should be stated with their source, date and exact location. Before delivery, confirm the original records and give the responsible office a fair opportunity to clarify the status. Do not present an allegation as an established fact without supporting evidence."
+    ] : [
+      "Residents deserve a clear account of the current state of services. I will call for published baselines, approved budgets, project milestones, maintenance records and regular ward-level progress reports so the public can judge what has been delivered, what is delayed and what still needs action. Specific failures should be named only when the supporting records have been checked."
+    ]),
+    "",
     "My commitment is to keep listening, to explain the choices, to report progress honestly and to make accountability part of delivery—not something we remember only when there is a problem. I ask you to hold this plan to a high standard: ask questions, examine the records and judge progress by the difference services make in people's lives.",
     "",
     "Together, let us restore the promise: development that reaches every part of Makueni, opportunity for our farmers and young people, water that lasts, healthcare that works and a government that answers to its people.",
@@ -210,6 +220,7 @@ export function buildFreeMakueniSpeech(input: {
       `Prepared as a campaign-plan speech for approximately ${minutes} minute(s); review aloud and shorten or expand to fit the occasion.`,
       "This speech presents proposed actions if elected; it does not claim that the commitments are already funded or delivered.",
       "Verify local project names, statistics, costs, legal responsibilities and current status before delivery.",
+      currentGaps ? "Current administration concerns were supplied by the user; confirm source, date, location and response before stating them as fact." : "No specific current-administration failure was supplied; the speech calls for transparent performance reporting rather than inventing allegations.",
       "The manifesto themes are attributed to Prof. Philip Kaloki's Makueni County 2027 platform."
     ],
   };
