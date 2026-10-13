@@ -121,41 +121,69 @@ router.post("/upload", async (req, res) => {
 
   const batchId = batchName || `UPLOAD-${Date.now()}`;
   let newCount = 0;
+  let updatedCount = 0;
   let dupCount = 0;
+  let skippedCount = 0;
 
-  for (const r of records) {
-    if (!r.fullName || !isMakueniWard(r.ward) || (r.subCounty && !isMakueniConstituency(r.subCounty))) continue;
+  for (const raw of records) {
+    const r = Object.fromEntries(
+      Object.entries(raw).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
+    ) as typeof raw;
 
-    // Check for duplicate by nationalId or voterNumber
-    let isDup = false;
+    if (!r.fullName || !isMakueniWard(r.ward) || (r.subCounty && !isMakueniConstituency(r.subCounty))) {
+      skippedCount++;
+      continue;
+    }
+
+    // Match existing records by either stable identifier. Update matching records
+    // instead of silently skipping them, which is why corrected names were not showing.
+    let existingId: number | undefined;
     if (r.nationalId) {
       const [existing] = await db.select({ id: voterRegistryTable.id })
-        .from(voterRegistryTable).where(eq(voterRegistryTable.nationalId, r.nationalId));
-      if (existing) { isDup = true; dupCount++; }
+        .from(voterRegistryTable).where(eq(voterRegistryTable.nationalId, r.nationalId)).limit(1);
+      existingId = existing?.id;
+    }
+    if (!existingId && r.voterNumber) {
+      const [existing] = await db.select({ id: voterRegistryTable.id })
+        .from(voterRegistryTable).where(eq(voterRegistryTable.voterNumber, r.voterNumber)).limit(1);
+      existingId = existing?.id;
     }
 
-    if (!isDup) {
-      await db.insert(voterRegistryTable).values({
-        ...r,
+    if (existingId) {
+      const updates: Record<string, unknown> = {
+        fullName: r.fullName,
         importBatch: batchId,
-        status: "pending",
-        source: "upload",
-      });
-      newCount++;
+        updatedAt: new Date(),
+      };
+      for (const field of ["nationalId", "voterNumber", "phone", "gender", "dateOfBirth", "ward", "subCounty", "pollingStation", "pollingStationCode", "stream"] as const) {
+        const value = r[field];
+        if (value !== undefined && value !== "") updates[field] = value;
+      }
+      await db.update(voterRegistryTable).set(updates).where(eq(voterRegistryTable.id, existingId));
+      updatedCount++;
+      dupCount++;
+      continue;
     }
+
+    await db.insert(voterRegistryTable).values({
+      ...r,
+      importBatch: batchId,
+      status: "pending",
+      source: "upload",
+    });
+    newCount++;
   }
 
-  // Log the sync
   await db.insert(voterSyncLogsTable).values({
     source: `upload:${batchId}`,
-    status: "completed",
+    status: skippedCount > 0 ? "completed_with_skips" : "completed",
     recordsProcessed: records.length,
     recordsNew: newCount,
     recordsDuplicate: dupCount,
-    details: `Uploaded ${records.length} records. New: ${newCount}, Duplicates skipped: ${dupCount}`,
+    details: `Processed ${records.length} rows. New: ${newCount}, Updated existing: ${updatedCount}, Invalid/skipped: ${skippedCount}`,
   });
 
-  res.json({ processed: records.length, new: newCount, duplicates: dupCount, batchId });
+  res.json({ processed: records.length, new: newCount, updated: updatedCount, duplicates: dupCount, skipped: skippedCount, batchId });
 });
 
 // ── Review: update status ──────────────────────────────────────────────────
