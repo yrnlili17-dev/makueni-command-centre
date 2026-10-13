@@ -9,7 +9,7 @@ import type { SocialMention } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Radio, RefreshCw, ExternalLink, Trash2, TrendingUp, TrendingDown,
-  Minus, Globe, AlertCircle, Search,
+  Minus, Globe, AlertCircle, Search, MessageSquareText, Copy, Check, Facebook,
 } from "lucide-react";
 
 const CATEGORIES: { key: string; label: string }[] = [
@@ -32,6 +32,27 @@ const CATEGORY_LABEL: Record<string, string> = {
   opponent: "PUBLIC RECORDS",
 };
 
+function mentionDate(value?: string | null): number {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function buildReplySuggestions(summary: string, topic?: string | null): string[] {
+  const subject = summary.replace(/\\s*[—–-]\\s*.+$/, "").trim().replace(/[.!?]+$/, "");
+  const shortSubject = subject.length > 180 ? subject.slice(0, 177) + "..." : subject;
+  const area = topic?.toLowerCase().includes("water") ? "water services"
+    : topic?.toLowerCase().includes("road") ? "road access"
+    : topic?.toLowerCase().includes("health") ? "health services"
+    : topic?.toLowerCase().includes("education") ? "education"
+    : "Makueni County services and development";
+  return [
+    `Thank you for sharing this update about “${shortSubject}”. We are reviewing the source and the details so the community can understand what has been confirmed and what still needs clarification.`,
+    `This is an important topic for ${area}. Could you share the original notice or the latest dated update, including the specific ward or location, so residents can check the details accurately?`,
+    `For residents following this issue, the next useful step is to verify the latest official update, the responsible department and the current implementation status. We will avoid treating an unverified headline as a confirmed fact.`,
+  ];
+}
+
 function sentimentStyle(s: string) {
   switch (s) {
     case "positive": return { text: "text-green-400", border: "border-green-400/40", bg: "bg-green-400/10", Icon: TrendingUp };
@@ -45,6 +66,8 @@ export default function SocialListening() {
   const { data: mentions = [], isLoading } = useListSocialMentions();
   const [category, setCategory] = useState("all");
   const [sentiment, setSentiment] = useState("all");
+  const [replyItemId, setReplyItemId] = useState<number | null>(null);
+  const [copiedReply, setCopiedReply] = useState<string | null>(null);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: getListSocialMentionsQueryKey() });
   const scan = useScanSocial({ mutation: { onSuccess: invalidate } });
@@ -75,9 +98,14 @@ export default function SocialListening() {
     return all.reduce<string | null>((max, m) => (!max || m.scannedAt > max ? m.scannedAt : max), null);
   }, [all]);
 
-  const filtered = all.filter(
-    (m) => (category === "all" || m.category === category) && (sentiment === "all" || m.sentiment === sentiment),
-  );
+  const filtered = all
+    .filter((m) => (category === "all" || m.category === category) && (sentiment === "all" || m.sentiment === sentiment))
+    .slice()
+    .sort((a, b) => {
+      const aDate = mentionDate(a.publishedAt) || mentionDate(a.scannedAt);
+      const bDate = mentionDate(b.publishedAt) || mentionDate(b.scannedAt);
+      return bDate - aDate;
+    });
 
   const scanResult = scan.data;
 
@@ -93,14 +121,22 @@ export default function SocialListening() {
             PUBLIC WEB MONITORING · PROF. PHILIP KYALO KALOKI · MAKUENI COUNTY NEWS & SERVICE ISSUES
           </p>
         </div>
-        <button
-          onClick={() => scan.mutate()}
-          disabled={scan.isPending}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 font-mono text-xs tracking-wider hover:bg-primary/90 disabled:opacity-60"
-        >
-          <RefreshCw className={"w-3.5 h-3.5" + (scan.isPending ? " animate-spin" : "")} />
-          {scan.isPending ? "SCANNING THE WEB…" : "RUN SCAN"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <a href={`https://www.facebook.com/search/top?q=${encodeURIComponent("Prof Philip Kyalo Kaloki Makueni")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Search public Facebook results">
+            <Facebook className="w-3.5 h-3.5" /> SEARCH FACEBOOK
+          </a>
+          <a href={`https://www.tiktok.com/search?q=${encodeURIComponent("Prof Philip Kyalo Kaloki Makueni")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Search public TikTok results">
+            <Search className="w-3.5 h-3.5" /> SEARCH TIKTOK
+          </a>
+          <button
+            onClick={() => scan.mutate()}
+            disabled={scan.isPending}
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 font-mono text-xs tracking-wider hover:bg-primary/90 disabled:opacity-60"
+          >
+            <RefreshCw className={"w-3.5 h-3.5" + (scan.isPending ? " animate-spin" : "")} />
+            {scan.isPending ? "SCANNING THE WEB…" : "RUN SCAN"}
+          </button>
+        </div>
       </div>
 
       {scan.isError && (
@@ -178,6 +214,13 @@ export default function SocialListening() {
                     </div>
                   </div>
                   <div className="shrink-0 flex items-start gap-1">
+                    <button
+                      onClick={() => setReplyItemId(replyItemId === m.id ? null : m.id)}
+                      className="flex items-center gap-1 p-1.5 border border-primary/40 text-primary hover:bg-primary/10 font-mono text-[10px]"
+                      title="Generate three response drafts"
+                    >
+                      <MessageSquareText className="w-3.5 h-3.5" /> REPLY IDEAS
+                    </button>
                     {m.url && (
                       <a
                         href={m.url}
@@ -197,6 +240,26 @@ export default function SocialListening() {
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
+                  {replyItemId === m.id && (
+                    <div className="mt-3 space-y-2 border border-primary/30 bg-secondary/20 p-3">
+                      <p className="font-mono text-[10px] tracking-wider text-primary">THREE DRAFT RESPONSES · REVIEW BEFORE POSTING</p>
+                      {buildReplySuggestions(m.summary, m.topic).map((reply, index) => (
+                        <div key={index} className="flex items-start gap-2 border border-border bg-background p-2">
+                          <p className="flex-1 text-xs leading-relaxed">{index + 1}. {reply}</p>
+                          <button
+                            onClick={() => {
+                              void navigator.clipboard.writeText(reply).then(() => setCopiedReply(`${m.id}-${index}`)).catch(() => setCopiedReply(null));
+                            }}
+                            className="shrink-0 p-1.5 border border-border hover:bg-secondary"
+                            title="Copy response"
+                          >
+                            {copiedReply === `${m.id}-${index}` ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      ))}
+                      <p className="text-[10px] text-muted-foreground">These are neutral draft ideas for a public discussion, not published automatically. Check the original post/comment and facts before using them.</p>
+                    </div>
+                  )}
                 </li>
               );
             })}
