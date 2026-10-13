@@ -30,7 +30,7 @@ export function buildFreeMakueniAnswer(input: {
   ];
   const ward = wards.find((name) => lower.includes(name.toLowerCase())) ??
     (lower.match(/(?:in|for|at|about)\s+([a-z][a-z /-]{1,35}?)\s+ward\b/i)?.[1]?.trim() ?? "");
-  const area = ward ? ward.replace(/\b\\w/g, (letter) => letter.toUpperCase()) : "Makueni County";
+  const area = ward ? ward.replace(/\b\w/g, (letter) => letter.toUpperCase()) : "Makueni County";
 
   let issue = "general service delivery";
   let practicalSteps = [
