@@ -209,12 +209,12 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
     }).onConflictDoUpdate({
       target: socialSourceHealthTable.sourceKey,
       set: {
-        sourceType: "openai_web_search",
+        sourceType: process.env.MAKUENI_AI_MODE === "free" ? "google_news_rss" : "openai_web_search",
         status: failed ? "error" : "healthy",
         lastAttemptAt: now,
         ...(failed ? {} : { lastSuccessAt: now }),
         lastItemCount: count,
-        lastError: failed ? "Web search scan failed for this category; inspect API logs and credentials." : null,
+        lastError: failed ? "Public-source scan failed for this category; inspect API logs and source availability." : null,
         updatedAt: now,
       },
     });
