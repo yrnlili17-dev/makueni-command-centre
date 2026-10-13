@@ -9,11 +9,13 @@ export function buildFreeMakueniAnswer(input: {
   message: string;
   module?: string;
   context?: Record<string, unknown>;
+  liveSources?: Array<{ title: string; url: string; checkedAt: string; excerpt: string; status: string }>;
 }): string {
   const message = input.message.trim();
   const lower = message.toLowerCase();
   const moduleName = input.module ?? "dashboard";
   const context = input.context ?? {};
+  const liveSources = input.liveSources ?? [];
   const contextEntries = Object.entries(context).filter(([, value]) => value !== undefined && value !== null && value !== "");
   const contextSummary = contextEntries.length
     ? contextEntries.map(([key, value]) => `- ${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`).join("\n")
@@ -60,6 +62,9 @@ export function buildFreeMakueniAnswer(input: {
     "4. Save the source URL and assign an owner for follow-up.",
     "",
     sourceNote,
+    "",
+    "Public source checks (page metadata/snippets only; confirm details in the source document):",
+    ...(liveSources.length ? liveSources.map((source) => `- ${source.title} [${source.status}; checked ${source.checkedAt}]\\n  ${source.url}\\n  ${source.excerpt}`) : ["- No live public source was reachable during this request."]),
   ].join("\n");
 }
 
@@ -117,4 +122,60 @@ export function buildFreeMakueniSpeech(input: {
       "Generated in deterministic no-token mode; no paid AI model was called.",
     ],
   };
+}
+
+
+type PublicSourceSnapshot = {
+  title: string;
+  url: string;
+  checkedAt: string;
+  excerpt: string;
+  status: string;
+};
+
+let sourceCache: { expiresAt: number; items: PublicSourceSnapshot[] } | null = null;
+const PUBLIC_MAKUENI_SOURCES = [
+  { title: "Makueni Project Monitoring and Tracking System", url: "https://pmts.makueni.go.ke/v2/" },
+  { title: "Makueni County Public Finance Management documents", url: "https://makueni.go.ke/public-finance-management/" },
+  { title: "Makueni County downloads and ward profiles", url: "https://makueni.go.ke/county-documents/" },
+];
+
+/**
+ * Token-free source retrieval from fixed, official public URLs. This fetches
+ * public page snippets and links only; it does not claim a project is complete
+ * merely because a portal is reachable. Cache successful and failed checks for
+ * 15 minutes to avoid hammering county sites.
+ */
+export async function fetchMakueniOfficialSources(): Promise<PublicSourceSnapshot[]> {
+  if (sourceCache && sourceCache.expiresAt > Date.now()) return sourceCache.items;
+  const checkedAt = new Date().toISOString();
+  const items = await Promise.all(PUBLIC_MAKUENI_SOURCES.map(async (source) => {
+    try {
+      const response = await fetch(source.url, {
+        headers: { "User-Agent": "ProKalokiCommandCentre/1.0 (public-source reader)" },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!response.ok) {
+        return { ...source, checkedAt, status: `HTTP ${response.status}`, excerpt: "Source page could not be read; open the official URL to verify." };
+      }
+      const html = (await response.text()).slice(0, 1_000_000);
+      const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+      const title = titleMatch?.[1]?.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&#8211;|&ndash;/g, "–").replace(/\s+/g, " ").trim() || source.title;
+      const text = html
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&#8217;|&rsquo;/g, "'")
+        .replace(/&#8211;|&ndash;/g, "–")
+        .replace(/\s+/g, " ")
+        .trim();
+      return { ...source, title, checkedAt, status: "reachable", excerpt: text.slice(0, 1100) || "Page reachable, but no readable text was extracted." };
+    } catch {
+      return { ...source, checkedAt, status: "unreachable", excerpt: "Live fetch failed or timed out. Open the official URL to check manually." };
+    }
+  }));
+  sourceCache = { expiresAt: Date.now() + 15 * 60 * 1000, items };
+  return items;
 }
