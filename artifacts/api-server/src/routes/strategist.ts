@@ -3,7 +3,7 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, strategistConversations, strategistMessages } from "@workspace/db";
 import { sql, eq, desc, asc } from "drizzle-orm";
 import { CAMPAIGN_CONTEXT } from "./ai";
-import { buildFreeMakueniAnswer, fetchMakueniOfficialSources } from "./makueni-free-ai";
+import { buildFreeMakueniAnswer, fetchMakueniOfficialSources, searchFreeMakueniWeb } from "./makueni-free-ai";
 import { requireAuth } from "../lib/auth";
 
 const router = Router();
@@ -258,11 +258,18 @@ router.post("/chat", async (req, res) => {
 
     let assistantText = "";
     if (process.env.MAKUENI_AI_MODE === "free") {
-      const liveSources = await fetchMakueniOfficialSources();
+      const [liveSources, publicWebResults] = await Promise.all([
+        fetchMakueniOfficialSources(),
+        searchFreeMakueniWeb(text),
+      ]);
       assistantText = buildFreeMakueniAnswer({
         message: text,
         module: "strategist",
-        context: { liveCountyDigest: digest, recentConversation: prior.slice(-4).map((m) => ({ role: m.role, content: m.content.slice(0, 500) })) },
+        context: {
+          liveCountyDigest: digest,
+          recentConversation: prior.slice(-4).map((m) => ({ role: m.role, content: m.content.slice(0, 500) })),
+          publicWebResults,
+        },
         liveSources,
       });
       res.write(`data: ${JSON.stringify({ content: assistantText, mode: "free-fallback" })}\n\n`);
@@ -291,8 +298,16 @@ router.post("/chat", async (req, res) => {
         }
       } catch (err) {
         req.log.warn({ err }, "Paid strategist unavailable; using free Makueni fallback");
-        const liveSources = await fetchMakueniOfficialSources();
-        assistantText = buildFreeMakueniAnswer({ message: text, module: "strategist", context: { liveCountyDigest: digest }, liveSources });
+        const [liveSources, publicWebResults] = await Promise.all([
+          fetchMakueniOfficialSources(),
+          searchFreeMakueniWeb(text),
+        ]);
+        assistantText = buildFreeMakueniAnswer({
+          message: text,
+          module: "strategist",
+          context: { liveCountyDigest: digest, publicWebResults },
+          liveSources,
+        });
         res.write(`data: ${JSON.stringify({ content: assistantText, mode: "free-fallback" })}\n\n`);
       }
     }
