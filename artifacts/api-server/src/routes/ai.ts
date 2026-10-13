@@ -85,6 +85,16 @@ const QUICK_PROMPTS: Record<string, string[]> = {
   "voters-db": ["Check voter records with invalid wards", "Summarize registry provenance", "Identify duplicate records for review"],
 };
 
+router.get("/county-knowledge", async (_req, res) => {
+  const sources = await fetchMakueniOfficialSources();
+  res.json({
+    mode: process.env.MAKUENI_AI_MODE === "free" ? "free-template-retrieval" : "provider-assisted",
+    checkedAt: new Date().toISOString(),
+    sources,
+    guidance: "Page snippets are discovery aids, not a complete indexed knowledge base. Verify facts in the original dated county documents before using them in public statements."
+  });
+});
+
 router.get("/quick-prompts", (req, res) => {
   const { module = "dashboard" } = req.query as { module?: string };
   res.json({ prompts: QUICK_PROMPTS[module] ?? QUICK_PROMPTS.dashboard });
