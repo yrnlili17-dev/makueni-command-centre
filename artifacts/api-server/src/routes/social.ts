@@ -49,6 +49,12 @@ function queriesForCategory(key: (typeof SCAN_CATEGORIES)[number]["key"]): strin
       '"Prof Philip Kaloki" Makueni',
       '"Philip Kyalo Kaloki" Makueni County',
       '"Kaloki" Makueni County',
+      'site:facebook.com/prof.philipkaloki',
+      'site:x.com/ProfKaloki',
+      'site:tiktok.com/@profkaloki1',
+      'site:facebook.com "Prof Philip Kaloki" Makueni',
+      'site:x.com "ProfKaloki" Makueni',
+      'site:tiktok.com "profkaloki1" Makueni',
     ];
   }
   if (key === "issues") {
