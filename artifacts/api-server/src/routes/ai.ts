@@ -259,6 +259,15 @@ router.post("/assist", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
+  // Explicit no-token mode avoids calling the paid model at all.
+  if (process.env.MAKUENI_AI_MODE === "free") {
+    const fallback = buildFreeMakueniAnswer({ message, module, context });
+    res.write(`data: ${JSON.stringify({ content: fallback, mode: "free-fallback" })}\n\n`);
+    res.write(`data: ${JSON.stringify({ done: true, mode: "free-fallback" })}\n\n`);
+    res.end();
+    return;
+  }
+
   try {
     const stream = await openai.chat.completions.create({
       model: "gpt-5.1",
