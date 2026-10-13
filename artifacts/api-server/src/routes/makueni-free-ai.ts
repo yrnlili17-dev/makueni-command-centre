@@ -148,6 +148,20 @@ export function buildFreeMakueniSpeech(input: {
     "",
     `Thank you for coming together in ${areaLabel}. This meeting is an opportunity to listen carefully, share verified information and agree on practical next steps concerning ${topic}.`,
     "",
+    "The draft policy framework, Restore the Promise: Makueni County 2027–2032, is organised around five pillars: development where people are; markets, prices and opportunity; water that lasts; agriculture and livelihoods; and healthcare that works when people arrive. Open and accountable government is the foundation that connects them. These are proposed commitments in a draft document, not proof that projects have been funded or delivered.",
+    "",
+    ...(/water|borehole|dam|irrigat|pipe|dry tap/i.test(topic) ? [
+      "On water, the draft puts repair and maintenance before new drilling, alongside protecting dams and sand dams, improving storage and extending distribution closer to homes. A useful local discussion should identify which source is broken, who maintains it, the repair status and the date residents can expect an update."
+    ] : /market|price|farmer|agricultur|livelihood|livestock|drought/i.test(topic) ? [
+      "On agriculture and livelihoods, the draft proposes timely farm inputs, stronger extension support, livestock services, aggregation, grading, storage and clearer market-price information. Any local example should be checked against current records and the season before it is presented as fact."
+    ] : /health|hospital|clinic|medicine|ambulance|diagnostic/i.test(topic) ? [
+      "On healthcare, the draft focuses on staffing, essential medicines, diagnostics, reliable ambulances and referral systems that connect patients to facilities able to treat them. Before making a specific claim, verify the facility, service gap and latest dated report."
+    ] : /market|trade|price|electricity|energy|land/i.test(topic) ? [
+      "On markets and opportunity, the draft proposes better aggregation and storage, transparent price information, reliable market infrastructure, energy access and clearer land planning. Specific figures, costs and implementation status must be verified before delivery."
+    ] : [
+      "Across all five pillars, the draft emphasises practical delivery, local participation and transparent follow-up. The strongest speech will connect the theme of this meeting to a specific service issue, explain the proposed action, and identify what evidence and follow-up are still needed."
+    ]),
+    "",
     "Our discussion should begin with the facts on the ground. We should identify the service or project, the location it serves, the responsible office, the latest documented progress and the issues residents still experience. Where information is not yet confirmed, we should say so openly and commit to checking it rather than make promises based on assumptions.",
     "",
     "I encourage residents to raise concerns respectfully and to describe the specific location and impact. County teams should record each issue, identify the office responsible, set a realistic follow-up date and report back to the community. Progress should be measured by evidence of service improvement, not by announcements alone.",
@@ -163,6 +177,7 @@ export function buildFreeMakueniSpeech(input: {
     speech,
     notes: [
       `This template is designed for approximately ${minutes} minute(s); shorten or expand to fit the event.`,
+      "The five-pillar language is drawn from the confidential draft manifesto; confirm approval before circulating or delivering it publicly.",
       "Add only verified local project names, budget figures and progress updates before delivery.",
       "Confirm names, titles, dates and official announcements from primary sources.",
       "Generated in deterministic no-token mode; no paid AI model was called.",
