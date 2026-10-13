@@ -130,13 +130,14 @@ router.post("/upload", async (req, res) => {
       Object.entries(raw).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
     ) as typeof raw;
 
-    if (!r.fullName || !isMakueniWard(r.ward) || (r.subCounty && !isMakueniConstituency(r.subCounty))) {
+    if (!r.fullName) {
       skippedCount++;
       continue;
     }
 
-    // Match existing records by either stable identifier. Update matching records
-    // instead of silently skipping them, which is why corrected names were not showing.
+    // Match existing records by either stable identifier before validating optional
+    // geography. A name-only correction file can update an existing voter even when
+    // the CSV omits ward/sub-county columns.
     let existingId: number | undefined;
     if (r.nationalId) {
       const [existing] = await db.select({ id: voterRegistryTable.id })
@@ -150,6 +151,10 @@ router.post("/upload", async (req, res) => {
     }
 
     if (existingId) {
+      if ((r.ward && !isMakueniWard(r.ward)) || (r.subCounty && !isMakueniConstituency(r.subCounty))) {
+        skippedCount++;
+        continue;
+      }
       const updates: Record<string, unknown> = {
         fullName: r.fullName,
         importBatch: batchId,
@@ -165,6 +170,12 @@ router.post("/upload", async (req, res) => {
       continue;
     }
 
+    // New rows still need a valid Makueni ward; without it they cannot be
+    // included in the county registry.
+    if (!isMakueniWard(r.ward) || (r.subCounty && !isMakueniConstituency(r.subCounty))) {
+      skippedCount++;
+      continue;
+    }
     await db.insert(voterRegistryTable).values({
       ...r,
       importBatch: batchId,
