@@ -161,6 +161,13 @@ function VoterRollTab() {
     }
   }, [search, ward, status, source, page]);
 
+  // Load the voter roll automatically, including records still pending review.
+  useEffect(() => {
+    void fetchData(0);
+    // Fetch on entry; filters remain user-controlled via SEARCH.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleSearch = () => { setPage(0); fetchData(0); };
 
   const handleDelete = async (id: number) => {
@@ -241,7 +248,7 @@ function VoterRollTab() {
       {!data && !loading && (
         <div className="border border-border bg-card p-12 text-center">
           <Database className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-          <div className="font-mono text-xs text-muted-foreground">CLICK SEARCH TO LOAD VOTER ROLL</div>
+          <div className="font-mono text-xs text-muted-foreground">VOTER ROLL WILL LOAD AUTOMATICALLY</div>
         </div>
       )}
 
@@ -475,7 +482,7 @@ function CaptureTab() {
                 <div className="text-center"><div className="font-mono text-[9px] text-yellow-400">MATCHED</div><div className="font-bold text-yellow-400">{uploadResult.duplicates}</div></div>
                 <div className="text-center"><div className="font-mono text-[9px] text-red-400">SKIPPED</div><div className="font-bold text-red-400">{uploadResult.skipped ?? 0}</div></div>
               </div>
-              <div className="font-mono text-[9px] text-muted-foreground mt-2">Existing records are updated by National ID or Voter Number. New records remain pending review. Run SEARCH again to refresh the voter roll.</div>
+              <div className="font-mono text-[9px] text-muted-foreground mt-2">Existing records are updated by National ID or Voter Number. New records remain visible in Voter Roll with PENDING status until reviewed.</div>
             </div>
           )}
         </div>
