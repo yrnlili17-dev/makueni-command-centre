@@ -3,6 +3,37 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import { buildFreeMakueniAnswer, buildFreeMakueniSpeech, fetchMakueniOfficialSources } from "./makueni-free-ai";
 
 const router = Router();
+/** In free mode these generation routes must never fall through to OpenAI. */
+router.use((req, res, next) => {
+  if (process.env.MAKUENI_AI_MODE !== "free" || req.method !== "POST") return next();
+  const routePath = req.path;
+  if (routePath === "/generate-readiness") return res.json({ mode: "free-template", items: [
+    { domain: "Evidence and records", item: "Confirm each reported service issue against a dated official source.", weight: "high" },
+    { domain: "Ward coverage", item: "Check that reports identify the correct Makueni sub-county and ward.", weight: "high" },
+    { domain: "Public participation", item: "Record concerns, responsible office, action owner and follow-up date.", weight: "medium" },
+    { domain: "Budget transparency", item: "Distinguish approved allocation, expenditure and verified outputs.", weight: "high" },
+    { domain: "Data protection", item: "Restrict personal data to authorized users and log access.", weight: "high" },
+    { domain: "Reporting", item: "Publish reviewed information with source links and update dates.", weight: "medium" }
+  ], note: "Template checklist, not a live audit." });
+  if (routePath === "/generate-campaign-plan") {
+    const today = new Date().toISOString().slice(0, 10);
+    const focus = typeof req.body?.focus === "string" ? req.body.focus.slice(0, 200).replace(/[<>]/g, "") : "county service delivery";
+    return res.json({ mode: "free-template", milestones: [
+      { title: "Verify official source material", description: "Collect current county plans, ward profiles, budget reports and project records.", dueDate: today, category: "Research", priority: "high", owner: "Research team" },
+      { title: "Map service issues by ward", description: "Record location, department, source date and verification status.", dueDate: today, category: "Service delivery", priority: "high", owner: "County information team" },
+      { title: "Review budget evidence", description: "Separate allocations, expenditure and documented outputs.", dueDate: today, category: "Finance", priority: "high", owner: "Finance review team" },
+      { title: "Prepare public information brief", description: "Prepare a neutral brief about " + focus + " using verified sources only.", dueDate: today, category: "Reporting", priority: "medium", owner: "Communications team" },
+      { title: "Schedule follow-up", description: "Assign owners and dates to unresolved service questions.", dueDate: today, category: "Follow-up", priority: "medium", owner: "Operations team" }
+    ], note: "Template milestones only; no live project status is implied." });
+  }
+  if (routePath === "/generate-swot") return res.json({ mode: "free-template",
+    strengths: [{ title: "Published county records", detail: "Official portals publish plans and project information.", impact: "medium", category: "Evidence", action: "Link claims to dated sources." }],
+    weaknesses: [{ title: "Evidence gaps", detail: "Some records may be old or incomplete.", impact: "medium", category: "Data quality", action: "Track source dates and missing fields." }],
+    opportunities: [{ title: "Ward-level reporting", detail: "Ward profiles help structure service reviews.", impact: "medium", category: "Reporting", action: "Use a consistent evidence checklist." }],
+    threats: [{ title: "Outdated information", detail: "Old reports can be mistaken for current status.", impact: "high", category: "Verification", action: "Confirm status with the official project portal." }],
+    generatedAt: new Date().toISOString(), note: "Evidence-led public-service framework." });
+  return next();
+});
 
 export const CAMPAIGN_CONTEXT = `
 You are an AI assistant for the Makueni County Command Centre in Kenya.
