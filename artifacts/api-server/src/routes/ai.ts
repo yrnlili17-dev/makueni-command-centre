@@ -103,7 +103,7 @@ router.get("/quick-prompts", (req, res) => {
   res.json({ prompts: QUICK_PROMPTS[module] ?? QUICK_PROMPTS.dashboard });
 });
 
-router.post("/generate-speech", (req, res) => {
+router.post("/generate-speech", async (req, res) => {
   const { area, occasion, topic, language, minutes } = req.body as {
     area?: string; occasion?: string; topic?: string; language?: string; minutes?: number;
   };
@@ -112,7 +112,15 @@ router.post("/generate-speech", (req, res) => {
     return;
   }
   const draft = buildFreeMakueniSpeech({ area, occasion, topic, language, minutes });
-  res.json({ ...draft, generatedAt: new Date().toISOString(), mode: "free-template" });
+  const query = [area || "Makueni County", topic || "service delivery", "Makueni County"].join(" ");
+  const [officialSources, webResults] = await Promise.all([fetchMakueniOfficialSources(), searchFreeMakueniWeb(query)]);
+  res.json({
+    ...draft,
+    generatedAt: new Date().toISOString(),
+    mode: "free-template-with-public-source-search",
+    research: { query, officialSources, webResults },
+    notes: [...draft.notes, "Search results are leads, not verified facts. Review linked sources and add only confirmed local details before delivering the speech."],
+  });
 });
 
 router.post("/generate-readiness", async (req, res) => {
