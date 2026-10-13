@@ -4,6 +4,7 @@ import { db, generatedDocumentsTable, insertGeneratedDocumentSchema } from "@wor
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { CAMPAIGN_CONTEXT } from "./ai";
+import { buildFreeMakueniSpeech } from "./makueni-free-ai";
 
 const router = Router();
 
@@ -77,6 +78,22 @@ router.post("/generate", async (req, res) => {
   if (ward !== "county-wide" && !["Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa","Kiima Kiu/Kalanzoni","Mukaa","Kasikeu","Kee","Kilungu","Ilima","Ukia","Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini","Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala","Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"].includes(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   const words = LENGTH_WORDS[length] ?? 170;
 
+  // Set MAKUENI_AI_MODE=free on Render to avoid all paid model calls.
+  if (process.env.MAKUENI_AI_MODE === "free") {
+    const freeDraft = buildFreeMakueniSpeech({
+      area: ward === "county-wide" ? "Makueni County" : ward,
+      occasion,
+      topic: keyPoints || occasion,
+      language,
+      minutes: length === "short" ? 1 : length === "long" ? 5 : 3,
+    });
+    const [saved] = await db.insert(generatedDocumentsTable).values({
+      docType: "speech", title: freeDraft.title, occasion, audience, ward, language, tone, body: freeDraft.speech,
+    }).returning();
+    res.json({ title: freeDraft.title, body: freeDraft.speech, mode: "free-template", notes: freeDraft.notes, documentId: saved?.id });
+    return;
+  }
+
   const base = `${CAMPAIGN_CONTEXT}
 
 You are preparing a public-service announcement for Makueni County. Use a ${tone.toLowerCase()} tone.
@@ -115,12 +132,20 @@ Ground it in Makueni County services and cite official sources where available.`
   // A speech is only useful whole — fail loudly if any part is missing rather
   // than returning a broken document as success.
   if (!opening || !body || !close) {
-    res.status(502).json({ error: "AI generation was incomplete. Please retry." });
+    const freeDraft = buildFreeMakueniSpeech({
+      area: ward === "county-wide" ? "Makueni County" : ward,
+      occasion, topic: keyPoints || occasion, language,
+      minutes: length === "short" ? 1 : length === "long" ? 5 : 3,
+    });
+    const [saved] = await db.insert(generatedDocumentsTable).values({
+      docType: "speech", title: freeDraft.title, occasion, audience, ward, language, tone, body: freeDraft.speech,
+    }).returning();
+    res.json({ title: freeDraft.title, body: freeDraft.speech, mode: "free-fallback", notes: freeDraft.notes, documentId: saved?.id });
     return;
   }
 
   const title = `${occasion}${ward && ward !== "county-wide" ? ` — ${ward}` : ""}`;
-  res.json({ title, body: [opening, body, close].join("\n\n") });
+  res.json({ title, body: [opening, body, close].join("\n\n"), mode: "ai" });
 });
 
 const manifestoSchema = z.object({
@@ -161,6 +186,24 @@ router.post("/manifesto", async (req, res) => {
     return;
   }
   const { language, tone, priorityIssues } = parsed.data;
+
+  if (process.env.MAKUENI_AI_MODE === "free") {
+    const body = [
+      "# Makueni County Development & Service Brief",
+      "",
+      "## Vision and public accountability",
+      `This brief sets out an evidence-led approach to county service delivery in Makueni County. Language: ${language}. Tone: ${tone}. Verify all current project status, budgets and statistics against dated official records before publication.`,
+      "",
+      ...PILLARS.map((p, i) => `## PILLAR ${i + 1}: ${p.key.toUpperCase()}\n\nPriority areas: ${p.hint} Record each proposed action with a responsible department, baseline, measurable milestone, due date and public reporting source.`),
+      "",
+      "## County service commitments",
+      "Publish progress using verified records, explain delays honestly, invite public participation across all 30 wards, protect personal data and provide a clear channel for follow-up.",
+      priorityIssues ? `\nPriority issues supplied: ${priorityIssues}\n` : "",
+      "\nVerification note: this no-token template does not establish that any project or allocation is approved, funded or completed.",
+    ].join("\n\n");
+    res.json({ title: "Makueni County Development & Service Brief", body, mode: "free-template" });
+    return;
+  }
 
   const base = `${CAMPAIGN_CONTEXT}
 
