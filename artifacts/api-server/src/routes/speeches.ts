@@ -4,7 +4,7 @@ import { db, generatedDocumentsTable, insertGeneratedDocumentSchema } from "@wor
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { CAMPAIGN_CONTEXT } from "./ai";
-import { buildFreeMakueniSpeech } from "./makueni-free-ai";
+import { buildFreeMakueniSpeech, searchFreeMakueniWeb } from "./makueni-free-ai";
 
 const router = Router();
 
@@ -80,17 +80,36 @@ router.post("/generate", async (req, res) => {
 
   // Set MAKUENI_AI_MODE=free on Render to avoid all paid model calls.
   if (process.env.MAKUENI_AI_MODE === "free") {
+    const area = ward === "county-wide" ? "Makueni County" : ward;
     const freeDraft = buildFreeMakueniSpeech({
-      area: ward === "county-wide" ? "Makueni County" : ward,
+      area,
       occasion,
       topic: keyPoints || occasion,
       language,
       minutes: length === "short" ? 1 : length === "long" ? 5 : 3,
     });
+    const query = [area, occasion, keyPoints || "water roads health agriculture county projects", "Makueni County"].join(" ");
+    const webResults = await searchFreeMakueniWeb(query);
+    const researchNotes = [
+      "",
+      "LOCAL RESEARCH LEADS — VERIFY BEFORE DELIVERY",
+      ...(webResults.length
+        ? webResults.slice(0, 5).map((item) => `- ${item.title} (${item.source}${item.publishedAt ? `, ${item.publishedAt}` : ""}) — ${item.url}`)
+        : ["- No matching public-news results were reachable for this query. Check the official Makueni County PMTS and ward profile sources manually."]),
+      "These headlines are leads, not confirmed facts. Open the original dated source and include only details verified for this ward.",
+    ].join("\n");
+    const fullBody = freeDraft.speech + researchNotes;
     const [saved] = await db.insert(generatedDocumentsTable).values({
-      docType: "speech", title: freeDraft.title, occasion, audience, ward, language, tone, body: freeDraft.speech,
+      docType: "speech", title: freeDraft.title, occasion, audience, ward, language, tone, body: fullBody,
     }).returning();
-    res.json({ title: freeDraft.title, body: freeDraft.speech, mode: "free-template", notes: freeDraft.notes, documentId: saved?.id });
+    res.json({
+      title: freeDraft.title,
+      body: fullBody,
+      mode: "free-template-with-public-research",
+      notes: [...freeDraft.notes, "Public-web headlines are research leads only; verify the original dated source before using any claim."],
+      research: { query, webResults },
+      documentId: saved?.id,
+    });
     return;
   }
 
