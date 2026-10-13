@@ -394,9 +394,9 @@ function CaptureTab() {
       const headers = rows[0]!.map(h => h.trim().replace(/^\uFEFF/, "").toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, ""));
 
       const fieldMap: Record<string, string> = {
-        "full_name": "fullName", "name": "fullName", "fullname": "fullName",
-        "national_id": "nationalId", "id_number": "nationalId", "nationalid": "nationalId",
-        "voter_number": "voterNumber", "voter_no": "voterNumber", "serial_number": "voterNumber",
+        "full_name": "fullName", "name": "fullName", "names": "fullName", "fullname": "fullName",
+        "national_id": "nationalId", "national_id_no": "nationalId", "id": "nationalId", "id_no": "nationalId", "id_number": "nationalId", "idno": "nationalId", "nationalid": "nationalId",
+        "voter_number": "voterNumber", "voter_no": "voterNumber", "voter_id": "voterNumber", "voter_id_number": "voterNumber", "serial_number": "voterNumber",
         "phone": "phone", "mobile": "phone", "telephone": "phone",
         "gender": "gender", "sex": "gender",
         "date_of_birth": "dateOfBirth", "dob": "dateOfBirth", "birth_date": "dateOfBirth",
@@ -414,6 +414,9 @@ function CaptureTab() {
           const value = (cols[i] ?? "").trim();
           if (value) record[mapped] = value;
         });
+        if (!record.fullName && (record.first_name || record.firstName || record.last_name || record.lastName)) {
+          record.fullName = [record.first_name ?? record.firstName, record.last_name ?? record.lastName].filter(Boolean).join(" ");
+        }
         return record;
       }).filter(r => r.fullName || r.nationalId || r.voterNumber);
 
@@ -484,7 +487,7 @@ function CaptureTab() {
         {/* CSV Upload */}
         <div className="bg-card border border-border p-4 space-y-3">
           <div className="font-mono text-[10px] text-muted-foreground tracking-widest">◆ BULK CSV UPLOAD</div>
-          <p className="text-xs text-muted-foreground">Upload a CSV file with voter data. Required column: <code className="font-mono text-primary">full_name</code>. Optional: <code className="font-mono text-primary">national_id, voter_number, phone, gender, dob, ward, polling_station, station_code, stream, sub_county</code>.</p>
+          <p className="text-xs text-muted-foreground">Upload a CSV file with voter data. Use <code className="font-mono text-primary">full_name</code> (or name), plus <code className="font-mono text-primary">national_id</code> or <code className="font-mono text-primary">voter_number</code> to match existing records and update their names. New records need a valid <code className="font-mono text-primary">ward</code>. Optional: <code className="font-mono text-primary">national_id, voter_number, phone, gender, dob, ward, polling_station, station_code, stream, sub_county</code>.</p>
 
           <div
             className="border-2 border-dashed border-border hover:border-primary/50 p-8 text-center cursor-pointer transition-colors"
