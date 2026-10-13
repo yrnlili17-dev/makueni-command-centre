@@ -197,14 +197,14 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Sparkles className="w-6 h-6 text-primary/40 mb-2" />
-                <p className="font-mono text-xs text-muted-foreground">Campaign AI is ready.</p>
-                <p className="font-mono text-[10px] text-muted-foreground/60 mt-1">Ask anything about {moduleLabel.toLowerCase()}.</p>
+                <p className="font-mono text-xs text-muted-foreground">AI is ready.</p>
+                <p className="font-mono text-[10px] text-muted-foreground/60 mt-1">Ask about Makueni County, local services or this dashboard.</p>
               </div>
             )}
             {messages.map((msg, idx) => (
               <div key={idx} className={cn("flex flex-col gap-1", msg.role === "user" ? "items-end" : "items-start")}>
                 <span className="font-mono text-[8px] text-muted-foreground/60 tracking-widest px-1">
-                  {msg.role === "user" ? "YOU" : "ACL AI"}
+                  {msg.role === "user" ? "YOU" : "AI"}
                 </span>
                 <div className={cn(
                   "relative group max-w-[92%] px-3 py-2 text-[11px] leading-relaxed font-sans",
@@ -257,7 +257,7 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
                 <Send className="w-3.5 h-3.5" />
               </button>
             </div>
-            <p className="font-mono text-[8px] text-muted-foreground/50 mt-1.5">Shift+Enter for new line · Powered by ACL AI</p>
+            <p className="font-mono text-[8px] text-muted-foreground/50 mt-1.5">Shift+Enter for new line · Makueni County public information and dashboard data</p>
           </div>
         </div>
       )}
