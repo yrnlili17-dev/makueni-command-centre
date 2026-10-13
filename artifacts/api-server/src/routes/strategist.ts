@@ -3,6 +3,7 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, strategistConversations, strategistMessages } from "@workspace/db";
 import { sql, eq, desc, asc } from "drizzle-orm";
 import { CAMPAIGN_CONTEXT } from "./ai";
+import { buildFreeMakueniAnswer, fetchMakueniOfficialSources } from "./makueni-free-ai";
 import { requireAuth } from "../lib/auth";
 
 const router = Router();
@@ -256,33 +257,44 @@ router.post("/chat", async (req, res) => {
     res.write(`data: ${JSON.stringify({ conversationId: convId })}\n\n`);
 
     let assistantText = "";
-    try {
-      const stream = await openai.chat.completions.create({
-        model: "gpt-5.1",
-        max_completion_tokens: 1536,
-        messages: [
-          { role: "system", content: `${CAMPAIGN_CONTEXT}\n\n${STRATEGIST_ROLE}\n\n${digest}` },
-          ...prior.map((m) => ({
-            role: (m.role === "assistant" ? "assistant" : "user") as "assistant" | "user",
-            content: m.content,
-          })),
-          { role: "user", content: text },
-        ],
-        stream: true,
+    if (process.env.MAKUENI_AI_MODE === "free") {
+      const liveSources = await fetchMakueniOfficialSources();
+      assistantText = buildFreeMakueniAnswer({
+        message: text,
+        module: "strategist",
+        context: { liveCountyDigest: digest, recentConversation: prior.slice(-4).map((m) => ({ role: m.role, content: m.content.slice(0, 500) })) },
+        liveSources,
       });
+      res.write(`data: ${JSON.stringify({ content: assistantText, mode: "free-fallback" })}\n\n`);
+    } else {
+      try {
+        const stream = await openai.chat.completions.create({
+          model: "gpt-5.1",
+          max_completion_tokens: 1536,
+          messages: [
+            { role: "system", content: `${CAMPAIGN_CONTEXT}\n\n${STRATEGIST_ROLE}\n\n${digest}` },
+            ...prior.map((m) => ({
+              role: (m.role === "assistant" ? "assistant" : "user") as "assistant" | "user",
+              content: m.content,
+            })),
+            { role: "user", content: text },
+          ],
+          stream: true,
+        });
 
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content;
-        if (content) {
-          assistantText += content;
-          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        for await (const chunk of stream) {
+          const content = chunk.choices[0]?.delta?.content;
+          if (content) {
+            assistantText += content;
+            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          }
         }
+      } catch (err) {
+        req.log.warn({ err }, "Paid strategist unavailable; using free Makueni fallback");
+        const liveSources = await fetchMakueniOfficialSources();
+        assistantText = buildFreeMakueniAnswer({ message: text, module: "strategist", context: { liveCountyDigest: digest }, liveSources });
+        res.write(`data: ${JSON.stringify({ content: assistantText, mode: "free-fallback" })}\n\n`);
       }
-    } catch (err) {
-      req.log.error({ err }, "strategist AI stream failed");
-      res.write(`data: ${JSON.stringify({ error: "AI service temporarily unavailable. Please retry." })}\n\n`);
-      res.end();
-      return;
     }
 
     if (assistantText.trim()) {
