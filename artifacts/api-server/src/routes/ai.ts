@@ -238,7 +238,7 @@ router.post("/generate-swot", async (req, res) => {
 
   // One call per quadrant — 4 items each — keeps output ~250 tokens per call (safe in prod)
   const ITEM = `{"title":"string","detail":"string","impact":"high|medium|low","category":"Political|Financial|Grassroots|Narrative|Demographic|Infrastructure|Legal|External","action":"string"}`;
-  const CTX = `Political strategist for ${CAMPAIGN_CONTEXT.split("\n")[0]}. Kenya MNA 2027. Output ONLY raw JSON, no markdown. Keep every string field under 90 characters.`;
+  const CTX = `Political strategist supporting Prof. Philip Kaloki in Makueni County, Kenya, for the 2027 election. Keep analysis evidence-led and specific to Makueni County. Do not mention Matungulu or any other county. Do not invent personal history, party affiliation, funding, polling, or election results. Output ONLY raw JSON, no markdown. Keep every string field under 90 characters.`;
 
   function makePrompt(quadrant: string, hint: string) {
     return {
@@ -248,10 +248,10 @@ router.post("/generate-swot", async (req, res) => {
   }
 
   const prompts = {
-    strengths: makePrompt("strengths", "Real political assets: biomedical engineer background, Wiper ticket, local Makueni roots, legislative record, community trust."),
-    weaknesses: makePrompt("weaknesses", "Honest vulnerabilities a challenger would exploit: funding gap, incumbency fatigue, limited digital presence, name recognition outside home ward."),
-    opportunities: makePrompt("opportunities", "Kenya/Makueni 2027 context: devolution funds, youth bulge, diaspora vote, infrastructure momentum, Wiper Ukambani coalition."),
-    threats: makePrompt("threats", "Concrete threats: well-funded ruling-party opponent, voter apathy, negative social media attacks, low GOTV in remote stations, split opposition vote."),
+    strengths: makePrompt("strengths", "Assess verifiable assets such as local community engagement, policy proposals, public profile, team capacity and documented service record. Do not assume any are proven without evidence."),
+    weaknesses: makePrompt("weaknesses", "Identify areas requiring evidence and improvement: ward coverage, communications reach, volunteer coordination, resourcing, and documented policy detail. Do not state unverified weaknesses as facts."),
+    opportunities: makePrompt("opportunities", "Consider Makueni-specific community priorities, youth and women participation, ward listening, public forums, digital information access, and transparent policy commitments."),
+    threats: makePrompt("threats", "Consider misinformation, low public trust, fragmented communications, poor source verification, volunteer safety and uneven ward coverage without asserting unverified opponents or polling trends."),
   };
 
   try {
