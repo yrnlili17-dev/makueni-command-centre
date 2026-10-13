@@ -571,17 +571,17 @@ export default function CampaignPlan() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 divide-border">
                 {[
-                  { role: "CAMPAIGN MANAGER", name: "John Kyalo" },
-                  { role: "DEPUTY MANAGER", name: "Thomas Kivindyo" },
-                  { role: "COMMS DIRECTOR", name: "Fiddellis Wambua" },
-                  { role: "FINANCE DIRECTOR", name: "Eric Nzuki" },
-                  { role: "VOLUNTEER COORD", name: "Alice Kavuu" },
-                  { role: "LEGAL TEAM", name: "Priscilla Mtawe" },
-                  { role: "ICT TEAM", name: "Dominic Mwakavi" },
-                ].map(({ role, name }, i) => (
+                  { role: "CAMPAIGN MANAGER" },
+                  { role: "DEPUTY CAMPAIGN MANAGER" },
+                  { role: "COMMUNICATIONS DIRECTOR" },
+                  { role: "FINANCE DIRECTOR" },
+                  { role: "VOLUNTEER COORDINATOR" },
+                  { role: "LEGAL TEAM" },
+                  { role: "ICT / DIGITAL TEAM" },
+                ].map(({ role }, i) => (
                   <div key={role} className={`px-4 py-3 border-b border-r border-border ${i % 4 === 3 ? "border-r-0" : ""}`}>
                     <p className="font-mono text-[8px] text-muted-foreground tracking-widest">{role}</p>
-                    <p className="font-mono text-xs font-bold tracking-wide mt-0.5">{name.toUpperCase()}</p>
+                    <p className="font-mono text-xs font-bold tracking-wide mt-0.5">&nbsp;</p>
                   </div>
                 ))}
               </div>
@@ -614,8 +614,8 @@ export default function CampaignPlan() {
             {/* Vision & Mission */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { label: "VISION", text: "To be a good people's representative, efficient legislator and do oversight duties effectively. Empower the people of Makueni through education and socioeconomic activities." },
-                { label: "MISSION", text: "To provide high level competence in protecting the will of the people. Prioritizing education, water, road infrastructure and security for all constituents." },
+                { label: "VISION", text: "" },
+                { label: "MISSION", text: "" },
               ].map(({ label, text }) => (
                 <div key={label} className="bg-card border border-border p-4">
                   <p className="font-mono text-[9px] text-primary tracking-widest mb-2">{label} STATEMENT</p>
