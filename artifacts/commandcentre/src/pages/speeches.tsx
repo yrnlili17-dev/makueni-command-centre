@@ -120,6 +120,7 @@ export default function Speeches() {
   const [sLanguage, setSLanguage] = useState(LANGUAGES[0]);
   const [tone, setTone] = useState(TONES[0]);
   const [keyPoints, setKeyPoints] = useState("");
+  const [currentGaps, setCurrentGaps] = useState("");
   const [length, setLength] = useState("medium");
 
   // Manifesto form
@@ -135,7 +136,7 @@ export default function Speeches() {
     mutationFn: () =>
       api("/generate", {
         method: "POST",
-        body: JSON.stringify({ occasion, audience, ward, language: sLanguage, tone, keyPoints, length }),
+        body: JSON.stringify({ occasion, audience, ward, language: sLanguage, tone, keyPoints, currentGaps, length }),
       }),
     onMutate: () => { setError(null); setSavedId(null); setOutput(null); },
     onSuccess: (d) => setOutput({ title: d.title, body: d.body, docType: "speech" }),
@@ -266,9 +267,14 @@ export default function Speeches() {
                 ))}
               </div>
             </Field>
-            <Field label="KEY POINTS (optional)">
-              <textarea value={keyPoints} onChange={(e) => setKeyPoints(e.target.value)} rows={4}
-                placeholder="Bullet the specific promises, achievements or themes to include..."
+            <Field label="CANDIDATE'S PLAN / KEY COMMITMENTS (optional)">
+              <textarea value={keyPoints} onChange={(e) => setKeyPoints(e.target.value)} rows={3}
+                placeholder="What Prof. Kaloki aims to deliver if elected; use specific manifesto commitments..."
+                className={`${inputCls} resize-none`} />
+            </Field>
+            <Field label="CURRENT ADMINISTRATION SERVICE GAPS (optional — include evidence)">
+              <textarea value={currentGaps} onChange={(e) => setCurrentGaps(e.target.value)} rows={3}
+                placeholder="Documented service gaps, dates, ward/project and source link. Avoid unsupported allegations."
                 className={`${inputCls} resize-none`} />
             </Field>
             <button
