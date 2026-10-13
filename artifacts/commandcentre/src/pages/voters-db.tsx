@@ -82,6 +82,35 @@ function Select({ label, children, ...props }: React.SelectHTMLAttributes<HTMLSe
   );
 }
 
+// Small RFC-4180-style CSV reader: supports quoted fields, commas inside quotes,
+// escaped double quotes, CRLF files and blank lines.
+function parseCsvRows(input: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let quoted = false;
+  const text = input.replace(/^\uFEFF/, "");
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!;
+    if (quoted) {
+      if (ch === '"' && text[i + 1] === '"') { field += '"'; i++; }
+      else if (ch === '"') quoted = false;
+      else field += ch;
+    } else if (ch === '"' && field.length === 0) quoted = true;
+    else if (ch === ",") { row.push(field); field = ""; }
+    else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      row.push(field);
+      if (row.some(value => value.trim())) rows.push(row);
+      row = [];
+      field = "";
+    } else field += ch;
+  }
+  row.push(field);
+  if (row.some(value => value.trim())) rows.push(row);
+  return rows;
+}
+
 const statusStyle: Record<string, string> = {
   verified: "text-green-400 border-green-400/30",
   pending: "text-yellow-400 border-yellow-400/30",
@@ -329,7 +358,7 @@ function CaptureTab() {
   const [recent, setRecent] = useState<VoterRecord[]>([]);
   const [successMsg, setSuccessMsg] = useState("");
   const [uploadLoading, setUploadLoading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<{ processed: number; new: number; duplicates: number; batchId: string } | null>(null);
+  const [uploadResult, setUploadResult] = useState<{ processed: number; new: number; updated?: number; duplicates: number; skipped?: number; batchId: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -359,10 +388,10 @@ function CaptureTab() {
 
     try {
       const text = await file.text();
-      const lines = text.split("\n").filter(l => l.trim());
-      if (lines.length < 2) { alert("CSV must have at least a header row and one data row"); return; }
+      const rows = parseCsvRows(text);
+      if (rows.length < 2) { alert("CSV must have at least a header row and one data row"); return; }
 
-      const headers = lines[0]!.split(",").map(h => h.trim().toLowerCase().replace(/[^a-z_]/g, "_"));
+      const headers = rows[0]!.map(h => h.trim().replace(/^\uFEFF/, "").toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, ""));
 
       const fieldMap: Record<string, string> = {
         "full_name": "fullName", "name": "fullName", "fullname": "fullName",
@@ -378,15 +407,15 @@ function CaptureTab() {
         "stream": "stream",
       };
 
-      const records = lines.slice(1).map(line => {
-        const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+      const records = rows.slice(1).map(cols => {
         const record: Record<string, string> = {};
         headers.forEach((h, i) => {
           const mapped = fieldMap[h] ?? h;
-          if (cols[i]) record[mapped] = cols[i]!;
+          const value = (cols[i] ?? "").trim();
+          if (value) record[mapped] = value;
         });
         return record;
-      }).filter(r => r.fullName || r.nationalId);
+      }).filter(r => r.fullName || r.nationalId || r.voterNumber);
 
       const res = await fetch(`${API}/upload`, {
         method: "POST",
@@ -472,12 +501,14 @@ function CaptureTab() {
           {uploadResult && (
             <div className="bg-secondary border border-border p-3 space-y-1">
               <div className="font-mono text-[10px] text-green-400 font-bold">✓ UPLOAD COMPLETE — BATCH: {uploadResult.batchId}</div>
-              <div className="grid grid-cols-3 gap-2 mt-2">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-2">
                 <div className="text-center"><div className="font-mono text-[9px] text-muted-foreground">PROCESSED</div><div className="font-bold">{uploadResult.processed}</div></div>
                 <div className="text-center"><div className="font-mono text-[9px] text-green-400">NEW</div><div className="font-bold text-green-400">{uploadResult.new}</div></div>
-                <div className="text-center"><div className="font-mono text-[9px] text-yellow-400">DUPLICATES SKIPPED</div><div className="font-bold text-yellow-400">{uploadResult.duplicates}</div></div>
+                <div className="text-center"><div className="font-mono text-[9px] text-blue-400">UPDATED</div><div className="font-bold text-blue-400">{uploadResult.updated ?? 0}</div></div>
+                <div className="text-center"><div className="font-mono text-[9px] text-yellow-400">MATCHED</div><div className="font-bold text-yellow-400">{uploadResult.duplicates}</div></div>
+                <div className="text-center"><div className="font-mono text-[9px] text-red-400">SKIPPED</div><div className="font-bold text-red-400">{uploadResult.skipped ?? 0}</div></div>
               </div>
-              <div className="font-mono text-[9px] text-muted-foreground mt-2">Records are now pending review. Go to Registry Review tab to verify.</div>
+              <div className="font-mono text-[9px] text-muted-foreground mt-2">Existing records are updated by National ID or Voter Number. New records remain pending review. Run SEARCH again to refresh the voter roll.</div>
             </div>
           )}
         </div>
