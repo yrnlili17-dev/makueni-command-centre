@@ -91,6 +91,13 @@ export function buildFreeMakueniAnswer(input: {
       ]
     : ["I could not retrieve matching public-news results just now, so I will not claim a particular project is delayed, funded or completed."];
 
+  const manifestoRelevant = /manifesto|restore the promise|pillar|markets?|price|farm|agricultur|livelihood|water|health|clinic|hospital|development|governance|budget|accountab/i.test(lower);
+  const manifestoSection = manifestoRelevant ? [
+    "Draft manifesto reference (CONFIDENTIAL — NOT FOR CIRCULATION):",
+    "The Restore the Promise 2027–2032 draft groups proposed commitments into five pillars: Nduani/development close to people; markets, price and opportunity; water that lasts; agriculture and livelihoods; healthcare that works. Open and accountable government is the foundation.",
+    "Use these as proposed policy commitments, not completed achievements or guaranteed outcomes. The draft's ward-priority figures and statistics need source/date checks before public use.",
+  ] : [];
+
   const official = [
     "Official places to verify local details:",
     "- Makueni Project Monitoring and Tracking System: https://pmts.makueni.go.ke/v2/",
@@ -108,6 +115,7 @@ export function buildFreeMakueniAnswer(input: {
       : "I do not have enough verified, ward-specific evidence to say which project is currently failing or what funding is available. The steps above are a practical checklist, not a claim that these problems are confirmed in this ward.",
     "",
     ...resultsSection,
+    ...(manifestoSection.length ? ["", ...manifestoSection] : []),
     "",
     ...official,
     ...(liveSources.length ? ["", "Official pages checked:", ...liveSources.slice(0, 3).map((source) => `- ${source.title}: ${source.url} (checked ${source.checkedAt}; ${source.status})`)] : []),
