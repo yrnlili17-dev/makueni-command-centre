@@ -14,6 +14,7 @@ import Segments from "@/pages/segments";
 import Messaging from "@/pages/messaging";
 import FieldOps from "@/pages/field-ops";
 import Volunteers from "@/pages/volunteers";
+import VolunteerRegistration from "@/pages/volunteer-registration";
 import Surveys from "@/pages/surveys";
 import Events from "@/pages/events";
 import Intelligence from "@/pages/intelligence";
@@ -110,6 +111,7 @@ function ProtectedRoutes() {
 function Router() {
   return (
     <Switch>
+      <Route path="/insights/volunteer" component={VolunteerRegistration} />
       <Route path="/" component={Login} />
       <Route path="/login" component={Login} />
       <Route path="/:rest*" component={ProtectedRoutes} />
