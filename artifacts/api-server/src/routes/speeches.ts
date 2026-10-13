@@ -59,6 +59,7 @@ const speechSchema = z.object({
   language: z.string().max(40).optional().default("English"),
   tone: z.string().max(40).optional().default("Inspirational"),
   keyPoints: z.string().max(1200).optional().default(""),
+  currentGaps: z.string().max(1600).optional().default(""),
   length: z.enum(["short", "medium", "long"]).optional().default("medium"),
 });
 
@@ -74,7 +75,7 @@ router.post("/generate", async (req, res) => {
     res.status(429).json({ error: `Please wait ${limit.retryAfter}s before generating again.` });
     return;
   }
-  const { occasion, audience, ward, language, tone, keyPoints, length } = parsed.data;
+  const { occasion, audience, ward, language, tone, keyPoints, currentGaps, length } = parsed.data;
   if (ward !== "county-wide" && !["Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa","Kiima Kiu/Kalanzoni","Mukaa","Kasikeu","Kee","Kilungu","Ilima","Ukia","Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini","Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala","Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"].includes(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
   const words = LENGTH_WORDS[length] ?? 170;
 
@@ -85,6 +86,7 @@ router.post("/generate", async (req, res) => {
       area,
       occasion,
       topic: keyPoints || occasion,
+      currentGaps,
       language,
       minutes: length === "short" ? 1 : length === "long" ? 5 : 3,
     });
@@ -118,10 +120,11 @@ router.post("/generate", async (req, res) => {
 You are preparing a public-service announcement for Makueni County. Use a ${tone.toLowerCase()} tone.
 Language: ${language} (if "Swahili" write in Swahili; if a mix, blend naturally as Kenyan politicians do).
 Occasion: ${occasion}. Audience: ${audience || "the people of Makueni"}. Ward focus: ${ward}.
-Write only the public information text for the requested part. No election appeal, candidate promotion or unverified claims.
-Ground it in Makueni County services and cite official sources where available.`;
+Write only the public information text for the requested part. The speech is in Prof. Philip Kaloki's voice as a candidate explaining his proposed plan if elected. Describe intended actions as future commitments, not completed achievements. If currentGaps are supplied, present them as documented service-delivery gaps only when the user provides a credible source/date; attribute claims and avoid unsupported accusations. If no evidence is supplied, discuss the need for public performance reporting without asserting specific government failures.
+Ground it in the manifesto themes and Makueni County services. Do not invent statistics, project failures, motives or outcomes.`;
 
-  const pointsLine = keyPoints ? `\nWeave in these key points where relevant: ${keyPoints}` : "";
+  const pointsLine = keyPoints ? `\nCandidate's proposed commitments to explain as actions if elected: ${keyPoints}` : "";
+  const gapsLine = currentGaps ? `\nCurrent administration service gaps supplied for evidence-led discussion: ${currentGaps}. Treat as claims to verify; attribute them to the supplied source/date and do not embellish. If the source/date is absent, phrase them as concerns requiring verification.` : "\nNo specific evidence about current administration failures was supplied. Do not invent failures; instead say the candidate will publish baselines, budgets, milestones and progress reports so residents can assess performance.";
 
   genInFlight = true;
   let opening = "", body = "", close = "";
@@ -129,17 +132,17 @@ Ground it in Makueni County services and cite official sources where available.`
     [opening, body, close] = await Promise.all([
       generateSection(
         base,
-        `Write the OPENING of the speech (~${Math.round(words * 0.35)} words): a warm, culturally appropriate greeting acknowledging leaders, elders and the audience for this ${occasion}. End by setting up the main message.`,
+        `Write the OPENING of the speech (~${Math.round(words * 0.35)} words): introduce Prof. Philip Kaloki as Makueni County Governor Candidate for 2027, greet leaders and residents, and state that he is outlining what he aims to accomplish if elected. Do not claim the plan is already delivered.`,
         480,
       ),
       generateSection(
         base,
-        `Write the MAIN BODY of the speech (~${words} words): the core message and vision, drawing on the campaign pillars and Makueni's real issues (water, roads, youth jobs, security).${pointsLine}`,
+        `Write the MAIN BODY of the speech (~${words} words): explain the candidate's future commitments from the five manifesto pillars, with practical delivery steps and accountability. Where relevant, contrast these plans with current service-delivery gaps only on the basis of the evidence supplied. Do not invent or overstate failures.${pointsLine}${gapsLine}`,
         700,
       ),
       generateSection(
         base,
-        `Write the CLOSING of the speech (~${Math.round(words * 0.4)} words): a clear explanation of next steps, the responsible county department and how residents can obtain verified updates. End with a practical service follow-up instruction.`,
+        `Write the CLOSING of the speech (~${Math.round(words * 0.4)} words): restate what the candidate aims to accomplish if elected, how delivery should be measured, and how residents can track budgets, milestones and verified updates. Do not claim proposed actions are already completed.${gapsLine}`,
         480,
       ),
     ]);
