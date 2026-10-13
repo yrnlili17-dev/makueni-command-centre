@@ -27,17 +27,39 @@ const idParamSchema = z.object({ id: z.coerce.number().int().positive() });
 const SCAN_CATEGORIES = [
   {
     key: "candidate",
-    prompt: `recent official public notices, county assembly updates, and service-delivery information from Makueni County, Kenya`,
+    prompt: "public mentions, interviews, official notices, community forums and news about Prof. Philip Kyalo Kaloki (also written Philip Kaloki, Prof Kaloki or Pro Kaloki) in Makueni County, Kenya",
   },
   {
     key: "issues",
-    prompt: `recent public concerns about water, roads, health, education, agriculture, budgets, and other county services within Makueni County, Kenya`,
+    prompt: "publicly reported Makueni County ward-level service issues and projects, including water, roads, health facilities, ECDE and schools, agriculture, markets, bursaries, budgets and development works",
   },
   {
     key: "opponent",
-    prompt: `recent public accountability reports, audit findings, official project updates, and documented service-delivery issues within Makueni County, Kenya`,
+    prompt: "public Makueni County news, official county notices, public participation, audit and budget documents, project delivery updates and documented service-delivery concerns",
   },
 ] as const;
+
+function queriesForCategory(key: (typeof SCAN_CATEGORIES)[number]["key"]): string[] {
+  if (key === "candidate") {
+    return [
+      '"Prof. Philip Kyalo Kaloki" Makueni',
+      '"Philip Kaloki" Makueni',
+      '"Pro Kaloki" Makueni',
+      '"Kaloki" Makueni County',
+    ];
+  }
+  if (key === "issues") {
+    return [
+      'Makueni County ward water roads health education agriculture projects',
+      'Makueni County development budget public participation ward news',
+      'Makueni County roads water borehole hospital market ECDE project',
+    ];
+  }
+  return [
+    'Makueni County official news budget audit project implementation',
+    'Makueni County public participation service delivery ward report',
+  ];
+}
 
 function buildInput(prompt: string): string {
   return `Use web search to find the most recent and relevant items about: ${prompt}.
@@ -83,17 +105,23 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
     SCAN_CATEGORIES.map(async (cat) => {
       try {
         if (process.env.MAKUENI_AI_MODE === "free") {
-          const query = cat.key === "candidate"
-            ? '"Pro Kaloki" OR "Philip Kaloki" Makueni'
-            : cat.key === "issues"
-              ? "Makueni County ward water roads health agriculture project"
-              : "Makueni County public audit budget project accountability";
-          const results = await searchFreeMakueniWeb(query);
-          return results.map((item) => ({
+          const queryResults = await Promise.all(
+            queriesForCategory(cat.key).map((query) => searchFreeMakueniWeb(query))
+          );
+          const seenForCategory = new Set<string>();
+          return queryResults.flat().filter((item) => {
+            const key = (item.url || item.title).toLowerCase();
+            if (seenForCategory.has(key)) return false;
+            seenForCategory.add(key);
+            return true;
+          }).slice(0, 12).map((item) => ({
             raw: {
               summary: item.title + (item.snippet ? " — " + item.snippet.slice(0, 180) : ""),
-              source: item.source, url: item.url, sentiment: "neutral",
-              topic: cat.key === "candidate" ? "Pro Kaloki public mention" : cat.key === "issues" ? "County service issue" : "Public accountability",
+              source: item.source,
+              url: item.url,
+              // Search-result sentiment is not reliably classifiable without review.
+              sentiment: "neutral",
+              topic: cat.key === "candidate" ? "Pro Kaloki / Philip Kaloki" : cat.key === "issues" ? "Makueni service delivery" : "County public accountability",
               date: item.publishedAt ?? "",
             } as RawMention,
             category: cat.key,
@@ -105,7 +133,7 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
           input: buildInput(cat.prompt),
         });
         const text = response.output_text ?? "";
-        const match = text.match(/\[[\s\S]*\]/);
+        const match = text.match(/\\[[\\s\\S]*\\]/);
         if (!match) return [];
         const arr = JSON.parse(match[0]) as unknown;
         if (!Array.isArray(arr)) return [];
@@ -168,12 +196,12 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
     const count = deduped.filter((mention) => mention.category === cat.key).length;
     await db.insert(socialSourceHealthTable).values({
       sourceKey: cat.key,
-      sourceType: "openai_web_search",
+      sourceType: process.env.MAKUENI_AI_MODE === "free" ? "google_news_rss" : "openai_web_search",
       status: failed ? "error" : "healthy",
       lastAttemptAt: now,
       lastSuccessAt: failed ? undefined : now,
       lastItemCount: count,
-      lastError: failed ? "Web search scan failed for this category; inspect API logs and credentials." : null,
+      lastError: failed ? "Public-source scan failed for this category; inspect API logs and source availability." : null,
       updatedAt: now,
     }).onConflictDoUpdate({
       target: socialSourceHealthTable.sourceKey,
