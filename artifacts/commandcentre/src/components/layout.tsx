@@ -147,7 +147,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="p-6 flex items-center gap-3 border-b border-border">
           <img src={brandIcon} alt="CommandCentre OS" className="w-8 h-8 object-contain" />
           <div className="flex flex-col">
-            <span className="font-bold tracking-widest text-sm">PRO KALOKI COMMAND CENTRE</span>
+            <span className="font-bold tracking-widest text-sm">PROF. PHILIP KALOKI SUPPORTERS COMMAND CENTRE</span>
             <span className="text-[10px] text-primary font-mono tracking-widest">[ SYSTEM_ACTIVE ]</span>
           </div>
         </div>
@@ -208,7 +208,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-4">
             <span className="font-mono text-[10px] text-muted-foreground">TIME: {new Date().toLocaleString("en-KE", { timeZone: "Africa/Nairobi", hour12: false })}</span>
             <div className="px-2 py-1 bg-primary/10 text-primary font-mono text-[10px] border border-primary/30">
-              PRO KALOKI COMMAND CENTRE · 2027
+              PROF. PHILIP KALOKI SUPPORTERS COMMAND CENTRE · 2027
             </div>
           </div>
         </header>
