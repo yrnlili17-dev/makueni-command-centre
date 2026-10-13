@@ -133,6 +133,44 @@ type PublicSourceSnapshot = {
   status: string;
 };
 
+export type FreeWebResult = { title: string; url: string; source: string; publishedAt: string | null; snippet: string; query: string };
+
+const searchCache = new Map<string, { expiresAt: number; results: FreeWebResult[] }>();
+
+/**
+ * Free public-web discovery using Google News RSS. This is search-result discovery,
+ * not an official API and not guaranteed comprehensive. Only requests the fixed
+ * news.google.com host; never accepts arbitrary URLs.
+ */
+export async function searchFreeMakueniWeb(query: string): Promise<FreeWebResult[]> {
+  const cleaned = query.trim().slice(0, 180);
+  if (!cleaned) return [];
+  const cacheKey = cleaned.toLowerCase();
+  const cached = searchCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.results;
+  const rssUrl = "https://news.google.com/rss/search?q=" + encodeURIComponent(cleaned + " Makueni Kenya") + "&hl=en-KE&gl=KE&ceid=KE:en";
+  try {
+    const response = await fetch(rssUrl, { headers: { "User-Agent": "Mozilla/5.0 (compatible; MakueniPublicInfo/1.0)" }, signal: AbortSignal.timeout(6000) });
+    if (!response.ok) return [];
+    const xml = (await response.text()).slice(0, 500_000);
+    const blocks = xml.match(/<item>[\\s\\S]*?<\\/item>/gi) ?? [];
+    const decode = (value: string) => value.replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, "$1").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
+    const results: FreeWebResult[] = blocks.slice(0, 8).map((block) => {
+      const get = (tag: string) => decode(block.match(new RegExp("<" + tag + ">([\\s\\S]*?)</" + tag + ">", "i"))?.[1] ?? "");
+      const title = get("title");
+      const link = get("link");
+      const pubDate = get("pubDate");
+      const source = decode(block.match(/<source[^>]*>([\\s\\S]*?)<\\/source>/i)?.[1] ?? "Google News");
+      const description = get("description").replace(/<[^>]+>/g, " ").replace(/\\s+/g, " ").slice(0, 400);
+      return { title, url: link, source, publishedAt: pubDate || null, snippet: description, query: cleaned };
+    }).filter((item) => item.title && /^https?:\\/\\//i.test(item.url));
+    searchCache.set(cacheKey, { expiresAt: Date.now() + 10 * 60_000, results });
+    return results;
+  } catch {
+    return [];
+  }
+}
+
 let sourceCache: { expiresAt: number; items: PublicSourceSnapshot[] } | null = null;
 const PUBLIC_MAKUENI_SOURCES = [
   { title: "Makueni Project Monitoring and Tracking System", url: "https://pmts.makueni.go.ke/v2/" },
