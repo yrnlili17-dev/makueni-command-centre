@@ -152,8 +152,8 @@ export default function SocialListening() {
             <Search className="w-8 h-8 mx-auto text-muted-foreground/50" />
             <p className="font-mono text-xs text-muted-foreground">NO MENTIONS YET</p>
             <p className="font-mono text-[10px] text-muted-foreground/70 max-w-md mx-auto">
-              Press RUN SCAN to search the public web for the latest mentions of Hon. Mule,
-              trending local issues, and opponent activity. A scan takes about 30 seconds.
+              Press RUN SCAN to search public news for Prof. Philip Kyalo Kaloki / Pro Kaloki,
+              Makueni County projects, ward-level service issues, budgets and official updates. Only publicly indexed results are covered; private posts and some social platforms may not be available.
             </p>
           </div>
         ) : filtered.length === 0 ? (
