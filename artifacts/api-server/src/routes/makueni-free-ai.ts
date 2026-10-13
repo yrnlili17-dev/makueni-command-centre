@@ -16,12 +16,17 @@ export function buildFreeMakueniAnswer(input: {
   const moduleName = input.module ?? "dashboard";
   const context = input.context ?? {};
   const liveSources = input.liveSources ?? [];
-  const contextEntries = Object.entries(context).filter(([, value]) => value !== undefined && value !== null && value !== "");
+  const publicWebResults = Array.isArray(context.publicWebResults)
+    ? (context.publicWebResults as Array<{ title?: string; url?: string; source?: string; publishedAt?: string | null; snippet?: string }>)
+        .filter((item) => item && typeof item.title === "string" && typeof item.url === "string")
+        .slice(0, 8)
+    : [];
+  const contextEntries = Object.entries(context).filter(([key, value]) => key !== "publicWebResults" && value !== undefined && value !== null && value !== "");
   const contextSummary = contextEntries.length
     ? contextEntries.map(([key, value]) => `- ${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`).join("\n")
     : "No live module data was supplied to this request.";
 
-  const sourceNote = "For current status, verify the latest dated record against the Makueni County Government portal (https://makueni.go.ke/), the County Integrated Development Plan, the approved budget and implementation reports. This fallback does not have a live verified feed, so it will not invent project status, figures or announcements.";
+  const sourceNote = "For current status, verify the latest dated record against the Makueni County Government portal (https://makueni.go.ke/), the Projects Monitoring and Tracking System (https://pmts.makueni.go.ke/v2/), the County Integrated Development Plan, the approved budget and implementation reports. Public-web search results below are discovery leads, not verified facts; do not infer project status, figures or announcements from a headline alone.";
   let guidance = "I can help structure this Makueni County question. Separate confirmed facts from assumptions, identify the responsible department and ward, and record the source and date for each claim.";
 
   if (/water|borehole|dam|irrigat/.test(lower)) {
@@ -63,8 +68,13 @@ export function buildFreeMakueniAnswer(input: {
     "",
     sourceNote,
     "",
-    "Public source checks (page metadata/snippets only; confirm details in the source document):",
-    ...(liveSources.length ? liveSources.map((source) => `- ${source.title} [${source.status}; checked ${source.checkedAt}]\\n  ${source.url}\\n  ${source.excerpt}`) : ["- No live public source was reachable during this request."]),
+    "Public-web research leads (not independently verified; open the original page and check its date):",
+    ...(publicWebResults.length
+      ? publicWebResults.map((item) => `- ${item.title} — ${item.source || "Public web"}${item.publishedAt ? `; published ${item.publishedAt}` : ""}\\n  ${item.url}\\n  ${item.snippet || "No snippet available."}`)
+      : ["- No matching public-web news results were reachable for this query."]),
+    "",
+    "Official Makueni source checks (page metadata/snippets only; confirm details in the source document):",
+    ...(liveSources.length ? liveSources.map((source) => `- ${source.title} [${source.status}; checked ${source.checkedAt}]\\n  ${source.url}\\n  ${source.excerpt}`) : ["- No official source page was reachable during this request."]),
   ].join("\n");
 }
 
