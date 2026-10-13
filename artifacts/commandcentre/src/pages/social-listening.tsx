@@ -122,10 +122,19 @@ export default function SocialListening() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <a href={`https://www.facebook.com/search/top?q=${encodeURIComponent("Prof Philip Kyalo Kaloki Makueni")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Search public Facebook results">
-            <Facebook className="w-3.5 h-3.5" /> SEARCH FACEBOOK
+          <a href="https://www.facebook.com/prof.philipkaloki" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Open the supplied Facebook profile">
+            <Facebook className="w-3.5 h-3.5" /> FACEBOOK PROFILE
           </a>
-          <a href={`https://www.tiktok.com/search?q=${encodeURIComponent("Prof Philip Kyalo Kaloki Makueni")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Search public TikTok results">
+          <a href="https://x.com/ProfKaloki" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Open the supplied X profile">
+            <ExternalLink className="w-3.5 h-3.5" /> X PROFILE
+          </a>
+          <a href="https://www.tiktok.com/@profkaloki1" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Open the supplied TikTok profile">
+            <ExternalLink className="w-3.5 h-3.5" /> TIKTOK PROFILE
+          </a>
+          <a href={`https://www.facebook.com/search/top?q=${encodeURIComponent('"prof.philipkaloki" OR "Prof Philip Kaloki" Makueni')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Search public Facebook results">
+            <Search className="w-3.5 h-3.5" /> SEARCH FACEBOOK
+          </a>
+          <a href={`https://www.tiktok.com/search?q=${encodeURIComponent("profkaloki1 Makueni")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Search public TikTok results">
             <Search className="w-3.5 h-3.5" /> SEARCH TIKTOK
           </a>
           <button
