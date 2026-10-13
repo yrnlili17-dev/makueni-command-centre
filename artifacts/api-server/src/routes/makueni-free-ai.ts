@@ -13,69 +13,105 @@ export function buildFreeMakueniAnswer(input: {
 }): string {
   const message = input.message.trim();
   const lower = message.toLowerCase();
-  const moduleName = input.module ?? "dashboard";
   const context = input.context ?? {};
   const liveSources = input.liveSources ?? [];
-  const publicWebResults = Array.isArray(context.publicWebResults)
+  const webResults = Array.isArray(context.publicWebResults)
     ? (context.publicWebResults as Array<{ title?: string; url?: string; source?: string; publishedAt?: string | null; snippet?: string }>)
         .filter((item) => item && typeof item.title === "string" && typeof item.url === "string")
-        .slice(0, 8)
+        .slice(0, 5)
     : [];
-  const contextEntries = Object.entries(context).filter(([key, value]) => key !== "publicWebResults" && value !== undefined && value !== null && value !== "");
-  const contextSummary = contextEntries.length
-    ? contextEntries.map(([key, value]) => `- ${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`).join("\n")
-    : "No live module data was supplied to this request.";
 
-  const sourceNote = "For current status, verify the latest dated record against the Makueni County Government portal (https://makueni.go.ke/), the Projects Monitoring and Tracking System (https://pmts.makueni.go.ke/v2/), the County Integrated Development Plan, the approved budget and implementation reports. Public-web search results below are discovery leads, not verified facts; do not infer project status, figures or announcements from a headline alone.";
-  let guidance = "I can help structure this Makueni County question. Separate confirmed facts from assumptions, identify the responsible department and ward, and record the source and date for each claim.";
+  const wards = [
+    "Tulimani", "Mbooni", "Kithungo/Kitundu", "Kiteta/Kisau", "Kako/Waia", "Kalawa",
+    "Kiima Kiu/Kalanzoni", "Mukaa", "Kasikeu", "Kee", "Kilungu", "Ilima", "Ukia",
+    "Nzaui/Kilili/Kalamba", "Muvau/Kikumini", "Kathonzweni", "Mavindini", "Kitise/Kithuki",
+    "Wote", "Mbitini", "Makindu", "Kikumbulyu North", "Kikumbulyu South", "Nguumo",
+    "Nguu/Masumba", "Emali/Mulala", "Masongaleni", "Mtito Andei", "Thange", "Ivingoni/Nzambani",
+  ];
+  const ward = wards.find((name) => lower.includes(name.toLowerCase())) ??
+    (lower.match(/(?:in|for|at|about)\\s+([a-z][a-z /-]{1,35}?)\\s+ward\\b/i)?.[1]?.trim() ?? "");
+  const area = ward ? ward.replace(/\\b\\w/g, (letter) => letter.toUpperCase()) : "Makueni County";
 
-  if (/water|borehole|dam|irrigat/.test(lower)) {
-    guidance = "Water and irrigation review: identify the affected ward and water point; record supply interruptions, functionality, beneficiaries only as aggregate counts, responsible agency, repair or project milestones, and the last verified inspection date.";
-  } else if (/road|bridge|transport|access/.test(lower)) {
-    guidance = "Roads and access review: record the road section and ward, surface/condition, reported access problem, responsible agency, approved project reference, contractor where officially documented, milestone, and last inspection date.";
-  } else if (/health|hospital|clinic|medicine|drug/.test(lower)) {
-    guidance = "Health-service review: focus on facility-level service availability, staffing and commodity availability using dated official reports. Do not publish identifiable patient information.";
-  } else if (/school|education|bursary|classroom/.test(lower)) {
-    guidance = "Education review: use school-level project records, classroom condition, access, bursary policy and aggregate service indicators. Verify amounts and eligibility against current official notices.";
-  } else if (/agricultur|mango|livestock|farmer|market/.test(lower)) {
-    guidance = "Agriculture and livelihoods review: capture crop/livestock issue, market access, extension-service availability, season and ward, and cite current agriculture department or official market information.";
-  } else if (/speech|address|baraza|forum|meeting/.test(lower)) {
-    guidance = "For a public address, use a clear greeting, acknowledge the specific locality, state only verified facts, explain the public-service issue, set out practical next steps, invite public feedback and close respectfully. The speech template endpoint can generate a first draft without paid tokens.";
-  } else if (/budget|spend|finance|allocation|fund/.test(lower)) {
-    guidance = "Budget review: distinguish approved allocation, funds released, expenditure, commitments and verified outputs. Cite the financial year, budget document, vote/department and page or table; do not treat allocation as proof of completed work.";
-  } else if (/current|latest|status|today|now|progress/.test(lower)) {
-    guidance = sourceNote;
-  } else if (/swot|strength|weakness|opportunit|threat/.test(lower)) {
-    guidance = "SWOT framework for Makueni County service delivery: strengths and weaknesses should be internal and evidence-based; opportunities and threats should be external and dated. Attach a source and confidence level to every item and avoid unsupported political claims.";
+  let issue = "general service delivery";
+  let practicalSteps = [
+    "List the three most urgent issues residents report and the exact village/facility/road affected.",
+    "Check the county project tracker and current ward profile for an existing project, budget and latest recorded status.",
+    "Agree on the responsible department, a named follow-up officer, evidence needed and a date to report back to residents.",
+  ];
+  if (/water|borehole|dam|irrigat|pipe|dry tap/.test(lower)) {
+    issue = "water and irrigation";
+    practicalSteps = [
+      "Map the affected water point or pipeline and record whether it is broken, unreliable, unfinished or inaccessible.",
+      "Check the county project tracker for the scheme, budget, contractor/milestone and last recorded update; do not assume a project is complete from its allocation.",
+      "Refer repairs or supply gaps to the responsible water office, set an inspection date and publish a clear update for affected villages.",
+    ];
+  } else if (/road|bridge|murram|transport|access|culvert/.test(lower)) {
+    issue = "roads and access";
+    practicalSteps = [
+      "Identify the exact road section, damaged points and villages/facilities it connects; add dated photos or an inspection report.",
+      "Check whether grading, drainage, gravelling or a bridge/culvert is already listed in the ward project records and verify its implementation status.",
+      "Prioritise sections that block access to schools, health facilities, markets or emergency services, then record the responsible office and inspection date.",
+    ];
+  } else if (/health|hospital|clinic|dispensary|medicine|drug|ambulance/.test(lower)) {
+    issue = "health services";
+    practicalSteps = [
+      "Name the affected health facility and the specific gap: staffing, opening hours, essential medicines, equipment, water or referral access.",
+      "Verify the issue with a dated facility or county health report; avoid sharing identifiable patient information.",
+      "Refer the gap to the responsible health office and agree on an update date and a way residents can report whether service has improved.",
+    ];
+  } else if (/school|education|bursary|classroom|teacher|ecde/.test(lower)) {
+    issue = "education";
+    practicalSteps = [
+      "Identify the school/ECDE centre and the concrete need, such as classroom safety, water, sanitation, learning materials or bursary access.",
+      "Check the current education project list and published bursary criteria; do not promise funding or eligibility without an official notice.",
+      "Record the responsible office, the action required and the date parents/community members will receive a progress update.",
+    ];
+  } else if (/agricultur|mango|livestock|farmer|market|crop|drought|feed/.test(lower)) {
+    issue = "agriculture and livelihoods";
+    practicalSteps = [
+      "Identify the crop/livestock or market problem and the affected farmer group/villages, including the current season.",
+      "Check current county agriculture advisories, extension support, water access and market information before recommending a specific intervention.",
+      "Coordinate a practical follow-up with the relevant extension officer or cooperative and record what support is available, eligibility and timing.",
+    ];
+  } else if (/budget|spend|finance|allocation|fund|project cost/.test(lower)) {
+    issue = "budget and project delivery";
+    practicalSteps = [
+      "Find the project in the approved budget/ward profile and record the financial year, department and approved allocation.",
+      "Separately verify releases, expenditure, implementation milestones and actual outputs; an allocation alone does not prove work was done.",
+      "Ask the responsible office for the latest dated progress report and record any discrepancy for public follow-up.",
+    ];
   }
 
+  const resultsSection = webResults.length
+    ? [
+        "Recent public-web leads to check:",
+        ...webResults.map((item, index) =>
+          `${index + 1}. ${item.title}${item.source ? ` — ${item.source}` : ""}${item.publishedAt ? ` (${item.publishedAt})` : ""}\\n   ${item.url}${item.snippet ? `\\n   ${item.snippet}` : ""}`
+        ),
+      ]
+    : ["I could not retrieve matching public-news results just now, so I will not claim a particular project is delayed, funded or completed."];
+
+  const official = [
+    "Official places to verify local details:",
+    "- Makueni Project Monitoring and Tracking System: https://pmts.makueni.go.ke/v2/",
+    "- County budget and public-finance documents: https://makueni.go.ke/public-finance-management/",
+    "- County documents and ward profiles: https://makueni.go.ke/county-documents/",
+  ];
+
   return [
-    `Makueni County — ${moduleName} assistant (free fallback)`,
+    `For ${area}, I would start with ${issue}. Here is a practical way to move it forward:`,
     "",
-    guidance,
+    ...practicalSteps.map((step, index) => `${index + 1}. ${step}`),
     "",
-    "Question received:",
-    message,
+    webResults.length
+      ? "I found these public-news leads that may be relevant. They are not confirmation of the situation in this specific ward; open each source and check the date and location."
+      : "I do not have enough verified, ward-specific evidence to say which project is currently failing or what funding is available. The steps above are a practical checklist, not a claim that these problems are confirmed in this ward.",
     "",
-    "Available module context:",
-    contextSummary,
+    ...resultsSection,
     "",
-    "Suggested next steps:",
-    "1. Confirm the exact constituency/ward or service location.",
-    "2. Retrieve the latest official source and record its publication/update date.",
-    "3. Mark each statement as verified, estimated or unverified.",
-    "4. Save the source URL and assign an owner for follow-up.",
-    "",
-    sourceNote,
-    "",
-    "Public-web research leads (not independently verified; open the original page and check its date):",
-    ...(publicWebResults.length
-      ? publicWebResults.map((item) => `- ${item.title} — ${item.source || "Public web"}${item.publishedAt ? `; published ${item.publishedAt}` : ""}\\n  ${item.url}\\n  ${item.snippet || "No snippet available."}`)
-      : ["- No matching public-web news results were reachable for this query."]),
-    "",
-    "Official Makueni source checks (page metadata/snippets only; confirm details in the source document):",
-    ...(liveSources.length ? liveSources.map((source) => `- ${source.title} [${source.status}; checked ${source.checkedAt}]\\n  ${source.url}\\n  ${source.excerpt}`) : ["- No official source page was reachable during this request."]),
-  ].join("\n");
+    ...official,
+    ...(liveSources.length ? ["", "Official pages checked:", ...liveSources.slice(0, 3).map((source) => `- ${source.title}: ${source.url} (checked ${source.checkedAt}; ${source.status})`)] : []),
+  ].join("\\n");
 }
 
 const wardExamples: Record<string, string> = {
