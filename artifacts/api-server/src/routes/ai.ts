@@ -238,7 +238,7 @@ router.post("/generate-swot", async (req, res) => {
 
   // One call per quadrant — 4 items each — keeps output ~250 tokens per call (safe in prod)
   const ITEM = `{"title":"string","detail":"string","impact":"high|medium|low","category":"Political|Financial|Grassroots|Narrative|Demographic|Infrastructure|Legal|External","action":"string"}`;
-  const CTX = `Political strategist supporting Prof. Philip Kaloki in Makueni County, Kenya, for the 2027 election. Keep analysis evidence-led and specific to Makueni County. Do not mention Matungulu or any other county. Do not invent personal history, party affiliation, funding, polling, or election results. Output ONLY raw JSON, no markdown. Keep every string field under 90 characters.`;
+  const CTX = `Political strategist supporting Prof. Philip Kaloki in Makueni County, Kenya, for the 2027 election. Keep analysis evidence-led and specific to Makueni County. Do not reference places outside Makueni County. Do not invent personal history, party affiliation, funding, polling, or election results. Output ONLY raw JSON, no markdown. Keep every string field under 90 characters.`;
 
   function makePrompt(quadrant: string, hint: string) {
     return {
