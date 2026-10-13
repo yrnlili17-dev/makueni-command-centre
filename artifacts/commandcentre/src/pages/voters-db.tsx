@@ -421,7 +421,7 @@ function CaptureTab() {
           record.fullName = [record.firstName, record.secondName, record.lastName].filter(Boolean).join(" ");
         }
         if (record.ward) {
-          const wardInput = record.ward.trim().replace(/\\s+ward$/i, "").trim().toLowerCase();
+          const wardInput = record.ward.trim().replace(/\s+ward$/i, "").trim().toLowerCase();
           const canonicalWard = WARDS.find(w => w.toLowerCase() === wardInput);
           if (canonicalWard) record.ward = canonicalWard;
         }
@@ -448,6 +448,38 @@ function CaptureTab() {
     <div className="grid grid-cols-5 gap-6">
       {/* Individual capture */}
       <div className="col-span-3 space-y-4">
+        {/* CSV Upload */}
+        <div className="bg-card border border-border p-4 space-y-3">
+          <div className="font-mono text-[10px] text-muted-foreground tracking-widest">◆ BULK CSV UPLOAD</div>
+          <p className="text-xs text-muted-foreground">Upload a CSV file with voter data. Use <code className="font-mono text-primary">full_name</code> (or name), plus <code className="font-mono text-primary">national_id</code> or <code className="font-mono text-primary">voter_number</code> to match existing records and update their names. New records need a valid <code className="font-mono text-primary">ward</code>. Optional: <code className="font-mono text-primary">national_id, voter_number, phone, gender, dob, ward, polling_station, station_code, stream, sub_county</code>.</p>
+
+          <div
+            className="border-2 border-dashed border-border hover:border-primary/50 p-8 text-center cursor-pointer transition-colors"
+            onClick={() => fileRef.current?.click()}
+          >
+            <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
+            <div className="font-mono text-xs text-muted-foreground">CLICK TO SELECT CSV FILE</div>
+            <div className="font-mono text-[9px] text-muted-foreground mt-1">Supports .csv format · Auto-detects column names</div>
+          </div>
+          <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+
+          {uploadLoading && <div className="font-mono text-xs text-muted-foreground animate-pulse">PARSING AND UPLOADING RECORDS...</div>}
+
+          {uploadResult && (
+            <div className="bg-secondary border border-border p-3 space-y-1">
+              <div className="font-mono text-[10px] text-green-400 font-bold">✓ UPLOAD COMPLETE — BATCH: {uploadResult.batchId}</div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-2">
+                <div className="text-center"><div className="font-mono text-[9px] text-muted-foreground">PROCESSED</div><div className="font-bold">{uploadResult.processed}</div></div>
+                <div className="text-center"><div className="font-mono text-[9px] text-green-400">NEW</div><div className="font-bold text-green-400">{uploadResult.new}</div></div>
+                <div className="text-center"><div className="font-mono text-[9px] text-blue-400">UPDATED</div><div className="font-bold text-blue-400">{uploadResult.updated ?? 0}</div></div>
+                <div className="text-center"><div className="font-mono text-[9px] text-yellow-400">MATCHED</div><div className="font-bold text-yellow-400">{uploadResult.duplicates}</div></div>
+                <div className="text-center"><div className="font-mono text-[9px] text-red-400">SKIPPED</div><div className="font-bold text-red-400">{uploadResult.skipped ?? 0}</div></div>
+              </div>
+              <div className="font-mono text-[9px] text-muted-foreground mt-2">Existing records are updated by National ID or Voter Number. New records remain pending review. Run SEARCH again to refresh the voter roll.</div>
+            </div>
+          )}
+        </div>
+
         <div className="bg-card border border-border p-4 space-y-4">
           <div className="flex items-center justify-between">
             <div className="font-mono text-[10px] text-muted-foreground tracking-widest">◆ INDIVIDUAL VOTER CAPTURE</div>
@@ -492,37 +524,6 @@ function CaptureTab() {
           </form>
         </div>
 
-        {/* CSV Upload */}
-        <div className="bg-card border border-border p-4 space-y-3">
-          <div className="font-mono text-[10px] text-muted-foreground tracking-widest">◆ BULK CSV UPLOAD</div>
-          <p className="text-xs text-muted-foreground">Upload a CSV file with voter data. Use <code className="font-mono text-primary">full_name</code> (or name), plus <code className="font-mono text-primary">national_id</code> or <code className="font-mono text-primary">voter_number</code> to match existing records and update their names. New records need a valid <code className="font-mono text-primary">ward</code>. Optional: <code className="font-mono text-primary">national_id, voter_number, phone, gender, dob, ward, polling_station, station_code, stream, sub_county</code>.</p>
-
-          <div
-            className="border-2 border-dashed border-border hover:border-primary/50 p-8 text-center cursor-pointer transition-colors"
-            onClick={() => fileRef.current?.click()}
-          >
-            <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
-            <div className="font-mono text-xs text-muted-foreground">CLICK TO SELECT CSV FILE</div>
-            <div className="font-mono text-[9px] text-muted-foreground mt-1">Supports .csv format · Auto-detects column names</div>
-          </div>
-          <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
-
-          {uploadLoading && <div className="font-mono text-xs text-muted-foreground animate-pulse">PARSING AND UPLOADING RECORDS...</div>}
-
-          {uploadResult && (
-            <div className="bg-secondary border border-border p-3 space-y-1">
-              <div className="font-mono text-[10px] text-green-400 font-bold">✓ UPLOAD COMPLETE — BATCH: {uploadResult.batchId}</div>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-2">
-                <div className="text-center"><div className="font-mono text-[9px] text-muted-foreground">PROCESSED</div><div className="font-bold">{uploadResult.processed}</div></div>
-                <div className="text-center"><div className="font-mono text-[9px] text-green-400">NEW</div><div className="font-bold text-green-400">{uploadResult.new}</div></div>
-                <div className="text-center"><div className="font-mono text-[9px] text-blue-400">UPDATED</div><div className="font-bold text-blue-400">{uploadResult.updated ?? 0}</div></div>
-                <div className="text-center"><div className="font-mono text-[9px] text-yellow-400">MATCHED</div><div className="font-bold text-yellow-400">{uploadResult.duplicates}</div></div>
-                <div className="text-center"><div className="font-mono text-[9px] text-red-400">SKIPPED</div><div className="font-bold text-red-400">{uploadResult.skipped ?? 0}</div></div>
-              </div>
-              <div className="font-mono text-[9px] text-muted-foreground mt-2">Existing records are updated by National ID or Voter Number. New records remain pending review. Run SEARCH again to refresh the voter roll.</div>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Recent captures */}
