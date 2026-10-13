@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { buildFreeMakueniAnswer, buildFreeMakueniSpeech, fetchMakueniOfficialSources } from "./makueni-free-ai";
+import { buildFreeMakueniAnswer, buildFreeMakueniSpeech, fetchMakueniOfficialSources, searchFreeMakueniWeb } from "./makueni-free-ai";
 
 const router = Router();
 /** In free mode these generation routes must never fall through to OpenAI. */
@@ -85,13 +85,16 @@ const QUICK_PROMPTS: Record<string, string[]> = {
   "voters-db": ["Check voter records with invalid wards", "Summarize registry provenance", "Identify duplicate records for review"],
 };
 
-router.get("/county-knowledge", async (_req, res) => {
-  const sources = await fetchMakueniOfficialSources();
+router.get("/county-knowledge", async (req, res) => {
+  const query = typeof req.query.q === "string" ? req.query.q.slice(0, 180) : "Makueni County development";
+  const [sources, webResults] = await Promise.all([fetchMakueniOfficialSources(), searchFreeMakueniWeb(query)]);
   res.json({
+    query,
+    webResults,
     mode: process.env.MAKUENI_AI_MODE === "free" ? "free-template-retrieval" : "provider-assisted",
     checkedAt: new Date().toISOString(),
     sources,
-    guidance: "Page snippets are discovery aids, not a complete indexed knowledge base. Verify facts in the original dated county documents before using them in public statements."
+    guidance: "Search results are public-web discovery aids, not a complete index or proof of truth. Verify facts in original dated county documents before using them in public statements."
   });
 });
 
@@ -302,8 +305,8 @@ router.post("/assist", async (req, res) => {
 
   // Explicit no-token mode avoids calling the paid model at all.
   if (process.env.MAKUENI_AI_MODE === "free") {
-    const liveSources = await fetchMakueniOfficialSources();
-    const fallback = buildFreeMakueniAnswer({ message, module, context, liveSources });
+    const [liveSources, publicWebResults] = await Promise.all([fetchMakueniOfficialSources(), searchFreeMakueniWeb(message)]);
+    const fallback = buildFreeMakueniAnswer({ message, module, context: { ...context, publicWebResults }, liveSources });
     res.write(`data: ${JSON.stringify({ content: fallback, mode: "free-fallback" })}\n\n`);
     res.write(`data: ${JSON.stringify({ done: true, mode: "free-fallback" })}\n\n`);
     res.end();
@@ -333,8 +336,8 @@ router.post("/assist", async (req, res) => {
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
   } catch (err) {
     req.log.warn({ err }, "Paid AI unavailable; using deterministic Makueni fallback");
-    const liveSources = await fetchMakueniOfficialSources();
-    const fallback = buildFreeMakueniAnswer({ message, module, context, liveSources });
+    const [liveSources, publicWebResults] = await Promise.all([fetchMakueniOfficialSources(), searchFreeMakueniWeb(message)]);
+    const fallback = buildFreeMakueniAnswer({ message, module, context: { ...context, publicWebResults }, liveSources });
     res.write(`data: ${JSON.stringify({ content: fallback, mode: "free-fallback" })}\n\n`);
     res.write(`data: ${JSON.stringify({ done: true, mode: "free-fallback" })}\n\n`);
   }
