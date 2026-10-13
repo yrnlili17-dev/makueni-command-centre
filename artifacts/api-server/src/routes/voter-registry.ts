@@ -149,6 +149,20 @@ router.post("/upload", async (req, res) => {
         .from(voterRegistryTable).where(eq(voterRegistryTable.voterNumber, r.voterNumber)).limit(1);
       existingId = existing?.id;
     }
+    if (!existingId && r.phone) {
+      const phoneDigits = r.phone.replace(/\\D/g, "");
+      const [existing] = await db.select({ id: voterRegistryTable.id })
+        .from(voterRegistryTable)
+        .where(and(eq(voterRegistryTable.phone, r.phone), inArray(voterRegistryTable.ward, WARDS)))
+        .limit(1);
+      existingId = existing?.id;
+      // If a CSV has a differently formatted phone, compare normalized digits.
+      if (!existingId && phoneDigits) {
+        const candidates = await db.select({ id: voterRegistryTable.id, phone: voterRegistryTable.phone })
+          .from(voterRegistryTable).where(inArray(voterRegistryTable.ward, WARDS)).limit(5000);
+        existingId = candidates.find(v => (v.phone ?? "").replace(/\\D/g, "") === phoneDigits)?.id;
+      }
+    }
 
     if (existingId) {
       if ((r.ward && !isMakueniWard(r.ward)) || (r.subCounty && !isMakueniConstituency(r.subCounty))) {
