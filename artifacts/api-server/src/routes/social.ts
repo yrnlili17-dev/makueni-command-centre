@@ -133,7 +133,7 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
           input: buildInput(cat.prompt),
         });
         const text = response.output_text ?? "";
-        const match = text.match(/\\[[\\s\\S]*\\]/);
+        const match = text.match(/\[[\s\S]*\]/);
         if (!match) return [];
         const arr = JSON.parse(match[0]) as unknown;
         if (!Array.isArray(arr)) return [];
