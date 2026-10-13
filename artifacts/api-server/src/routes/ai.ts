@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { buildFreeMakueniAnswer, buildFreeMakueniSpeech } from "./makueni-free-ai";
 
 const router = Router();
 
@@ -56,6 +57,18 @@ const QUICK_PROMPTS: Record<string, string[]> = {
 router.get("/quick-prompts", (req, res) => {
   const { module = "dashboard" } = req.query as { module?: string };
   res.json({ prompts: QUICK_PROMPTS[module] ?? QUICK_PROMPTS.dashboard });
+});
+
+router.post("/generate-speech", (req, res) => {
+  const { area, occasion, topic, language, minutes } = req.body as {
+    area?: string; occasion?: string; topic?: string; language?: string; minutes?: number;
+  };
+  if ([area, occasion, topic, language].some((value) => typeof value === "string" && value.length > 200)) {
+    res.status(400).json({ error: "Speech fields must be 200 characters or fewer." });
+    return;
+  }
+  const draft = buildFreeMakueniSpeech({ area, occasion, topic, language, minutes });
+  res.json({ ...draft, generatedAt: new Date().toISOString(), mode: "free-template" });
 });
 
 router.post("/generate-readiness", async (req, res) => {
@@ -267,10 +280,11 @@ router.post("/assist", async (req, res) => {
       }
     }
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-  } catch (_err) {
-    res.write(
-      `data: ${JSON.stringify({ error: "AI service temporarily unavailable. Please retry." })}\n\n`
-    );
+  } catch (err) {
+    req.log.warn({ err }, "Paid AI unavailable; using deterministic Makueni fallback");
+    const fallback = buildFreeMakueniAnswer({ message, module, context });
+    res.write(`data: ${JSON.stringify({ content: fallback, mode: "free-fallback" })}\n\n`);
+    res.write(`data: ${JSON.stringify({ done: true, mode: "free-fallback" })}\n\n`);
   }
   res.end();
 });
