@@ -45,6 +45,9 @@ function queriesForCategory(key: (typeof SCAN_CATEGORIES)[number]["key"]): strin
       '"Prof. Philip Kyalo Kaloki" Makueni',
       '"Philip Kaloki" Makueni',
       '"Pro Kaloki" Makueni',
+      '"Pro. Kaloki" Makueni',
+      '"Prof Philip Kaloki" Makueni',
+      '"Philip Kyalo Kaloki" Makueni County',
       '"Kaloki" Makueni County',
     ];
   }
