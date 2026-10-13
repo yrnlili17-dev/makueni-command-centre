@@ -14,9 +14,9 @@ import {
 
 const CATEGORIES: { key: string; label: string }[] = [
   { key: "all", label: "ALL" },
-  { key: "candidate", label: "CAMPAIGN" },
+  { key: "candidate", label: "PRO KALOKI" },
   { key: "issues", label: "LOCAL ISSUES" },
-  { key: "opponent", label: "OPPONENTS" },
+  { key: "opponent", label: "PUBLIC RECORDS" },
 ];
 
 const SENTIMENTS: { key: string; label: string }[] = [
@@ -27,9 +27,9 @@ const SENTIMENTS: { key: string; label: string }[] = [
 ];
 
 const CATEGORY_LABEL: Record<string, string> = {
-  candidate: "CAMPAIGN",
+  candidate: "PRO KALOKI",
   issues: "LOCAL ISSUES",
-  opponent: "OPPONENTS",
+  opponent: "PUBLIC RECORDS",
 };
 
 function sentimentStyle(s: string) {
@@ -87,10 +87,10 @@ export default function SocialListening() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-widest flex items-center gap-2">
-            <Radio className="w-5 h-5 text-primary" /> POLITICAL SOCIAL LISTENING
+            <Radio className="w-5 h-5 text-primary" /> SOCIAL LISTENING
           </h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5 tracking-wider">
-            POLITICAL INTELLIGENCE · PUBLIC WEB SIGNALS · PRO KALOKI MENTIONS · TRENDING COUNTY ISSUES · MAKUENI COUNTY
+            PUBLIC WEB MONITORING · PROF. PHILIP KYALO KALOKI · MAKUENI COUNTY NEWS & SERVICE ISSUES
           </p>
         </div>
         <button
