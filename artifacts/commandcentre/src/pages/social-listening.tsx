@@ -14,7 +14,7 @@ import {
 
 const CATEGORIES: { key: string; label: string }[] = [
   { key: "all", label: "ALL" },
-  { key: "candidate", label: "PRO KALOKI" },
+  { key: "candidate", label: "PROF. PHILIP KALOKI" },
   { key: "issues", label: "LOCAL ISSUES" },
   { key: "opponent", label: "PUBLIC RECORDS" },
 ];
@@ -27,7 +27,7 @@ const SENTIMENTS: { key: string; label: string }[] = [
 ];
 
 const CATEGORY_LABEL: Record<string, string> = {
-  candidate: "PRO KALOKI",
+  candidate: "PROF. PHILIP KALOKI",
   issues: "LOCAL ISSUES",
   opponent: "PUBLIC RECORDS",
 };
