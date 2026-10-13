@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { buildFreeMakueniAnswer, buildFreeMakueniSpeech } from "./makueni-free-ai";
+import { buildFreeMakueniAnswer, buildFreeMakueniSpeech, fetchMakueniOfficialSources } from "./makueni-free-ai";
 
 const router = Router();
 
@@ -261,7 +261,8 @@ router.post("/assist", async (req, res) => {
 
   // Explicit no-token mode avoids calling the paid model at all.
   if (process.env.MAKUENI_AI_MODE === "free") {
-    const fallback = buildFreeMakueniAnswer({ message, module, context });
+    const liveSources = await fetchMakueniOfficialSources();
+    const fallback = buildFreeMakueniAnswer({ message, module, context, liveSources });
     res.write(`data: ${JSON.stringify({ content: fallback, mode: "free-fallback" })}\n\n`);
     res.write(`data: ${JSON.stringify({ done: true, mode: "free-fallback" })}\n\n`);
     res.end();
@@ -291,7 +292,8 @@ router.post("/assist", async (req, res) => {
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
   } catch (err) {
     req.log.warn({ err }, "Paid AI unavailable; using deterministic Makueni fallback");
-    const fallback = buildFreeMakueniAnswer({ message, module, context });
+    const liveSources = await fetchMakueniOfficialSources();
+    const fallback = buildFreeMakueniAnswer({ message, module, context, liveSources });
     res.write(`data: ${JSON.stringify({ content: fallback, mode: "free-fallback" })}\n\n`);
     res.write(`data: ${JSON.stringify({ done: true, mode: "free-fallback" })}\n\n`);
   }
