@@ -29,8 +29,8 @@ export function buildFreeMakueniAnswer(input: {
     "Nguu/Masumba", "Emali/Mulala", "Masongaleni", "Mtito Andei", "Thange", "Ivingoni/Nzambani",
   ];
   const ward = wards.find((name) => lower.includes(name.toLowerCase())) ??
-    (lower.match(/(?:in|for|at|about)\\s+([a-z][a-z /-]{1,35}?)\\s+ward\\b/i)?.[1]?.trim() ?? "");
-  const area = ward ? ward.replace(/\\b\\w/g, (letter) => letter.toUpperCase()) : "Makueni County";
+    (lower.match(/(?:in|for|at|about)\s+([a-z][a-z /-]{1,35}?)\s+ward\b/i)?.[1]?.trim() ?? "");
+  const area = ward ? ward.replace(/\b\\w/g, (letter) => letter.toUpperCase()) : "Makueni County";
 
   let issue = "general service delivery";
   let practicalSteps = [
@@ -86,7 +86,7 @@ export function buildFreeMakueniAnswer(input: {
     ? [
         "Recent public-web leads to check:",
         ...webResults.map((item, index) =>
-          `${index + 1}. ${item.title}${item.source ? ` — ${item.source}` : ""}${item.publishedAt ? ` (${item.publishedAt})` : ""}\\n   ${item.url}${item.snippet ? `\\n   ${item.snippet}` : ""}`
+          `${index + 1}. ${item.title}${item.source ? ` — ${item.source}` : ""}${item.publishedAt ? ` (${item.publishedAt})` : ""}\n   ${item.url}${item.snippet ? `\n   ${item.snippet}` : ""}`
         ),
       ]
     : ["I could not retrieve matching public-news results just now, so I will not claim a particular project is delayed, funded or completed."];
@@ -111,7 +111,7 @@ export function buildFreeMakueniAnswer(input: {
     "",
     ...official,
     ...(liveSources.length ? ["", "Official pages checked:", ...liveSources.slice(0, 3).map((source) => `- ${source.title}: ${source.url} (checked ${source.checkedAt}; ${source.status})`)] : []),
-  ].join("\\n");
+  ].join("\n");
 }
 
 const wardExamples: Record<string, string> = {
