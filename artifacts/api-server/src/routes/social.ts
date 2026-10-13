@@ -4,6 +4,7 @@ import { db, socialMentionsTable, socialSourceHealthTable } from "@workspace/db"
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { requireAuth, requirePermission } from "../lib/auth";
+import { searchFreeMakueniWeb } from "./makueni-free-ai";
 
 const router = Router();
 router.use(requireAuth);
@@ -81,6 +82,23 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
   const perCategory = await Promise.all(
     SCAN_CATEGORIES.map(async (cat) => {
       try {
+        if (process.env.MAKUENI_AI_MODE === "free") {
+          const query = cat.key === "candidate"
+            ? '"Pro Kaloki" OR "Philip Kaloki" Makueni'
+            : cat.key === "issues"
+              ? "Makueni County ward water roads health agriculture project"
+              : "Makueni County public audit budget project accountability";
+          const results = await searchFreeMakueniWeb(query);
+          return results.map((item) => ({
+            raw: {
+              summary: item.title + (item.snippet ? " — " + item.snippet.slice(0, 180) : ""),
+              source: item.source, url: item.url, sentiment: "neutral",
+              topic: cat.key === "candidate" ? "Pro Kaloki public mention" : cat.key === "issues" ? "County service issue" : "Public accountability",
+              date: item.publishedAt ?? "",
+            } as RawMention,
+            category: cat.key,
+          }));
+        }
         const response = await openai.responses.create({
           model: "gpt-5.1",
           tools: [{ type: "web_search" }],
