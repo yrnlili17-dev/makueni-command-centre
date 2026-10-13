@@ -21,12 +21,12 @@ interface ChatMessage {
 }
 
 const STARTER_PROMPTS = [
-  "What are our top 3 strategic priorities right now?",
-  "Where are we weakest, and how do we fix it before election day?",
-  "Draft a 30-day plan to grow support in our weakest ward",
-  "How should we allocate volunteers and funds across the 5 wards?",
-  "What does our turnout forecast say about GOTV priorities?",
-  "Assess our narrative threats and recommend counter-moves",
+  "What are the latest public Makueni County project updates?",
+  "Summarize water, roads and health service issues in Makueni",
+  "What official budget and ward profile sources should I check?",
+  "Draft a public participation speech for a Makueni ward",
+  "How can residents report and follow up a stalled county project?",
+  "Summarize recent public news about Makueni and cite the links",
 ];
 
 export default function Strategist() {
@@ -239,7 +239,7 @@ export default function Strategist() {
           <div>
             <h1 className="text-lg font-bold tracking-tight">AI CHIEF STRATEGIST</h1>
             <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-widest">
-              Senior strategic counsel · grounded in live campaign data
+              Makueni County information · public sources and service-delivery records
             </p>
           </div>
         </header>

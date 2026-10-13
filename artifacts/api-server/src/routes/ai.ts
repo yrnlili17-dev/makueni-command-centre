@@ -1,7 +1,39 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { buildFreeMakueniAnswer, buildFreeMakueniSpeech, fetchMakueniOfficialSources, searchFreeMakueniWeb } from "./makueni-free-ai";
 
 const router = Router();
+/** In free mode these generation routes must never fall through to OpenAI. */
+router.use((req, res, next) => {
+  if (process.env.MAKUENI_AI_MODE !== "free" || req.method !== "POST") return next();
+  const routePath = req.path;
+  if (routePath === "/generate-readiness") return res.json({ mode: "free-template", items: [
+    { domain: "Evidence and records", item: "Confirm each reported service issue against a dated official source.", weight: "high" },
+    { domain: "Ward coverage", item: "Check that reports identify the correct Makueni sub-county and ward.", weight: "high" },
+    { domain: "Public participation", item: "Record concerns, responsible office, action owner and follow-up date.", weight: "medium" },
+    { domain: "Budget transparency", item: "Distinguish approved allocation, expenditure and verified outputs.", weight: "high" },
+    { domain: "Data protection", item: "Restrict personal data to authorized users and log access.", weight: "high" },
+    { domain: "Reporting", item: "Publish reviewed information with source links and update dates.", weight: "medium" }
+  ], note: "Template checklist, not a live audit." });
+  if (routePath === "/generate-campaign-plan") {
+    const today = new Date().toISOString().slice(0, 10);
+    const focus = typeof req.body?.focus === "string" ? req.body.focus.slice(0, 200).replace(/[<>]/g, "") : "county service delivery";
+    return res.json({ mode: "free-template", milestones: [
+      { title: "Verify official source material", description: "Collect current county plans, ward profiles, budget reports and project records.", dueDate: today, category: "Research", priority: "high", owner: "Research team" },
+      { title: "Map service issues by ward", description: "Record location, department, source date and verification status.", dueDate: today, category: "Service delivery", priority: "high", owner: "County information team" },
+      { title: "Review budget evidence", description: "Separate allocations, expenditure and documented outputs.", dueDate: today, category: "Finance", priority: "high", owner: "Finance review team" },
+      { title: "Prepare public information brief", description: "Prepare a neutral brief about " + focus + " using verified sources only.", dueDate: today, category: "Reporting", priority: "medium", owner: "Communications team" },
+      { title: "Schedule follow-up", description: "Assign owners and dates to unresolved service questions.", dueDate: today, category: "Follow-up", priority: "medium", owner: "Operations team" }
+    ], note: "Template milestones only; no live project status is implied." });
+  }
+  if (routePath === "/generate-swot") return res.json({ mode: "free-template",
+    strengths: [{ title: "Published county records", detail: "Official portals publish plans and project information.", impact: "medium", category: "Evidence", action: "Link claims to dated sources." }],
+    weaknesses: [{ title: "Evidence gaps", detail: "Some records may be old or incomplete.", impact: "medium", category: "Data quality", action: "Track source dates and missing fields." }],
+    opportunities: [{ title: "Ward-level reporting", detail: "Ward profiles help structure service reviews.", impact: "medium", category: "Reporting", action: "Use a consistent evidence checklist." }],
+    threats: [{ title: "Outdated information", detail: "Old reports can be mistaken for current status.", impact: "high", category: "Verification", action: "Confirm status with the official project portal." }],
+    generatedAt: new Date().toISOString(), note: "Evidence-led public-service framework." });
+  return next();
+});
 
 export const CAMPAIGN_CONTEXT = `
 You are an AI assistant for the Makueni County Command Centre in Kenya.
@@ -53,9 +85,42 @@ const QUICK_PROMPTS: Record<string, string[]> = {
   "voters-db": ["Check voter records with invalid wards", "Summarize registry provenance", "Identify duplicate records for review"],
 };
 
+router.get("/county-knowledge", async (req, res) => {
+  const query = typeof req.query.q === "string" ? req.query.q.slice(0, 180) : "Makueni County development";
+  const [sources, webResults] = await Promise.all([fetchMakueniOfficialSources(), searchFreeMakueniWeb(query)]);
+  res.json({
+    query,
+    webResults,
+    mode: process.env.MAKUENI_AI_MODE === "free" ? "free-template-retrieval" : "provider-assisted",
+    checkedAt: new Date().toISOString(),
+    sources,
+    guidance: "Search results are public-web discovery aids, not a complete index or proof of truth. Verify facts in original dated county documents before using them in public statements."
+  });
+});
+
 router.get("/quick-prompts", (req, res) => {
   const { module = "dashboard" } = req.query as { module?: string };
   res.json({ prompts: QUICK_PROMPTS[module] ?? QUICK_PROMPTS.dashboard });
+});
+
+router.post("/generate-speech", async (req, res) => {
+  const { area, occasion, topic, language, minutes } = req.body as {
+    area?: string; occasion?: string; topic?: string; language?: string; minutes?: number;
+  };
+  if ([area, occasion, topic, language].some((value) => typeof value === "string" && value.length > 200)) {
+    res.status(400).json({ error: "Speech fields must be 200 characters or fewer." });
+    return;
+  }
+  const draft = buildFreeMakueniSpeech({ area, occasion, topic, language, minutes });
+  const query = [area || "Makueni County", topic || "service delivery", "Makueni County"].join(" ");
+  const [officialSources, webResults] = await Promise.all([fetchMakueniOfficialSources(), searchFreeMakueniWeb(query)]);
+  res.json({
+    ...draft,
+    generatedAt: new Date().toISOString(),
+    mode: "free-template-with-public-source-search",
+    research: { query, officialSources, webResults },
+    notes: [...draft.notes, "Search results are leads, not verified facts. Review linked sources and add only confirmed local details before delivering the speech."],
+  });
 });
 
 router.post("/generate-readiness", async (req, res) => {
@@ -246,6 +311,16 @@ router.post("/assist", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
+  // Explicit no-token mode avoids calling the paid model at all.
+  if (process.env.MAKUENI_AI_MODE === "free") {
+    const [liveSources, publicWebResults] = await Promise.all([fetchMakueniOfficialSources(), searchFreeMakueniWeb(message)]);
+    const fallback = buildFreeMakueniAnswer({ message, module, context: { ...context, publicWebResults }, liveSources });
+    res.write(`data: ${JSON.stringify({ content: fallback, mode: "free-fallback" })}\n\n`);
+    res.write(`data: ${JSON.stringify({ done: true, mode: "free-fallback" })}\n\n`);
+    res.end();
+    return;
+  }
+
   try {
     const stream = await openai.chat.completions.create({
       model: "gpt-5.1",
@@ -267,10 +342,12 @@ router.post("/assist", async (req, res) => {
       }
     }
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-  } catch (_err) {
-    res.write(
-      `data: ${JSON.stringify({ error: "AI service temporarily unavailable. Please retry." })}\n\n`
-    );
+  } catch (err) {
+    req.log.warn({ err }, "Paid AI unavailable; using deterministic Makueni fallback");
+    const [liveSources, publicWebResults] = await Promise.all([fetchMakueniOfficialSources(), searchFreeMakueniWeb(message)]);
+    const fallback = buildFreeMakueniAnswer({ message, module, context: { ...context, publicWebResults }, liveSources });
+    res.write(`data: ${JSON.stringify({ content: fallback, mode: "free-fallback" })}\n\n`);
+    res.write(`data: ${JSON.stringify({ done: true, mode: "free-fallback" })}\n\n`);
   }
   res.end();
 });

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useListSocialMentions,
   useScanSocial,
@@ -50,6 +50,14 @@ export default function SocialListening() {
   const scan = useScanSocial({ mutation: { onSuccess: invalidate } });
   const del = useDeleteSocialMention({ mutation: { onSuccess: invalidate } });
 
+  // Free-mode public-web scan refreshes while this screen is open. For always-on
+  // monitoring while nobody is logged in, deploy a separate scheduled worker.
+  useEffect(() => {
+    scan.mutate();
+    const timer = window.setInterval(() => scan.mutate(), 15 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [scan.mutate]);
+
   const all = mentions as SocialMention[];
 
   const counts = useMemo(() => {
@@ -79,10 +87,10 @@ export default function SocialListening() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-widest flex items-center gap-2">
-            <Radio className="w-5 h-5 text-primary" /> SOCIAL LISTENING
+            <Radio className="w-5 h-5 text-primary" /> POLITICAL SOCIAL LISTENING
           </h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5 tracking-wider">
-            AI WEB-SCAN · MENTIONS · SENTIMENT · TRENDING ISSUES · MATUNGULU
+            POLITICAL INTELLIGENCE · PUBLIC WEB SIGNALS · PRO KALOKI MENTIONS · TRENDING COUNTY ISSUES · MAKUENI COUNTY
           </p>
         </div>
         <button
