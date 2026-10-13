@@ -58,8 +58,8 @@ export default function VolunteerRegistration() {
             <div className="border border-primary/40 p-3"><UserPlus className="w-6 h-6 text-primary" /></div>
             <div>
               <p className="font-mono text-[10px] tracking-widest text-primary">MAKUENI COUNTY</p>
-              <h1 className="text-xl font-bold tracking-wide">VOLUNTEER REGISTRATION</h1>
-              <p className="text-xs text-muted-foreground mt-1">Register your interest in supporting community activities.</p>
+              <h1 className="text-xl font-bold tracking-wide">PROF. PHILIP KALOKI SUPPORTERS</h1>
+              <p className="text-xs text-muted-foreground mt-1">Makueni County supporter and volunteer registration.</p>
             </div>
           </div>
 
@@ -73,7 +73,7 @@ export default function VolunteerRegistration() {
               <div><label className={labelClass}>PHONE *</label><input className={inputClass} required type="tel" maxLength={40} value={form.phone} onChange={e => update("phone", e.target.value)} autoComplete="tel" /></div>
               <div><label className={labelClass}>EMAIL (OPTIONAL)</label><input className={inputClass} type="email" maxLength={200} value={form.email} onChange={e => update("email", e.target.value)} autoComplete="email" /></div>
               <div className="md:col-span-2"><label className={labelClass}>WARD *</label><select className={inputClass} required value={form.ward} onChange={e => update("ward", e.target.value)}><option value="">Select your ward</option>{WARDS.map(ward => <option key={ward} value={ward}>{ward}</option>)}</select></div>
-              <div><label className={labelClass}>AREAS OF INTEREST</label><input className={inputClass} maxLength={500} placeholder="Community support, logistics…" value={form.interests} onChange={e => update("interests", e.target.value)} /></div>
+              <div><label className={labelClass}>AREA OF INTEREST</label><select className={inputClass} value={form.interests} onChange={e => update("interests", e.target.value)}><option value="">Select an area of interest</option><option value="Mobilization and community engagement">1. Mobilization and community engagement</option><option value="Communication and information sharing">2. Communication and information sharing</option><option value="Events and logistics">3. Events and logistics</option><option value="Administration and data management">4. Administration and data management</option><option value="Digital media and technology">5. Digital media and technology</option><option value="Community feedback and research">6. Community feedback and research</option><option value="Fundraising and resource support">7. Fundraising and resource support</option><option value="Election-day assistance">8. Election-day assistance</option></select></div>
               <div><label className={labelClass}>AVAILABILITY</label><input className={inputClass} maxLength={200} placeholder="Weekends, evenings…" value={form.availability} onChange={e => update("availability", e.target.value)} /></div>
               <div className="md:col-span-2"><label className={labelClass}>ADDITIONAL MESSAGE (OPTIONAL)</label><textarea className={inputClass} rows={4} maxLength={2000} value={form.message} onChange={e => update("message", e.target.value)} /></div>
             </div>
