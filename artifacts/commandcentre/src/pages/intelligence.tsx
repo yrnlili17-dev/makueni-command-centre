@@ -199,6 +199,20 @@ export default function Intelligence() {
   useEffect(() => { if (tab === "queue") loadResponses(); }, [tab, loadResponses]);
   useEffect(() => { if (tab === "platforms") loadPlatforms(); }, [tab, loadPlatforms]);
 
+  // Keep displayed intelligence current without repeatedly triggering external scans.
+  // Feed ingestion remains controlled by SCAN FEEDS until scheduled source polling is configured.
+  useEffect(() => {
+    const refreshVisibleData = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      void refetchMentions();
+      void refetchScore();
+      if (tab === "queue") void loadResponses();
+      if (tab === "platforms") void loadPlatforms();
+    };
+    const timer = window.setInterval(refreshVisibleData, 60_000);
+    return () => window.clearInterval(timer);
+  }, [tab, refetchMentions, refetchScore, loadResponses, loadPlatforms]);
+
   // ── Draft Rebuttal ──
   async function handleDraftRebuttal() {
     if (!attackText.trim()) return;
@@ -308,11 +322,6 @@ export default function Intelligence() {
           <h1 className="text-xl font-bold tracking-widest">POLITICAL INTELLIGENCE</h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
             AI-POWERED PUBLIC-SERVICE INTELLIGENCE · MAKUENI COUNTY
-            {score?.aiEnabled ? (
-              <span className="ml-3 text-green-400">[ AI_ONLINE ]</span>
-            ) : (
-              <span className="ml-3 text-yellow-400">[ AI_HEURISTIC — ADD OPENAI_API_KEY FOR FULL AI ]</span>
-            )}
           </p>
         </div>
         <div className="flex gap-2">
