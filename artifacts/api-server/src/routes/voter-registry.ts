@@ -150,7 +150,7 @@ router.post("/upload", async (req, res) => {
       existingId = existing?.id;
     }
     if (!existingId && r.phone) {
-      const phoneDigits = r.phone.replace(/\\D/g, "");
+      const phoneDigits = r.phone.replace(/\D/g, "");
       const [existing] = await db.select({ id: voterRegistryTable.id })
         .from(voterRegistryTable)
         .where(and(eq(voterRegistryTable.phone, r.phone), inArray(voterRegistryTable.ward, WARDS)))
@@ -160,7 +160,7 @@ router.post("/upload", async (req, res) => {
       if (!existingId && phoneDigits) {
         const candidates = await db.select({ id: voterRegistryTable.id, phone: voterRegistryTable.phone })
           .from(voterRegistryTable).where(inArray(voterRegistryTable.ward, WARDS)).limit(5000);
-        existingId = candidates.find(v => (v.phone ?? "").replace(/\\D/g, "") === phoneDigits)?.id;
+        existingId = candidates.find(v => (v.phone ?? "").replace(/\D/g, "") === phoneDigits)?.id;
       }
     }
 
