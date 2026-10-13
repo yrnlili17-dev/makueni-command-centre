@@ -153,17 +153,17 @@ export async function searchFreeMakueniWeb(query: string): Promise<FreeWebResult
     const response = await fetch(rssUrl, { headers: { "User-Agent": "Mozilla/5.0 (compatible; MakueniPublicInfo/1.0)" }, signal: AbortSignal.timeout(6000) });
     if (!response.ok) return [];
     const xml = (await response.text()).slice(0, 500_000);
-    const blocks = xml.match(/<item>[\\s\\S]*?<\\/item>/gi) ?? [];
-    const decode = (value: string) => value.replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, "$1").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
+    const blocks = xml.match(/<item>[\s\S]*?<\/item>/gi) ?? [];
+    const decode = (value: string) => value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
     const results: FreeWebResult[] = blocks.slice(0, 8).map((block) => {
       const get = (tag: string) => decode(block.match(new RegExp("<" + tag + ">([\\s\\S]*?)</" + tag + ">", "i"))?.[1] ?? "");
       const title = get("title");
       const link = get("link");
       const pubDate = get("pubDate");
-      const source = decode(block.match(/<source[^>]*>([\\s\\S]*?)<\\/source>/i)?.[1] ?? "Google News");
-      const description = get("description").replace(/<[^>]+>/g, " ").replace(/\\s+/g, " ").slice(0, 400);
+      const source = decode(block.match(/<source[^>]*>([\s\S]*?)<\/source>/i)?.[1] ?? "Google News");
+      const description = get("description").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 400);
       return { title, url: link, source, publishedAt: pubDate || null, snippet: description, query: cleaned };
-    }).filter((item) => item.title && /^https?:\\/\\//i.test(item.url));
+    }).filter((item) => item.title && /^https?:\/\//i.test(item.url));
     searchCache.set(cacheKey, { expiresAt: Date.now() + 10 * 60_000, results });
     return results;
   } catch {
