@@ -151,13 +151,8 @@ router.post("/upload", async (req, res) => {
     }
     if (!existingId && r.phone) {
       const phoneDigits = r.phone.replace(/\D/g, "");
-      const [existing] = await db.select({ id: voterRegistryTable.id })
-        .from(voterRegistryTable)
-        .where(and(eq(voterRegistryTable.phone, r.phone), inArray(voterRegistryTable.ward, WARDS)))
-        .limit(1);
-      existingId = existing?.id;
-      // Normalize phone formats in SQL instead of loading thousands of rows into memory.
-      if (!existingId && phoneDigits) {
+      // Normalize stored and uploaded phone formats in one lookup.
+      if (phoneDigits) {
         const [phoneMatch] = await db.select({ id: voterRegistryTable.id })
           .from(voterRegistryTable)
           .where(and(inArray(voterRegistryTable.ward, WARDS), sql`regexp_replace(coalesce(${voterRegistryTable.phone}, ''), '[^0-9]', '', 'g') = ${phoneDigits}`))
