@@ -164,7 +164,7 @@ router.post("/upload", async (req, res) => {
       ?? (r.voterNumber ? byVoterNumber.get(r.voterNumber) : undefined)
       ?? (phone ? byPhone.get(phone) : undefined);
     if (existing) {
-      const updates: Record<string, unknown> = { fullName: r.fullName, importBatch: batchId, updatedAt: new Date() };
+      const updates: Record<string, unknown> = { fullName: r.fullName, importBatch: batchId, status: "verified", updatedAt: new Date() };
       for (const field of ["nationalId", "voterNumber", "phone", "gender", "dateOfBirth", "ward", "subCounty", "pollingStation", "pollingStationCode", "stream"] as const) {
         const value = r[field];
         if (value !== undefined && value !== "") updates[field] = value;
@@ -176,7 +176,7 @@ router.post("/upload", async (req, res) => {
     }
     // Names are valid registry records even when the source has no phone or ward.
     // Do not silently drop name-only rows; preserve the contact and let staff enrich it later.
-    insertRows.push({ ...r, importBatch: batchId, status: "pending", source: "upload" });
+    insertRows.push({ ...r, importBatch: batchId, status: "verified", source: "upload" });
   }
 
   // One bulk insert per batch instead of one INSERT per contact.
