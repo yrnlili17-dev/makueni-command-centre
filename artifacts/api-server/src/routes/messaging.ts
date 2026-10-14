@@ -108,13 +108,19 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const { name, channel, messageBody, segmentId, scheduledAt } = req.body;
+  const { name, channel, messageBody, segmentId, scheduledAt, recipientList } = req.body;
   if (!name || !channel || !messageBody) { res.status(400).json({ error: "name, channel, messageBody required" }); return; }
   if (!["sms", "whatsapp"].includes(channel)) {
     res.status(400).json({ error: "Real sending is currently enabled for SMS and WhatsApp only." }); return;
   }
+  if (recipientList !== undefined && (!Array.isArray(recipientList) || recipientList.length > 10000)) {
+    res.status(400).json({ error: "CSV list must contain no more than 10,000 contacts." }); return;
+  }
+  if (Array.isArray(recipientList) && recipientList.some((r: any) => !r || typeof r.phone !== "string" || !r.phone.trim() || r.consent !== true)) {
+    res.status(400).json({ error: "Every CSV contact must have a phone number and explicit consent for this channel." }); return;
+  }
   const [campaign] = await db.insert(messageCampaignsTable).values({
-    name, channel, messageBody, segmentId, status: "draft",
+    name, channel, messageBody, segmentId, recipientList: Array.isArray(recipientList) ? JSON.stringify(recipientList) : null, status: "draft",
     scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
     recipientCount: 0, deliveredCount: 0, openedCount: 0, clickedCount: 0,
   }).returning();
@@ -133,10 +139,17 @@ router.patch("/:id", async (req, res) => {
   const [existing] = await db.select().from(messageCampaignsTable).where(eq(messageCampaignsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   const updates: Record<string, unknown> = {};
-  for (const f of ["name", "messageBody", "segmentId", "scheduledAt"]) {
+  for (const f of ["name", "messageBody", "segmentId", "scheduledAt", "recipientList"]) {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   }
   if (updates.scheduledAt) updates.scheduledAt = new Date(String(updates.scheduledAt));
+  if (updates.recipientList !== undefined) {
+    const list = updates.recipientList;
+    if (!Array.isArray(list) || list.length > 10000 || list.some((r: any) => !r || typeof r.phone !== "string" || !r.phone.trim() || r.consent !== true)) {
+      res.status(400).json({ error: "CSV list must contain up to 10,000 contacts with phone numbers and explicit channel consent." }); return;
+    }
+    updates.recipientList = JSON.stringify(list);
+  }
   if (req.body.status !== undefined) {
     if (req.body.status !== "confirmed" || !existing.scheduledAt || existing.status !== "draft") {
       res.status(400).json({ error: "Only a scheduled draft can be marked officially confirmed." }); return;
@@ -270,6 +283,21 @@ router.post("/:id/send", async (req, res) => {
 
   let candidates = await db.select().from(membersTable)
     .where(and(inArray(membersTable.ward, ALLOWED_WARDS), eq(membersTable.status, "active")));
+  let uploadedRecipients: Array<{ id: number; firstName: string; lastName: string; phone: string; ward?: string; supportLevel?: string; consent: boolean; smsConsent: boolean; whatsappConsent: boolean }> = [];
+  if (campaign.recipientList) {
+    try {
+      const parsed = JSON.parse(campaign.recipientList);
+      if (!Array.isArray(parsed) || parsed.length > 10000 || parsed.some((r: any) => !r || typeof r.phone !== "string" || !r.phone.trim() || r.consent !== true)) {
+        res.status(400).json({ error: "Saved CSV list is invalid or missing explicit consent." }); return;
+      }
+      uploadedRecipients = parsed.map((r: any, i: number) => ({ id: -(i + 1), firstName: String(r.firstName ?? ""), lastName: String(r.lastName ?? ""), phone: String(r.phone), ward: r.ward ? String(r.ward) : "", supportLevel: r.supportLevel ? String(r.supportLevel) : "", consent: true, smsConsent: true, whatsappConsent: true }));
+    } catch {
+      res.status(400).json({ error: "Saved CSV list could not be read. Re-upload the file." }); return;
+    }
+  }
+  if (campaign.segmentId && uploadedRecipients.length) {
+    res.status(400).json({ error: "Choose either a saved segment or an uploaded CSV list, not both." }); return;
+  }
   if (campaign.segmentId) {
     const [segment] = await db.select().from(segmentsTable).where(eq(segmentsTable.id, campaign.segmentId));
     if (!segment) { res.status(400).json({ error: "Selected segment does not exist" }); return; }
@@ -282,7 +310,7 @@ router.post("/:id/send", async (req, res) => {
   }
   const consentField = campaign.channel === "whatsapp" ? "whatsappConsent" : "smsConsent";
   const contactField = campaign.channel === "whatsapp" ? "phone" : "phone";
-  const recipients = candidates.filter(m => Boolean(m[consentField]) && Boolean(m[contactField]?.trim()));
+  const recipients = uploadedRecipients.length ? uploadedRecipients : candidates.filter(m => Boolean(m[consentField]) && Boolean(m[contactField]?.trim()));
   if (!recipients.length) { res.status(409).json({ error: "No active Makueni recipients with valid contact details and explicit channel consent" }); return; }
 
   await db.update(messageCampaignsTable).set({ status: "sending", recipientCount: recipients.length, deliveredCount: 0, openedCount: 0, clickedCount: 0 }).where(eq(messageCampaignsTable.id, id));
@@ -346,7 +374,7 @@ router.post("/:id/send", async (req, res) => {
         providerMessageId = result.messageId;
       }
       await db.insert(messageDeliveriesTable).values({
-        campaignId: id, memberId: member.id, channel: campaign.channel, recipient,
+        campaignId: id, ...(member.id > 0 ? { memberId: member.id } : {}), channel: campaign.channel, recipient,
         provider: provider.provider, providerMessageId, status: "sent", sentAt: new Date(), updatedAt: new Date(),
       });
       accepted++;
