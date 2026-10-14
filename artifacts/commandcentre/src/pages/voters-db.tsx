@@ -256,35 +256,47 @@ function VoterRollTab() {
 
       {data && !loading && (
         <>
-          <div className="font-mono text-[10px] text-muted-foreground">{data.total.toLocaleString()} records matched</div>
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>{data.total.toLocaleString()} contacts</span>
+            <span className="hidden sm:inline">Makueni County · Registry</span>
+          </div>
           <div className="border border-border bg-card overflow-hidden">
-            <div className="grid grid-cols-12 gap-1 px-4 py-2 border-b border-border bg-secondary/50 font-mono text-[10px] text-muted-foreground">
-              <div className="col-span-3">FULL NAME</div>
-              <div className="col-span-2">NATIONAL ID</div>
-              <div className="col-span-2">VOTER #</div>
-              <div className="col-span-2">WARD</div>
-              <div className="col-span-1">STATUS</div>
-              <div className="col-span-1">SOURCE</div>
-              <div className="col-span-1" />
+            <div className="grid grid-cols-12 gap-3 px-4 py-3 border-b border-border bg-secondary/30 text-[10px] font-semibold tracking-widest text-muted-foreground">
+              <div className="col-span-3">NAME</div>
+              <div className="col-span-2">CONTACT</div>
+              <div className="col-span-2">LOCATION</div>
+              <div className="col-span-3">RECORD DETAILS</div>
+              <div className="col-span-2 text-right">STATUS</div>
             </div>
-            <div className="divide-y divide-border max-h-[420px] overflow-y-auto">
+            <div className="divide-y divide-border max-h-[560px] overflow-y-auto">
               {data.data.map(r => (
-                <div key={r.id} className={`grid grid-cols-12 gap-1 px-4 py-2.5 hover:bg-secondary/30 cursor-pointer group items-center ${selected?.id === r.id ? "bg-secondary/40" : ""}`} onClick={() => setSelected(selected?.id === r.id ? null : r)}>
-                  <div className="col-span-3">
-                    <div className="font-semibold text-xs truncate">{r.fullName}</div>
-                    {r.pollingStation && <div className="font-mono text-[9px] text-muted-foreground truncate">{r.pollingStation}</div>}
+                <div key={r.id} className={`grid grid-cols-12 gap-3 px-4 py-3.5 hover:bg-white/[0.025] cursor-pointer group items-center transition-colors ${selected?.id === r.id ? "bg-secondary/40" : ""}`} onClick={() => setSelected(selected?.id === r.id ? null : r)}>
+                  <div className="col-span-3 min-w-0">
+                    <div className="font-semibold text-sm text-foreground truncate">{r.fullName}</div>
+                    <div className="text-[11px] text-muted-foreground mt-1">ID #{String(r.id).padStart(5, "0")}</div>
                   </div>
-                  <div className="col-span-2 font-mono text-[10px]">{r.nationalId ?? "—"}</div>
-                  <div className="col-span-2 font-mono text-[10px] text-muted-foreground">{r.voterNumber ?? "—"}</div>
-                  <div className="col-span-2 font-mono text-[10px] text-muted-foreground">{r.ward ?? "—"}</div>
-                  <div className="col-span-1"><Badge label={r.status.toUpperCase()} style={statusStyle[r.status] ?? "border-border text-muted-foreground"} /></div>
-                  <div className="col-span-1"><Badge label={r.source.toUpperCase()} style={sourceStyle[r.source] ?? "border-border text-muted-foreground"} /></div>
-                  <div className="col-span-1 opacity-0 group-hover:opacity-100 flex justify-end">
-                    <button onClick={e => { e.stopPropagation(); handleDelete(r.id); }} className="text-muted-foreground hover:text-primary"><Trash2 className="w-3 h-3" /></button>
+                  <div className="col-span-2 min-w-0">
+                    <div className="text-sm text-foreground truncate">{r.phone || "No phone recorded"}</div>
+                    {r.voterNumber && <div className="text-[11px] text-muted-foreground mt-1">Voter #{r.voterNumber}</div>}
+                  </div>
+                  <div className="col-span-2 min-w-0">
+                    <div className="text-sm text-foreground truncate">{r.ward || "Ward not set"}</div>
+                    <div className="text-[11px] text-muted-foreground mt-1">{r.subCounty || "Constituency not set"}</div>
+                  </div>
+                  <div className="col-span-3 flex flex-wrap gap-1.5 items-center">
+                    {r.nationalId && <span className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground">ID: {r.nationalId}</span>}
+                    <span className={`rounded-full px-2 py-1 text-[10px] ${r.source === "upload" ? "bg-blue-500/10 text-blue-300" : r.source === "api" ? "bg-cyan-500/10 text-cyan-300" : "bg-violet-500/10 text-violet-300"}`}>{r.source === "upload" ? "CSV Upload" : r.source === "api" ? "IEBC API" : "Manual"}</span>
+                    {r.pollingStation && <span className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground max-w-full truncate">{r.pollingStation}</span>}
+                  </div>
+                  <div className="col-span-2 flex justify-end items-center gap-2">
+                    <span className={`inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] font-semibold tracking-wide ${r.status === "verified" ? "border-emerald-500/40 text-emerald-400 bg-emerald-500/[0.06]" : r.status === "pending" ? "border-amber-500/40 text-amber-300 bg-amber-500/[0.06]" : "border-red-500/40 text-red-300 bg-red-500/[0.06]"}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${r.status === "verified" ? "bg-emerald-400" : r.status === "pending" ? "bg-amber-300" : "bg-red-400"}`} />{r.status === "verified" ? "ACTIVE" : r.status.toUpperCase()}
+                    </span>
+                    <button title="Delete contact" onClick={e => { e.stopPropagation(); handleDelete(r.id); }} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-opacity"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               ))}
-              {data.data.length === 0 && <div className="px-4 py-8 text-center font-mono text-xs text-muted-foreground">NO RECORDS FOUND</div>}
+              {data.data.length === 0 && <div className="px-4 py-12 text-center text-sm text-muted-foreground">No contacts found. Try changing your search or filters.</div>}
             </div>
           </div>
 
