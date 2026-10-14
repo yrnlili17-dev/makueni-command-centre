@@ -466,7 +466,7 @@ type UploadedRecipient = { firstName: string; lastName: string; phone: string; w
 function parseRecipientCsv(text: string, channel: Channel): UploadedRecipient[] {
   const rows: string[][] = [];
   let row: string[] = [], cell = "", quoted = false;
-  const input = text.replace(/^\\uFEFF/, "");
+  const input = text.replace(/^\uFEFF/, "");
   for (let i = 0; i < input.length; i++) {
     const ch = input[i];
     if (ch === '"' && quoted && input[i + 1] === '"') { cell += '"'; i++; }
@@ -482,7 +482,7 @@ function parseRecipientCsv(text: string, channel: Channel): UploadedRecipient[] 
   row.push(cell.trim());
   if (row.some(v => v)) rows.push(row);
   if (rows.length < 2) throw new Error("CSV must include a header row and at least one contact.");
-  const headers = rows[0].map(h => h.trim().toLowerCase().replace(/[\\s_-]+/g, ""));
+  const headers = rows[0].map(h => h.trim().toLowerCase().replace(/[\s_-]+/g, ""));
   const index = (...names: string[]) => headers.findIndex(h => names.includes(h));
   const phoneIndex = index("phone", "phonenumber", "mobile", "mobilenumber", "telephone", "number");
   const firstIndex = index("firstname", "first");
@@ -501,13 +501,13 @@ function parseRecipientCsv(text: string, channel: Channel): UploadedRecipient[] 
     if (!rawPhone) continue;
     const consent = ["yes", "true", "1", "y", "consented", "opted-in", "optedin"].includes(get(consentIndex).toLowerCase());
     if (!consent) continue;
-    const digits = rawPhone.replace(/\\D/g, "");
+    const digits = rawPhone.replace(/\D/g, "");
     const phone = digits.startsWith("0") ? "254" + digits.slice(1) : digits.startsWith("254") ? digits : digits;
     if (phone.length < 9 || phone.length > 15 || seen.has(phone)) continue;
     seen.add(phone);
     const fullName = get(nameIndex);
-    const firstName = get(firstIndex) || fullName.split(/\\s+/)[0] || "";
-    const lastName = get(lastIndex) || fullName.split(/\\s+/).slice(1).join(" ");
+    const firstName = get(firstIndex) || fullName.split(/\s+/)[0] || "";
+    const lastName = get(lastIndex) || fullName.split(/\s+/).slice(1).join(" ");
     result.push({ firstName, lastName, phone, ward: get(wardIndex), supportLevel: get(supportIndex), consent: true });
   }
   if (!result.length) throw new Error("No valid contacts with explicit consent were found in this CSV.");
