@@ -13,7 +13,6 @@ async function ensureCsvRecipientSchema() {
   if (!csvSchemaReady) {
     csvSchemaReady = (async () => {
       await db.execute(sql`ALTER TABLE message_campaigns ADD COLUMN IF NOT EXISTS recipient_list text`);
-      await db.execute(sql`ALTER TABLE message_deliveries ALTER COLUMN member_id DROP NOT NULL`);
     })().catch((error) => {
       csvSchemaReady = null;
       throw error;
