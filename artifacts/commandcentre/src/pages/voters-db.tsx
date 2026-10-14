@@ -513,7 +513,9 @@ function CaptureTab() {
           </div>
           <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
 
-          {uploadLoading && <div className="font-mono text-xs text-muted-foreground animate-pulse">PARSING AND UPLOADING RECORDS...</div>}
+          {uploadLoading && <div className="font-mono text-xs text-muted-foreground animate-pulse">{uploadProgress || "PARSING AND UPLOADING RECORDS..."}</div>}
+          {!uploadLoading && uploadProgress && <div className="font-mono text-xs text-green-400">{uploadProgress}</div>}
+          {uploadError && <div className="border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300"><strong>UPLOAD FAILED:</strong> {uploadError}</div>}
 
           {uploadResult && (
             <div className="bg-secondary border border-border p-3 space-y-1">
@@ -525,7 +527,7 @@ function CaptureTab() {
                 <div className="text-center"><div className="font-mono text-[9px] text-yellow-400">MATCHED</div><div className="font-bold text-yellow-400">{uploadResult.duplicates}</div></div>
                 <div className="text-center"><div className="font-mono text-[9px] text-red-400">SKIPPED</div><div className="font-bold text-red-400">{uploadResult.skipped ?? 0}</div></div>
               </div>
-              <div className="font-mono text-[9px] text-muted-foreground mt-2">Existing records are updated by National ID or Voter Number. New records remain visible in Voter Roll with PENDING status until reviewed.</div>
+              <div className="font-mono text-[9px] text-muted-foreground mt-2">Existing records can match by National ID, Voter Number or phone. New records need a valid Makueni ward and remain PENDING until reviewed. Contacts without a ward may be skipped unless they match an existing record.</div>
             </div>
           )}
         </div>
