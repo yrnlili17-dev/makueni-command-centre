@@ -432,9 +432,31 @@ function CaptureTab() {
           record.fullName = [record.firstName, record.secondName, record.lastName].filter(Boolean).join(" ");
         }
         if (record.ward) {
-          const wardInput = record.ward.trim().replace(/\s+ward$/i, "").trim().toLowerCase();
-          const canonicalWard = WARDS.find(w => w.toLowerCase() === wardInput);
+          const normalizeWard = (value: string) => value.toLowerCase().replace(/\s+ward$/i, "").replace(/[^a-z0-9]/g, "");
+          const aliases: Record<string, string> = {
+            emalimulala: "Emali/Mulala",
+            ivingoninzambani: "Ivingoni/Nzambani",
+            nzauikililikalamba: "Nzaui/Kilili/Kalamba",
+            muvaukikuumini: "Muvau/Kikumini",
+            muvaukikumini: "Muvau/Kikumini",
+            kithungokitundu: "Kithungo/Kitundu",
+            kitetakisau: "Kiteta/Kisau",
+            kakowaia: "Kako/Waia",
+            nguumasumba: "Nguu/Masumba",
+            ksouth: "Kikumbulyu South",
+            mbooniward: "Mbooni",
+          };
+          const normalized = normalizeWard(record.ward);
+          const canonicalWard = WARDS.find(w => normalizeWard(w) === normalized) ?? aliases[normalized];
           if (canonicalWard) record.ward = canonicalWard;
+        }
+        if (record.phone) {
+          const digits = record.phone.replace(/\D/g, "");
+          let normalizedPhone = digits;
+          if (digits.startsWith("2540")) normalizedPhone = "254" + digits.slice(4);
+          else if (digits.startsWith("0")) normalizedPhone = "254" + digits.slice(1);
+          else if (digits.startsWith("7") || digits.startsWith("1")) normalizedPhone = "254" + digits;
+          record.phone = normalizedPhone ? "+" + normalizedPhone : record.phone;
         }
         return record;
       }).filter(r => r.fullName || r.nationalId || r.voterNumber);
