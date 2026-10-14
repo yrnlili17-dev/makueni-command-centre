@@ -119,7 +119,7 @@ router.post("/upload", async (req, res) => {
     res.status(400).json({ error: "records array required" }); return;
   }
   if (records.length > 1000) {
-    res.status(413).json({ error: "Maximum 1,000 contacts per API batch. The uploader automatically splits files into smaller batches." }); return;
+    res.status(413).json({ error: "Maximum 1,000 contacts per API batch." }); return;
   }
 
   const batchId = batchName || `UPLOAD-${Date.now()}`;
@@ -127,80 +127,61 @@ router.post("/upload", async (req, res) => {
   let updatedCount = 0;
   let dupCount = 0;
   let skippedCount = 0;
+  const clean = records.map(raw => Object.fromEntries(
+    Object.entries(raw).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
+  ) as typeof raw).filter(r => !!r.fullName);
+  skippedCount += records.length - clean.length;
 
-  for (const raw of records) {
-    const r = Object.fromEntries(
-      Object.entries(raw).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
-    ) as typeof raw;
+  // Resolve matching contacts in a single query per batch instead of querying
+  // the database repeatedly for every CSV row.
+  const nationalIds = [...new Set(clean.map(r => r.nationalId).filter((v): v is string => !!v))];
+  const voterNumbers = [...new Set(clean.map(r => r.voterNumber).filter((v): v is string => !!v))];
+  const phoneDigits = [...new Set(clean.map(r => (r.phone ?? "").replace(/\D/g, "")).filter(Boolean))];
+  const matchConditions = [];
+  if (nationalIds.length) matchConditions.push(inArray(voterRegistryTable.nationalId, nationalIds));
+  if (voterNumbers.length) matchConditions.push(inArray(voterRegistryTable.voterNumber, voterNumbers));
+  if (phoneDigits.length) matchConditions.push(inArray(sql<string>`regexp_replace(coalesce(${voterRegistryTable.phone}, ''), '[^0-9]', '', 'g')`, phoneDigits));
+  const existingRows = matchConditions.length
+    ? await db.select({ id: voterRegistryTable.id, nationalId: voterRegistryTable.nationalId, voterNumber: voterRegistryTable.voterNumber, phone: voterRegistryTable.phone })
+        .from(voterRegistryTable).where(or(...matchConditions))
+    : [];
+  const byNationalId = new Map(existingRows.filter(r => r.nationalId).map(r => [r.nationalId!, r]));
+  const byVoterNumber = new Map(existingRows.filter(r => r.voterNumber).map(r => [r.voterNumber!, r]));
+  const byPhone = new Map(existingRows.filter(r => r.phone).map(r => [(r.phone ?? "").replace(/\D/g, ""), r]));
+  const seenKeys = new Set<string>();
+  const insertRows: Array<typeof voterRegistryTable.$inferInsert> = [];
 
-    if (!r.fullName) {
-      skippedCount++;
-      continue;
-    }
-
-    // Match existing records by either stable identifier before validating optional
-    // geography. A name-only correction file can update an existing voter even when
-    // the CSV omits ward/sub-county columns.
-    let existingId: number | undefined;
-    if (r.nationalId) {
-      const [existing] = await db.select({ id: voterRegistryTable.id })
-        .from(voterRegistryTable).where(eq(voterRegistryTable.nationalId, r.nationalId)).limit(1);
-      existingId = existing?.id;
-    }
-    if (!existingId && r.voterNumber) {
-      const [existing] = await db.select({ id: voterRegistryTable.id })
-        .from(voterRegistryTable).where(eq(voterRegistryTable.voterNumber, r.voterNumber)).limit(1);
-      existingId = existing?.id;
-    }
-    if (!existingId && r.phone) {
-      const phoneDigits = r.phone.replace(/\D/g, "");
-      // Normalize stored and uploaded phone formats in one lookup.
-      if (phoneDigits) {
-        const [phoneMatch] = await db.select({ id: voterRegistryTable.id })
-          .from(voterRegistryTable)
-          .where(sql`regexp_replace(coalesce(${voterRegistryTable.phone}, ''), '[^0-9]', '', 'g') = ${phoneDigits}`)
-          .limit(1);
-        existingId = phoneMatch?.id;
-      }
-    }
-
-    if (existingId) {
-      if ((r.ward && !isMakueniWard(r.ward)) || (r.subCounty && !isMakueniConstituency(r.subCounty))) {
-        skippedCount++;
-        continue;
-      }
-      const updates: Record<string, unknown> = {
-        fullName: r.fullName,
-        importBatch: batchId,
-        updatedAt: new Date(),
-      };
-      for (const field of ["nationalId", "voterNumber", "phone", "gender", "dateOfBirth", "ward", "subCounty", "pollingStation", "pollingStationCode", "stream"] as const) {
-        const value = r[field];
-        if (value !== undefined && value !== "") updates[field] = value;
-      }
-      await db.update(voterRegistryTable).set(updates).where(eq(voterRegistryTable.id, existingId));
-      updatedCount++;
-      dupCount++;
-      continue;
-    }
-
-    // Contacts can be captured before their ward is known. Phone is the
-    // preferred deduplication key; unassigned contacts stay visible for later cleanup.
+  for (const r of clean) {
     if ((r.ward && !isMakueniWard(r.ward)) || (r.subCounty && !isMakueniConstituency(r.subCounty))) {
       skippedCount++;
       continue;
     }
-    if (!r.ward && !r.phone) {
-      skippedCount++;
+    const phone = (r.phone ?? "").replace(/\D/g, "");
+    const key = r.nationalId ? `id:${r.nationalId}` : r.voterNumber ? `voter:${r.voterNumber}` : phone ? `phone:${phone}` : "";
+    if (key && seenKeys.has(key)) { dupCount++; continue; }
+    if (key) seenKeys.add(key);
+    const existing = (r.nationalId ? byNationalId.get(r.nationalId) : undefined)
+      ?? (r.voterNumber ? byVoterNumber.get(r.voterNumber) : undefined)
+      ?? (phone ? byPhone.get(phone) : undefined);
+    if (existing) {
+      const updates: Record<string, unknown> = { fullName: r.fullName, importBatch: batchId, updatedAt: new Date() };
+      for (const field of ["nationalId", "voterNumber", "phone", "gender", "dateOfBirth", "ward", "subCounty", "pollingStation", "pollingStationCode", "stream"] as const) {
+        const value = r[field];
+        if (value !== undefined && value !== "") updates[field] = value;
+      }
+      await db.update(voterRegistryTable).set(updates).where(eq(voterRegistryTable.id, existing.id));
+      updatedCount++;
+      dupCount++;
       continue;
     }
-    await db.insert(voterRegistryTable).values({
-      ...r,
-      importBatch: batchId,
-      status: "pending",
-      source: "upload",
-    });
-    newCount++;
+    if (!r.ward && !r.phone) { skippedCount++; continue; }
+    insertRows.push({ ...r, importBatch: batchId, status: "pending", source: "upload" });
+  }
+
+  // One bulk insert per batch instead of one INSERT per contact.
+  if (insertRows.length) {
+    await db.insert(voterRegistryTable).values(insertRows);
+    newCount = insertRows.length;
   }
 
   await db.insert(voterSyncLogsTable).values({
@@ -211,7 +192,6 @@ router.post("/upload", async (req, res) => {
     recordsDuplicate: dupCount,
     details: `Processed ${records.length} rows. New: ${newCount}, Updated existing: ${updatedCount}, Invalid/skipped: ${skippedCount}`,
   });
-
   res.json({ processed: records.length, new: newCount, updated: updatedCount, duplicates: dupCount, skipped: skippedCount, batchId });
 });
 
