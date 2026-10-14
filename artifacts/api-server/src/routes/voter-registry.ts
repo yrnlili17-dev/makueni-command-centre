@@ -174,7 +174,8 @@ router.post("/upload", async (req, res) => {
       dupCount++;
       continue;
     }
-    if (!r.ward && !r.phone) { skippedCount++; continue; }
+    // Names are valid registry records even when the source has no phone or ward.
+    // Do not silently drop name-only rows; preserve the contact and let staff enrich it later.
     insertRows.push({ ...r, importBatch: batchId, status: "pending", source: "upload" });
   }
 
