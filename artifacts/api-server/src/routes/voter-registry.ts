@@ -156,11 +156,13 @@ router.post("/upload", async (req, res) => {
         .where(and(eq(voterRegistryTable.phone, r.phone), inArray(voterRegistryTable.ward, WARDS)))
         .limit(1);
       existingId = existing?.id;
-      // If a CSV has a differently formatted phone, compare normalized digits.
+      // Normalize phone formats in SQL instead of loading thousands of rows into memory.
       if (!existingId && phoneDigits) {
-        const candidates = await db.select({ id: voterRegistryTable.id, phone: voterRegistryTable.phone })
-          .from(voterRegistryTable).where(inArray(voterRegistryTable.ward, WARDS)).limit(5000);
-        existingId = candidates.find(v => (v.phone ?? "").replace(/\D/g, "") === phoneDigits)?.id;
+        const [phoneMatch] = await db.select({ id: voterRegistryTable.id })
+          .from(voterRegistryTable)
+          .where(and(inArray(voterRegistryTable.ward, WARDS), sql`regexp_replace(coalesce(${voterRegistryTable.phone}, ''), '[^0-9]', '', 'g') = ${phoneDigits}`))
+          .limit(1);
+        existingId = phoneMatch?.id;
       }
     }
 
