@@ -461,11 +461,68 @@ function EmailConfig({ provider, onSaved }: { provider?: Provider; onSaved: () =
 }
 
 // ── Campaign panel ──────────────────────────────────────────────────────────
+type UploadedRecipient = { firstName: string; lastName: string; phone: string; ward?: string; supportLevel?: string; consent: boolean };
+
+function parseRecipientCsv(text: string, channel: Channel): UploadedRecipient[] {
+  const rows: string[][] = [];
+  let row: string[] = [], cell = "", quoted = false;
+  const input = text.replace(/^\\uFEFF/, "");
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    if (ch === '"' && quoted && input[i + 1] === '"') { cell += '"'; i++; }
+    else if (ch === '"') quoted = !quoted;
+    else if (ch === "," && !quoted) { row.push(cell.trim()); cell = ""; }
+    else if ((ch === "\n" || ch === "\r") && !quoted) {
+      if (ch === "\r" && input[i + 1] === "\n") i++;
+      row.push(cell.trim()); cell = "";
+      if (row.some(v => v)) rows.push(row);
+      row = [];
+    } else cell += ch;
+  }
+  row.push(cell.trim());
+  if (row.some(v => v)) rows.push(row);
+  if (rows.length < 2) throw new Error("CSV must include a header row and at least one contact.");
+  const headers = rows[0].map(h => h.trim().toLowerCase().replace(/[\\s_-]+/g, ""));
+  const index = (...names: string[]) => headers.findIndex(h => names.includes(h));
+  const phoneIndex = index("phone", "phonenumber", "mobile", "mobilenumber", "telephone", "number");
+  const firstIndex = index("firstname", "first");
+  const lastIndex = index("lastname", "last", "surname", "familyname");
+  const nameIndex = index("name", "fullname", "contactname");
+  const wardIndex = index("ward", "area", "location");
+  const supportIndex = index("supportlevel", "support");
+  const consentIndex = index("consent", channel === "sms" ? "smsconsent" : channel === "whatsapp" ? "whatsappconsent" : "emailconsent", "optin", "permission");
+  if (phoneIndex < 0) throw new Error("CSV needs a Phone, Mobile, Mobile Number or Number column.");
+  if (consentIndex < 0) throw new Error("For safety, include a Consent, OptIn or channel-specific consent column with YES/TRUE/1 for each recipient.");
+  const result: UploadedRecipient[] = [];
+  const seen = new Set<string>();
+  for (const values of rows.slice(1)) {
+    const get = (i: number) => i >= 0 ? (values[i] ?? "").trim() : "";
+    const rawPhone = get(phoneIndex);
+    if (!rawPhone) continue;
+    const consent = ["yes", "true", "1", "y", "consented", "opted-in", "optedin"].includes(get(consentIndex).toLowerCase());
+    if (!consent) continue;
+    const digits = rawPhone.replace(/\\D/g, "");
+    const phone = digits.startsWith("0") ? "254" + digits.slice(1) : digits.startsWith("254") ? digits : digits;
+    if (phone.length < 9 || phone.length > 15 || seen.has(phone)) continue;
+    seen.add(phone);
+    const fullName = get(nameIndex);
+    const firstName = get(firstIndex) || fullName.split(/\\s+/)[0] || "";
+    const lastName = get(lastIndex) || fullName.split(/\\s+/).slice(1).join(" ");
+    result.push({ firstName, lastName, phone, ward: get(wardIndex), supportLevel: get(supportIndex), consent: true });
+  }
+  if (!result.length) throw new Error("No valid contacts with explicit consent were found in this CSV.");
+  if (result.length > 10000) throw new Error("Upload limit is 10,000 contacts per campaign.");
+  return result;
+}
+
 function CampaignPanel({ channel }: { channel: Channel }) {
   const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<Partial<MessageCampaignInput>>({ channel });
   const [targetWard, setTargetWard] = useState("");
+  const [uploadedList, setUploadedList] = useState<UploadedRecipient[]>([]);
+  const [uploadName, setUploadName] = useState("");
+  const [uploadError, setUploadError] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftError, setDraftError] = useState("");
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
@@ -491,6 +548,9 @@ function CampaignPanel({ channel }: { channel: Channel }) {
         setShowAdd(false);
         setForm({ channel });
         setTargetWard("");
+        setUploadedList([]);
+        setUploadName("");
+        setUploadError("");
       },
     },
   });
@@ -526,7 +586,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
         if (!segmentResponse.ok) throw new Error(segment.error ?? "Could not create ward segment");
         segmentId = segment.id;
       }
-      createCampaign.mutate({ data: { ...form, segmentId } as MessageCampaignInput });
+      createCampaign.mutate({ data: { ...form, segmentId: uploadedList.length ? undefined : segmentId, recipientList: uploadedList.length ? uploadedList : undefined } as MessageCampaignInput });
     } catch (error) {
       setDraftError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -554,9 +614,32 @@ function CampaignPanel({ channel }: { channel: Channel }) {
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3">
             <FieldInput label="CAMPAIGN NAME" required value={form.name ?? ""} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+            <div className="col-span-2 space-y-2 border border-border p-3">
+              <label className="block text-[10px] font-mono text-muted-foreground tracking-widest">SEND TO A SEPARATE CSV LIST (OPTIONAL)</label>
+              <input type="file" accept=".csv,text/csv" onChange={async e => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploadError("");
+                try {
+                  const parsed = parseRecipientCsv(await file.text(), channel);
+                  setUploadedList(parsed);
+                  setUploadName(file.name);
+                  setTargetWard("");
+                  setForm(p => ({ ...p, segmentId: undefined }));
+                } catch (error) {
+                  setUploadedList([]);
+                  setUploadName("");
+                  setUploadError(error instanceof Error ? error.message : String(error));
+                }
+              }} className="block w-full text-xs file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-white file:font-mono file:text-[10px]" />
+              <p className="font-mono text-[9px] text-muted-foreground">Upload a separate CSV for this campaign only. Required columns: phone/mobile number and an explicit Consent/OptIn column (YES/TRUE/1). Optional: Name, First Name, Last Name, Ward, Support Level. Phone numbers are normalized to 254 format. Maximum 10,000 contacts.</p>
+              {uploadedList.length > 0 && <div className="font-mono text-[10px] text-green-400">✓ {uploadName}: {uploadedList.length.toLocaleString()} consented contacts ready. This list will be saved with this campaign and will not be added to the main contacts database.<div className="mt-1 text-muted-foreground">Preview: {uploadedList.slice(0, 3).map(r => `${[r.firstName, r.lastName].filter(Boolean).join(" ") || "Contact"} — ${r.phone}`).join(" · ")}</div></div>}
+              {uploadError && <p className="font-mono text-[10px] text-red-400">{uploadError}</p>}
+              {uploadedList.length > 0 && <button type="button" onClick={() => { setUploadedList([]); setUploadName(""); }} className="text-[10px] font-mono text-muted-foreground underline">Remove uploaded list</button>}
+            </div>
             <div className="space-y-1">
               <label className="block text-[10px] font-mono text-muted-foreground tracking-widest">TARGET SEGMENT</label>
-              <select value={form.segmentId ?? ""} onChange={e => setForm(p => ({ ...p, segmentId: e.target.value ? Number(e.target.value) : undefined }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
+              <select value={uploadedList.length ? "" : (form.segmentId ?? "")} disabled={uploadedList.length > 0} onChange={e => setForm(p => ({ ...p, segmentId: e.target.value ? Number(e.target.value) : undefined }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
                 <option value="">ALL CONTACTS</option>
                 {segments?.map(s => <option key={s.id} value={s.id}>{s.name} ({s.memberCount})</option>)}
               </select>
