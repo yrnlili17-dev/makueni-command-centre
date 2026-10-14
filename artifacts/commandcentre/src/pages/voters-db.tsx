@@ -501,7 +501,7 @@ function CaptureTab() {
         {/* CSV Upload */}
         <div className="bg-card border border-border p-4 space-y-3">
           <div className="font-mono text-[10px] text-muted-foreground tracking-widest">◆ BULK CSV UPLOAD</div>
-          <p className="text-xs text-muted-foreground">Upload a CSV file with voter data. Use <code className="font-mono text-primary">full_name</code> (or name), plus <code className="font-mono text-primary">national_id</code> or <code className="font-mono text-primary">voter_number</code> to match existing records and update their names. New records need a valid <code className="font-mono text-primary">ward</code>. Optional: <code className="font-mono text-primary">national_id, voter_number, phone, gender, dob, ward, polling_station, station_code, stream, sub_county</code>.</p>
+          <p className="text-xs text-muted-foreground">Upload a CSV file with voter data. Use <code className="font-mono text-primary">full_name</code> (or name), plus <code className="font-mono text-primary">national_id</code> or <code className="font-mono text-primary">voter_number</code> to match existing records and update their names. New contacts can be uploaded without a <code className="font-mono text-primary">ward</code>; phone number is used to match existing contacts. Optional: <code className="font-mono text-primary">national_id, voter_number, phone, gender, dob, ward, polling_station, station_code, stream, sub_county</code>.</p>
 
           <div
             className="border-2 border-dashed border-border hover:border-primary/50 p-8 text-center cursor-pointer transition-colors"
@@ -527,7 +527,7 @@ function CaptureTab() {
                 <div className="text-center"><div className="font-mono text-[9px] text-yellow-400">MATCHED</div><div className="font-bold text-yellow-400">{uploadResult.duplicates}</div></div>
                 <div className="text-center"><div className="font-mono text-[9px] text-red-400">SKIPPED</div><div className="font-bold text-red-400">{uploadResult.skipped ?? 0}</div></div>
               </div>
-              <div className="font-mono text-[9px] text-muted-foreground mt-2">Existing records can match by National ID, Voter Number or phone. New records need a valid Makueni ward and remain PENDING until reviewed. Contacts without a ward may be skipped unless they match an existing record.</div>
+              <div className="font-mono text-[9px] text-muted-foreground mt-2">Existing records can match by National ID, Voter Number or phone. Contacts can be uploaded without a ward. Phone number is the preferred matching key; contacts without a ward remain unassigned until their ward is confirmed.</div>
             </div>
           )}
         </div>
