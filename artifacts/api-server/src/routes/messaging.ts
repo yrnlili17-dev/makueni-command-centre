@@ -293,14 +293,14 @@ router.post("/:id/send", async (req, res) => {
         if (!response.ok || !payload.sid) throw new Error(payload.message ?? `Twilio HTTP ${response.status}`);
         providerMessageId = payload.sid;
       } else if (provider.provider === "onfonmedia") {
-        const digits = recipient.replace(/\\D/g, "");
+        const digits = recipient.replace(/\D/g, "");
         const number = digits.startsWith("0") ? "254" + digits.slice(1) : digits.startsWith("254") ? digits : digits;
         const response = await fetch("https://api.onfonmedia.co.ke/v1/sms/SendBulkSMS", {
           method: "POST",
           headers: { "Content-Type": "application/json", AccessKey: provider.apiSecret! },
           body: JSON.stringify({
             SenderId: provider.senderId,
-            IsUnicode: /[^\\x00-\\x7F]/.test(personalizedBody),
+            IsUnicode: /[^\x00-\x7F]/.test(personalizedBody),
             IsFlash: false,
             MessageParameters: [{ Number: number, Text: personalizedBody }],
             ApiKey: provider.apiKey,
