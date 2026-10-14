@@ -365,6 +365,8 @@ function CaptureTab() {
   const [recent, setRecent] = useState<VoterRecord[]>([]);
   const [successMsg, setSuccessMsg] = useState("");
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
+  const [uploadError, setUploadError] = useState("");
   const [uploadResult, setUploadResult] = useState<{ processed: number; new: number; updated?: number; duplicates: number; skipped?: number; batchId: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -392,6 +394,8 @@ function CaptureTab() {
     if (!file) return;
     setUploadLoading(true);
     setUploadResult(null);
+    setUploadError("");
+    setUploadProgress("Reading CSV file...");
 
     try {
       const text = await file.text();
@@ -435,16 +439,33 @@ function CaptureTab() {
         return record;
       }).filter(r => r.fullName || r.nationalId || r.voterNumber);
 
-      const res = await fetch(`${API}/upload`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ records, batchName: `FILE-${file.name.replace(/[^a-z0-9]/gi, "_")}-${Date.now()}` }),
-      });
-      const result = await res.json();
-      setUploadResult(result);
+      const batchName = `FILE-${file.name.replace(/[^a-z0-9]/gi, "_")}-${Date.now()}`;
+      const totals = { processed: 0, new: 0, updated: 0, duplicates: 0, skipped: 0, batchId: batchName };
+      const chunkSize = 250;
+      const chunks = Math.ceil(records.length / chunkSize);
+      for (let start = 0; start < records.length; start += chunkSize) {
+        const chunk = records.slice(start, start + chunkSize);
+        const chunkNumber = Math.floor(start / chunkSize) + 1;
+        setUploadProgress(`Uploading batch ${chunkNumber} of ${chunks} (${Math.min(start + chunk.length, records.length).toLocaleString()} of ${records.length.toLocaleString()} contacts)...`);
+        const res = await fetch(`${API}/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ records: chunk, batchName: `${batchName}-${chunkNumber}` }),
+        });
+        const responseText = await res.text();
+        let result: Record<string, unknown>;
+        try { result = JSON.parse(responseText) as Record<string, unknown>; }
+        catch { throw new Error(`Batch ${chunkNumber} failed (HTTP ${res.status}). Server response: ${responseText.slice(0, 180)}`); }
+        if (!res.ok) throw new Error(`Batch ${chunkNumber} failed (HTTP ${res.status}): ${String(result.error ?? responseText).slice(0, 240)}`);
+        for (const key of ["processed", "new", "updated", "duplicates", "skipped"] as const) totals[key] += Number(result[key] ?? 0);
+      }
+      setUploadResult(totals);
+      setUploadProgress(`Finished processing ${totals.processed.toLocaleString()} contacts.`);
     } catch (err) {
       console.error(err);
-      alert("Error parsing CSV file");
+      const message = err instanceof Error ? err.message : String(err);
+      setUploadError(message);
+      setUploadProgress("");
     } finally {
       setUploadLoading(false);
       if (fileRef.current) fileRef.current.value = "";
