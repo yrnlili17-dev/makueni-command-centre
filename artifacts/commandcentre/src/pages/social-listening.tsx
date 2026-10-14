@@ -9,7 +9,7 @@ import type { SocialMention } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Radio, RefreshCw, ExternalLink, Trash2, TrendingUp, TrendingDown,
-  Minus, Globe, AlertCircle, Search, MessageSquareText, Copy, Check, Facebook,
+  Minus, Globe, AlertCircle, Search, MessageSquareText, Copy, Check, Facebook, X, Music,
 } from "lucide-react";
 
 const CATEGORIES: { key: string; label: string }[] = [
@@ -68,6 +68,27 @@ export default function SocialListening() {
   const [sentiment, setSentiment] = useState("all");
   const [replyItemId, setReplyItemId] = useState<number | null>(null);
   const [copiedReply, setCopiedReply] = useState<string | null>(null);
+  const [feedSearch, setFeedSearch] = useState<{
+    platform: "facebook" | "x" | "tiktok";
+    query: string;
+    results: Array<{ title: string; url: string; source: string; publishedAt: string | null; snippet: string }>;
+    loading: boolean;
+    error: string | null;
+    coverage?: string;
+    checkedAt?: string;
+  } | null>(null);
+  const [feedQuery, setFeedQuery] = useState("Prof Philip Kaloki Makueni");
+  async function searchPlatform(platform: "facebook" | "x" | "tiktok") {
+    setFeedSearch({ platform, query: feedQuery, results: [], loading: true, error: null });
+    try {
+      const response = await fetch(`/api/social/search-feed?platform=${platform}&q=${encodeURIComponent(feedQuery)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `Search failed (HTTP ${response.status})`);
+      setFeedSearch({ platform, query: data.query ?? feedQuery, results: data.results ?? [], loading: false, error: null, coverage: data.coverage, checkedAt: data.checkedAt });
+    } catch (error) {
+      setFeedSearch(current => current ? { ...current, loading: false, error: error instanceof Error ? error.message : "Search failed." } : current);
+    }
+  }
 
   const invalidate = () => qc.invalidateQueries({ queryKey: getListSocialMentionsQueryKey() });
   const scan = useScanSocial({ mutation: { onSuccess: invalidate } });
@@ -117,21 +138,10 @@ export default function SocialListening() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <a href="https://www.facebook.com/prof.philipkaloki" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Open the supplied Facebook profile">
-            <Facebook className="w-3.5 h-3.5" /> FACEBOOK PROFILE
-          </a>
-          <a href="https://x.com/ProfKaloki" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Open the supplied X profile">
-            <ExternalLink className="w-3.5 h-3.5" /> X PROFILE
-          </a>
-          <a href="https://www.tiktok.com/@profkaloki1" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Open the supplied TikTok profile">
-            <ExternalLink className="w-3.5 h-3.5" /> TIKTOK PROFILE
-          </a>
-          <a href={`https://www.facebook.com/search/top?q=${encodeURIComponent('"prof.philipkaloki" OR "Prof Philip Kaloki" Makueni')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Search public Facebook results">
-            <Search className="w-3.5 h-3.5" /> SEARCH FACEBOOK
-          </a>
-          <a href={`https://www.tiktok.com/search?q=${encodeURIComponent("profkaloki1 Makueni")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary" title="Search public TikTok results">
-            <Search className="w-3.5 h-3.5" /> SEARCH TIKTOK
-          </a>
+          <button type="button" onClick={() => { setFeedQuery("Prof Philip Kaloki Makueni"); void searchPlatform("facebook"); }} className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary"><Facebook className="w-3.5 h-3.5" /> SEARCH FACEBOOK</button>
+          <button type="button" onClick={() => { setFeedQuery("Prof Philip Kaloki Makueni"); void searchPlatform("x"); }} className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary"><X className="w-3.5 h-3.5" /> SEARCH X</button>
+          <button type="button" onClick={() => { setFeedQuery("Prof Philip Kaloki Makueni"); void searchPlatform("tiktok"); }} className="flex items-center gap-1.5 border border-border px-3 py-2 font-mono text-[10px] tracking-wider hover:bg-secondary"><Music className="w-3.5 h-3.5" /> SEARCH TIKTOK</button>
+          <input value={feedQuery} onChange={event => setFeedQuery(event.target.value)} placeholder="Search public posts..." className="w-40 border border-border bg-background px-2 py-2 text-xs" aria-label="Public social search query" />
           <button
             onClick={() => scan.mutate()}
             disabled={scan.isPending}
@@ -142,6 +152,35 @@ export default function SocialListening() {
           </button>
         </div>
       </div>
+
+      {feedSearch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={`${feedSearch.platform} public search results`} onMouseDown={event => { if (event.target === event.currentTarget) setFeedSearch(null); }}>
+          <div className="flex max-h-[85vh] w-full max-w-4xl flex-col border border-border bg-card shadow-2xl">
+            <div className="flex items-start justify-between gap-3 border-b border-border p-4">
+              <div><h2 className="font-bold text-sm tracking-wider">{feedSearch.platform.toUpperCase()} · PUBLIC SEARCH</h2><p className="mt-1 text-xs text-muted-foreground">Search: {feedSearch.query}</p></div>
+              <button type="button" onClick={() => setFeedSearch(null)} className="border border-border px-3 py-1 text-sm hover:bg-secondary">CLOSE ✕</button>
+            </div>
+            <div className="flex gap-2 border-b border-border p-3">
+              <input value={feedQuery} onChange={event => setFeedQuery(event.target.value)} onKeyDown={event => { if (event.key === "Enter") void searchPlatform(feedSearch.platform); }} className="min-w-0 flex-1 border border-border bg-background px-3 py-2 text-sm" aria-label="Search query" />
+              <button type="button" onClick={() => void searchPlatform(feedSearch.platform)} disabled={feedSearch.loading || !feedQuery.trim()} className="bg-primary px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50">{feedSearch.loading ? "SEARCHING…" : "SEARCH"}</button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              {feedSearch.loading && <p className="py-8 text-center text-sm text-muted-foreground"><span className="inline-flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" /> Searching publicly indexed results…</span></p>}
+              {feedSearch.error && <p className="border border-red-400/40 bg-red-400/10 p-3 text-sm text-red-400">{feedSearch.error}</p>}
+              {!feedSearch.loading && !feedSearch.error && feedSearch.results.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No matching public search results were returned. This does not mean the platform has no posts.</p>}
+              <ul className="space-y-3">{feedSearch.results.map((item, index) => <li key={item.url || index} className="border border-border p-3">
+                <p className="text-sm font-semibold">{item.title}</p>{item.snippet && <p className="mt-2 text-sm text-muted-foreground">{item.snippet}</p>}
+                <p className="mt-2 text-[11px] text-muted-foreground">{item.source}{item.publishedAt ? ` · ${item.publishedAt}` : ""}</p>
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-primary underline">View original source <ExternalLink className="h-3 w-3" /></a>
+              </li>)}</ul>
+            </div>
+            <div className="border-t border-border p-3 text-[11px] text-muted-foreground">
+              {feedSearch.coverage || "Results come from publicly indexed search listings, not a complete live feed."}{feedSearch.checkedAt ? ` Checked: ${new Date(feedSearch.checkedAt).toLocaleString()}.` : ""}
+              <p className="mt-1">Full real-time feeds require approved platform API access. Public search results may be delayed or incomplete.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {scan.isError && (
         <div className="flex items-start gap-2 bg-red-400/10 border border-red-400/40 text-red-400 px-3 py-2 font-mono text-[11px]">
