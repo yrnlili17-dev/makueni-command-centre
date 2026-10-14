@@ -248,6 +248,30 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
   }
 });
 
+router.get("/search-feed", requirePermission("social", "read"), async (req, res) => {
+  const platformSchema = z.enum(["facebook", "x", "tiktok"]);
+  const parsedPlatform = platformSchema.safeParse(req.query.platform);
+  const query = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 120) : "";
+  if (!parsedPlatform.success || !query) {
+    return res.status(400).json({ error: "Choose a supported platform and enter a search term." });
+  }
+  const platform = parsedPlatform.data;
+  const domain = platform === "facebook" ? "facebook.com" : platform === "x" ? "x.com" : "tiktok.com";
+  try {
+    const results = await searchFreeMakueniWeb(`site:${domain} ${query}`);
+    return res.json({
+      platform,
+      query,
+      checkedAt: new Date().toISOString(),
+      coverage: "Publicly indexed search results only; this is not a complete or real-time platform feed.",
+      results: results.slice(0, 8),
+    });
+  } catch (err) {
+    req.log.error({ err, platform }, "social platform search failed");
+    return res.status(502).json({ error: "The public search provider could not return results. Please retry later." });
+  }
+});
+
 router.get("/source-health", requirePermission("social", "read"), async (_req, res) => {
   const rows = await db.select().from(socialSourceHealthTable).orderBy(socialSourceHealthTable.sourceKey);
   res.json(rows);
