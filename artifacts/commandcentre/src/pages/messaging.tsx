@@ -7,7 +7,7 @@ import {
 import type { MessageCampaignInput } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Plus, Send, Trash2, X, Check, MessageSquare, Settings,
+  Plus, Send, Trash2, X, Check, ShieldCheck, MessageSquare, Settings,
   Phone, Mail, ChevronDown, ChevronUp, Save, Wifi, WifiOff,
 } from "lucide-react";
 
@@ -468,6 +468,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
   const [targetWard, setTargetWard] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftError, setDraftError] = useState("");
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const messageBodyRef = useRef<HTMLTextAreaElement>(null);
   const insertPlaceholder = (token: string) => {
     const field = messageBodyRef.current;
@@ -604,11 +605,15 @@ function CampaignPanel({ channel }: { channel: Channel }) {
                 placeholder={channel === "email" ? "Email body (HTML supported)..." : channel === "whatsapp" ? "WhatsApp message (supports *bold*, _italic_, ~strikethrough~)..." : "SMS message (max 160 chars for 1 part)..."}
                 className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary resize-none"
               />
-              {(form.messageBody ?? "").includes("##") && (
-                <div className="border border-border bg-secondary/50 p-2">
-                  <div className="mb-1 font-mono text-[9px] tracking-widest text-muted-foreground">EXAMPLE PREVIEW</div>
-                  <p className="whitespace-pre-wrap text-xs">{(form.messageBody ?? "")
+              <div className="border border-border bg-secondary/50 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="font-mono text-[9px] tracking-widest text-muted-foreground">LIVE MESSAGE PREVIEW</div>
+                  <span className="font-mono text-[9px] text-green-400">EXAMPLE CONTACT: JONAH KYATHA</span>
+                </div>
+                <div className="max-w-xl rounded-lg border border-border bg-card p-3">
+                  <p className="whitespace-pre-wrap text-xs leading-relaxed">{(form.messageBody ?? "Your message preview will appear here.")
                     .replace(/##Name##/gi, "Jonah Kyatha")
+                    .replace(/##FullName##/gi, "Jonah Kyatha")
                     .replace(/##FirstName##/gi, "Jonah")
                     .replace(/##LastName##/gi, "Kyatha")
                     .replace(/##Ward##/gi, "Ukia")
@@ -618,15 +623,19 @@ function CampaignPanel({ channel }: { channel: Channel }) {
                     .replace(/##CampaignName##/gi, form.name || "Campaign")
                     .replace(/##[^#]+##/g, "[unknown field]")}</p>
                 </div>
-              )}
+                <p className="mt-2 font-mono text-[9px] text-muted-foreground">Example only. Each opted-in contact sees their own saved details.</p>
+              </div>
             </div>
-            <FieldInput label="SCHEDULE (OPTIONAL)" type="datetime-local" value={form.scheduledAt ?? ""} onChange={e => setForm(p => ({ ...p, scheduledAt: e.target.value }))} />
+            <div className="space-y-1">
+              <FieldInput label="PROPOSED SEND TIME (OPTIONAL)" type="datetime-local" value={form.scheduledAt ?? ""} onChange={e => setForm(p => ({ ...p, scheduledAt: e.target.value }))} />
+              <p className="font-mono text-[9px] text-yellow-400">A scheduled campaign remains a draft until official confirmation is recorded. A saved time alone never authorizes sending.</p>
+            </div>
             <div className="flex items-end justify-end gap-2">
               <button type="button" onClick={() => { setShowAdd(false); setForm({ channel }); }} className="flex items-center gap-1.5 border border-border px-4 py-2 font-mono text-[10px] hover:bg-secondary">
                 <X className="w-3 h-3" /> ABORT
               </button>
               <button type="submit" disabled={createCampaign.isPending || savingDraft} className="flex items-center gap-1.5 bg-primary text-white px-4 py-2 font-mono text-[10px] hover:bg-primary/90 disabled:opacity-50">
-                <Check className="w-3 h-3" /> DEPLOY
+                <Save className="w-3 h-3" /> {savingDraft ? "SAVING..." : "SAVE DRAFT"}
               </button>
             </div>
           </form>
@@ -659,8 +668,48 @@ function CampaignPanel({ channel }: { channel: Channel }) {
                 </td>
                 <td className="px-4 py-2.5">
                   <div className="flex gap-2">
-                    {c.status === "draft" && (
-                      <button onClick={() => sendCampaign.mutate({ id: c.id })} title="Send now" className="text-muted-foreground hover:text-primary transition-colors">
+                    {c.status === "draft" && c.scheduledAt && (
+                      <button
+                        disabled={confirmingId === c.id}
+                        onClick={async () => {
+                          if (!confirm("Confirm official authorization to send this scheduled campaign has been received?")) return;
+                          setConfirmingId(c.id);
+                          try {
+                            const response = await fetch(`${BASE_URL}/api/messages/${c.id}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ status: "confirmed" }),
+                            });
+                            const result = await response.json();
+                            if (!response.ok) throw new Error(result.error ?? "Could not record confirmation");
+                            qc.invalidateQueries({ queryKey: getListCampaignsQueryKey() });
+                          } catch (error) {
+                            alert(error instanceof Error ? error.message : String(error));
+                          } finally { setConfirmingId(null); }
+                        }}
+                        title="Record official confirmation"
+                        className="text-yellow-400 hover:text-green-400 disabled:opacity-50"
+                      >
+                        <ShieldCheck className="w-3 h-3" />
+                      </button>
+                    )}
+                    {["draft", "failed", "confirmed"].includes(c.status) && (
+                      <button
+                        disabled={Boolean(c.scheduledAt && (c.status !== "confirmed" || new Date(c.scheduledAt).getTime() > Date.now())) || sendCampaign.isPending}
+                        onClick={() => {
+                          if (c.scheduledAt && c.status !== "confirmed") {
+                            alert("Official confirmation is required before this scheduled campaign can be sent.");
+                            return;
+                          }
+                          if (c.scheduledAt && new Date(c.scheduledAt).getTime() > Date.now()) {
+                            alert("The scheduled time has not arrived yet.");
+                            return;
+                          }
+                          if (confirm("Send this campaign now to eligible, opted-in contacts?")) sendCampaign.mutate({ id: c.id });
+                        }}
+                        title={c.scheduledAt ? (c.status !== "confirmed" ? "Official confirmation required" : "Send at/after scheduled time") : "Send now"}
+                        className="text-muted-foreground hover:text-primary disabled:opacity-30 transition-colors"
+                      >
                         <Send className="w-3 h-3" />
                       </button>
                     )}
