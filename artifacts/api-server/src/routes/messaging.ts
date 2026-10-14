@@ -217,11 +217,15 @@ router.post("/:id/send", async (req, res) => {
     .where(and(eq(messagingProvidersTable.channel, campaign.channel), eq(messagingProvidersTable.isActive, true)));
   if (!provider) { res.status(409).json({ error: `No active ${campaign.channel} provider configured` }); return; }
   const supported = campaign.channel === "sms"
-    ? ["africastalking", "twilio"].includes(provider.provider)
+    ? ["africastalking", "twilio", "onfonmedia"].includes(provider.provider)
     : ["twilio_wa"].includes(provider.provider);
   if (!supported) { res.status(409).json({ error: "The configured provider is not supported for live sending yet" }); return; }
   if (provider.provider === "twilio" || provider.provider === "twilio_wa") {
     if (!provider.username || !provider.apiKey || !provider.senderId) { res.status(409).json({ error: "Twilio requires Account SID, Auth Token and sender phone number" }); return; }
+  } else if (provider.provider === "onfonmedia") {
+    if (!provider.apiKey || !provider.username || !provider.apiSecret || !provider.senderId) {
+      res.status(409).json({ error: "Onfon Media requires API Key, Client ID, Access Key and approved Sender ID" }); return;
+    }
   } else if (!provider.apiKey || !provider.username) {
     res.status(409).json({ error: "Africa's Talking requires API key and username" }); return;
   }
@@ -266,6 +270,28 @@ router.post("/:id/send", async (req, res) => {
         const payload = await response.json() as { sid?: string; status?: string; message?: string; code?: number };
         if (!response.ok || !payload.sid) throw new Error(payload.message ?? `Twilio HTTP ${response.status}`);
         providerMessageId = payload.sid;
+      } else if (provider.provider === "onfonmedia") {
+        const digits = recipient.replace(/\\D/g, "");
+        const number = digits.startsWith("0") ? "254" + digits.slice(1) : digits.startsWith("254") ? digits : digits;
+        const response = await fetch("https://api.onfonmedia.co.ke/v1/sms/SendBulkSMS", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", AccessKey: provider.apiSecret! },
+          body: JSON.stringify({
+            SenderId: provider.senderId,
+            IsUnicode: /[^\\x00-\\x7F]/.test(campaign.messageBody),
+            IsFlash: false,
+            MessageParameters: [{ Number: number, Text: campaign.messageBody }],
+            ApiKey: provider.apiKey,
+            ClientId: provider.username,
+          }),
+        });
+        const payload = await response.json() as { ErrorCode?: number | string; ErrorDescription?: string; Data?: Array<{ MessageId?: string; MobileNumber?: string }> };
+        const errorCode = String(payload.ErrorCode ?? "");
+        const result = payload.Data?.[0];
+        if (!response.ok || !["0", "000"].includes(errorCode) || !result?.MessageId) {
+          throw new Error(payload.ErrorDescription ?? "Onfon Media HTTP " + response.status);
+        }
+        providerMessageId = result.MessageId;
       } else {
         const form = new URLSearchParams({ username: provider.username!, to: recipient, message: campaign.messageBody });
         if (provider.senderId) form.set("from", provider.senderId);
