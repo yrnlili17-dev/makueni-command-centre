@@ -73,13 +73,8 @@ export default function SocialListening() {
   const scan = useScanSocial({ mutation: { onSuccess: invalidate } });
   const del = useDeleteSocialMention({ mutation: { onSuccess: invalidate } });
 
-  // Free-mode public-web scan refreshes while this screen is open. For always-on
-  // monitoring while nobody is logged in, deploy a separate scheduled worker.
-  useEffect(() => {
-    scan.mutate();
-    const timer = window.setInterval(() => scan.mutate(), 15 * 60 * 1000);
-    return () => window.clearInterval(timer);
-  }, [scan.mutate]);
+  // Scans are manual to avoid repeated provider failures, rate limits and
+  // accidental requests whenever the page mounts or refreshes.
 
   const all = mentions as SocialMention[];
 
@@ -149,8 +144,14 @@ export default function SocialListening() {
       </div>
 
       {scan.isError && (
-        <div className="flex items-center gap-2 bg-red-400/10 border border-red-400/40 text-red-400 px-3 py-2 font-mono text-[11px]">
-          <AlertCircle className="w-3.5 h-3.5" /> Scan failed. Please try again in a moment.
+        <div className="flex items-start gap-2 bg-red-400/10 border border-red-400/40 text-red-400 px-3 py-2 font-mono text-[11px]">
+          <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+          <div>
+            <p>Scan failed. Existing mentions are unchanged.</p>
+            <p className="mt-1 text-red-300/90 break-words">
+              {scan.error instanceof Error ? scan.error.message.replace(/<[^>]*>/g, "").slice(0, 400) : "The API did not provide a readable error. Check the Render API logs."}
+            </p>
+          </div>
         </div>
       )}
       {scanResult && !scan.isPending && (
