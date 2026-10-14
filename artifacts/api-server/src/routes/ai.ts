@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { buildFreeMakueniAnswer, buildFreeMakueniSpeech, fetchMakueniOfficialSources, searchFreeMakueniWeb } from "./makueni-free-ai";
+import { getCidp2013Context } from "./cidp-2013-2017-knowledge";
 
 const router = Router();
 /** In free mode these generation routes must never fall through to OpenAI. */
@@ -305,6 +306,7 @@ router.post("/assist", async (req, res) => {
   }
 
   const moduleCtx = MODULE_CONTEXTS[module] ?? MODULE_CONTEXTS.dashboard;
+  const historicalCidpContext = getCidp2013Context(message, 4);
   const contextStr =
     Object.keys(context).length > 0
       ? `\n\nCURRENT MODULE DATA:\n${JSON.stringify(context, null, 2)}`
@@ -317,7 +319,7 @@ router.post("/assist", async (req, res) => {
   // Explicit no-token mode avoids calling the paid model at all.
   if (process.env.MAKUENI_AI_MODE === "free") {
     const [liveSources, publicWebResults] = await Promise.all([fetchMakueniOfficialSources(), searchFreeMakueniWeb(message)]);
-    const fallback = buildFreeMakueniAnswer({ message, module, context: { ...context, publicWebResults }, liveSources });
+    const fallback = buildFreeMakueniAnswer({ message, module, context: { ...context, publicWebResults, historicalCidpContext }, liveSources });
     res.write(`data: ${JSON.stringify({ content: fallback, mode: "free-fallback" })}\n\n`);
     res.write(`data: ${JSON.stringify({ done: true, mode: "free-fallback" })}\n\n`);
     res.end();
@@ -331,7 +333,7 @@ router.post("/assist", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: `${CAMPAIGN_CONTEXT}\n\nMODULE: ${module.toUpperCase()}\nROLE: ${moduleCtx}${contextStr}`,
+          content: `${CAMPAIGN_CONTEXT}\n\nHISTORICAL SOURCE — MAKUENI CIDP 2013-2017:\n${historicalCidpContext}\n\nThis source is historical. Never treat its baselines or planned projects as current statistics or current project status. Use it for historical context and compare against current dated evidence.\n\nMODULE: ${module.toUpperCase()}\nROLE: ${moduleCtx}${contextStr}`,
         },
         { role: "user", content: message },
       ],
