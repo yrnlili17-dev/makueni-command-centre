@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   useListCampaigns, useCreateCampaign, useDeleteCampaign, useSendCampaign,
   useGetMessagingStats, useListSegments,
@@ -458,6 +458,17 @@ function CampaignPanel({ channel }: { channel: Channel }) {
   const [targetWard, setTargetWard] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftError, setDraftError] = useState("");
+  const messageBodyRef = useRef<HTMLTextAreaElement>(null);
+  const insertPlaceholder = (token: string) => {
+    const field = messageBodyRef.current;
+    const current = form.messageBody ?? "";
+    if (!field) { setForm(p => ({ ...p, messageBody: current + token })); return; }
+    const start = field.selectionStart ?? current.length;
+    const end = field.selectionEnd ?? current.length;
+    const next = current.slice(0, start) + token + current.slice(end);
+    setForm(p => ({ ...p, messageBody: next }));
+    requestAnimationFrame(() => { field.focus(); field.setSelectionRange(start + token.length, start + token.length); });
+  };
 
   const { data: campaigns, isLoading } = useListCampaigns({ channel });
   const { data: segments } = useListSegments();
@@ -550,7 +561,22 @@ function CampaignPanel({ channel }: { channel: Channel }) {
               </div>
             )}
             {draftError && <div className="col-span-2 border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-300">{draftError}</div>}
-            <div className="col-span-2 space-y-1">
+            <div className="col-span-2 space-y-2">
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-muted-foreground tracking-widest">PERSONALIZATION PLACEHOLDERS — CLICK TO INSERT</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    ["##Name##", "Full name"], ["##FirstName##", "First name"], ["##LastName##", "Last name"],
+                    ["##Ward##", "Ward"], ["##Phone##", "Phone"], ["##SupportLevel##", "Support level"],
+                    ["##County##", "County"], ["##CampaignName##", "Campaign name"],
+                  ].map(([token, label]) => (
+                    <button key={token} type="button" onClick={() => insertPlaceholder(token)} className="border border-primary/40 bg-primary/5 px-2 py-1 font-mono text-[9px] text-primary hover:bg-primary/15" title={`Insert ${token}`}>
+                      {label} <span className="opacity-70">{token}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="font-mono text-[9px] text-muted-foreground">Each contact receives their own details. Tokens are replaced before sending; unknown or blank fields are handled safely.</p>
+              </div>
               <div className="flex justify-between">
                 <label className="text-[10px] font-mono text-muted-foreground tracking-widest">MESSAGE BODY *</label>
                 {charLimit && (
@@ -560,6 +586,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
                 )}
               </div>
               <textarea
+                ref={messageBodyRef}
                 required
                 value={form.messageBody ?? ""}
                 onChange={e => setForm(p => ({ ...p, messageBody: e.target.value }))}
@@ -567,6 +594,21 @@ function CampaignPanel({ channel }: { channel: Channel }) {
                 placeholder={channel === "email" ? "Email body (HTML supported)..." : channel === "whatsapp" ? "WhatsApp message (supports *bold*, _italic_, ~strikethrough~)..." : "SMS message (max 160 chars for 1 part)..."}
                 className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary resize-none"
               />
+              {(form.messageBody ?? "").includes("##") && (
+                <div className="border border-border bg-secondary/50 p-2">
+                  <div className="mb-1 font-mono text-[9px] tracking-widest text-muted-foreground">EXAMPLE PREVIEW</div>
+                  <p className="whitespace-pre-wrap text-xs">{(form.messageBody ?? "")
+                    .replace(/##Name##/gi, "Jonah Kyatha")
+                    .replace(/##FirstName##/gi, "Jonah")
+                    .replace(/##LastName##/gi, "Kyatha")
+                    .replace(/##Ward##/gi, "Ukia")
+                    .replace(/##Phone##/gi, "2547XXXXXXXX")
+                    .replace(/##SupportLevel##/gi, "Supporter")
+                    .replace(/##County##/gi, "Makueni")
+                    .replace(/##CampaignName##/gi, form.name || "Campaign")
+                    .replace(/##[^#]+##/g, "[unknown field]")}</p>
+                </div>
+              )}
             </div>
             <FieldInput label="SCHEDULE (OPTIONAL)" type="datetime-local" value={form.scheduledAt ?? ""} onChange={e => setForm(p => ({ ...p, scheduledAt: e.target.value }))} />
             <div className="flex items-end justify-end gap-2">
