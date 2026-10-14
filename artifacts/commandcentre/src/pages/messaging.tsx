@@ -463,7 +463,7 @@ function EmailConfig({ provider, onSaved }: { provider?: Provider; onSaved: () =
 // ── Campaign panel ──────────────────────────────────────────────────────────
 type UploadedRecipient = { firstName: string; lastName: string; phone: string; ward?: string; supportLevel?: string; consent: boolean };
 
-function parseRecipientCsv(text: string, channel: Channel): UploadedRecipient[] {
+function parseRecipientCsv(text: string, channel: Channel, consentAttested = false): UploadedRecipient[] {
   const rows: string[][] = [];
   let row: string[] = [], cell = "", quoted = false;
   const input = text.replace(/^\uFEFF/, "");
@@ -492,14 +492,16 @@ function parseRecipientCsv(text: string, channel: Channel): UploadedRecipient[] 
   const supportIndex = index("supportlevel", "support");
   const consentIndex = index("consent", channel === "sms" ? "smsconsent" : channel === "whatsapp" ? "whatsappconsent" : "emailconsent", "optin", "permission");
   if (phoneIndex < 0) throw new Error("CSV needs a Phone, Mobile, Mobile Number or Number column.");
-  if (consentIndex < 0) throw new Error("For safety, include a Consent, OptIn or channel-specific consent column with YES/TRUE/1 for each recipient.");
+  if (consentIndex < 0 && !consentAttested) throw new Error("Add a consent column or confirm that every contact in this list has already opted in.");
   const result: UploadedRecipient[] = [];
   const seen = new Set<string>();
   for (const values of rows.slice(1)) {
     const get = (i: number) => i >= 0 ? (values[i] ?? "").trim() : "";
     const rawPhone = get(phoneIndex);
     if (!rawPhone) continue;
-    const consent = ["yes", "true", "1", "y", "consented", "opted-in", "optedin"].includes(get(consentIndex).toLowerCase());
+    const consent = consentIndex >= 0
+      ? ["yes", "true", "1", "y", "consented", "opted-in", "optedin"].includes(get(consentIndex).toLowerCase())
+      : consentAttested;
     if (!consent) continue;
     const digits = rawPhone.replace(/\D/g, "");
     const phone = digits.startsWith("0") ? "254" + digits.slice(1) : digits.startsWith("254") ? digits : digits;
@@ -523,6 +525,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
   const [uploadedList, setUploadedList] = useState<UploadedRecipient[]>([]);
   const [uploadName, setUploadName] = useState("");
   const [uploadError, setUploadError] = useState("");
+  const [consentAttested, setConsentAttested] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftError, setDraftError] = useState("");
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
@@ -551,6 +554,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
         setUploadedList([]);
         setUploadName("");
         setUploadError("");
+        setConsentAttested(false);
       },
     },
   });
@@ -616,12 +620,16 @@ function CampaignPanel({ channel }: { channel: Channel }) {
             <FieldInput label="CAMPAIGN NAME" required value={form.name ?? ""} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
             <div className="col-span-2 space-y-2 border border-border p-3">
               <label className="block text-[10px] font-mono text-muted-foreground tracking-widest">SEND TO A SEPARATE CSV LIST (OPTIONAL)</label>
+              <label className="flex items-start gap-2 text-xs">
+                <input type="checkbox" checked={consentAttested} onChange={e => setConsentAttested(e.target.checked)} className="mt-0.5" />
+                <span>I confirm every contact in this uploaded list has already consented to receive this type of message. If the CSV has no consent column, this confirmation will be used for the list.</span>
+              </label>
               <input type="file" accept=".csv,text/csv" onChange={async e => {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 setUploadError("");
                 try {
-                  const parsed = parseRecipientCsv(await file.text(), channel);
+                  const parsed = parseRecipientCsv(await file.text(), channel, consentAttested);
                   setUploadedList(parsed);
                   setUploadName(file.name);
                   setTargetWard("");
@@ -632,7 +640,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
                   setUploadError(error instanceof Error ? error.message : String(error));
                 }
               }} className="block w-full text-xs file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-white file:font-mono file:text-[10px]" />
-              <p className="font-mono text-[9px] text-muted-foreground">Upload a separate CSV for this campaign only. Required columns: phone/mobile number and an explicit Consent/OptIn column (YES/TRUE/1). Optional: Name, First Name, Last Name, Ward, Support Level. Phone numbers are normalized to 254 format. Maximum 10,000 contacts.</p>
+              <p className="font-mono text-[9px] text-muted-foreground">Upload a separate CSV for this campaign only. Required: phone/mobile number. If no consent column is present, tick the confirmation above. If present, YES/TRUE/1 rows are included. Optional: Name, First Name, Last Name, Ward, Support Level. Phone numbers are normalized to 254 format. Maximum 10,000 contacts.</p>
               {uploadedList.length > 0 && <div className="font-mono text-[10px] text-green-400">✓ {uploadName}: {uploadedList.length.toLocaleString()} consented contacts ready. This list will be saved with this campaign and will not be added to the main contacts database.<div className="mt-1 text-muted-foreground">Preview: {uploadedList.slice(0, 3).map(r => `${[r.firstName, r.lastName].filter(Boolean).join(" ") || "Contact"} — ${r.phone}`).join(" · ")}</div></div>}
               {uploadError && <p className="font-mono text-[10px] text-red-400">{uploadError}</p>}
               {uploadedList.length > 0 && <button type="button" onClick={() => { setUploadedList([]); setUploadName(""); }} className="text-[10px] font-mono text-muted-foreground underline">Remove uploaded list</button>}
