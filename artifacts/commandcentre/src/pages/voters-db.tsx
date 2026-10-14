@@ -400,8 +400,10 @@ function CaptureTab() {
     try {
       const text = await file.text();
       const rows = parseCsvRows(text);
-      if (rows.length < 2) { alert("CSV must have at least a header row and one data row"); return; }
-
+      if (rows.length < 2) throw new Error("CSV must contain a header row and at least one contact.");
+      const entryCount = rows.length - 1;
+      if (entryCount > 25000) throw new Error("This upload contains " + entryCount.toLocaleString() + " entries. The maximum per upload is 25,000. Split the file into smaller CSV files.");
+      setUploadProgress("Read " + entryCount.toLocaleString() + " contact rows. Preparing upload...");
       const headers = rows[0]!.map(h => h.trim().replace(/^\uFEFF/, "").toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, ""));
 
       const fieldMap: Record<string, string> = {
@@ -461,9 +463,11 @@ function CaptureTab() {
         return record;
       }).filter(r => r.fullName || r.nationalId || r.voterNumber);
 
+      if (!records.length) throw new Error("No contacts with a name were found. Check that the CSV contains First Name and/or Second Name columns.");
+      if (records.length > 25000) throw new Error("This upload contains " + records.length.toLocaleString() + " usable contacts. The maximum per upload is 25,000.");
       const batchName = `FILE-${file.name.replace(/[^a-z0-9]/gi, "_")}-${Date.now()}`;
       const totals = { processed: 0, new: 0, updated: 0, duplicates: 0, skipped: 0, batchId: batchName };
-      const chunkSize = 250;
+      const chunkSize = 500;
       const chunks = Math.ceil(records.length / chunkSize);
       for (let start = 0; start < records.length; start += chunkSize) {
         const chunk = records.slice(start, start + chunkSize);
@@ -486,7 +490,7 @@ function CaptureTab() {
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
-      setUploadError(message);
+      setUploadError(message.startsWith("Failed to fetch") ? "Could not reach the API. The deployment may still be starting or the server may have timed out. Refresh and retry; completed batches may already have been saved." : message);
       setUploadProgress("");
     } finally {
       setUploadLoading(false);
@@ -501,7 +505,7 @@ function CaptureTab() {
         {/* CSV Upload */}
         <div className="bg-card border border-border p-4 space-y-3">
           <div className="font-mono text-[10px] text-muted-foreground tracking-widest">◆ BULK CSV UPLOAD</div>
-          <p className="text-xs text-muted-foreground">Upload a CSV file with voter data. Use <code className="font-mono text-primary">full_name</code> (or name), plus <code className="font-mono text-primary">national_id</code> or <code className="font-mono text-primary">voter_number</code> to match existing records and update their names. New contacts can be uploaded without a <code className="font-mono text-primary">ward</code>; phone number is used to match existing contacts. Optional: <code className="font-mono text-primary">national_id, voter_number, phone, gender, dob, ward, polling_station, station_code, stream, sub_county</code>.</p>
+          <p className="text-xs text-muted-foreground">Upload a CSV file with up to 25,000 contacts per upload. Use <code className="font-mono text-primary">full_name</code> (or name), plus <code className="font-mono text-primary">national_id</code> or <code className="font-mono text-primary">voter_number</code> to match existing records and update their names. New contacts can be uploaded without a <code className="font-mono text-primary">ward</code>; phone number is used to match existing contacts. Optional: <code className="font-mono text-primary">national_id, voter_number, phone, gender, dob, ward, polling_station, station_code, stream, sub_county</code>.</p>
 
           <div
             className="border-2 border-dashed border-border hover:border-primary/50 p-8 text-center cursor-pointer transition-colors"
