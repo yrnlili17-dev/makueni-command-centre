@@ -109,10 +109,10 @@
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
 
-  --app-font-sans: 'Barlow Semi Condensed', 'Inter', sans-serif;
+  --app-font-sans: 'Inter', 'Segoe UI', sans-serif;
   --app-font-serif: Georgia, serif;
-  --app-font-mono: 'JetBrains Mono', 'Space Mono', monospace;
-  --radius: 0px;
+  --app-font-mono: 'JetBrains Mono', 'SFMono-Regular', monospace;
+  --radius: 0.35rem;
 
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -130,13 +130,39 @@
 
   html {
     color-scheme: dark;
-    font-size: 115%;
+    font-size: 100%;
   }
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
   }
+}
+
+/* Global visual system: clean dark dashboard inspired by the member registry reference. */
+:root {
+  --app-surface: #151719;
+  --app-surface-raised: #1a1d20;
+}
+body {
+  font-family: var(--app-font-sans);
+}
+h1, h2, h3, h4 {
+  font-family: var(--app-font-sans);
+  letter-spacing: -0.02em;
+}
+button, input, select, textarea {
+  font-family: inherit;
+}
+.font-mono {
+  font-family: var(--app-font-sans);
+  letter-spacing: 0.01em;
+}
+table, [role="table"] {
+  font-variant-numeric: tabular-nums;
+}
+::selection {
+  background: hsl(var(--primary) / 0.28);
 }
 
 /* Scale up hardcoded tiny px classes used throughout the UI */
