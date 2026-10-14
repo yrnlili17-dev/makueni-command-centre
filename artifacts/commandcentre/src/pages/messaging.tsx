@@ -467,11 +467,13 @@ function parseRecipientCsv(text: string, channel: Channel, consentAttested = fal
   const rows: string[][] = [];
   let row: string[] = [], cell = "", quoted = false;
   const input = text.replace(/^\uFEFF/, "");
+  const firstLine = input.split(/\r?\n/, 1)[0] ?? "";
+  const delimiter = [",", ";", "\\t"].sort((a, b) => firstLine.split(b).length - firstLine.split(a).length)[0];
   for (let i = 0; i < input.length; i++) {
     const ch = input[i];
     if (ch === '"' && quoted && input[i + 1] === '"') { cell += '"'; i++; }
     else if (ch === '"') quoted = !quoted;
-    else if (ch === "," && !quoted) { row.push(cell.trim()); cell = ""; }
+    else if (ch === delimiter && !quoted) { row.push(cell.trim()); cell = ""; }
     else if ((ch === "\n" || ch === "\r") && !quoted) {
       if (ch === "\r" && input[i + 1] === "\n") i++;
       row.push(cell.trim()); cell = "";
@@ -484,13 +486,13 @@ function parseRecipientCsv(text: string, channel: Channel, consentAttested = fal
   if (rows.length < 2) throw new Error("CSV must include a header row and at least one contact.");
   const headers = rows[0].map(h => h.trim().toLowerCase().replace(/[\s_-]+/g, ""));
   const index = (...names: string[]) => headers.findIndex(h => names.includes(h));
-  const phoneIndex = index("phone", "phonenumber", "mobile", "mobilenumber", "telephone", "number");
+  const phoneIndex = index("phone", "phonenumber", "phoneno", "phonenumbers", "mobile", "mobileno", "mobilenumber", "telephone", "tel", "number", "contact", "contactnumber", "msisdn", "recipient", "recipientnumber");
   const firstIndex = index("firstname", "first");
   const lastIndex = index("lastname", "last", "surname", "familyname");
   const nameIndex = index("name", "fullname", "contactname");
   const wardIndex = index("ward", "area", "location");
   const supportIndex = index("supportlevel", "support");
-  const consentIndex = index("consent", channel === "sms" ? "smsconsent" : channel === "whatsapp" ? "whatsappconsent" : "emailconsent", "optin", "permission");
+  const consentIndex = index("consent", "consented", "consentstatus", channel === "sms" ? "smsconsent" : channel === "whatsapp" ? "whatsappconsent" : "emailconsent", "optin", "permission", "subscribed", "subscribedtosms", "subscribedtowhatsapp");
   if (phoneIndex < 0) throw new Error("CSV needs a Phone, Mobile, Mobile Number or Number column.");
   if (consentIndex < 0 && !consentAttested) throw new Error("Add a consent column or confirm that every contact in this list has already opted in.");
   const result: UploadedRecipient[] = [];
@@ -678,7 +680,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
                 <p className="font-mono text-[9px] text-muted-foreground">Uses active members in the selected Makueni ward who have explicitly opted in to this channel. It does not send to the voter registry unless those people are separately enrolled as consenting contacts.</p>
               </div>
             )}
-            {draftError && <div className="col-span-2 border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-300">{draftError}</div>}
+            {draftError && <div className="col-span-2 border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300"><strong>Draft not saved:</strong> {draftError}</div>}
             <div className="col-span-2 space-y-2">
               <div className="space-y-1">
                 <label className="text-[10px] font-mono text-muted-foreground tracking-widest">PERSONALIZATION PLACEHOLDERS — CLICK TO INSERT</label>
