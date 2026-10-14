@@ -7,6 +7,21 @@ import { MAKUENI_WARDS } from "../data/makueni-geography";
 const router = Router();
 const ALLOWED_WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 
+// Ensure older production databases have the columns required for campaign-specific CSV lists.
+let csvSchemaReady: Promise<void> | null = null;
+async function ensureCsvRecipientSchema() {
+  if (!csvSchemaReady) {
+    csvSchemaReady = (async () => {
+      await db.execute(sql`ALTER TABLE message_campaigns ADD COLUMN IF NOT EXISTS recipient_list text`);
+      await db.execute(sql`ALTER TABLE message_deliveries ALTER COLUMN member_id DROP NOT NULL`);
+    })().catch((error) => {
+      csvSchemaReady = null;
+      throw error;
+    });
+  }
+  return csvSchemaReady;
+}
+
 function safeEqual(a: string, b: string): boolean {
   const aa = Buffer.from(a);
   const bb = Buffer.from(b);
@@ -108,6 +123,7 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
+  try {
   const { name, channel, messageBody, segmentId, scheduledAt, recipientList } = req.body;
   if (!name || !channel || !messageBody) { res.status(400).json({ error: "name, channel, messageBody required" }); return; }
   if (!["sms", "whatsapp"].includes(channel)) {
@@ -119,12 +135,17 @@ router.post("/", async (req, res) => {
   if (Array.isArray(recipientList) && recipientList.some((r: any) => !r || typeof r.phone !== "string" || !r.phone.trim() || r.consent !== true)) {
     res.status(400).json({ error: "Every CSV contact must have a phone number and explicit consent for this channel." }); return;
   }
+  if (Array.isArray(recipientList)) await ensureCsvRecipientSchema();
   const [campaign] = await db.insert(messageCampaignsTable).values({
     name, channel, messageBody, segmentId, recipientList: Array.isArray(recipientList) ? JSON.stringify(recipientList) : null, status: "draft",
     scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
     recipientCount: 0, deliveredCount: 0, openedCount: 0, clickedCount: 0,
   }).returning();
   res.status(201).json(campaign);
+  } catch (error) {
+    console.error("[messaging] Failed to save campaign draft:", error);
+    res.status(500).json({ error: "Could not save campaign draft. Check the database schema and server logs.", detail: error instanceof Error ? error.message : String(error) });
+  }
 });
 
 router.get("/:id", async (req, res) => {
