@@ -15,6 +15,7 @@ export function buildFreeMakueniAnswer(input: {
   const lower = message.toLowerCase();
   const context = input.context ?? {};
   const liveSources = input.liveSources ?? [];
+  const historicalCidpContext = typeof context.historicalCidpContext === "string" ? context.historicalCidpContext : "";
   const webResults = Array.isArray(context.publicWebResults)
     ? (context.publicWebResults as Array<{ title?: string; url?: string; source?: string; publishedAt?: string | null; snippet?: string }>)
         .filter((item) => item && typeof item.title === "string" && typeof item.url === "string")
@@ -116,6 +117,7 @@ export function buildFreeMakueniAnswer(input: {
     "",
     ...resultsSection,
     ...(manifestoSection.length ? ["", ...manifestoSection] : []),
+    ...(historicalCidpContext ? ["", "Historical source — Makueni CIDP 2013-2017 (not current data or project status):", historicalCidpContext] : []),
     "",
     ...official,
     ...(liveSources.length ? ["", "Official pages checked:", ...liveSources.slice(0, 3).map((source) => `- ${source.title}: ${source.url} (checked ${source.checkedAt}; ${source.status})`)] : []),
