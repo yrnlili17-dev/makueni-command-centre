@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, voterRegistryTable, voterSyncLogsTable, iebcCredentialsTable } from "@workspace/db";
-import { eq, sql, desc, ilike, or, and, inArray } from "drizzle-orm";
+import { eq, sql, desc, ilike, or, and, inArray, isNull } from "drizzle-orm";
 import { MAKUENI_CONSTITUENCIES, MAKUENI_WARDS } from "../data/makueni-geography";
 const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 const CONSTITUENCIES: string[] = [...MAKUENI_CONSTITUENCIES];
@@ -19,12 +19,12 @@ router.get("/stats", async (req, res) => {
     fromUpload: sql<number>`count(*) filter (where source = 'upload')`,
     fromApi: sql<number>`count(*) filter (where source = 'api')`,
     fromManual: sql<number>`count(*) filter (where source = 'manual')`,
-  }).from(voterRegistryTable).where(inArray(voterRegistryTable.ward, WARDS));
+  }).from(voterRegistryTable).where(or(inArray(voterRegistryTable.ward, WARDS), isNull(voterRegistryTable.ward)));
 
   const wardBreakdown = await db
     .select({ ward: voterRegistryTable.ward, count: sql<number>`count(*)` })
     .from(voterRegistryTable)
-    .where(inArray(voterRegistryTable.ward, WARDS))
+    .where(or(inArray(voterRegistryTable.ward, WARDS), isNull(voterRegistryTable.ward)))
     .groupBy(voterRegistryTable.ward);
 
   const recentLogs = await db
@@ -52,7 +52,7 @@ router.get("/", async (req, res) => {
   const limit = parseInt(limitStr ?? "100");
   const offset = parseInt(offsetStr ?? "0");
 
-  const conditions = [inArray(voterRegistryTable.ward, WARDS)];
+  const conditions = [or(inArray(voterRegistryTable.ward, WARDS), isNull(voterRegistryTable.ward))!];
   if (search) {
     const searchCondition = or(
       ilike(voterRegistryTable.fullName, `%${search}%`),
@@ -155,7 +155,7 @@ router.post("/upload", async (req, res) => {
       if (phoneDigits) {
         const [phoneMatch] = await db.select({ id: voterRegistryTable.id })
           .from(voterRegistryTable)
-          .where(and(inArray(voterRegistryTable.ward, WARDS), sql`regexp_replace(coalesce(${voterRegistryTable.phone}, ''), '[^0-9]', '', 'g') = ${phoneDigits}`))
+          .where(sql`regexp_replace(coalesce(${voterRegistryTable.phone}, ''), '[^0-9]', '', 'g') = ${phoneDigits}`)
           .limit(1);
         existingId = phoneMatch?.id;
       }
@@ -181,9 +181,13 @@ router.post("/upload", async (req, res) => {
       continue;
     }
 
-    // New rows still need a valid Makueni ward; without it they cannot be
-    // included in the county registry.
-    if (!isMakueniWard(r.ward) || (r.subCounty && !isMakueniConstituency(r.subCounty))) {
+    // Contacts can be captured before their ward is known. Phone is the
+    // preferred deduplication key; unassigned contacts stay visible for later cleanup.
+    if ((r.ward && !isMakueniWard(r.ward)) || (r.subCounty && !isMakueniConstituency(r.subCounty))) {
+      skippedCount++;
+      continue;
+    }
+    if (!r.ward && !r.phone) {
       skippedCount++;
       continue;
     }
@@ -220,7 +224,7 @@ router.patch("/:id", async (req, res) => {
 
   const [record] = await db.update(voterRegistryTable)
     .set(updates)
-    .where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), inArray(voterRegistryTable.ward, WARDS)))
+    .where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), or(inArray(voterRegistryTable.ward, WARDS), isNull(voterRegistryTable.ward))))
     .returning();
 
   if (!record) { res.status(404).json({ error: "Not found" }); return; }
@@ -242,7 +246,7 @@ router.post("/bulk-review", async (req, res) => {
 
 // ── Delete ─────────────────────────────────────────────────────────────────
 router.delete("/:id", async (req, res) => {
-  await db.delete(voterRegistryTable).where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), inArray(voterRegistryTable.ward, WARDS)));
+  await db.delete(voterRegistryTable).where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), or(inArray(voterRegistryTable.ward, WARDS), isNull(voterRegistryTable.ward))));
   res.status(204).send();
 });
 
