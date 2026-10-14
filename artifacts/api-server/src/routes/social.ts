@@ -114,11 +114,25 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
     SCAN_CATEGORIES.map(async (cat) => {
       try {
         if (process.env.MAKUENI_AI_MODE === "free") {
-          const queryResults = await Promise.all(
+          // A single search-provider failure must not cancel every query in this
+          // category. Keep successful results and mark the category failed only
+          // when every query failed, so partial scans can still be useful.
+          const queryResults = await Promise.allSettled(
             queriesForCategory(cat.key).map((query) => searchFreeMakueniWeb(query))
           );
+          const successfulResults = queryResults
+            .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof searchFreeMakueniWeb>>> => result.status === "fulfilled")
+            .map((result) => result.value);
+          if (successfulResults.length === 0 && queryResults.length > 0) {
+            const failures = queryResults.filter((result) => result.status === "rejected");
+            if (failures.length === queryResults.length) {
+              failedCategories.add(cat.key);
+              req.log.error({ category: cat.key, failedQueries: failures.length }, "all free social search queries failed");
+              return [];
+            }
+          }
           const seenForCategory = new Set<string>();
-          return queryResults.flat().filter((item) => {
+          return successfulResults.flat().filter((item) => {
             const key = (item.url || item.title).toLowerCase();
             if (seenForCategory.has(key)) return false;
             seenForCategory.add(key);
