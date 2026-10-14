@@ -128,13 +128,22 @@ router.get("/:id", async (req, res) => {
 });
 
 router.patch("/:id", async (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid campaign id" }); return; }
+  const [existing] = await db.select().from(messageCampaignsTable).where(eq(messageCampaignsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   const updates: Record<string, unknown> = {};
   for (const f of ["name", "messageBody", "segmentId", "scheduledAt"]) {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   }
   if (updates.scheduledAt) updates.scheduledAt = new Date(String(updates.scheduledAt));
-  const [campaign] = await db.update(messageCampaignsTable).set(updates).where(eq(messageCampaignsTable.id, parseInt(req.params.id))).returning();
-  if (!campaign) { res.status(404).json({ error: "Not found" }); return; }
+  if (req.body.status !== undefined) {
+    if (req.body.status !== "confirmed" || !existing.scheduledAt || existing.status !== "draft") {
+      res.status(400).json({ error: "Only a scheduled draft can be marked officially confirmed." }); return;
+    }
+    updates.status = "confirmed";
+  }
+  const [campaign] = await db.update(messageCampaignsTable).set(updates).where(eq(messageCampaignsTable.id, id)).returning();
   res.json(campaign);
 });
 
@@ -233,7 +242,15 @@ router.post("/:id/send", async (req, res) => {
   const [campaign] = await db.select().from(messageCampaignsTable).where(eq(messageCampaignsTable.id, id));
   if (!campaign) { res.status(404).json({ error: "Not found" }); return; }
   if (!["sms", "whatsapp"].includes(campaign.channel)) { res.status(400).json({ error: "Unsupported channel for live sending" }); return; }
-  if (!["draft", "failed"].includes(campaign.status)) { res.status(409).json({ error: "Campaign is already processing or sent" }); return; }
+  if (!["draft", "failed", "confirmed"].includes(campaign.status)) { res.status(409).json({ error: "Campaign is already processing or sent" }); return; }
+  if (campaign.scheduledAt) {
+    if (campaign.status !== "confirmed") {
+      res.status(409).json({ error: "Official confirmation is required before a scheduled campaign can be sent." }); return;
+    }
+    if (new Date(campaign.scheduledAt).getTime() > Date.now()) {
+      res.status(409).json({ error: "The scheduled time has not arrived yet." }); return;
+    }
+  }
   const [provider] = await db.select().from(messagingProvidersTable)
     .where(and(eq(messagingProvidersTable.channel, campaign.channel), eq(messagingProvidersTable.isActive, true)));
   if (!provider) { res.status(409).json({ error: `No active ${campaign.channel} provider configured` }); return; }
