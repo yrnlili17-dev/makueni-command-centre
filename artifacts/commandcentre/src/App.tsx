@@ -90,6 +90,7 @@ function ProtectedRoutes() {
         <Route path="/surveys">{() => <Guarded module="intelligence" component={Surveys} />}</Route>
         <Route path="/events">{() => <Guarded module="events" component={Events} />}</Route>
         <Route path="/intelligence">{() => <Guarded module="narrative" component={Intelligence} />}</Route>
+        <Route path="/narrative-response">{() => <Guarded module="narrative" component={Intelligence} />}</Route>
         <Route path="/social-listening">{() => <Guarded module="intelligence" component={SocialListening} />}</Route>
         <Route path="/swot">{() => <Guarded module="intelligence" component={Swot} />}</Route>
         <Route path="/campaign-plan">{() => <Guarded module="campaign-plan" component={CampaignPlan} />}</Route>
