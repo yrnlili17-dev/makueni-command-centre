@@ -453,7 +453,7 @@ function CaptureTab() {
             nimakui: "Kiima Kiu/Kalanzoni",
             kimakui: "Kiima Kiu/Kalanzoni",
             muvaukikuumini: "Muvau/Kikumini",
-            kitise kithuki: "Kitise/Kithuki",
+            kitesekithuki: "Kitise/Kithuki",
           };
           const normalized = normalizeWard(record.ward);
           const canonicalWard = WARDS.find(w => normalizeWard(w) === normalized) ?? aliases[normalized];
