@@ -118,6 +118,9 @@ router.post("/upload", async (req, res) => {
   if (!Array.isArray(records) || records.length === 0) {
     res.status(400).json({ error: "records array required" }); return;
   }
+  if (records.length > 1000) {
+    res.status(413).json({ error: "Maximum 1,000 contacts per API batch. The uploader automatically splits files into smaller batches." }); return;
+  }
 
   const batchId = batchName || `UPLOAD-${Date.now()}`;
   let newCount = 0;
