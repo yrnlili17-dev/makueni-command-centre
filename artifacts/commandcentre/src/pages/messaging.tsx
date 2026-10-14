@@ -28,6 +28,7 @@ interface Provider {
 
 const SMS_PROVIDERS = [
   { value: "africastalking", label: "Africa's Talking" },
+  { value: "onfonmedia", label: "Onfon Media / Addonfon" },
   { value: "twilio", label: "Twilio" },
   { value: "infobip", label: "Infobip" },
   { value: "custom", label: "Custom / Other" },
@@ -156,6 +157,18 @@ function SmsConfig({ provider, onSaved }: { provider?: Provider; onSaved: () => 
               </div>
             )}
 
+            {providerVal === "onfonmedia" && (
+              <div className="grid grid-cols-2 gap-3">
+                <FieldInput label="ONFON API KEY" required type="password" placeholder="API key from Onfon" value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />
+                <FieldInput label="CLIENT ID" required type="password" placeholder="Client ID from Onfon" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />
+                <FieldInput label="ACCESS KEY" required type="password" placeholder="AccessKey header value" value={form.apiSecret} onChange={e => setForm(p => ({ ...p, apiSecret: e.target.value }))} />
+                <FieldInput label="APPROVED SENDER ID" required placeholder="Your approved sender ID" value={form.senderId} onChange={e => setForm(p => ({ ...p, senderId: e.target.value }))} />
+                <div className="col-span-2 bg-secondary border border-border p-3 font-mono text-[9px] text-muted-foreground">
+                  Onfon requires an active gateway account, API Key, Client ID, Access Key and an approved Sender ID. Credentials are saved in the provider configuration; never put them in message text.
+                </div>
+              </div>
+            )}
+
             {providerVal === "twilio" && (
               <div className="grid grid-cols-2 gap-3">
                 <FieldInput label="ACCOUNT SID" required type="password" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />
@@ -183,6 +196,13 @@ function SmsConfig({ provider, onSaved }: { provider?: Provider; onSaved: () => 
                 <div>2. Create an app → copy the API key from the dashboard</div>
                 <div>3. Use "sandbox" as username during testing, or your real username in production</div>
                 <div>4. Request a Sender ID (shortcode/alphanumeric) through the AT dashboard</div>
+              </>}
+              {providerVal === "onfonmedia" && <>
+                <div className="text-yellow-400 font-bold mb-1">ONFON MEDIA SETUP:</div>
+                <div>1. Obtain API Key, Client ID and Access Key from your Onfon account.</div>
+                <div>2. Enter your approved Sender ID.</div>
+                <div>3. Confirm the account has SMS credit and API access enabled.</div>
+                <div>4. Save, then send a small test to an opted-in number before a larger send.</div>
               </>}
               {providerVal === "twilio" && <>
                 <div className="text-yellow-400 font-bold mb-1">TWILIO SETUP:</div>
@@ -435,6 +455,9 @@ function CampaignPanel({ channel }: { channel: Channel }) {
   const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<Partial<MessageCampaignInput>>({ channel });
+  const [targetWard, setTargetWard] = useState("");
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftError, setDraftError] = useState("");
 
   const { data: campaigns, isLoading } = useListCampaigns({ channel });
   const { data: segments } = useListSegments();
@@ -445,6 +468,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
         qc.invalidateQueries({ queryKey: getGetMessagingStatsQueryKey() });
         setShowAdd(false);
         setForm({ channel });
+        setTargetWard("");
       },
     },
   });
@@ -460,9 +484,32 @@ function CampaignPanel({ channel }: { channel: Channel }) {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createCampaign.mutate({ data: form as MessageCampaignInput });
+    setDraftError("");
+    setSavingDraft(true);
+    try {
+      let segmentId = form.segmentId;
+      if (targetWard) {
+        const segmentResponse = await fetch(`${BASE_URL}/api/segments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: `SMS ${targetWard} — ${new Date().toISOString().slice(0, 10)}`,
+            description: "Ward-specific audience. Only active contacts with explicit channel consent are eligible.",
+            criteria: { ward: targetWard, ...(channel === "sms" ? { smsConsent: true } : { whatsappConsent: true }) },
+          }),
+        });
+        const segment = await segmentResponse.json();
+        if (!segmentResponse.ok) throw new Error(segment.error ?? "Could not create ward segment");
+        segmentId = segment.id;
+      }
+      createCampaign.mutate({ data: { ...form, segmentId } as MessageCampaignInput });
+    } catch (error) {
+      setDraftError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSavingDraft(false);
+    }
   };
 
   const channelLabel = channel === "sms" ? "SMS" : channel === "whatsapp" ? "WhatsApp" : "Email";
@@ -471,7 +518,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="font-mono text-[10px] text-muted-foreground tracking-widest">◆ {channelLabel.toUpperCase()} CAMPAIGNS</div>
+        <div className="font-mono text-[10px] text-muted-foreground tracking-widest">◆ {channelLabel.toUpperCase()} CAMPAIGNS — DRAFTS & SENT HISTORY</div>
         <button onClick={() => setShowAdd(s => !s)} className="flex items-center gap-1.5 bg-primary text-white font-mono text-[10px] tracking-widest px-3 py-2 hover:bg-primary/90">
           <Plus className="w-3 h-3" /> NEW {channelLabel.toUpperCase()} CAMPAIGN
         </button>
@@ -492,6 +539,17 @@ function CampaignPanel({ channel }: { channel: Channel }) {
                 {segments?.map(s => <option key={s.id} value={s.id}>{s.name} ({s.memberCount})</option>)}
               </select>
             </div>
+            {channel !== "email" && (
+              <div className="space-y-1">
+                <label className="block text-[10px] font-mono text-muted-foreground tracking-widest">QUICK TARGET — MAKUENI WARD</label>
+                <select value={targetWard} onChange={e => { setTargetWard(e.target.value); if (e.target.value) setForm(p => ({ ...p, segmentId: undefined })); }} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
+                  <option value="">Use selected segment / all eligible contacts</option>
+                  {["Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa","Kiima Kiu/Kalanzoni","Mukaa","Kasikeu","Kee","Kilungu","Ilima","Ukia","Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini","Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala","Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"].map(ward => <option key={ward} value={ward}>{ward}</option>)}
+                </select>
+                <p className="font-mono text-[9px] text-muted-foreground">Uses active members in the selected Makueni ward who have explicitly opted in to this channel. It does not send to the voter registry unless those people are separately enrolled as consenting contacts.</p>
+              </div>
+            )}
+            {draftError && <div className="col-span-2 border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-300">{draftError}</div>}
             <div className="col-span-2 space-y-1">
               <div className="flex justify-between">
                 <label className="text-[10px] font-mono text-muted-foreground tracking-widest">MESSAGE BODY *</label>
@@ -515,7 +573,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
               <button type="button" onClick={() => { setShowAdd(false); setForm({ channel }); }} className="flex items-center gap-1.5 border border-border px-4 py-2 font-mono text-[10px] hover:bg-secondary">
                 <X className="w-3 h-3" /> ABORT
               </button>
-              <button type="submit" disabled={createCampaign.isPending} className="flex items-center gap-1.5 bg-primary text-white px-4 py-2 font-mono text-[10px] hover:bg-primary/90 disabled:opacity-50">
+              <button type="submit" disabled={createCampaign.isPending || savingDraft} className="flex items-center gap-1.5 bg-primary text-white px-4 py-2 font-mono text-[10px] hover:bg-primary/90 disabled:opacity-50">
                 <Check className="w-3 h-3" /> DEPLOY
               </button>
             </div>
