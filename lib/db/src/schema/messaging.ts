@@ -10,6 +10,7 @@ export const messageCampaignsTable = pgTable("message_campaigns", {
   status: text("status").notNull().default("draft"),
   messageBody: text("message_body").notNull(),
   segmentId: integer("segment_id"),
+  recipientList: text("recipient_list"),
   scheduledAt: timestamp("scheduled_at"),
   sentAt: timestamp("sent_at"),
   recipientCount: integer("recipient_count").notNull().default(0),
@@ -22,7 +23,7 @@ export const messageCampaignsTable = pgTable("message_campaigns", {
 export const messageDeliveriesTable = pgTable("message_deliveries", {
   id: serial("id").primaryKey(),
   campaignId: integer("campaign_id").notNull(),
-  memberId: integer("member_id").notNull(),
+  memberId: integer("member_id"),
   channel: text("channel").notNull(),
   recipient: text("recipient").notNull(),
   provider: text("provider").notNull(),
