@@ -499,9 +499,8 @@ function parseRecipientCsv(text: string, channel: Channel, consentAttested = fal
     const get = (i: number) => i >= 0 ? (values[i] ?? "").trim() : "";
     const rawPhone = get(phoneIndex);
     if (!rawPhone) continue;
-    const consent = consentIndex >= 0
-      ? ["yes", "true", "1", "y", "consented", "opted-in", "optedin"].includes(get(consentIndex).toLowerCase())
-      : consentAttested;
+    const consent = consentAttested || (consentIndex >= 0
+      && ["yes", "true", "1", "y", "consented", "opted-in", "optedin"].includes(get(consentIndex).toLowerCase()));
     if (!consent) continue;
     const digits = rawPhone.replace(/\D/g, "");
     const phone = digits.startsWith("0") ? "254" + digits.slice(1) : digits.startsWith("254") ? digits : digits;
@@ -526,6 +525,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
   const [uploadName, setUploadName] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [consentAttested, setConsentAttested] = useState(false);
+  const [rawCsvText, setRawCsvText] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftError, setDraftError] = useState("");
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
@@ -555,6 +555,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
         setUploadName("");
         setUploadError("");
         setConsentAttested(false);
+        setRawCsvText("");
       },
     },
   });
@@ -590,7 +591,7 @@ function CampaignPanel({ channel }: { channel: Channel }) {
         if (!segmentResponse.ok) throw new Error(segment.error ?? "Could not create ward segment");
         segmentId = segment.id;
       }
-      createCampaign.mutate({ data: { ...form, segmentId: uploadedList.length ? undefined : segmentId, recipientList: uploadedList.length ? uploadedList : undefined } as MessageCampaignInput });
+      await createCampaign.mutateAsync({ data: { ...form, segmentId: uploadedList.length ? undefined : segmentId, recipientList: uploadedList.length ? uploadedList : undefined } as MessageCampaignInput });
     } catch (error) {
       setDraftError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -621,29 +622,44 @@ function CampaignPanel({ channel }: { channel: Channel }) {
             <div className="col-span-2 space-y-2 border border-border p-3">
               <label className="block text-[10px] font-mono text-muted-foreground tracking-widest">SEND TO A SEPARATE CSV LIST (OPTIONAL)</label>
               <label className="flex items-start gap-2 text-xs">
-                <input type="checkbox" checked={consentAttested} onChange={e => setConsentAttested(e.target.checked)} className="mt-0.5" />
+                <input type="checkbox" checked={consentAttested} onChange={e => {
+                  const checked = e.target.checked;
+                  setConsentAttested(checked);
+                  if (rawCsvText) {
+                    try {
+                      const parsed = parseRecipientCsv(rawCsvText, channel, checked);
+                      setUploadedList(parsed);
+                      setUploadError("");
+                    } catch (error) {
+                      setUploadedList([]);
+                      setUploadError(error instanceof Error ? error.message : String(error));
+                    }
+                  }
+                }} className="mt-0.5" />
                 <span>I confirm every contact in this uploaded list has already consented to receive this type of message. If the CSV has no consent column, this confirmation will be used for the list.</span>
               </label>
               <input type="file" accept=".csv,text/csv" onChange={async e => {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 setUploadError("");
+                const csvText = await file.text();
+                setRawCsvText(csvText);
                 try {
-                  const parsed = parseRecipientCsv(await file.text(), channel, consentAttested);
+                  const parsed = parseRecipientCsv(csvText, channel, consentAttested);
                   setUploadedList(parsed);
                   setUploadName(file.name);
                   setTargetWard("");
                   setForm(p => ({ ...p, segmentId: undefined }));
                 } catch (error) {
                   setUploadedList([]);
-                  setUploadName("");
+                  setUploadName(file.name);
                   setUploadError(error instanceof Error ? error.message : String(error));
                 }
               }} className="block w-full text-xs file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-white file:font-mono file:text-[10px]" />
               <p className="font-mono text-[9px] text-muted-foreground">Upload a separate CSV for this campaign only. Required: phone/mobile number. If no consent column is present, tick the confirmation above. If present, YES/TRUE/1 rows are included. Optional: Name, First Name, Last Name, Ward, Support Level. Phone numbers are normalized to 254 format. Maximum 10,000 contacts.</p>
               {uploadedList.length > 0 && <div className="font-mono text-[10px] text-green-400">✓ {uploadName}: {uploadedList.length.toLocaleString()} consented contacts ready. This list will be saved with this campaign and will not be added to the main contacts database.<div className="mt-1 text-muted-foreground">Preview: {uploadedList.slice(0, 3).map(r => `${[r.firstName, r.lastName].filter(Boolean).join(" ") || "Contact"} — ${r.phone}`).join(" · ")}</div></div>}
               {uploadError && <p className="font-mono text-[10px] text-red-400">{uploadError}</p>}
-              {uploadedList.length > 0 && <button type="button" onClick={() => { setUploadedList([]); setUploadName(""); }} className="text-[10px] font-mono text-muted-foreground underline">Remove uploaded list</button>}
+              {(uploadedList.length > 0 || rawCsvText) && <button type="button" onClick={() => { setUploadedList([]); setUploadName(""); setRawCsvText(""); setUploadError(""); }} className="text-[10px] font-mono text-muted-foreground underline">Remove uploaded list</button>}
             </div>
             <div className="space-y-1">
               <label className="block text-[10px] font-mono text-muted-foreground tracking-widest">TARGET SEGMENT</label>
