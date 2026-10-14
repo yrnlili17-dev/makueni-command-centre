@@ -242,6 +242,13 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
 
   req.log.info({ scanned: deduped.length, inserted: inserted.length }, "social scan complete");
   return res.json({ scanned: deduped.length, inserted: inserted.length, mentions: inserted });
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    req.log.error({ err, name: error.name, message: error.message }, "social scan failed outside provider query handling");
+    return res.status(500).json({
+      error: "The scan reached the API but failed while processing or saving results. Check the Render API logs for the 'social scan failed outside provider query handling' entry.",
+      code: "SOCIAL_SCAN_PROCESSING_FAILED",
+    });
   } finally {
     scanInFlight = false;
     lastScanAt = Date.now();
