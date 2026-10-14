@@ -460,11 +460,9 @@ function CaptureTab() {
             ksouth: "Kikumbulyu South",
             mbooniward: "Mbooni",
             woteniu: "Wote",
-            ksouth: "Kikumbulyu South",
             kiimakiukalanzoni: "Kiima Kiu/Kalanzoni",
             nimakui: "Kiima Kiu/Kalanzoni",
             kimakui: "Kiima Kiu/Kalanzoni",
-            muvaukikuumini: "Muvau/Kikumini",
             kitesekithuki: "Kitise/Kithuki",
           };
           const normalized = normalizeWard(record.ward);
