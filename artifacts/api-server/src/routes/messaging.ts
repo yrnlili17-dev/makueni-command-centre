@@ -206,6 +206,27 @@ router.post("/webhooks/africastalking", async (req, res) => {
   res.json({ ok: true });
 });
 
+function personalizeMessage(template: string, member: { firstName?: string | null; lastName?: string | null; ward?: string | null; phone?: string | null; supportLevel?: string | null }, campaignName: string) {
+  const firstName = member.firstName?.trim() ?? "";
+  const lastName = member.lastName?.trim() ?? "";
+  const fullName = [firstName, lastName].filter(Boolean).join(" ") || "friend";
+  const values: Record<string, string> = {
+    name: fullName,
+    fullname: fullName,
+    firstname: firstName || fullName,
+    lastname: lastName,
+    ward: member.ward?.trim() ?? "",
+    phone: member.phone?.trim() ?? "",
+    supportlevel: member.supportLevel?.trim() ?? "",
+    county: "Makueni",
+    campaignname: campaignName,
+  };
+  return template.replace(/##([A-Za-z]+)##/g, (token, key: string) => {
+    const value = values[key.toLowerCase()];
+    return value === undefined ? token : value;
+  });
+}
+
 router.post("/:id/send", async (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
   if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid campaign id" }); return; }
@@ -252,13 +273,14 @@ router.post("/:id/send", async (req, res) => {
   let failed = 0;
   for (const member of recipients) {
     const recipient = member.phone!.trim();
+    const personalizedBody = personalizeMessage(campaign.messageBody, member, campaign.name);
     try {
       let providerMessageId = "";
       if (provider.provider === "twilio" || provider.provider === "twilio_wa") {
         const accountSid = provider.username!;
         const from = provider.provider === "twilio_wa" ? `whatsapp:${provider.senderId}` : provider.senderId!;
         const to = provider.provider === "twilio_wa" ? `whatsapp:${recipient}` : recipient;
-        const form = new URLSearchParams({ To: to, From: from, Body: campaign.messageBody });
+        const form = new URLSearchParams({ To: to, From: from, Body: personalizedBody });
         const publicBase = String(process.env.PUBLIC_BASE_URL ?? "").replace(/\/$/, "");
         if (publicBase) form.set("StatusCallback", `${publicBase}/api/messages/webhooks/twilio`);
         const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
@@ -278,9 +300,9 @@ router.post("/:id/send", async (req, res) => {
           headers: { "Content-Type": "application/json", AccessKey: provider.apiSecret! },
           body: JSON.stringify({
             SenderId: provider.senderId,
-            IsUnicode: /[^\\x00-\\x7F]/.test(campaign.messageBody),
+            IsUnicode: /[^\\x00-\\x7F]/.test(personalizedBody),
             IsFlash: false,
-            MessageParameters: [{ Number: number, Text: campaign.messageBody }],
+            MessageParameters: [{ Number: number, Text: personalizedBody }],
             ApiKey: provider.apiKey,
             ClientId: provider.username,
           }),
@@ -293,7 +315,7 @@ router.post("/:id/send", async (req, res) => {
         }
         providerMessageId = result.MessageId;
       } else {
-        const form = new URLSearchParams({ username: provider.username!, to: recipient, message: campaign.messageBody });
+        const form = new URLSearchParams({ username: provider.username!, to: recipient, message: personalizedBody });
         if (provider.senderId) form.set("from", provider.senderId);
         const response = await fetch("https://api.africastalking.com/version1/messaging", {
           method: "POST", headers: { apiKey: provider.apiKey!, Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
