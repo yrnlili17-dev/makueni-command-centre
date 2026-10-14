@@ -447,10 +447,19 @@ function CaptureTab() {
             nguumasumba: "Nguu/Masumba",
             ksouth: "Kikumbulyu South",
             mbooniward: "Mbooni",
+            woteniu: "Wote",
+            ksouth: "Kikumbulyu South",
+            kiimakiukalanzoni: "Kiima Kiu/Kalanzoni",
+            nimakui: "Kiima Kiu/Kalanzoni",
+            kimakui: "Kiima Kiu/Kalanzoni",
+            muvaukikuumini: "Muvau/Kikumini",
+            kitise kithuki: "Kitise/Kithuki",
           };
           const normalized = normalizeWard(record.ward);
           const canonicalWard = WARDS.find(w => normalizeWard(w) === normalized) ?? aliases[normalized];
-          if (canonicalWard) record.ward = canonicalWard;
+          // Keep the person's name even when the source has a non-standard/unknown ward label.
+          // Unknown geography is stored as blank rather than causing the whole contact to be skipped.
+          record.ward = canonicalWard ?? "";
         }
         if (record.phone) {
           const digits = record.phone.replace(/\D/g, "");
