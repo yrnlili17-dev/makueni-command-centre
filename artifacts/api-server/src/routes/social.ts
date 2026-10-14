@@ -97,6 +97,25 @@ function asStr(v: unknown): string | null {
   return typeof v === "string" && v.trim().length > 0 ? v.trim() : null;
 }
 
+const MAKUENI_RELEVANCE_TERMS = [
+  "makueni", "prof. philip kaloki", "prof philip kaloki", "philip kyalo kaloki",
+  "pro kaloki", "kaloki", "mbooni", "kilome", "kaiti", "kibwezi west",
+  "kibwezi east", "wote", "mbitini", "makindu", "kikumbulyu", "nguumo",
+  "nguu/masumba", "emali", "mulala", "masongaleni", "mtito andei",
+  "thange", "ivingoni", "nzambani", "kathonzweni", "mavindini",
+  "kitise", "kithuki", "tulimani", "kalawa", "mukaa", "kasikeu",
+  "kilungu", "ilima", "ukia", "nzaui", "muvau", "kikumini",
+  "kithungo", "kitundu", "kiteta", "kisau", "kako", "waia",
+];
+
+function isMakueniRelevant(raw: RawMention): boolean {
+  const text = [raw.summary, raw.source, raw.url, raw.topic]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ")
+    .toLowerCase();
+  return MAKUENI_RELEVANCE_TERMS.some((term) => text.includes(term));
+}
+
 router.post("/scan", requirePermission("social", "write"), async (req, res) => {
   if (scanInFlight) {
     return res.status(429).json({ error: "A scan is already in progress. Please wait." });
@@ -171,6 +190,7 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
 
   const normalized = perCategory
     .flat()
+    .filter(({ raw }) => isMakueniRelevant(raw))
     .map(({ raw, category }) => {
       const summary = asStr(raw.summary);
       if (!summary) return null;
