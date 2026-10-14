@@ -98,6 +98,9 @@ function FieldSelect({ label, children, ...props }: React.SelectHTMLAttributes<H
 // ── SMS Provider Config ─────────────────────────────────────────────────────
 function SmsConfig({ provider, onSaved }: { provider?: Provider; onSaved: () => void }) {
   const [open, setOpen] = useState(!provider?.isActive);
+  useEffect(() => {
+    if (provider?.isActive) setOpen(false);
+  }, [provider?.isActive, provider?.provider]);
   const [providerVal, setProviderVal] = useState(provider?.provider ?? "africastalking");
   const [form, setForm] = useState({
     apiKey: provider?.apiKey ?? "",
@@ -129,9 +132,13 @@ function SmsConfig({ provider, onSaved }: { provider?: Provider; onSaved: () => 
         <div className="flex items-center gap-3">
           <Settings className="w-3.5 h-3.5 text-muted-foreground" />
           <span className="font-mono text-[10px] tracking-widest text-muted-foreground">SMS PROVIDER CONFIGURATION</span>
-          {provider?.isActive && (
+          {provider?.isActive ? (
             <span className="font-mono text-[9px] text-green-400 border border-green-400/30 px-1.5 py-0.5">
-              ◆ {SMS_PROVIDERS.find(p => p.value === provider.provider)?.label ?? provider.provider}
+              ✓ CONFIGURED — {SMS_PROVIDERS.find(p => p.value === provider.provider)?.label ?? provider.provider}
+            </span>
+          ) : (
+            <span className="font-mono text-[9px] text-yellow-400 border border-yellow-400/30 px-1.5 py-0.5">
+              NOT CONFIGURED
             </span>
           )}
         </div>
@@ -140,6 +147,9 @@ function SmsConfig({ provider, onSaved }: { provider?: Provider; onSaved: () => 
 
       {open && (
         <div className="border-t border-border p-4">
+          {provider?.isActive && (
+            <p className="mb-3 font-mono text-[10px] text-green-400">SMS provider is configured. Open this section only if you need to change the provider or credentials.</p>
+          )}
           {saved && <div className="mb-3 bg-green-500/10 border border-green-500/30 text-green-400 font-mono text-xs p-2">✓ SMS PROVIDER SAVED</div>}
           <form onSubmit={save} className="space-y-3">
             <FieldSelect label="SMS PROVIDER" value={providerVal} onChange={e => setProviderVal(e.target.value)}>
