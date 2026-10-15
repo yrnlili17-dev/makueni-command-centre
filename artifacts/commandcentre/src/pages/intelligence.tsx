@@ -899,6 +899,34 @@ export default function Intelligence() {
       {/* ── PLATFORM INTEL ── */}
       {tab === "platforms" && (
         <div className="space-y-4">
+          {/* Official account references are public links, not OAuth connections. */}
+          <div className="bg-card border border-border p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="font-mono text-xs font-bold tracking-wider">OFFICIAL SOCIAL ACCOUNTS</h3>
+                <p className="text-[10px] text-muted-foreground mt-1">Public profile references supplied by the administrator. Account authorization is pending.</p>
+              </div>
+              <span className="font-mono text-[9px] border border-yellow-500/40 text-yellow-400 px-2 py-1">NOT CONNECTED</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { name: "FACEBOOK", handle: "Prof. Philip Kaloki", url: "https://www.facebook.com/prof.philipkaloki", guide: "https://developers.facebook.com/apps/" },
+                { name: "TIKTOK", handle: "@profkaloki1", url: "https://www.tiktok.com/@profkaloki1", guide: "https://developers.tiktok.com/" },
+                { name: "X / TWITTER", handle: "@ProfKaloki", url: "https://x.com/ProfKaloki", guide: "https://developer.x.com/" },
+              ].map(account => (
+                <div key={account.name} className="border border-border bg-secondary/30 p-3 space-y-2">
+                  <div className="font-mono text-[10px] font-semibold">{account.name}</div>
+                  <div className="text-xs">{account.handle}</div>
+                  <div className="text-[10px] text-muted-foreground">Public profile only · OAuth not configured</div>
+                  <div className="flex flex-wrap gap-3">
+                    <a href={account.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary underline">OPEN PROFILE</a>
+                    <a href={account.guide} target="_blank" rel="noopener noreferrer" className="text-[10px] text-muted-foreground underline">DEVELOPER SETUP</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="font-mono text-[10px] text-muted-foreground">To connect later: create the Meta / TikTok developer apps, register approved HTTPS callback URLs, configure secrets on the server, then authorize via official login. Do not paste passwords or tokens into the dashboard. TikTok Login Kit + Display API supports authorized profile and public video data; it does not grant unrestricted Research API access.</p>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             {[
               {
@@ -940,7 +968,7 @@ export default function Intelligence() {
                   { key: "accessToken", label: "ACCESS TOKEN", placeholder: "TikTok Developer Access Token" },
                   { key: "apiKey", label: "CLIENT KEY", placeholder: "TikTok Client Key" },
                 ],
-                hint: "Requires TikTok for Developers account with Research API access."
+                hint: "For the official account, use TikTok Login Kit + Display API with approved user.info.basic and video.list scopes. Research API access is separate. OAuth is not configured yet; do not paste account passwords here."
               },
             ].map(p => {
               const existing = platforms.find(pl => pl.platform === p.key);
