@@ -147,15 +147,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-dvh min-h-0 w-full max-w-full overflow-hidden bg-background text-foreground font-sans">
-      {mobileMenuOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-40 bg-black/70 md:hidden" onClick={() => setMobileMenuOpen(false)} />}
-      <aside className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] border-r border-border bg-card flex flex-col transition-transform md:static md:translate-x-0 md:shrink-0`}>
+      {mobileMenuOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-40 bg-black/70 lg:hidden" onClick={() => setMobileMenuOpen(false)} />}
+      <aside className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] border-r border-border bg-card flex flex-col transition-transform lg:static lg:translate-x-0 lg:shrink-0`}>
         <div className="p-4 md:p-6 flex items-center gap-3 border-b border-border">
           <img src={brandIcon} alt="CommandCentre OS" className="w-8 h-8 object-contain" />
           <div className="flex flex-col">
             <span className="font-bold tracking-widest text-sm">PROF. PHILIP KALOKI COMMAND CENTRE</span>
             <span className="text-[10px] text-primary font-mono tracking-widest">[ SYSTEM_ACTIVE ]</span>
           </div>
-          <button type="button" aria-label="Close menu" className="ml-auto p-1 md:hidden" onClick={() => setMobileMenuOpen(false)}><X className="w-5 h-5" /></button>
+          <button type="button" aria-label="Close menu" className="ml-auto p-1 lg:hidden" onClick={() => setMobileMenuOpen(false)}><X className="w-5 h-5" /></button>
           <div className="hidden">
           </div>
         </div>
@@ -210,7 +210,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="min-w-0 flex-1 flex flex-col h-full overflow-hidden">
         <header className="min-h-14 border-b border-border flex items-center gap-2 px-3 md:px-6 justify-between shrink-0 bg-card/50">
           <div className="flex min-w-0 items-center gap-2 md:gap-4">
-            <button type="button" aria-label="Open navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)} className="p-2 border border-border md:hidden"><Menu className="w-5 h-5" /></button>
+            <button type="button" aria-label="Open navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)} className="p-2 border border-border lg:hidden"><Menu className="w-5 h-5" /></button>
             <div className="hidden md:block w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span className="font-mono text-[10px] md:text-xs text-muted-foreground tracking-widest truncate">MAKUENI COMMAND CENTRE</span>
           </div>
@@ -221,7 +221,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-6">
+        <div className="min-w-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-6">
           {children}
         </div>
       </main>
