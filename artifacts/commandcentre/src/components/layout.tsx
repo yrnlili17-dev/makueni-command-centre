@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { AiAssistPanel } from "@/components/ai-assist-panel";
 import { useAuth } from "@/lib/auth";
 import { 
-  Activity, Users, PieChart, MessageSquare, 
+  Menu, X, Activity, Users, PieChart, MessageSquare, 
   Map, UserPlus, FileText, Calendar, 
   ShieldAlert, Target, Star, Shield, LayoutDashboard, LogOut, Banknote, Vote, Database, Award, Settings, BarChart2, Crosshair, Radio, TrendingUp, Mic, BrainCircuit
 } from "lucide-react";
@@ -126,6 +126,7 @@ const PATH_MODULE: Record<string, string> = {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, can, logout } = useAuth();
   const currentModule = PATH_MODULE[location] ?? "dashboard";
 
@@ -145,13 +146,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground font-sans">
-      <aside className="w-64 border-r border-border bg-card flex flex-col">
-        <div className="p-6 flex items-center gap-3 border-b border-border">
+    <div className="flex h-dvh min-h-0 w-full max-w-full overflow-hidden bg-background text-foreground font-sans">
+      {mobileMenuOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-40 bg-black/70 md:hidden" onClick={() => setMobileMenuOpen(false)} />}
+      <aside className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] border-r border-border bg-card flex flex-col transition-transform md:static md:translate-x-0 md:shrink-0`}>
+        <div className="p-4 md:p-6 flex items-center gap-3 border-b border-border">
           <img src={brandIcon} alt="CommandCentre OS" className="w-8 h-8 object-contain" />
           <div className="flex flex-col">
             <span className="font-bold tracking-widest text-sm">PROF. PHILIP KALOKI COMMAND CENTRE</span>
             <span className="text-[10px] text-primary font-mono tracking-widest">[ SYSTEM_ACTIVE ]</span>
+          </div>
+          <button type="button" aria-label="Close menu" className="ml-auto p-1 md:hidden" onClick={() => setMobileMenuOpen(false)}><X className="w-5 h-5" /></button>
+          <div className="hidden">
           </div>
         </div>
         
@@ -170,7 +175,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     const isActive = location === item.href;
                     return (
                       <li key={item.href}>
-                        <Link href={item.href} className={cn(
+                        <Link href={item.href} onClick={() => setMobileMenuOpen(false)} className={cn(
                           "flex items-center gap-3 px-3 py-2 text-xs font-mono tracking-wider transition-colors",
                           isActive
                             ? "bg-primary text-primary-foreground border-l-2 border-primary-foreground"
@@ -202,20 +207,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-14 border-b border-border flex items-center px-6 justify-between shrink-0 bg-card/50">
-          <div className="flex items-center gap-4">
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="font-mono text-xs text-muted-foreground tracking-widest">PROF. KALOKI · MAKUENI COUNTY COMMAND CENTRE</span>
+      <main className="min-w-0 flex-1 flex flex-col h-full overflow-hidden">
+        <header className="min-h-14 border-b border-border flex items-center gap-2 px-3 md:px-6 justify-between shrink-0 bg-card/50">
+          <div className="flex min-w-0 items-center gap-2 md:gap-4">
+            <button type="button" aria-label="Open navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)} className="p-2 border border-border md:hidden"><Menu className="w-5 h-5" /></button>
+            <div className="hidden md:block w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="font-mono text-[10px] md:text-xs text-muted-foreground tracking-widest truncate">MAKUENI COMMAND CENTRE</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-4">
             <span className="font-mono text-[10px] text-muted-foreground">TIME: {new Date().toLocaleString("en-KE", { timeZone: "Africa/Nairobi", hour12: false })}</span>
             <div className="px-2 py-1 bg-primary/10 text-primary font-mono text-[10px] border border-primary/30">
               PROF. PHILIP KALOKI COMMAND CENTRE · 2027
             </div>
           </div>
         </header>
-        <div className="flex-1 overflow-auto p-6">
+        <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-6">
           {children}
         </div>
       </main>
