@@ -106,6 +106,33 @@ router.post("/providers", async (req, res) => {
   }
 });
 
+// Read-only Onfon balance check. Never expose saved API credentials to clients.
+router.get("/providers/onfon/health", async (_req, res) => {
+  const [provider] = await db.select().from(messagingProvidersTable)
+    .where(and(eq(messagingProvidersTable.channel, "sms"), eq(messagingProvidersTable.provider, "onfonmedia"), eq(messagingProvidersTable.isActive, true)));
+  if (!provider) return res.status(404).json({ status: "unconfigured", error: "No active Onfon SMS provider found." });
+  if (!provider.apiKey || !provider.username || !provider.apiSecret) {
+    return res.status(409).json({ status: "incomplete", error: "Onfon API Key, Client ID or Access Key is missing." });
+  }
+  try {
+    const url = new URL("https://api.onfonmedia.co.ke/v1/sms/Balance");
+    url.searchParams.set("ApiKey", provider.apiKey);
+    url.searchParams.set("ClientId", provider.username);
+    const response = await fetch(url, {
+      headers: { AccessKey: provider.apiSecret, "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(10000),
+    });
+    const payload = await response.json() as { ErrorCode?: number | string; ErrorDescription?: string; Data?: Array<{ PluginType?: string; Credits?: string }> };
+    if (!response.ok || Number(payload.ErrorCode) !== 0) {
+      return res.status(502).json({ status: "failed", error: payload.ErrorDescription || `Onfon returned HTTP ${response.status}`, providerCode: String(payload.ErrorCode ?? "") });
+    }
+    return res.json({ status: "connected", checkedAt: new Date().toISOString(), balances: (payload.Data ?? []).map(item => ({ type: item.PluginType, credits: item.Credits })) });
+  } catch (err) {
+    console.error("[messaging] Onfon balance check failed", err instanceof Error ? err.message : "Unknown error");
+    return res.status(502).json({ status: "unavailable", error: "Could not reach the Onfon balance service. Check the Render API logs." });
+  }
+});
+
 router.delete("/providers/:id", async (req, res) => {
   await db.delete(messagingProvidersTable).where(eq(messagingProvidersTable.id, parseInt(req.params.id)));
   res.status(204).send();
