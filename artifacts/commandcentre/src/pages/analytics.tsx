@@ -50,7 +50,7 @@ function pct(num: number, den: number) {
 
 function Stat({ label, value, sub, color = "text-foreground", trend }: { label: string; value: string | number; sub?: string; color?: string; trend?: "up" | "down" | "flat" }) {
   return (
-    <div className="bg-card border border-border p-4">
+    <div className="min-w-0 bg-card border border-border p-3 sm:p-4">
       <p className="font-mono text-[9px] text-muted-foreground mb-1">{label}</p>
       <div className="flex items-end gap-2">
         <p className={`text-2xl font-bold ${color}`}>{value}</p>
@@ -65,7 +65,7 @@ function Stat({ label, value, sub, color = "text-foreground", trend }: { label: 
 
 function Panel({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-card border border-border ${className ?? ""}`}>
+    <div className={`min-w-0 max-w-full bg-card border border-border ${className ?? ""}`}>
       <div className="px-4 py-3 border-b border-border/60">
         <p className="font-mono text-[10px] tracking-widest text-muted-foreground">{title}</p>
       </div>
@@ -133,10 +133,10 @@ export default function Analytics() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 max-w-full space-y-4 overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-xl font-bold tracking-widest">ANALYTICS HUB</h1>
           <p className="text-[10px] font-mono text-muted-foreground mt-0.5">GROWTH · MESSAGING · FIELD · SENTIMENT · KOLS · INSIGHTS</p>
         </div>
@@ -158,7 +158,7 @@ export default function Analytics() {
       </div>
 
       {loading && !d && (
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[...Array(8)].map((_, i) => <div key={i} className="animate-pulse bg-card border border-border h-24" />)}
         </div>
       )}
@@ -166,7 +166,7 @@ export default function Analytics() {
       {/* ─── GROWTH ─── */}
       {tab === "growth" && d && (
         <div className="space-y-4">
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
             <Stat label="TOTAL MEMBERS" value={fmt(d.totals.total)} color="text-foreground" />
             <Stat label="ACTIVE" value={fmt(d.totals.active)} sub={`${pct(d.totals.active, d.totals.total)}% of total`} color="text-green-400" />
             <Stat label="SMS CONSENT" value={fmt(d.totals.smsConsent)} sub={`${pct(d.totals.smsConsent, d.totals.total)}% opt-in`} color="text-blue-400" />
@@ -174,7 +174,7 @@ export default function Analytics() {
             <Stat label="EMAIL" value={fmt(d.totals.emailConsent)} sub={`${pct(d.totals.emailConsent, d.totals.total)}% opt-in`} color="text-cyan-400" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <Panel title="MEMBER GROWTH OVER TIME">
               {d.monthly.length === 0 ? <EmptyChart /> : (
                 <ResponsiveContainer width="100%" height={200}>
@@ -272,7 +272,7 @@ export default function Analytics() {
       {/* ─── MESSAGING ─── */}
       {tab === "messaging" && d && (
         <div className="space-y-4">
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
             <Stat label="CAMPAIGNS" value={d.totals.campaigns} />
             <Stat label="SENT" value={d.totals.sent} sub={`${pct(d.totals.sent, d.totals.campaigns)}% of total`} color="text-blue-400" />
             <Stat label="RECIPIENTS" value={fmt(d.totals.recipients)} color="text-foreground" />
@@ -281,7 +281,7 @@ export default function Analytics() {
             <Stat label="CLICKED" value={fmt(d.totals.clicked)} sub={`${pct(d.totals.clicked, d.totals.delivered)}% CTR`} color="text-orange-400" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <Panel title="CAMPAIGNS OVER TIME — RECIPIENTS">
               {d.monthly.length === 0 ? <EmptyChart /> : (
                 <ResponsiveContainer width="100%" height={200}>
@@ -382,14 +382,14 @@ export default function Analytics() {
       {/* ─── FIELD ─── */}
       {tab === "field" && d && (
         <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Stat label="CANVASS SESSIONS" value={d.sessions.total} sub={`${d.sessions.completed} completed`} />
             <Stat label="DOORS COVERAGE" value={`${d.sessions.coveragePct}%`} sub={`${fmt(d.sessions.doorsCompleted)} / ${fmt(d.sessions.doorsTarget)} doors`} color={d.sessions.coveragePct > 70 ? "text-green-400" : d.sessions.coveragePct > 40 ? "text-yellow-400" : "text-red-400"} />
             <Stat label="VOLUNTEERS" value={d.volunteers.total} sub={`${d.volunteers.active} active · ${fmt(d.volunteers.totalHours)} hours`} color="text-blue-400" />
             <Stat label="DOORS KNOCKED" value={fmt(d.volunteers.totalDoors)} sub="Total by volunteers" color="text-orange-400" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <Panel title="CANVASS COVERAGE BY WARD">
               {d.byWard.length === 0 ? <EmptyChart /> : (
                 <div className="space-y-3">
@@ -490,7 +490,7 @@ export default function Analytics() {
           </div>
 
           {/* Field issues bar */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
             <Stat label="FIELD ISSUES REPORTED" value={d.issues.total} />
             <Stat label="OPEN ISSUES" value={d.issues.open} color={d.issues.open > 0 ? "text-yellow-400" : "text-green-400"} />
             <Stat label="CRITICAL ISSUES" value={d.issues.critical} color={d.issues.critical > 0 ? "text-red-400" : "text-green-400"} />
@@ -501,7 +501,7 @@ export default function Analytics() {
       {/* ─── SENTIMENT ─── */}
       {tab === "sentiment" && d && (
         <div className="space-y-4">
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
             <Stat label="OPINION POLLS" value={d.polls.total} sub={`${d.polls.active} active`} />
             <Stat label="TOTAL VOTES" value={fmt(d.polls.votes)} color="text-primary" />
             <Stat label="ISSUES TRACKED" value={d.issues.total} sub={`${d.issues.open} open`} />
@@ -509,7 +509,7 @@ export default function Analytics() {
             <Stat label="HIGH PRIORITY" value={d.issues.high} color={d.issues.high > 0 ? "text-orange-400" : "text-green-400"} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <Panel title="POLL PARTICIPATION BY WARD">
               {d.votesByWard.length === 0 ? <EmptyChart /> : (
                 <ResponsiveContainer width="100%" height={200}>
@@ -630,7 +630,7 @@ export default function Analytics() {
       {/* ─── KOLs ─── */}
       {tab === "kols" && d && (
         <div className="space-y-4">
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
             <Stat label="TOTAL KOLs" value={d.totals.total} />
             <Stat label="TOTAL REACH" value={fmt(d.totals.followers)} sub="Combined followers" color="text-blue-400" />
             <Stat label="AVG INFLUENCE" value={d.totals.avgInfluence} sub="Out of 100" color="text-yellow-400" />
@@ -638,7 +638,7 @@ export default function Analytics() {
             <Stat label="OPPOSED" value={d.totals.opposed} sub={`${pct(d.totals.opposed, d.totals.total)}% opposed`} color={d.totals.opposed > 0 ? "text-red-400" : "text-muted-foreground"} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <Panel title="REACH BY TIER">
               {d.byTier.length === 0 ? <EmptyChart /> : (
                 <ResponsiveContainer width="100%" height={200}>
@@ -740,7 +740,7 @@ export default function Analytics() {
               <span className="font-mono text-[10px] tracking-widest text-primary">CAMPAIGN COMMAND SUMMARY</span>
               <span className="ml-auto font-mono text-[9px] text-muted-foreground">{new Date().toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}</span>
             </div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { label: "MEMBER BASE", value: fmt(d.members.total), sub: `${d.members.active} active`, color: "text-foreground", icon: <Users className="w-4 h-4 text-primary" /> },
                 { label: "FIELD COVERAGE", value: `${d.field.coveragePct}%`, sub: `${fmt(d.field.doorsCompleted)} doors done`, color: d.field.coveragePct > 60 ? "text-green-400" : d.field.coveragePct > 30 ? "text-yellow-400" : "text-red-400", icon: <Map className="w-4 h-4 text-blue-400" /> },
@@ -760,7 +760,7 @@ export default function Analytics() {
           </div>
 
           {/* Full module scorecard */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <Panel title="MODULE PERFORMANCE SCORECARD">
               <div className="space-y-3">
                 {[
@@ -860,7 +860,7 @@ export default function Analytics() {
           </div>
 
           {/* Finance summary */}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Stat label="DONATIONS RECEIVED" value={fmt(d.finance.totalRaised)} sub={`${d.finance.donations} transactions`} color="text-teal-400" />
             <Stat label="POLL PARTICIPATION" value={fmt(d.sentiment.votes)} sub={`${d.sentiment.polls} polls active`} color="text-purple-400" />
             <Stat label="LEGISLATIVE RECORDS" value={d.credentials.records} sub={`${d.credentials.passed} passed`} color="text-orange-400" />
