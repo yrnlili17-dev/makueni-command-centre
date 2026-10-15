@@ -120,11 +120,11 @@ router.post("/generate", async (req, res) => {
 
   const base = `${CAMPAIGN_CONTEXT}
 
-You are preparing a public-service announcement for Makueni County. Use a ${tone.toLowerCase()} tone.
+You are drafting a policy-focused public address for Prof. Philip Kaloki, a 2027 Makueni governor CANDIDATE, not an incumbent governor. Use a ${tone.toLowerCase()} tone.
 Language: ${language} (if "Swahili" write in Swahili; if a mix, blend naturally as Kenyan politicians do).
 Occasion: ${occasion}. Audience: ${audience || "the people of Makueni"}. Ward focus: ${ward}.
 Write only the public information text for the requested part. The speech is in Prof. Philip Kaloki's voice as a candidate explaining his proposed plan if elected. Describe intended actions as future commitments, not completed achievements. If currentGaps are supplied, present them as documented service-delivery gaps only when the user provides a credible source/date; attribute claims and avoid unsupported accusations. If no evidence is supplied, discuss the need for public performance reporting without asserting specific government failures.
-Ground it in the manifesto themes and Makueni County services. Do not invent statistics, project failures, motives or outcomes.`;
+Do not use incumbent-government phrasing such as "my administration has delivered", "we have launched", "our county government implemented", or "as your governor" as a present fact. Use prospective wording such as "my proposal", "if elected", "I intend to", and "I would seek to", without implying guaranteed funding or delivery. Historical positions must be explicitly identified as past roles. Ground it in the manifesto themes and Makueni County services. Do not invent statistics, project failures, motives or outcomes.`;
 
   const pointsLine = keyPoints ? `\nCandidate's proposed commitments to explain as actions if elected: ${keyPoints}` : "";
   const gapsLine = currentGaps ? `\nCurrent administration service gaps supplied for evidence-led discussion: ${currentGaps}. Treat as claims to verify; attribute them to the supplied source/date and do not embellish. If the source/date is absent, phrase them as concerns requiring verification.` : "\nNo specific evidence about current administration failures was supplied. Do not invent failures; instead say the candidate will publish baselines, budgets, milestones and progress reports so residents can assess performance.";
@@ -232,9 +232,9 @@ router.post("/manifesto", async (req, res) => {
 
   const base = `${CAMPAIGN_CONTEXT}
 
-You are drafting a Makueni County development and service-delivery brief. Tone: ${tone.toLowerCase()}, factual and specific.
+You are drafting a prospective county development policy platform for Prof. Philip Kaloki, a candidate seeking election as Makueni Governor in 2027, not an incumbent official. Tone: ${tone.toLowerCase()}, factual and specific.
 Language: ${language}. Write ONLY the prose for the requested section — no headings, no markdown, no labels, no bullet symbols other than plain lines.
-Describe only county-government responsibilities and documented Makueni County needs. Distinguish proposed actions from approved or completed work.`;
+Describe only county-government responsibilities and documented Makueni County needs. Distinguish proposed actions from approved or completed work. Describe the candidate\'s priorities as proposals conditional on election, budgeting, public participation and lawful county approvals. Never write as if the candidate currently controls county budgets, staff, or projects.`;
 
   const issuesLine = priorityIssues ? ` Emphasize these priority issues: ${priorityIssues}.` : "";
 
