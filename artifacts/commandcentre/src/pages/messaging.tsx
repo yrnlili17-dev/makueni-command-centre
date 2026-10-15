@@ -846,6 +846,19 @@ const TABS: { id: Channel; label: string; color: string; desc: string }[] = [
 export default function Messaging() {
   const [tab, setTab] = useState<Channel>("sms");
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [onfonHealth, setOnfonHealth] = useState<{ status: string; error?: string; balances?: Array<{ type?: string; credits?: string }> } | null>(null);
+  const [checkingOnfon, setCheckingOnfon] = useState(false);
+  async function checkOnfon() {
+    setCheckingOnfon(true);
+    try {
+      const response = await fetch(`${BASE_URL}/api/messages/providers/onfon/health`);
+      const data = await response.json();
+      setOnfonHealth(data);
+    } catch {
+      setOnfonHealth({ status: "unavailable", error: "Unable to reach the Command Centre API." });
+    } finally { setCheckingOnfon(false); }
+  }
+
   const { data: stats } = useGetMessagingStats();
 
   const loadProviders = useCallback(async () => {
@@ -864,6 +877,18 @@ export default function Messaging() {
 
   return (
     <div className="space-y-5">
+      {smsProvider?.provider === "onfonmedia" && (
+        <div className="flex flex-wrap items-center gap-3 border border-border bg-card p-3 text-xs">
+          <span className="font-mono text-muted-foreground">ONFON CONNECTION</span>
+          <button type="button" onClick={() => void checkOnfon()} disabled={checkingOnfon} className="border border-border px-3 py-2 hover:bg-secondary disabled:opacity-50">
+            {checkingOnfon ? "CHECKING…" : "TEST CONNECTION / CHECK BALANCE"}
+          </button>
+          {onfonHealth && <span className={onfonHealth.status === "connected" ? "text-green-400" : "text-red-400"}>
+            {onfonHealth.status.toUpperCase()}{onfonHealth.error ? ` — ${onfonHealth.error}` : ""}
+            {onfonHealth.balances?.map(item => ` · ${item.type ?? "SMS"}: ${item.credits ?? "Unknown"}`).join("")}
+          </span>}
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
