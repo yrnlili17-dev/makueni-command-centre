@@ -4,9 +4,12 @@ import { db, generatedDocumentsTable, insertGeneratedDocumentSchema } from "@wor
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { CAMPAIGN_CONTEXT } from "./ai";
+import { requireAuth } from "../lib/auth";
 import { buildFreeMakueniSpeech, searchFreeMakueniWeb } from "./makueni-free-ai";
 
 const router = Router();
+// Generated speeches and their source material are internal-only.
+router.use(requireAuth);
 
 // Guard the expensive AI generation endpoints against credit-burn abuse: one
 // generation at a time globally, plus a short per-IP cooldown between requests.
