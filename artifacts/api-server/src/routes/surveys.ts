@@ -37,22 +37,34 @@ router.delete("/polls/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
+// Public poll endpoint exposes only the question and options, never participant records.
+router.get("/public/polls/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id < 1) { res.status(400).json({ error: "Invalid poll" }); return; }
+  const [poll] = await db.select().from(opinionPollsTable).where(eq(opinionPollsTable.id, id));
+  if (!poll || !isMakueniWard(poll.ward)) { res.status(404).json({ error: "Poll not found" }); return; }
+  const options = poll.options as Array<{ label: string; votes: number }>;
+  res.json({ id: poll.id, title: poll.title, description: poll.description, status: poll.status, deadline: poll.deadline, options: options.map(o => ({ label: o.label })) });
+});
+
 router.post("/polls/:id/vote", async (req, res) => {
-  const pollId = parseInt(req.params.id);
-  const { optionIndex, respondentName, ward, ageGroup, gender } = req.body;
-  if (!WARDS.includes(ward)) { res.status(400).json({ error: "A valid Makueni County ward is required to submit a response" }); return; }
-  if (optionIndex === undefined) { res.status(400).json({ error: "optionIndex required" }); return; }
+  const pollId = Number(req.params.id);
+  const { optionIndex } = req.body ?? {};
+  if (!Number.isSafeInteger(pollId) || pollId < 1 || !Number.isInteger(optionIndex)) { res.status(400).json({ error: "Invalid poll or option" }); return; }
   const [poll] = await db.select().from(opinionPollsTable).where(eq(opinionPollsTable.id, pollId));
   if (!poll || !isMakueniWard(poll.ward)) { res.status(404).json({ error: "Makueni poll not found" }); return; }
   if (poll.status !== "active") { res.status(400).json({ error: "Poll is not active" }); return; }
-
-  const [vote] = await db.insert(pollVotesTable).values({ pollId, optionIndex, respondentName, ward, ageGroup, gender }).returning();
-
-  const opts = poll.options as Array<{ label: string; votes: number }>;
-  opts[optionIndex].votes = (opts[optionIndex].votes ?? 0) + 1;
-  await db.update(opinionPollsTable).set({ options: opts, totalVotes: sql`${opinionPollsTable.totalVotes} + 1` }).where(eq(opinionPollsTable.id, pollId));
-
-  res.status(201).json(vote);
+  if (poll.deadline && String(poll.deadline).slice(0, 10) < new Date().toISOString().slice(0, 10)) { res.status(400).json({ error: "Poll has closed" }); return; }
+  const options = poll.options as Array<{ label: string; votes: number }>;
+  if (optionIndex < 0 || optionIndex >= options.length) { res.status(400).json({ error: "Invalid answer" }); return; }
+  // Session-level duplicate protection is a safeguard, not proof of one vote per person.
+  const session = req.session as typeof req.session & { publicPollVotes?: number[] };
+  if (session.publicPollVotes?.includes(pollId)) { res.status(409).json({ error: "This browser session already voted in this poll" }); return; }
+  const [vote] = await db.insert(pollVotesTable).values({ pollId, optionIndex, respondentName: null, ward: null, ageGroup: null, gender: null }).returning();
+  const nextOptions = options.map((o, index) => ({ ...o, votes: (o.votes ?? 0) + (index === optionIndex ? 1 : 0) }));
+  await db.update(opinionPollsTable).set({ options: nextOptions, totalVotes: sql`${opinionPollsTable.totalVotes} + 1` }).where(eq(opinionPollsTable.id, pollId));
+  session.publicPollVotes = [...(session.publicPollVotes ?? []), pollId];
+  res.status(201).json({ ok: true, message: "Thank you for voting" });
 });
 
 router.get("/polls/:id/results", async (req, res) => {
