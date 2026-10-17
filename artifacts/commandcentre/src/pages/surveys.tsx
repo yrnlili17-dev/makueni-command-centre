@@ -383,6 +383,12 @@ export default function Surveys() {
                           {poll.ward !== "all" && <span className="flex items-center gap-0.5 font-mono text-[10px] text-primary"><MapPin className="w-2.5 h-2.5" />{poll.ward}</span>}
                         </div>
                         <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                          <button type="button" onClick={async () => {
+                            const link = new URL(`poll/${poll.id}`, window.location.origin + import.meta.env.BASE_URL).toString();
+                            try { await navigator.clipboard.writeText(link); window.alert("Public poll link copied: " + link); }
+                            catch { window.prompt("Copy public poll link:", link); }
+                          }} className="border border-primary/50 text-primary px-2 py-1 font-mono text-[9px] hover:bg-primary/10">COPY SHARE LINK</button>
+                          <a href={`https://wa.me/?text=${encodeURIComponent(poll.title + " " + new URL(`poll/${poll.id}`, window.location.origin + import.meta.env.BASE_URL).toString())}`} target="_blank" rel="noopener noreferrer" className="border border-border px-2 py-1 font-mono text-[9px] hover:bg-secondary">WHATSAPP</a>
                           {poll.status === "active" && (
                             <button onClick={() => { setVotingPollId(poll.id); setVoteForm({ optionIndex: null }); }} className="flex items-center gap-1 border border-primary/30 text-primary px-2 py-0.5 font-mono text-[9px] hover:bg-primary hover:text-primary-foreground">CAST VOTE</button>
                           )}
