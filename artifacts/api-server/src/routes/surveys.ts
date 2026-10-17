@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { db, surveysTable, surveyResponsesTable, opinionPollsTable, pollVotesTable, topicalIssuesTable } from "@workspace/db";
+import { requireAuth, requirePermission } from "../lib/auth";
+import { db, pool, surveysTable, surveyResponsesTable, opinionPollsTable, pollVotesTable, topicalIssuesTable } from "@workspace/db";
 import { eq, sql, desc, and, inArray } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
 const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
@@ -107,6 +108,35 @@ router.get("/polls/:id/results", async (req, res) => {
     wardBreakdown, ageBreakdown, genderBreakdown,
     recentVotes: votes.slice(-10).reverse(),
   });
+});
+
+// Separate voluntary contact registration. No ballot ID, vote selection or poll ID is stored.
+router.post("/public/participant-registration", async (req, res) => {
+  const { fullName, phone, ward, thankYouSmsConsent } = req.body ?? {};
+  const name = typeof fullName === "string" ? fullName.trim().replace(/\\s+/g, " ") : "";
+  const digits = typeof phone === "string" ? phone.replace(/[\\s()+-]/g, "") : "";
+  const normalized = /^0[17]\\d{8}$/.test(digits) ? "254" + digits.slice(1) : digits;
+  if (name.length < 2 || name.length > 160 || !/^254[17]\\d{8}$/.test(normalized) || !WARDS.includes(ward) || typeof thankYouSmsConsent !== "boolean") {
+    res.status(400).json({ error: "Enter a valid name, Kenyan phone number, ward and consent choice." }); return;
+  }
+  try {
+    await pool.query("INSERT INTO public.poll_participant_registrations (full_name, phone, ward, thank_you_sms_consent) VALUES ($1, $2, $3, $4)", [name, normalized, ward, thankYouSmsConsent]);
+    res.status(201).json({ ok: true, message: "Thank you for registering" });
+  } catch (error: any) {
+    if (error?.code === "23505") { res.status(409).json({ error: "This phone number is already registered." }); return; }
+    console.error("Participant registration failed:", error?.code ?? "unknown");
+    res.status(503).json({ error: "Registration is temporarily unavailable." });
+  }
+});
+
+router.get("/participant-registrations", requireAuth, requirePermission("surveys", "read"), async (_req, res) => {
+  try {
+    const rows = await pool.query("SELECT id, full_name AS \\"fullName\\", phone, ward, thank_you_sms_consent AS \\"thankYouSmsConsent\\", created_at AS \\"createdAt\\" FROM public.poll_participant_registrations ORDER BY created_at DESC LIMIT 5000");
+    res.json({ total: rows.rowCount, registrations: rows.rows });
+  } catch (error: any) {
+    console.error("Participant list failed:", error?.code ?? "unknown");
+    res.status(503).json({ error: "Participant list unavailable. Check database migration." });
+  }
 });
 
 // ─── Topical Issues ───────────────────────────────────────────────────────────
