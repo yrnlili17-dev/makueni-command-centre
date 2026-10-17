@@ -104,6 +104,9 @@ function ResultBar({ label, votes, pct, total, color = "bg-primary" }: { label: 
 export default function Surveys() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("polls");
+  const [registrations, setRegistrations] = useState<any[]>([]);
+  const [registrationError, setRegistrationError] = useState("");
+  const [showRegistrations, setShowRegistrations] = useState(false);
   const [requestError, setRequestError] = useState("");
 
   // Polls
@@ -145,6 +148,18 @@ export default function Surveys() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
+  const loadRegistrations = useCallback(async () => {
+    try {
+      const data = await apiFetch("/participant-registrations");
+      setRegistrations(data.registrations ?? []); setRegistrationError("");
+    } catch (e) { setRegistrationError(e instanceof Error ? e.message : "Unable to load registrations"); }
+  }, []);
+  function exportRegistrations() {
+    const quote = (v: unknown) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+    const csv = [["Full name","Phone","Ward","Thank-you SMS consent","Registered at"], ...registrations.map(r => [r.fullName,r.phone,r.ward,r.thankYouSmsConsent ? "Yes" : "No",r.createdAt])].map(row => row.map(quote).join(",")).join("\\r\\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "poll-voluntary-registrations.csv"; a.click(); URL.revokeObjectURL(url);
+  }
   const loadPolls = useCallback(async () => {
     setPollsLoading(true);
     try { setRequestError(""); setPolls(await apiFetch("/polls")); } catch (e) { setRequestError(e instanceof Error ? e.message : "Could not load polls"); } finally { setPollsLoading(false); }
@@ -273,6 +288,18 @@ export default function Surveys() {
           {tab === "analytics" && <button onClick={loadAnalytics} disabled={analyticsLoading} className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs hover:bg-secondary disabled:opacity-60"><RefreshCw className={`w-3 h-3 ${analyticsLoading ? "animate-spin" : ""}`} /> REFRESH</button>}
         </div>
       </div>
+
+      <section className="border border-border bg-card p-3 sm:p-4 space-y-3">
+        <div className="flex flex-wrap justify-between items-center gap-2">
+          <div><h2 className="text-xs font-bold tracking-wider">VOLUNTARY PARTICIPANT CONTACTS</h2><p className="text-[10px] text-muted-foreground mt-1">Independent registration list · No individual ballot selections are stored here.</p></div>
+          <div className="flex gap-2 flex-wrap"><button type="button" className="border border-border px-3 py-2 text-xs" onClick={() => { setShowRegistrations(v => !v); if (!showRegistrations) loadRegistrations(); }}>{showRegistrations ? "HIDE LIST" : "VIEW LIST"}</button>{showRegistrations && <button type="button" className="border border-border px-3 py-2 text-xs" onClick={loadRegistrations}>REFRESH</button>}{showRegistrations && registrations.length > 0 && <button type="button" className="border border-border px-3 py-2 text-xs" onClick={exportRegistrations}>EXPORT CSV</button>}</div>
+        </div>
+        {showRegistrations && <>
+          {registrationError && <p role="alert" className="text-red-400 text-xs">{registrationError}</p>}
+          <p className="text-xs text-muted-foreground">{registrations.length} voluntary contact registrations (up to 5,000 most recent). This is not a verified count of unique voters.</p>
+          <div className="max-w-full overflow-x-auto"><table className="w-full min-w-[540px] text-xs"><thead><tr className="text-left border-b border-border"><th className="p-2">Full name</th><th className="p-2">Phone</th><th className="p-2">Ward</th><th className="p-2">Thank-you SMS</th><th className="p-2">Date</th></tr></thead><tbody>{registrations.map(r=><tr key={r.id} className="border-b border-border"><td className="p-2">{r.fullName}</td><td className="p-2">{r.phone}</td><td className="p-2">{r.ward}</td><td className="p-2">{r.thankYouSmsConsent ? "Opted in" : "No"}</td><td className="p-2">{new Date(r.createdAt).toLocaleDateString()}</td></tr>)}</tbody></table></div>
+        </>}
+      </section>
 
       {/* Stats bar */}
       {requestError && <div role="alert" className="border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-300">Unable to load data: {requestError} <button type="button" className="ml-3 underline" onClick={() => { if (tab === "polls") loadPolls(); else if (tab === "issues") loadIssues(); else if (tab === "analytics") loadAnalytics(); }}>Retry</button></div>}
