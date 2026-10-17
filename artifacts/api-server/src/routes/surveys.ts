@@ -25,8 +25,14 @@ router.post("/polls", async (req, res) => {
 });
 
 router.patch("/polls/:id", async (req, res) => {
-  const { status } = req.body;
-  const [poll] = await db.update(opinionPollsTable).set({ status }).where(eq(opinionPollsTable.id, parseInt(req.params.id))).returning();
+  const { status, deadline } = req.body ?? {};
+  if (status !== undefined && !["active", "closed"].includes(status)) { res.status(400).json({ error: "Invalid status" }); return; }
+  if (deadline !== undefined && deadline !== null && (typeof deadline !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(deadline))) { res.status(400).json({ error: "Invalid deadline" }); return; }
+  const updates: { status?: string; deadline?: string | null } = {};
+  if (status !== undefined) updates.status = status;
+  if (deadline !== undefined) updates.deadline = deadline || null;
+  if (!Object.keys(updates).length) { res.status(400).json({ error: "Nothing to update" }); return; }
+  const [poll] = await db.update(opinionPollsTable).set(updates).where(eq(opinionPollsTable.id, parseInt(req.params.id))).returning();
   if (!poll) { res.status(404).json({ error: "Not found" }); return; }
   res.json(poll);
 });
