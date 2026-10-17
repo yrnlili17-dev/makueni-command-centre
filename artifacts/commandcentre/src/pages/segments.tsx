@@ -87,6 +87,7 @@ export default function Segments() {
   const [showWardDirectory, setShowWardDirectory] = useState(true);
   const [wardSearch, setWardSearch] = useState("");
   const [contactCount, setContactCount] = useState<number | null>(null);
+  const [wardCounts, setWardCounts] = useState<Record<string, number> | null>(null);
   const [segmentType, setSegmentType] = useState<"geographic" | "demographic" | "behavioral" | "strategic">("geographic");
   const [form, setForm] = useState<Partial<SegmentInput> & Record<string, any>>({ criteria: {}, isLocked: false });
 
@@ -97,6 +98,17 @@ export default function Segments() {
       .then(r => { if (!r.ok) throw new Error("Contact count unavailable"); return r.json(); })
       .then(data => { if (mounted) setContactCount(typeof data.total === "number" ? data.total : null); })
       .catch(() => { if (mounted) setContactCount(null); });
+    return () => { mounted = false; };
+  }, []);
+  useEffect(() => {
+    let mounted = true;
+    fetch(`${import.meta.env.BASE_URL}api/members/stats`, { credentials: "include" })
+      .then(r => { if (!r.ok) throw new Error("Ward counts unavailable"); return r.json(); })
+      .then(data => {
+        if (!mounted) return;
+        const rows = Array.isArray(data.byWard) ? data.byWard : [];
+        setWardCounts(Object.fromEntries(rows.map((row: { ward: string; count: number }) => [row.ward, Number(row.count)])));
+      }).catch(() => { if (mounted) setWardCounts(null); });
     return () => { mounted = false; };
   }, []);
   const createSegment = useCreateSegment({
@@ -204,7 +216,7 @@ export default function Segments() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="font-mono text-xs font-bold tracking-wider">MAKUENI COUNTY · ALL 30 WARDS</h2>
-            <p className="text-[10px] text-muted-foreground mt-1">Ward directory · Saved segments: {(segments ?? []).length}. A ward without a saved segment is still listed.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Ward directory with database contact counts. Saved segments are managed separately below.</p>
           </div>
           <button type="button" onClick={() => setShowWardDirectory(v => !v)} className="border border-border px-3 py-2 font-mono text-[10px] hover:bg-secondary">{showWardDirectory ? "HIDE WARDS" : "SHOW WARDS"}</button>
         </div>
@@ -215,7 +227,7 @@ export default function Segments() {
               const saved = (segments ?? []).filter(s => (s.criteria as Record<string, any> | null)?.ward === ward);
               return <div key={ward} className="min-w-0 border border-border p-3 bg-secondary/20">
                 <p className="font-mono text-[11px] font-semibold break-words">{ward}</p>
-                <p className="font-mono text-[9px] text-muted-foreground mt-1">{saved.length} saved {saved.length === 1 ? "segment" : "segments"}</p>
+                <p className="font-mono text-[10px] text-muted-foreground mt-1">{wardCounts === null ? "Contacts unavailable" : `${wardCounts[ward] ?? 0} contact records`}</p>\n                <p className="font-mono text-[9px] text-muted-foreground mt-1">{saved.length} saved {saved.length === 1 ? "segment" : "segments"}</p>
               </div>;
             })}
           </div>
@@ -223,7 +235,7 @@ export default function Segments() {
         </>}
       </section>
 
-      {/* Category tabs */}
+      <div className="border-b border-border pb-2 pt-2">\n        <h2 className="font-mono text-xs font-bold tracking-wider">SAVED SEGMENTS · {(segments ?? []).length}</h2>\n        <p className="text-[10px] text-muted-foreground mt-1">These are user-created segment definitions, not the complete list of Makueni wards.</p>\n      </div>\n\n      {/* Category tabs */}
       <div className="flex gap-1 border-b border-border pb-0">
         {CATEGORIES.map(cat => (
           <button
