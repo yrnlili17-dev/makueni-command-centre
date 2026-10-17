@@ -190,6 +190,12 @@ export default function Surveys() {
     if (selectedPoll === id) await loadPollResults(id);
   }
 
+  async function keepPollOpen(id: number) {
+    await apiFetch(`/polls/${id}`, { method: "PATCH", body: JSON.stringify({ status: "active", deadline: null }) });
+    await loadPolls();
+    if (selectedPoll === id) await loadPollResults(id);
+  }
+
   async function deletePoll(id: number) {
     await apiFetch(`/polls/${id}`, { method: "DELETE" });
     await loadPolls();
@@ -392,6 +398,7 @@ export default function Surveys() {
                           {poll.status === "active" && (
                             <button onClick={() => { setVotingPollId(poll.id); setVoteForm({ optionIndex: null }); }} className="flex items-center gap-1 border border-primary/30 text-primary px-2 py-0.5 font-mono text-[9px] hover:bg-primary hover:text-primary-foreground">CAST VOTE</button>
                           )}
+                          {(poll.status !== "active" || (poll.deadline && poll.deadline < new Date().toISOString().slice(0, 10))) && <button onClick={() => keepPollOpen(poll.id)} className="font-mono text-[9px] text-green-400 hover:text-green-300 px-1">REOPEN · NO DEADLINE</button>}
                           {poll.status === "active" && <button onClick={() => closePoll(poll.id)} className="font-mono text-[9px] text-muted-foreground hover:text-foreground px-1">CLOSE</button>}
                           <button onClick={() => deletePoll(poll.id)} className="text-muted-foreground hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
                         </div>
