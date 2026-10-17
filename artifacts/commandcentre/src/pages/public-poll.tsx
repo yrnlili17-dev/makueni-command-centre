@@ -2,7 +2,40 @@ import { useEffect, useState } from "react";
 import { useRoute } from "wouter";
 
 const BASE = import.meta.env.BASE_URL;
+const WARDS = ["Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa","Kiima Kiu/Kalanzoni","Mukaa","Kasikeu","Kee","Kilungu","Ilima","Ukia","Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini","Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala","Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"];
 type Poll = { id: number; title: string; description?: string; status: string; deadline?: string; options: { label: string }[] };
+
+function VoluntaryRegistration() {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [ward, setWard] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [complete, setComplete] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function register(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setError("");
+    try {
+      const r = await fetch(`${BASE}api/surveys/public/participant-registration`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fullName: name, phone, ward, thankYouSmsConsent: consent }) });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || "Registration failed");
+      setComplete(true);
+    } catch (e) { setError(e instanceof Error ? e.message : "Registration failed"); }
+    finally { setBusy(false); }
+  }
+  return <div className="border-t border-border pt-5 space-y-3">
+    <h2 className="text-lg font-bold">Optional contact registration</h2>
+    <p className="text-xs text-muted-foreground">Register separately to receive an optional one-time participation thank-you message. Your contact details are not connected to how you voted. Registration is not required to vote.</p>
+    {complete ? <p role="status" className="text-green-400">Thank you. Your contact registration is saved.</p> : <form onSubmit={register} className="space-y-3">
+      <label className="block text-sm">Full name<input required minLength={2} maxLength={160} value={name} onChange={e=>setName(e.target.value)} className="mt-1 w-full bg-background border border-border p-3" /></label>
+      <label className="block text-sm">Phone number<input required type="tel" inputMode="tel" placeholder="0712 345 678" value={phone} onChange={e=>setPhone(e.target.value)} className="mt-1 w-full bg-background border border-border p-3" /></label>
+      <label className="block text-sm">Makueni ward<select required value={ward} onChange={e=>setWard(e.target.value)} className="mt-1 w-full bg-background border border-border p-3"><option value="">Select ward</option>{WARDS.map(w=><option key={w} value={w}>{w}</option>)}</select></label>
+      <label className="flex gap-2 text-xs items-start"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)} />I agree to receive a one-time thank-you SMS. This is optional and not consent to campaign marketing.</label>
+      <button disabled={busy} type="submit" className="w-full border border-primary text-primary p-3 disabled:opacity-50">{busy ? "Saving…" : "Register contact details"}</button>
+      {error && <p role="alert" className="text-red-400 text-sm">{error}</p>}
+    </form>}
+  </div>;
+}
 
 export default function PublicPoll() {
   const [, params] = useRoute("/poll/:id");
@@ -45,6 +78,7 @@ export default function PublicPoll() {
         </>}
       </> : null}
       {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+      {submitted && <VoluntaryRegistration />}
       <p className="text-xs text-muted-foreground">This is an informal, voluntary online poll and is not an official election or representative scientific survey. Duplicate checks are limited to the current browser session.</p>
     </section>
   </main>;
