@@ -156,7 +156,7 @@ export default function Surveys() {
   }, []);
   function exportRegistrations() {
     const quote = (v: unknown) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
-    const csv = [["Full name","Phone","Ward","Thank-you SMS consent","Registered at"], ...registrations.map(r => [r.fullName,r.phone,r.ward,r.thankYouSmsConsent ? "Yes" : "No",r.createdAt])].map(row => row.map(quote).join(",")).join("\\r\\n");
+    const csv = [["Full name","Phone","Ward","Thank-you SMS consent","Registered at"], ...registrations.map(r => [r.fullName,r.phone,r.ward,r.thankYouSmsConsent ? "Yes" : "No",r.createdAt])].map(row => row.map(quote).join(",")).join("\r\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "poll-voluntary-registrations.csv"; a.click(); URL.revokeObjectURL(url);
   }
