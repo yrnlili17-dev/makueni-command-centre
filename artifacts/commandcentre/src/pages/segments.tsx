@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useListSegments, useCreateSegment, useDeleteSegment,
   getListSegmentsQueryKey
@@ -86,10 +86,19 @@ export default function Segments() {
   const [showAdd, setShowAdd] = useState(false);
   const [showWardDirectory, setShowWardDirectory] = useState(true);
   const [wardSearch, setWardSearch] = useState("");
+  const [contactCount, setContactCount] = useState<number | null>(null);
   const [segmentType, setSegmentType] = useState<"geographic" | "demographic" | "behavioral" | "strategic">("geographic");
   const [form, setForm] = useState<Partial<SegmentInput> & Record<string, any>>({ criteria: {}, isLocked: false });
 
   const { data: segments, isLoading } = useListSegments();
+  useEffect(() => {
+    let mounted = true;
+    fetch(`${import.meta.env.BASE_URL}api/members?limit=1`, { credentials: "include" })
+      .then(r => { if (!r.ok) throw new Error("Contact count unavailable"); return r.json(); })
+      .then(data => { if (mounted) setContactCount(typeof data.total === "number" ? data.total : null); })
+      .catch(() => { if (mounted) setContactCount(null); });
+    return () => { mounted = false; };
+  }, []);
   const createSegment = useCreateSegment({
     mutation: {
       onSuccess: () => {
@@ -177,7 +186,7 @@ export default function Segments() {
         {[
           { label: "TOTAL SEGMENTS", value: segments?.length ?? 0, icon: Layers },
           { label: "TOTAL REACH", value: (totalReach).toLocaleString(), icon: Users },
-          { label: "REGISTERED VOTERS", value: "78,000", icon: Target },
+          { label: "MAKUENI CONTACT RECORDS", value: contactCount === null ? "—" : contactCount.toLocaleString(), icon: Target },
           { label: "SEGMENTS LOCKED", value: (segments ?? []).filter(s => s.isLocked).length, icon: Lock },
         ].map(({ label, value, icon: Icon }) => (
           <div key={label} className="bg-card border border-border p-3 flex items-center gap-3">
