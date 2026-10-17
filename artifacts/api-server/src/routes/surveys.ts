@@ -134,8 +134,18 @@ router.get("/participant-registrations", requireAuth, requirePermission("intelli
     const rows = await pool.query("SELECT id, full_name AS \"fullName\", phone, ward, thank_you_sms_consent AS \"thankYouSmsConsent\", created_at AS \"createdAt\" FROM public.poll_participant_registrations ORDER BY created_at DESC LIMIT 5000");
     res.json({ total: rows.rowCount, registrations: rows.rows });
   } catch (error: any) {
-    console.error("Participant list failed:", error?.code ?? "unknown");
-    res.status(503).json({ error: "Participant list unavailable. Check database migration." });
+    const code = error?.code;
+    console.error("Participant list failed:", code ?? "unknown");
+    const message = code === "42P01"
+      ? "Participant table not found in the database connected to Render. Verify Render DATABASE_URL points to the Supabase project where you ran the SQL."
+      : code === "42501"
+        ? "The Render database user lacks permission to read participant registrations."
+        : code === "42703"
+          ? "Participant table columns do not match the application schema."
+          : code === "28P01" || code === "28000"
+            ? "Render database authentication failed."
+            : "Participant list database query failed. Check Render service logs for the PostgreSQL error code.";
+    res.status(503).json({ error: message });
   }
 });
 
