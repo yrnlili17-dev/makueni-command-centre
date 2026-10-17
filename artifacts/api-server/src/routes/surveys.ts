@@ -28,7 +28,7 @@ router.post("/polls", async (req, res) => {
 router.patch("/polls/:id", async (req, res) => {
   const { status, deadline } = req.body ?? {};
   if (status !== undefined && !["active", "closed"].includes(status)) { res.status(400).json({ error: "Invalid status" }); return; }
-  if (deadline !== undefined && deadline !== null && (typeof deadline !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(deadline))) { res.status(400).json({ error: "Invalid deadline" }); return; }
+  if (deadline !== undefined && deadline !== null && (typeof deadline !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(deadline))) { res.status(400).json({ error: "Invalid deadline" }); return; }
   const updates: { status?: string; deadline?: string | null } = {};
   if (status !== undefined) updates.status = status;
   if (deadline !== undefined) updates.deadline = deadline || null;
@@ -113,10 +113,10 @@ router.get("/polls/:id/results", async (req, res) => {
 // Separate voluntary contact registration. No ballot ID, vote selection or poll ID is stored.
 router.post("/public/participant-registration", async (req, res) => {
   const { fullName, phone, ward, thankYouSmsConsent } = req.body ?? {};
-  const name = typeof fullName === "string" ? fullName.trim().replace(/\\s+/g, " ") : "";
-  const digits = typeof phone === "string" ? phone.replace(/[\\s()+-]/g, "") : "";
-  const normalized = /^0[17]\\d{8}$/.test(digits) ? "254" + digits.slice(1) : digits;
-  if (name.length < 2 || name.length > 160 || !/^254[17]\\d{8}$/.test(normalized) || !WARDS.includes(ward) || typeof thankYouSmsConsent !== "boolean") {
+  const name = typeof fullName === "string" ? fullName.trim().replace(/\s+/g, " ") : "";
+  const digits = typeof phone === "string" ? phone.replace(/[\s()+-]/g, "") : "";
+  const normalized = /^0[17]\d{8}$/.test(digits) ? "254" + digits.slice(1) : digits;
+  if (name.length < 2 || name.length > 160 || !/^254[17]\d{8}$/.test(normalized) || !WARDS.includes(ward) || typeof thankYouSmsConsent !== "boolean") {
     res.status(400).json({ error: "Enter a valid name, Kenyan phone number, ward and consent choice." }); return;
   }
   try {
