@@ -84,6 +84,8 @@ export default function Segments() {
   const qc = useQueryClient();
   const [activeCategory, setActiveCategory] = useState<Category>("ALL");
   const [showAdd, setShowAdd] = useState(false);
+  const [showWardDirectory, setShowWardDirectory] = useState(true);
+  const [wardSearch, setWardSearch] = useState("");
   const [segmentType, setSegmentType] = useState<"geographic" | "demographic" | "behavioral" | "strategic">("geographic");
   const [form, setForm] = useState<Partial<SegmentInput> & Record<string, any>>({ criteria: {}, isLocked: false });
 
@@ -171,7 +173,7 @@ export default function Segments() {
       </div>
 
       {/* Summary bar */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "TOTAL SEGMENTS", value: segments?.length ?? 0, icon: Layers },
           { label: "TOTAL REACH", value: (totalReach).toLocaleString(), icon: Users },
@@ -187,6 +189,30 @@ export default function Segments() {
           </div>
         ))}
       </div>
+
+      {/* Ward directory is distinct from saved segments: never imply a ward has zero residents because no segment exists. */}
+      <section className="border border-border bg-card p-3 sm:p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="font-mono text-xs font-bold tracking-wider">MAKUENI COUNTY · ALL 30 WARDS</h2>
+            <p className="text-[10px] text-muted-foreground mt-1">Ward directory · Saved segments: {(segments ?? []).length}. A ward without a saved segment is still listed.</p>
+          </div>
+          <button type="button" onClick={() => setShowWardDirectory(v => !v)} className="border border-border px-3 py-2 font-mono text-[10px] hover:bg-secondary">{showWardDirectory ? "HIDE WARDS" : "SHOW WARDS"}</button>
+        </div>
+        {showWardDirectory && <>
+          <input aria-label="Search Makueni wards" value={wardSearch} onChange={e => setWardSearch(e.target.value)} placeholder="Search all 30 wards…" className="w-full sm:max-w-sm bg-secondary border border-border px-3 py-2 text-xs outline-none focus:border-primary" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
+            {WARDS.filter(w => w.toLowerCase().includes(wardSearch.trim().toLowerCase())).map(ward => {
+              const saved = (segments ?? []).filter(s => (s.criteria as Record<string, any> | null)?.ward === ward);
+              return <div key={ward} className="min-w-0 border border-border p-3 bg-secondary/20">
+                <p className="font-mono text-[11px] font-semibold break-words">{ward}</p>
+                <p className="font-mono text-[9px] text-muted-foreground mt-1">{saved.length} saved {saved.length === 1 ? "segment" : "segments"}</p>
+              </div>;
+            })}
+          </div>
+          {WARDS.filter(w => w.toLowerCase().includes(wardSearch.trim().toLowerCase())).length === 0 && <p className="text-xs text-muted-foreground">No matching Makueni ward.</p>}
+        </>}
+      </section>
 
       {/* Category tabs */}
       <div className="flex gap-1 border-b border-border pb-0">
