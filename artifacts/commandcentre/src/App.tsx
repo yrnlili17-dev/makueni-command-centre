@@ -16,6 +16,7 @@ import FieldOps from "@/pages/field-ops";
 import Volunteers from "@/pages/volunteers";
 import VolunteerRegistration from "@/pages/volunteer-registration";
 import Surveys from "@/pages/surveys";
+import PublicPoll from "@/pages/public-poll";
 import Events from "@/pages/events";
 import Intelligence from "@/pages/intelligence";
 import SocialListening from "@/pages/social-listening";
@@ -113,6 +114,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/insights/volunteer" component={VolunteerRegistration} />
+      <Route path="/poll/:id" component={PublicPoll} />
       <Route path="/" component={Login} />
       <Route path="/login" component={Login} />
       <Route path="/:rest*" component={ProtectedRoutes} />
