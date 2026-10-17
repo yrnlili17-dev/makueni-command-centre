@@ -104,6 +104,7 @@ function ResultBar({ label, votes, pct, total, color = "bg-primary" }: { label: 
 export default function Surveys() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("polls");
+  const [requestError, setRequestError] = useState("");
 
   // Polls
   const [polls, setPolls] = useState<any[]>([]);
@@ -146,15 +147,15 @@ export default function Surveys() {
 
   const loadPolls = useCallback(async () => {
     setPollsLoading(true);
-    try { setPolls(await apiFetch("/polls")); } catch { } finally { setPollsLoading(false); }
+    try { setRequestError(""); setPolls(await apiFetch("/polls")); } catch (e) { setRequestError(e instanceof Error ? e.message : "Could not load polls"); } finally { setPollsLoading(false); }
   }, []);
   const loadIssues = useCallback(async () => {
     setIssuesLoading(true);
-    try { setIssues(await apiFetch("/issues")); } catch { } finally { setIssuesLoading(false); }
+    try { setRequestError(""); setIssues(await apiFetch("/issues")); } catch (e) { setRequestError(e instanceof Error ? e.message : "Could not load issues"); } finally { setIssuesLoading(false); }
   }, []);
   const loadAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
-    try { setAnalytics(await apiFetch("/analytics")); } catch { } finally { setAnalyticsLoading(false); }
+    try { setRequestError(""); setAnalytics(await apiFetch("/analytics")); } catch (e) { setRequestError(e instanceof Error ? e.message : "Could not load analytics"); } finally { setAnalyticsLoading(false); }
   }, []);
   const loadPollResults = useCallback(async (id: number) => {
     const results = await apiFetch(`/polls/${id}/results`);
@@ -274,7 +275,8 @@ export default function Surveys() {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-6 gap-2">
+      {requestError && <div role="alert" className="border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-300">Unable to load data: {requestError} <button type="button" className="ml-3 underline" onClick={() => { if (tab === "polls") loadPolls(); else if (tab === "issues") loadIssues(); else if (tab === "analytics") loadAnalytics(); }}>Retry</button></div>}
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
         {[
           { label: "ACTIVE POLLS", value: activePolls, color: "text-green-400" },
           { label: "TOTAL VOTES", value: totalVotes, color: "text-foreground" },
@@ -595,7 +597,8 @@ export default function Surveys() {
           ) : filteredIssues.length === 0 ? (
             <div className="bg-card border border-border flex flex-col items-center justify-center py-16 gap-3">
               <CheckCircle className="w-6 h-6 text-green-400" />
-              <p className="font-mono text-xs text-green-400">[ NO_ISSUES_LOGGED ]</p>
+              <p className="font-mono text-xs text-green-400">{issues.length > 0 ? "No issues match the current filters." : "No topical issues recorded yet."}</p>
+              {issues.length > 0 && <button type="button" className="text-xs underline text-primary" onClick={() => { setFilterUrgency("all"); setFilterCategory("all"); setFilterWard("all"); }}>CLEAR FILTERS</button>}
             </div>
           ) : (
             <div className="space-y-2">
@@ -742,7 +745,7 @@ export default function Surveys() {
               {surveysLoading ? (
                 <div className="animate-pulse bg-card border border-border h-20" />
               ) : !surveys || surveys.length === 0 ? (
-                <div className="bg-card border border-border flex items-center justify-center py-12"><p className="font-mono text-xs text-muted-foreground">[ NO_SURVEYS_DEPLOYED ]</p></div>
+                <div className="bg-card border border-border flex items-center justify-center py-12"><p className="font-mono text-xs text-muted-foreground">No field surveys yet. Select NEW SURVEY to create one.</p></div>
               ) : surveys.map(s => (
                 <div key={s.id} onClick={() => setSelectedSurveyId(s.id === selectedSurveyId ? null : s.id)} className={`bg-card border p-4 cursor-pointer transition-colors ${s.id === selectedSurveyId ? "border-primary/50" : "border-border hover:border-border/80"}`}>
                   <div className="flex items-start justify-between mb-2">
@@ -840,7 +843,7 @@ export default function Surveys() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Issues by Category */}
                 <div className="bg-card border border-border p-4">
                   <p className="font-mono text-[10px] text-muted-foreground mb-3">OPEN ISSUES BY CATEGORY</p>
