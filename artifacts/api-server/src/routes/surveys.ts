@@ -129,7 +129,7 @@ router.post("/public/participant-registration", async (req, res) => {
   }
 });
 
-router.get("/participant-registrations", requireAuth, requirePermission("surveys", "read"), async (_req, res) => {
+router.get("/participant-registrations", requireAuth, requirePermission("intelligence", "read"), async (_req, res) => {
   try {
     const rows = await pool.query("SELECT id, full_name AS \\"fullName\\", phone, ward, thank_you_sms_consent AS \\"thankYouSmsConsent\\", created_at AS \\"createdAt\\" FROM public.poll_participant_registrations ORDER BY created_at DESC LIMIT 5000");
     res.json({ total: rows.rowCount, registrations: rows.rows });
