@@ -18,7 +18,7 @@ const WARDS = GEOGRAPHY.flatMap(({ wards }) => [...wards]);
 const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 const API = `${BASE_URL}/api/voter-registry`;
 
-type Tab = "roll" | "capture" | "api" | "review";
+type Tab = "contacts" | "quality" | "roll" | "capture" | "api" | "review";
 
 interface VoterRecord {
   id: number;
@@ -41,6 +41,8 @@ interface VoterRecord {
 }
 
 interface Stats {
+  contactOverview?: { active: number; new30Days: number; consented: number | null };
+  dataQuality?: { missingPhone: number; invalidPhone: number; missingWard: number; missingConstituency: number; conflictingDetails: number };
   total: number; verified: number; pending: number; rejected: number;
   fromUpload: number; fromApi: number; fromManual: number;
   wardBreakdown: { ward: string; count: number }[];
@@ -124,7 +126,7 @@ const sourceStyle: Record<string, string> = {
 };
 
 // ── VOTER ROLL TAB ──────────────────────────────────────────────────────────
-function VoterRollTab() {
+function VoterRollTab({ contactMode = false }: { contactMode?: boolean }) {
   const [search, setSearch] = useState("");
   const [ward, setWard] = useState("");
   const [status, setStatus] = useState("");
@@ -134,10 +136,12 @@ function VoterRollTab() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<VoterRecord | null>(null);
+  const [error, setError] = useState("");
   const LIMIT = 50;
 
   const fetchData = useCallback(async (pg = page) => {
     setLoading(true);
+    setError("");
     try {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
@@ -150,12 +154,13 @@ function VoterRollTab() {
         fetch(`${API}?${params}`),
         fetch(`${API}/stats`),
       ]);
+      if (!rollRes.ok || !statsRes.ok) throw new Error("Contact data is unavailable. Please retry.");
       const roll = await rollRes.json();
       const st = await statsRes.json();
       setData(roll);
       setStats(st);
     } catch (e) {
-      console.error(e);
+      setError(e instanceof Error ? e.message : "Contact data is unavailable.");
     } finally {
       setLoading(false);
     }
@@ -179,7 +184,12 @@ function VoterRollTab() {
   const downloadCSV = () => {
     if (!data?.data.length) return;
     const headers = ["ID", "National ID", "Voter #", "Full Name", "Phone", "Gender", "Ward", "Polling Station", "Status", "Source", "Created"];
-    const rows = data.data.map(r => [r.id, r.nationalId ?? "", r.voterNumber ?? "", r.fullName, r.phone ?? "", r.gender ?? "", r.ward ?? "", r.pollingStation ?? "", r.status, r.source, r.createdAt].join(","));
+    const csvCell = (value: unknown) => {
+      const text = String(value ?? "");
+      const safe = /^[=+@\-\t\r]/.test(text) ? "\'" + text : text;
+      return '"' + safe.replace(/"/g, '""') + '"';
+    };
+    const rows = data.data.map(r => [r.id, r.nationalId ?? "", r.voterNumber ?? "", r.fullName, r.phone ?? "", r.gender ?? "", r.ward ?? "", r.pollingStation ?? "", r.status, r.source, r.createdAt].map(csvCell).join(","));
     const csv = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -189,20 +199,29 @@ function VoterRollTab() {
 
   return (
     <div className="space-y-4">
+      {error && <div role="alert" className="rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm">{error} <button className="underline" onClick={() => void fetchData(page)}>Retry</button></div>}
+      {contactMode && <p className="text-xs text-muted-foreground">Contacts become active automatically when recorded, unless rejected. Active status does not establish voter registration or messaging consent.</p>}
       {/* Stats row */}
       {stats && (
-        <div className="grid grid-cols-6 gap-3">
-          {[
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+          {(contactMode ? [
+            { label: "TOTAL CONTACTS", value: stats.total, color: "" },
+            { label: "ACTIVE", value: stats.contactOverview?.active ?? null, color: "text-green-400" },
+            { label: "NEW (30 DAYS)", value: stats.contactOverview?.new30Days ?? null, color: "text-blue-400" },
+            { label: "CONSENTED", value: stats.contactOverview?.consented ?? null, color: "" },
+            { label: "VIA UPLOAD", value: stats.fromUpload, color: "text-blue-400" },
+            { label: "REJECTED", value: stats.rejected, color: "text-red-400" },
+          ] : [
             { label: "TOTAL", value: stats.total, color: "" },
             { label: "VERIFIED", value: stats.verified, color: "text-green-400" },
             { label: "PENDING", value: stats.pending, color: "text-yellow-400" },
             { label: "REJECTED", value: stats.rejected, color: "text-red-400" },
             { label: "VIA UPLOAD", value: stats.fromUpload, color: "text-blue-400" },
             { label: "VIA IEBC API", value: stats.fromApi, color: "text-cyan-400" },
-          ].map(s => (
-            <div key={s.label} className="bg-card border border-border p-3 text-center">
+          ]).map(s => (
+            <div key={s.label} className="rounded-xl bg-card/80 backdrop-blur-xl border border-white/10 p-3 text-center shadow-lg">
               <div className="font-mono text-[10px] text-muted-foreground mb-1">{s.label}</div>
-              <div className={`text-xl font-bold ${s.color}`}>{s.value.toLocaleString()}</div>
+              <div className={`text-xl font-bold ${s.color}`}>{s.value === null ? "Not recorded" : s.value.toLocaleString()}</div>
             </div>
           ))}
         </div>
@@ -212,7 +231,7 @@ function VoterRollTab() {
       <div className="flex items-end gap-3 flex-wrap">
         <div className="relative flex-1 min-w-48">
           <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSearch()} placeholder="Name, National ID, Voter #..." className="w-full bg-secondary border border-border pl-8 pr-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+          <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSearch()} placeholder="Name, phone, National ID, Voter #..." className="w-full bg-secondary border border-border pl-8 pr-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
         </div>
         <div>
           <select value={ward} onChange={e => setWard(e.target.value)} className="bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
@@ -240,7 +259,7 @@ function VoterRollTab() {
           SEARCH
         </button>
         <button onClick={downloadCSV} disabled={!data?.data.length} className="flex items-center gap-1.5 border border-border font-mono text-[10px] px-3 py-2 hover:border-primary hover:text-primary disabled:opacity-40">
-          <Download className="w-3 h-3" /> EXPORT CSV
+          <Download className="w-3 h-3" /> EXPORT PAGE CSV
         </button>
       </div>
 
@@ -289,8 +308,8 @@ function VoterRollTab() {
                     {r.pollingStation && <span className="rounded-full bg-secondary px-2 py-1 text-[10px] text-muted-foreground max-w-full truncate">{r.pollingStation}</span>}
                   </div>
                   <div className="col-span-2 flex justify-end items-center gap-2">
-                    <span className={`inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] font-semibold tracking-wide ${r.status === "verified" ? "border-emerald-500/40 text-emerald-400 bg-emerald-500/[0.06]" : r.status === "pending" ? "border-amber-500/40 text-amber-300 bg-amber-500/[0.06]" : "border-red-500/40 text-red-300 bg-red-500/[0.06]"}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${r.status === "verified" ? "bg-emerald-400" : r.status === "pending" ? "bg-amber-300" : "bg-red-400"}`} />{r.status === "verified" ? "ACTIVE" : r.status.toUpperCase()}
+                    <span className={`inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] font-semibold tracking-wide ${(contactMode ? r.status !== "rejected" : r.status === "verified") ? "border-emerald-500/40 text-emerald-400 bg-emerald-500/[0.06]" : r.status === "pending" ? "border-amber-500/40 text-amber-300 bg-amber-500/[0.06]" : "border-red-500/40 text-red-300 bg-red-500/[0.06]"}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${(contactMode ? r.status !== "rejected" : r.status === "verified") ? "bg-emerald-400" : r.status === "pending" ? "bg-amber-300" : "bg-red-400"}`} />{contactMode ? (r.status === "rejected" ? "INACTIVE" : "ACTIVE") : (r.status === "verified" ? "APPROVED" : r.status.toUpperCase())}
                     </span>
                     <button title="Delete contact" onClick={e => { e.stopPropagation(); handleDelete(r.id); }} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-opacity"><Trash2 className="w-4 h-4" /></button>
                   </div>
@@ -318,7 +337,7 @@ function VoterRollTab() {
                 <div className="font-mono text-[10px] text-primary tracking-widest">VOTER RECORD DETAIL</div>
                 <button onClick={() => setSelected(null)} className="text-muted-foreground hover:text-foreground font-mono text-[10px]">× CLOSE</button>
               </div>
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
                   { label: "FULL NAME", value: selected.fullName },
                   { label: "NATIONAL ID", value: selected.nationalId ?? "—" },
@@ -1008,8 +1027,48 @@ function RegistryReviewTab() {
   );
 }
 
+function DataQualityTab() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`${API}/stats`);
+      if (!response.ok) throw new Error("Data quality is unavailable. Please retry.");
+      const result: Stats = await response.json();
+      if (!result.dataQuality) throw new Error("Data quality requires the updated API deployment.");
+      setStats(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Data quality is unavailable.");
+    } finally { setLoading(false); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  const quality = stats?.dataQuality;
+  return <div className="space-y-5">
+    <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">Contact data quality</h2><button onClick={() => void load()} disabled={loading} className="rounded-lg border border-border px-4 py-2 text-xs disabled:opacity-50">{loading ? "Refreshing…" : "Refresh"}</button></div>
+    {error && <p role="alert" className="rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm">{error}</p>}
+    {loading && <p role="status" className="text-sm text-muted-foreground">Loading data quality…</p>}
+    {!loading && !error && quality && <>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">{[
+        ["Missing phone", quality.missingPhone], ["Invalid phone format", quality.invalidPhone],
+        ["Missing ward", quality.missingWard], ["Missing constituency", quality.missingConstituency],
+        ["Imported source conflicts", quality.conflictingDetails],
+      ].map(([label, count]) => <div key={String(label)} className="rounded-xl border border-white/10 bg-card/80 backdrop-blur-xl p-4 shadow-lg"><p className="text-xs text-muted-foreground">{label}</p><p className="text-2xl font-semibold mt-2">{Number(count).toLocaleString()}</p></div>)}</div>
+      <p className="text-xs text-muted-foreground">Counts cover the full registry in scope, not just the current page. A record may have several issues. Phone format checks do not establish ownership or delivery. Source conflicts reflect preserved import flags.</p>
+      <div className="rounded-xl border border-white/10 bg-card/80 backdrop-blur-xl p-5"><h3 className="font-semibold">Voter-roll matching</h3><p className="mt-2 text-sm text-muted-foreground">Not configured. No confidence scores or official matches are available. Contact approval is recorded separately from electoral verification.</p></div>
+      <div className="rounded-xl border border-white/10 bg-card/80 backdrop-blur-xl p-5"><h3 className="font-semibold mb-3">Recent import and sync activity</h3>
+        {stats.recentLogs.length === 0 ? <p className="text-sm text-muted-foreground">No import or sync events recorded. Direct SQL imports may not appear here.</p> : <div className="space-y-3">{stats.recentLogs.map(log => <div key={log.id} className="border-b border-border pb-3 break-words"><div className="flex flex-wrap justify-between gap-2 text-sm"><span>{log.source}</span><span>{log.status}</span></div><p className="text-xs text-muted-foreground mt-1">{new Date(log.createdAt).toLocaleString()} · Processed: {Number(log.recordsProcessed ?? 0).toLocaleString()} · New: {Number(log.recordsNew ?? 0).toLocaleString()} · Duplicates: {Number(log.recordsDuplicate ?? 0).toLocaleString()}</p>{log.details && <p className="text-xs mt-1">{log.details}</p>}{log.errorMessage && <p className="text-xs text-red-400 mt-1">{log.errorMessage}</p>}</div>)}</div>}
+      </div>
+    </>}
+  </div>;
+}
+
 // ── MAIN PAGE ────────────────────────────────────────────────────────────────
 const TABS: { id: Tab; label: string; icon: React.ElementType; desc: string }[] = [
+  { id: "contacts", label: "CONTACTS", icon: Users, desc: "Contact overview, search and record details" },
+  { id: "quality", label: "DATA QUALITY", icon: BarChart2, desc: "Record completeness and import history" },
   { id: "roll", label: "VOTER ROLL", icon: FileText, desc: "Search & view all registered voter records" },
   { id: "capture", label: "SUPERVISED CAPTURE", icon: Plus, desc: "Manual data entry & bulk CSV upload" },
   { id: "api", label: "REGISTRY API", icon: Link, desc: "Configure IEBC API and trigger data sync" },
@@ -1017,7 +1076,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType; desc: string }[] 
 ];
 
 export default function VotersDb() {
-  const [tab, setTab] = useState<Tab>("roll");
+  const [tab, setTab] = useState<Tab>("contacts");
 
   return (
     <div className="p-6 space-y-6">
@@ -1036,14 +1095,14 @@ export default function VotersDb() {
         </div>
       </div>
 
-      <div className="flex border-b border-border">
+      <div className="flex overflow-x-auto border-b border-border">
         {TABS.map(t => {
           const Icon = t.icon;
           return (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-5 py-3 font-mono text-[10px] tracking-widest border-b-2 transition-colors ${tab === t.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+              className={`flex shrink-0 items-center gap-2 px-5 py-3 font-mono text-[10px] tracking-widest border-b-2 transition-colors ${tab === t.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
             >
               <Icon className="w-3 h-3" />
               {t.label}
@@ -1058,7 +1117,9 @@ export default function VotersDb() {
       </div>
 
       <div>
-        {tab === "roll" && <VoterRollTab />}
+        {tab === "contacts" && <><div className="flex gap-3 mb-4"><button className="rounded-lg border border-border px-4 py-2 text-xs hover:border-primary" onClick={() => setTab("capture")}>Add record / Import CSV</button><button className="rounded-lg border border-border px-4 py-2 text-xs hover:border-primary" onClick={() => setTab("quality")}>View data quality</button></div><VoterRollTab key="contacts" contactMode /></>}
+        {tab === "quality" && <DataQualityTab />}
+        {tab === "roll" && <VoterRollTab key="roll" />}
         {tab === "capture" && <CaptureTab />}
         {tab === "api" && <RegistryApiTab />}
         {tab === "review" && <RegistryReviewTab />}

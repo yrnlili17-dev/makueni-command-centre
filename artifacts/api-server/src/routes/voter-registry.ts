@@ -13,6 +13,13 @@ const router = Router();
 router.get("/stats", async (req, res) => {
   const [totals] = await db.select({
     total: sql<number>`count(*)`,
+    activeContacts: sql<number>`count(*) filter (where status <> 'rejected')`,
+    new30Days: sql<number>`count(*) filter (where created_at >= now() - interval '30 days')`,
+    missingPhone: sql<number>`count(*) filter (where nullif(trim(phone), '') is null)`,
+    invalidPhone: sql<number>`count(*) filter (where nullif(trim(phone), '') is not null and regexp_replace(phone, '[^0-9]', '', 'g') !~ '^(254[17][0-9]{8}|0[17][0-9]{8}|[17][0-9]{8})$')`,
+    missingWard: sql<number>`count(*) filter (where nullif(trim(ward), '') is null)`,
+    missingConstituency: sql<number>`count(*) filter (where nullif(trim(sub_county), '') is null)`,
+    conflictingDetails: sql<number>`count(*) filter (where coalesce(review_notes, '') ilike '%conflicting_source_details%')`,
     verified: sql<number>`count(*) filter (where status = 'verified')`,
     pending: sql<number>`count(*) filter (where status = 'pending')`,
     rejected: sql<number>`count(*) filter (where status = 'rejected')`,
@@ -35,6 +42,18 @@ router.get("/stats", async (req, res) => {
 
   res.json({
     total: Number(totals?.total ?? 0),
+    contactOverview: {
+      active: Number(totals?.activeContacts ?? 0),
+      new30Days: Number(totals?.new30Days ?? 0),
+      consented: null,
+    },
+    dataQuality: {
+      missingPhone: Number(totals?.missingPhone ?? 0),
+      invalidPhone: Number(totals?.invalidPhone ?? 0),
+      missingWard: Number(totals?.missingWard ?? 0),
+      missingConstituency: Number(totals?.missingConstituency ?? 0),
+      conflictingDetails: Number(totals?.conflictingDetails ?? 0),
+    },
     verified: Number(totals?.verified ?? 0),
     pending: Number(totals?.pending ?? 0),
     rejected: Number(totals?.rejected ?? 0),
@@ -397,3 +416,4 @@ router.get("/sync-logs", async (req, res) => {
 });
 
 export default router;
+
