@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: 22
       - name: Test API access policy
-        run: node --experimental-strip-types --test artifacts/api-server/tests/api-access.test.mjs
+        run: node --experimental-strip-types --test artifacts/api-server/tests/api-access.test.mjs artifacts/commandcentre/tests/contact-summary.test.mjs
       - name: Enable pnpm
         run: |
           corepack enable
