@@ -146,9 +146,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-dvh min-h-0 w-full max-w-full overflow-hidden bg-background text-foreground font-sans">
+    <div className="command-shell flex h-dvh min-h-0 w-full max-w-full overflow-hidden text-foreground font-sans">
       {mobileMenuOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-40 bg-black/70 lg:hidden" onClick={() => setMobileMenuOpen(false)} />}
-      <aside className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] border-r border-border bg-card flex flex-col transition-transform lg:static lg:translate-x-0 lg:shrink-0`}>
+      <aside className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} glass-sidebar fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] border-r border-border flex flex-col transition-transform lg:static lg:translate-x-0 lg:shrink-0`}>
         <div className="p-4 md:p-6 flex items-center gap-3 border-b border-border">
           <img src={brandIcon} alt="CommandCentre OS" className="w-8 h-8 object-contain" />
           <div className="flex flex-col">
@@ -164,7 +164,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="space-y-5 px-2">
             {visibleGroups.map((group) => (
               <div key={group.title}>
-                <div className="mb-1.5 flex items-center gap-2 bg-secondary/60 border-l-2 border-primary px-3 py-1.5">
+                <div className="glass-nav-group mb-1.5 flex items-center gap-2 bg-secondary/60 border-l-2 border-primary px-3 py-1.5">
                   <span className="text-primary font-mono text-[10px] font-bold">▸</span>
                   <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-foreground uppercase">
                     {group.title}
@@ -175,8 +175,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     const isActive = location === item.href;
                     return (
                       <li key={item.href}>
-                        <Link href={item.href} onClick={() => setMobileMenuOpen(false)} className={cn(
-                          "flex items-center gap-3 px-3 py-2 text-xs font-mono tracking-wider transition-colors",
+                        <Link href={item.href} aria-current={isActive ? "page" : undefined} onClick={() => setMobileMenuOpen(false)} className={cn(
+                          "glass-nav-link flex items-center gap-3 px-3 py-2 text-xs font-mono tracking-wider transition-colors",
                           isActive
                             ? "bg-primary text-primary-foreground border-l-2 border-primary-foreground"
                             : "text-muted-foreground hover:bg-secondary hover:text-foreground border-l-2 border-transparent"
@@ -208,7 +208,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="min-w-0 flex-1 flex flex-col h-full overflow-hidden">
-        <header className="min-h-14 border-b border-border flex items-center gap-2 px-3 md:px-6 justify-between shrink-0 bg-card/50">
+        <header className="glass-header min-h-14 border-b border-border flex items-center gap-2 px-3 md:px-6 justify-between shrink-0">
           <div className="flex min-w-0 items-center gap-2 md:gap-4">
             <button type="button" aria-label="Open navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)} className="p-2 border border-border lg:hidden"><Menu className="w-5 h-5" /></button>
             <div className="hidden md:block w-2 h-2 rounded-full bg-primary animate-pulse" />
