@@ -128,6 +128,7 @@ export async function permissionsForRole(roleName: string): Promise<Record<strin
       "volunteers", "intelligence", "events", "narrative", "campaign-plan", "kol",
       "finance", "election-day", "credentials", "admin", "analytics", "insights",
       "ai", "speeches", "social", "di", "strategist",
+      "members", "voters-db", "segments", "surveys", "social-listening", "swot", "fundraising", "turnout",
     ].map((module) => [module, "write" as PermLevel]));
   }
 
@@ -221,6 +222,10 @@ export function requirePermission(module: string, level: PermLevel = "read") {
     const user = req.currentUser ?? (await getSessionUser(req));
     if (!user) {
       res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
+    if (user.status !== "active") {
+      res.status(403).json({ error: "Account disabled" });
       return;
     }
     req.currentUser = user;
