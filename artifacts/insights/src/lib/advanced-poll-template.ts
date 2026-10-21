@@ -12,14 +12,12 @@ export interface PollTemplate {
   questions: TemplateQuestion[];
 }
 
-// Candidate roster for the Makueni County governor race. Replace the
-// placeholder rivals with the real names before publishing, and mirror any
-// changes in the favorability and second-choice questions below.
+// Candidate roster for the 2027 Makueni County governor race: our candidate
+// and the incumbent. Favourability, vote-choice and second-choice questions
+// below are generated from this list; "Other candidate" covers new entrants.
 const CANDIDATES = [
   "Prof. Philip Kaloki",
-  "Candidate B",
-  "Candidate C",
-  "Candidate D",
+  "Mutula Kilonzo Jnr",
 ];
 
 const FAVORABILITY_SCALE = [
@@ -156,7 +154,7 @@ export const ADVANCED_POLL_TEMPLATE: PollTemplate = {
     },
     {
       type: "single_choice",
-      text: "Do you approve or disapprove of the way the Makueni County government is performing?",
+      text: "Do you approve or disapprove of the way Mutula Kilonzo Jnr is performing as Governor of Makueni County?",
       options: [
         "Strongly approve",
         "Somewhat approve",
