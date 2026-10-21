@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, membersTable, volunteersTable, messageCampaignsTable, canvassVisitsTable, canvassSessionsTable, narrativeMentionsTable, milestonesTable, campaignEventsTable, campaignSettingsTable, warRoomBriefsTable } from "@workspace/db";
+import { db, membersTable, volunteersTable, messageCampaignsTable, canvassVisitsTable, canvassSessionsTable, narrativeMentionsTable, milestonesTable, campaignEventsTable, campaignSettingsTable, warRoomBriefsTable, messagingProvidersTable, pollingStationsTable } from "@workspace/db";
 import { sql, eq, gte, inArray, and, or, isNull } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
 const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
@@ -65,6 +65,95 @@ router.get("/activity", async (req, res) => {
 
   activity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   res.json(activity.slice(0, 15));
+});
+
+// Growth: members joined this month vs last month, weekly acquisition for 12
+// weeks, open tasks and messages sent this calendar month.
+router.get("/growth", async (_req, res) => {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const twelveWeeksAgo = new Date(now.getTime() - 12 * 7 * 86400000);
+  const [thisMonth, lastMonth, weekly, openTasks, msgs] = await Promise.all([
+    db.select({ n: sql<number>`count(*)` }).from(membersTable)
+      .where(and(inArray(membersTable.ward, WARDS), gte(membersTable.createdAt, monthStart))),
+    db.select({ n: sql<number>`count(*)` }).from(membersTable)
+      .where(and(inArray(membersTable.ward, WARDS), gte(membersTable.createdAt, lastMonthStart), sql`${membersTable.createdAt} < ${monthStart}`)),
+    db.select({
+      week: sql<string>`to_char(date_trunc('week', ${membersTable.createdAt}), 'YYYY-MM-DD')`,
+      n: sql<number>`count(*)`,
+    }).from(membersTable)
+      .where(and(inArray(membersTable.ward, WARDS), gte(membersTable.createdAt, twelveWeeksAgo)))
+      .groupBy(sql`1`).orderBy(sql`1`),
+    db.select({ n: sql<number>`count(*)` }).from(milestonesTable).where(sql`${milestonesTable.status} <> 'completed'`),
+    db.select({ n: sql<number>`coalesce(sum(${messageCampaignsTable.recipientCount}), 0)` }).from(messageCampaignsTable)
+      .where(gte(messageCampaignsTable.sentAt, monthStart)),
+  ]);
+  // Fill missing weeks with zero so the chart has a continuous axis.
+  const byWeek = new Map(weekly.map(w => [w.week, Number(w.n)]));
+  const monday = new Date(now); monday.setHours(0, 0, 0, 0); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  const weeks = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(monday.getTime() - (11 - i) * 7 * 86400000);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return { week: key, joined: byWeek.get(key) ?? 0 };
+  });
+  const cur = Number(thisMonth[0]?.n ?? 0);
+  const prev = Number(lastMonth[0]?.n ?? 0);
+  res.json({
+    joinedThisMonth: cur,
+    joinedLastMonth: prev,
+    // null when last month had no sign-ups: a percentage would be meaningless.
+    growthRate: prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null,
+    weeks,
+    openTasks: Number(openTasks[0]?.n ?? 0),
+    messagesThisMonth: Number(msgs[0]?.n ?? 0),
+  });
+});
+
+// Campaign health: concrete checks, each with a fix pointer, plus a 0-100 score.
+router.get("/health", async (_req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const [providers, electionDate, stations, volWards, overdue, threats, consented] = await Promise.all([
+    db.select({ channel: messagingProvidersTable.channel }).from(messagingProvidersTable).where(eq(messagingProvidersTable.isActive, true)),
+    db.select().from(campaignSettingsTable).where(eq(campaignSettingsTable.key, "election_date")),
+    db.select({ total: sql<number>`count(*)`, withAgent: sql<number>`count(${pollingStationsTable.agentName})` }).from(pollingStationsTable),
+    db.select({ ward: volunteersTable.ward }).from(volunteersTable)
+      .where(and(eq(volunteersTable.status, "active"), inArray(volunteersTable.ward, WARDS))).groupBy(volunteersTable.ward),
+    db.select({ n: sql<number>`count(*)` }).from(milestonesTable)
+      .where(and(sql`${milestonesTable.status} <> 'completed'`, sql`${milestonesTable.dueDate} < ${today}`)),
+    db.select({ n: sql<number>`count(*)` }).from(narrativeMentionsTable)
+      .where(and(eq(narrativeMentionsTable.status, "open"), inArray(narrativeMentionsTable.threatLevel, ["high", "critical"]))),
+    db.select({ total: sql<number>`count(*)`, sms: sql<number>`sum(case when ${membersTable.smsConsent} then 1 else 0 end)` })
+      .from(membersTable).where(and(inArray(membersTable.ward, WARDS), eq(membersTable.status, "active"))),
+  ]);
+  const channels = new Set(providers.map(p => p.channel));
+  const stationTotal = Number(stations[0]?.total ?? 0);
+  const agentPct = stationTotal ? Math.round((Number(stations[0]?.withAgent ?? 0) / stationTotal) * 100) : 0;
+  const wardPct = Math.round((volWards.length / WARDS.length) * 100);
+  const memberTotal = Number(consented[0]?.total ?? 0);
+  const smsPct = memberTotal ? Math.round((Number(consented[0]?.sms ?? 0) / memberTotal) * 100) : 0;
+  type Check = { id: string; label: string; status: "ok" | "warn" | "fail"; detail: string; href: string };
+  const checks: Check[] = [
+    { id: "sms", label: "SMS provider", status: channels.has("sms") ? "ok" : "fail",
+      detail: channels.has("sms") ? "An SMS provider is active." : "No SMS provider is active, so SMS campaigns cannot send.", href: "/messaging" },
+    { id: "whatsapp", label: "WhatsApp provider", status: channels.has("whatsapp") ? "ok" : "warn",
+      detail: channels.has("whatsapp") ? "A WhatsApp provider is active." : "No WhatsApp provider is active.", href: "/messaging" },
+    { id: "election-date", label: "Election date", status: electionDate[0] ? "ok" : "fail",
+      detail: electionDate[0] ? `Set to ${electionDate[0].value}.` : "Not set, so countdown and turnout planning are off.", href: "/campaign-plan" },
+    { id: "volunteer-coverage", label: "Volunteer coverage", status: wardPct >= 80 ? "ok" : wardPct >= 40 ? "warn" : "fail",
+      detail: `${volWards.length} of ${WARDS.length} wards have at least one active volunteer.`, href: "/volunteers" },
+    { id: "agents", label: "Polling agents", status: agentPct >= 90 ? "ok" : agentPct >= 30 ? "warn" : "fail",
+      detail: `${agentPct}% of ${stationTotal.toLocaleString()} polling stations have an agent assigned.`, href: "/election-day" },
+    { id: "milestones", label: "Overdue milestones", status: Number(overdue[0]?.n ?? 0) === 0 ? "ok" : "warn",
+      detail: `${Number(overdue[0]?.n ?? 0)} milestone(s) are past their due date.`, href: "/campaign-plan" },
+    { id: "threats", label: "Open high-level threats", status: Number(threats[0]?.n ?? 0) === 0 ? "ok" : "fail",
+      detail: `${Number(threats[0]?.n ?? 0)} high or critical narrative threat(s) are still open.`, href: "/narrative-response" },
+    { id: "consent", label: "SMS reach", status: smsPct >= 50 ? "ok" : smsPct >= 20 ? "warn" : "fail",
+      detail: `${smsPct}% of active voters have given SMS consent.`, href: "/members" },
+  ];
+  const points = checks.reduce((s, c) => s + (c.status === "ok" ? 2 : c.status === "warn" ? 1 : 0), 0);
+  const score = Math.round((points / (checks.length * 2)) * 100);
+  res.json({ score, status: score >= 80 ? "healthy" : score >= 50 ? "needs_attention" : "at_risk", checks, generatedAt: new Date().toISOString() });
 });
 
 export default router;

@@ -1,5 +1,7 @@
 import { Router, type IRouter } from "express";
 import { requireAuth, requirePermission } from "../lib/auth";
+import { auditSensitiveRead } from "../lib/audit";
+import { waTemplatesRouter } from "../lib/wa-templates";
 import { isPublicApiRoute, requiredApiAccess } from "../lib/api-access";
 import healthRouter from "./health";
 import dashboardRouter from "./dashboard";
@@ -41,12 +43,16 @@ router.use((req, res, next) => {
   if (!module) { res.status(404).json({ error: "API route not found" }); return; }
   void requireAuth(req, res, (err?: unknown) => {
     if (err) { next(err); return; }
-    void requirePermission(module, level)(req, res, next).catch(next);
+    void requirePermission(module, level)(req, res, (permErr?: unknown) => {
+      if (!permErr) auditSensitiveRead(req, module);
+      next(permErr);
+    }).catch(next);
   }).catch(next);
 });
 router.use("/dashboard", dashboardRouter);
 router.use("/members", membersRouter);
 router.use("/segments", segmentsRouter);
+router.use("/messages/wa-templates", waTemplatesRouter);
 router.use("/messages", messagingRouter);
 router.use("/field-ops", fieldOpsRouter);
 router.use("/volunteers", volunteersRouter);

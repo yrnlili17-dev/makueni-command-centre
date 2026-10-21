@@ -1,3 +1,4 @@
+import { DashboardInsights } from "@/components/dashboard-insights";
 import { useGetDashboardSummary, useGetDashboardActivity } from "@workspace/api-client-react";
 import { Users, MessageSquare, Map, ShieldAlert, Target, Calendar, Zap, Clock, TrendingUp, Activity, User, Building2 } from "lucide-react";
 
@@ -85,6 +86,8 @@ export default function Dashboard() {
           <StatCard label="UPCOMING EVENTS" value={summary.upcomingEvents} icon={Calendar} sub="SCHEDULED" />
         </div>
       ) : null}
+
+      <DashboardInsights />
 
       {/* Candidate Profile + Constituency Intel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

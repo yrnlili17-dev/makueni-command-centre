@@ -3,6 +3,7 @@ import { z } from "zod";
 import { timingSafeEqual } from "crypto";
 import { db, adminUsersTable, auditLogsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { recordAudit } from "../lib/audit";
 import {
   findByIdentifier,
   verifyPassword,
@@ -111,13 +112,7 @@ router.post("/login", async (req, res) => {
       .where(eq(adminUsersTable.id, user.id));
 
     try {
-      await db.insert(auditLogsTable).values({
-        userEmail: user.email,
-        userName: user.name,
-        action: "Signed in",
-        module: "admin",
-        severity: "info",
-      });
+      await recordAudit(req, { action: "Signed in", module: "auth" }, { email: user.email, name: user.name });
     } catch {
       // Audit logging is non-critical during login.
     }

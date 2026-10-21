@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { db, messageCampaignsTable, messageDeliveriesTable, membersTable, segmentsTable, messagingProvidersTable } from "@workspace/db";
+import { db, messageCampaignsTable, messageDeliveriesTable, membersTable, segmentsTable, messagingProvidersTable, waTemplatesTable } from "@workspace/db";
 import { eq, sql, and, inArray } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
 import {
@@ -8,6 +8,7 @@ import {
   sendMailgunEmail, sendMetaWhatsApp, sendSendGridEmail,
   verifyMailgunSignature, verifyMetaSignature, verifySendGridSignature,
 } from "../lib/channel-senders";
+import { sendMetaTemplate } from "../lib/wa-templates";
 
 const router = Router();
 const ALLOWED_WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
@@ -186,10 +187,26 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-  const { name, channel, messageBody, segmentId, scheduledAt, recipientList } = req.body;
+  const { name, channel, messageBody, segmentId, scheduledAt, recipientList, waTemplateId, waTemplateParams } = req.body;
   if (!name || !channel || !messageBody) { res.status(400).json({ error: "name, channel, messageBody required" }); return; }
-  if (!["sms", "whatsapp"].includes(channel)) {
-    res.status(400).json({ error: "Real sending is currently enabled for SMS and WhatsApp only." }); return;
+  if (!["sms", "whatsapp", "email"].includes(channel)) {
+    res.status(400).json({ error: "Channel must be SMS, WhatsApp or email." }); return;
+  }
+  if (channel === "email" && Array.isArray(recipientList) && recipientList.length) {
+    res.status(400).json({ error: "CSV lists hold phone numbers only. Send email campaigns to a saved segment or all opted-in members." }); return;
+  }
+  let templateId: number | null = null;
+  let templateParams: string | null = null;
+  if (waTemplateId !== undefined && waTemplateId !== null && waTemplateId !== "") {
+    if (channel !== "whatsapp") { res.status(400).json({ error: "Templates apply to WhatsApp campaigns only." }); return; }
+    const [tpl] = await db.select().from(waTemplatesTable).where(eq(waTemplatesTable.id, Number(waTemplateId)));
+    if (!tpl) { res.status(400).json({ error: "Selected WhatsApp template no longer exists." }); return; }
+    const params = Array.isArray(waTemplateParams) ? waTemplateParams.map((p: unknown) => String(p ?? "")) : [];
+    if (params.length < tpl.variableCount || params.slice(0, tpl.variableCount).some(p => !p.trim())) {
+      res.status(400).json({ error: `This template needs ${tpl.variableCount} value(s), one for each {{n}} placeholder.` }); return;
+    }
+    templateId = tpl.id;
+    templateParams = JSON.stringify(params.slice(0, tpl.variableCount));
   }
   if (recipientList !== undefined && (!Array.isArray(recipientList) || recipientList.length > 10000)) {
     res.status(400).json({ error: "CSV list must contain no more than 10,000 contacts." }); return;
@@ -200,6 +217,7 @@ router.post("/", async (req, res) => {
   if (Array.isArray(recipientList)) await ensureCsvRecipientSchema();
   const [campaign] = await db.insert(messageCampaignsTable).values({
     name, channel, messageBody, segmentId, recipientList: Array.isArray(recipientList) ? JSON.stringify(recipientList) : null, status: "draft",
+    waTemplateId: templateId, waTemplateParams: templateParams,
     scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
     recipientCount: 0, deliveredCount: 0, openedCount: 0, clickedCount: 0,
   }).returning();
@@ -419,6 +437,15 @@ router.post("/:id/send", async (req, res) => {
       : ["sendgrid", "mailgun"].includes(provider.provider);
   if (!supported) { res.status(409).json({ error: "The configured provider is not supported for live sending yet" }); return; }
   const isNewProvider = ["meta", "sendgrid", "mailgun"].includes(provider.provider);
+  let template: typeof waTemplatesTable.$inferSelect | undefined;
+  let templateParams: string[] = [];
+  if (campaign.waTemplateId) {
+    [template] = await db.select().from(waTemplatesTable).where(eq(waTemplatesTable.id, campaign.waTemplateId));
+    if (!template) { res.status(409).json({ error: "This campaign's WhatsApp template has been deleted. Edit the campaign." }); return; }
+    if (provider.provider !== "meta") { res.status(409).json({ error: "WhatsApp templates are sent through the Meta Cloud API provider." }); return; }
+    if (template.status !== "APPROVED") { res.status(409).json({ error: `Template "${template.name}" is ${template.status.toLowerCase()}, not approved. Sync templates or wait for Meta's review.` }); return; }
+    try { templateParams = JSON.parse(campaign.waTemplateParams ?? "[]"); } catch { templateParams = []; }
+  }
   const missing = missingProviderSettings(provider);
   if (missing) { res.status(409).json({ error: missing }); return; }
   if (isNewProvider) {
@@ -479,7 +506,10 @@ router.post("/:id/send", async (req, res) => {
     const personalizedBody = personalizeMessage(campaign.messageBody, member, campaign.name);
     try {
       let providerMessageId = "";
-      if (provider.provider === "meta") {
+      if (provider.provider === "meta" && template) {
+        const params = templateParams.map(p => personalizeMessage(p, member, campaign.name));
+        providerMessageId = await sendMetaTemplate(provider, recipient, template, params);
+      } else if (provider.provider === "meta") {
         providerMessageId = await sendMetaWhatsApp(provider, recipient, personalizedBody);
       } else if (provider.provider === "sendgrid") {
         providerMessageId = await sendSendGridEmail(provider, recipient, personalizeMessage(campaign.name, member, campaign.name), personalizedBody, id);

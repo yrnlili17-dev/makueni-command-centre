@@ -1,3 +1,4 @@
+import { useWaTemplates } from "@/pages/wa-templates";
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   useListCampaigns, useCreateCampaign, useDeleteCampaign, useSendCampaign,
@@ -566,6 +567,18 @@ function CampaignPanel({ channel }: { channel: Channel }) {
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftError, setDraftError] = useState("");
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const [templateId, setTemplateId] = useState<number | "">("");
+  const [templateParams, setTemplateParams] = useState<string[]>([]);
+  const { data: waTemplates } = useWaTemplates();
+  const approvedTemplates = (waTemplates ?? []).filter(t => t.status === "APPROVED");
+  const selectedTemplate = approvedTemplates.find(t => t.id === templateId);
+  const chooseTemplate = (id: number | "") => {
+    setTemplateId(id);
+    const t = approvedTemplates.find(x => x.id === id);
+    setTemplateParams(t ? Array.from({ length: t.variableCount }, (_, i) => (i === 0 ? "##FirstName##" : "")) : []);
+    // Keep the template text as the campaign's message body so it shows in history.
+    if (t) setForm(p => ({ ...p, messageBody: t.body }));
+  };
   const messageBodyRef = useRef<HTMLTextAreaElement>(null);
   const insertPlaceholder = (token: string) => {
     const field = messageBodyRef.current;
@@ -628,7 +641,11 @@ function CampaignPanel({ channel }: { channel: Channel }) {
         if (!segmentResponse.ok) throw new Error(segment.error ?? "Could not create ward segment");
         segmentId = segment.id;
       }
-      await createCampaign.mutateAsync({ data: { ...form, segmentId: uploadedList.length ? undefined : segmentId, recipientList: uploadedList.length ? uploadedList : undefined } as MessageCampaignInput });
+      await createCampaign.mutateAsync({ data: {
+        ...form, segmentId: uploadedList.length ? undefined : segmentId, recipientList: uploadedList.length ? uploadedList : undefined,
+        ...(channel === "whatsapp" && selectedTemplate ? { waTemplateId: selectedTemplate.id, waTemplateParams: templateParams } : {}),
+      } as unknown as MessageCampaignInput });
+      setTemplateId(""); setTemplateParams([]);
     } catch (error) {
       setDraftError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -716,6 +733,27 @@ function CampaignPanel({ channel }: { channel: Channel }) {
               </div>
             )}
             {draftError && <div className="col-span-2 border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300"><strong>Draft not saved:</strong> {draftError}</div>}
+            {channel === "whatsapp" && (
+              <div className="col-span-2 space-y-2 border border-border p-3">
+                <label htmlFor="wa-template" className="block text-[10px] font-mono text-muted-foreground tracking-widest">APPROVED TEMPLATE (META CLOUD API)</label>
+                <select id="wa-template" value={templateId} onChange={e => chooseTemplate(e.target.value ? Number(e.target.value) : "")} className="w-full bg-secondary border border-border px-3 py-2 text-sm">
+                  <option value="">None: send free text (only reaches people who messaged you in the last 24 hours)</option>
+                  {approvedTemplates.map(t => <option key={t.id} value={t.id}>{t.name} ({t.language})</option>)}
+                </select>
+                {approvedTemplates.length === 0 && (
+                  <p className="font-mono text-[9px] text-muted-foreground">No approved templates yet. Create one under WA Templates.</p>
+                )}
+                {selectedTemplate && templateParams.map((value, i) => (
+                  <div key={i} className="grid grid-cols-[4rem_1fr] items-center gap-2">
+                    <label htmlFor={`tpl-p-${i}`} className="font-mono text-[10px] text-primary">{`{{${i + 1}}}`}</label>
+                    <input id={`tpl-p-${i}`} required value={value} placeholder="e.g. ##FirstName## or Wote Stadium"
+                      onChange={e => setTemplateParams(ps => ps.map((p, j) => (j === i ? e.target.value : p)))}
+                      className="w-full bg-secondary border border-border px-3 py-2 text-sm font-mono" />
+                  </div>
+                ))}
+                {selectedTemplate && <p className="font-mono text-[9px] text-muted-foreground">Fill each placeholder with fixed text or a personalisation token such as ##FirstName## or ##Ward##.</p>}
+              </div>
+            )}
             <div className="col-span-2 space-y-2">
               <div className="space-y-1">
                 <label className="text-[10px] font-mono text-muted-foreground tracking-widest">PERSONALIZATION PLACEHOLDERS — CLICK TO INSERT</label>

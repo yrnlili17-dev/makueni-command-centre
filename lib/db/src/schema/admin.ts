@@ -36,6 +36,7 @@ export const auditLogsTable = pgTable("audit_logs", {
   module: text("module").notNull(),
   details: text("details"),
   ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
   severity: text("severity").notNull().default("info"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

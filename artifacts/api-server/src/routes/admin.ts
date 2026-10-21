@@ -235,6 +235,16 @@ router.delete("/roles/:id", requirePermission("admin", "write"), async (req, res
 
 // ── Audit Log ─────────────────────────────────────────────────────────────────
 
+// Recent sign-ins and sensitive-data access, newest first, for the dashboard feed.
+router.get("/activity-feed", async (_req, res) => {
+  const rows = await db.select().from(auditLogsTable).orderBy(desc(auditLogsTable.createdAt)).limit(25);
+  res.json(rows.map(r => ({
+    id: r.id, action: r.action, module: r.module, details: r.details, severity: r.severity,
+    userName: r.userName, userEmail: r.userEmail, ipAddress: r.ipAddress,
+    userAgent: (r as { userAgent?: string | null }).userAgent ?? null, createdAt: r.createdAt,
+  })));
+});
+
 router.get("/audit", async (req, res) => {
   const { module, severity } = req.query as Record<string, string>;
   const conditions = [];

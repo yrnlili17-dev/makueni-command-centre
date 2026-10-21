@@ -31,6 +31,7 @@ import Speeches from "@/pages/speeches";
 import VotersDb from "@/pages/voters-db";
 import Credentials from "@/pages/credentials";
 import Admin from "@/pages/admin";
+import WaTemplates from "@/pages/wa-templates";
 import Analytics from "@/pages/analytics";
 import Strategist from "@/pages/strategist";
 import { Layout } from "@/components/layout";
@@ -87,6 +88,7 @@ function ProtectedRoutes() {
         <Route path="/members">{() => <Guarded module="voters" component={Members} />}</Route>
         <Route path="/segments">{() => <Guarded module="segmentation" component={Segments} />}</Route>
         <Route path="/messaging">{() => <Guarded module="messaging" component={Messaging} />}</Route>
+        <Route path="/wa-templates">{() => <Guarded module="messaging" component={WaTemplates} />}</Route>
         <Route path="/field-ops">{() => <Guarded module="field-ops" component={FieldOps} />}</Route>
         <Route path="/volunteers">{() => <Guarded module="volunteers" component={Volunteers} />}</Route>
         <Route path="/surveys">{() => <Guarded module="intelligence" component={Surveys} />}</Route>

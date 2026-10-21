@@ -2,6 +2,8 @@ import { db, adminUsersTable, adminRolesTable, systemConfigTable } from "@worksp
 import { eq, and, sql } from "drizzle-orm";
 import { hashPassword } from "./auth";
 import { ensureMakueniPollingStations } from "./makueni-register";
+import { ensureAuditColumns } from "./audit";
+import { ensureWaTemplates } from "./wa-templates";
 
 let seeded = false;
 
@@ -353,6 +355,8 @@ export async function ensureSeeded(): Promise<void> {
   await ensureSessionTable();
   await ensureTurnoutTable();
   await ensureMakueniPollingStations();
+  await ensureAuditColumns();
+  await ensureWaTemplates();
   await ensureGeneratedDocsTable();
   await ensureMpesaTable();
   await ensureDiTables();

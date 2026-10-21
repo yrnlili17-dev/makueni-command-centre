@@ -6,7 +6,8 @@ import { useAuth } from "@/lib/auth";
 import { 
   Menu, X, Activity, Users, PieChart, MessageSquare, 
   Map, UserPlus, FileText, Calendar, 
-  ShieldAlert, Target, Star, Shield, LayoutDashboard, LogOut, Banknote, Vote, Database, Award, Settings, BarChart2, Crosshair, Radio, TrendingUp, Mic, BrainCircuit
+  ShieldAlert, Target, Star, Shield, LayoutDashboard, LogOut, Banknote, Vote, Database, Award, Settings, BarChart2, Crosshair, Radio, TrendingUp, Mic, BrainCircuit,
+  FileCheck2,
 } from "lucide-react";
 import brandIcon from "@assets/brand-icon.png";
 
@@ -32,6 +33,7 @@ const navGroups = [
     title: "OUTREACH & MESSAGING",
     items: [
       { href: "/messaging", label: "MESSAGING", icon: MessageSquare },
+      { href: "/wa-templates", label: "WA TEMPLATES", icon: FileCheck2 },
       { href: "/speeches", label: "SPEECH & MANIFESTO", icon: Mic },
       { href: "/events", label: "EVENT LOGISTICS", icon: Calendar },
       { href: "/kol", label: "KOL INFLUENCE NETWORK", icon: Star },
@@ -79,6 +81,7 @@ const NAV_PERM: Record<string, string> = {
   "/voters-db": "constituents",
   "/segments": "segmentation",
   "/messaging": "messaging",
+  "/wa-templates": "messaging",
   "/field-ops": "field-ops",
   "/volunteers": "volunteers",
   "/surveys": "intelligence",

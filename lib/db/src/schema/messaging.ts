@@ -17,8 +17,32 @@ export const messageCampaignsTable = pgTable("message_campaigns", {
   deliveredCount: integer("delivered_count").notNull().default(0),
   openedCount: integer("opened_count").notNull().default(0),
   clickedCount: integer("clicked_count").notNull().default(0),
+  // WhatsApp (Meta Cloud API) approved template to send instead of free text,
+  // with one parameter string per {{n}} placeholder (JSON array).
+  waTemplateId: integer("wa_template_id"),
+  waTemplateParams: text("wa_template_params"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// WhatsApp message templates, created here and submitted to / synced from Meta.
+export const waTemplatesTable = pgTable("wa_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  language: text("language").notNull().default("en"),
+  category: text("category").notNull().default("MARKETING"),
+  status: text("status").notNull().default("DRAFT"),
+  body: text("body").notNull(),
+  headerText: text("header_text"),
+  footerText: text("footer_text"),
+  variableCount: integer("variable_count").notNull().default(0),
+  metaId: text("meta_id"),
+  rejectedReason: text("rejected_reason"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  nameLangUnique: uniqueIndex("wa_templates_name_language_unique").on(table.name, table.language),
+}));
+export type WaTemplate = typeof waTemplatesTable.$inferSelect;
 
 export const messageDeliveriesTable = pgTable("message_deliveries", {
   id: serial("id").primaryKey(),
