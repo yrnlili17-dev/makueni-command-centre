@@ -3,7 +3,7 @@ import { Users, MessageSquare, Map, ShieldAlert, Target, Calendar, Zap, Clock, T
 
 function StatCard({ label, value, icon: Icon, sub }: { label: string; value: string | number; icon: any; sub?: string }) {
   return (
-    <div className="bg-card border border-border p-4">
+    <div className="glass-panel glass-stat p-4">
       <div className="flex items-start justify-between mb-3">
         <span className="text-[10px] font-mono tracking-widest text-muted-foreground">{label}</span>
         <Icon className="w-4 h-4 text-primary" />
@@ -60,7 +60,7 @@ export default function Dashboard() {
           <p className="text-[10px] font-mono text-muted-foreground mt-1 tracking-widest">[ CAMPAIGN_READ ] [ LIVE_DATA ]</p>
         </div>
         {summary?.daysToElection != null && (
-          <div className="bg-primary/10 border border-primary/30 px-6 py-3 text-center">
+          <div className="glass-spotlight px-4 sm:px-6 py-3 text-center">
             <div className="text-4xl font-bold text-primary tabular-nums">{summary.daysToElection}</div>
             <div className="text-[9px] font-mono text-primary/80 tracking-widest mt-1">DAYS TO ELECTION</div>
           </div>
@@ -70,7 +70,7 @@ export default function Dashboard() {
       {summaryLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-card border border-border p-4 h-24 animate-pulse" />
+            <div key={i} className="glass-panel p-4 h-24 animate-pulse" />
           ))}
         </div>
       ) : summary ? (
@@ -88,7 +88,7 @@ export default function Dashboard() {
 
       {/* Candidate Profile + Constituency Intel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-card border border-border">
+        <div className="glass-panel">
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <User className="w-4 h-4 text-primary" />
             <span className="font-mono text-xs tracking-widest">CANDIDATE_PROFILE</span>
@@ -123,7 +123,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-card border border-border">
+        <div className="glass-panel">
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <Building2 className="w-4 h-4 text-primary" />
             <span className="font-mono text-xs tracking-widest">CONSTITUENCY_INTEL</span>
@@ -153,7 +153,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-card border border-border">
+        <div className="lg:col-span-2 glass-panel">
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <Zap className="w-4 h-4 text-primary" />
             <span className="font-mono text-xs tracking-widest">ACTIVITY_FEED</span>
@@ -188,7 +188,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        <div className="bg-card border border-border">
+        <div className="glass-panel">
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <Clock className="w-4 h-4 text-primary" />
             <span className="font-mono text-xs tracking-widest">SYSTEM_STATUS</span>
