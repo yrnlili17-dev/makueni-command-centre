@@ -24,6 +24,7 @@ interface Provider {
   smtpHost?: string | null; smtpPort?: string | null;
   smtpUser?: string | null; fromEmail?: string | null; fromName?: string | null;
   isActive: boolean; testStatus?: string | null; lastTested?: string | null;
+  hasApiKey?: boolean; hasApiSecret?: boolean; hasUsername?: boolean; hasWebhookSecret?: boolean;
 }
 
 const SMS_PROVIDERS = [
@@ -42,6 +43,7 @@ const WA_PROVIDERS = [
 
 const EMAIL_PROVIDERS = [
   { value: "sendgrid", label: "SendGrid" },
+  { value: "mailgun", label: "Mailgun" },
   { value: "mailchimp", label: "Mailchimp / Mandrill" },
   { value: "smtp", label: "Custom SMTP" },
   { value: "ses", label: "Amazon SES" },
@@ -250,6 +252,8 @@ function WhatsAppConfig({ provider, onSaved }: { provider?: Provider; onSaved: (
     phoneNumber: provider?.phoneNumber ?? "",
     username: provider?.username ?? "",
     senderId: provider?.senderId ?? "",
+    apiSecret: "",
+    webhookSecret: "",
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -303,6 +307,8 @@ function WhatsAppConfig({ provider, onSaved }: { provider?: Provider; onSaved: (
                 <div className="col-span-2">
                   <FieldInput label="DISPLAY PHONE NUMBER" placeholder="+254712345678" value={form.phoneNumber} onChange={e => setForm(p => ({ ...p, phoneNumber: e.target.value }))} />
                 </div>
+                <FieldInput label="APP SECRET (FOR DELIVERY RECEIPTS)" type="password" placeholder={provider?.hasApiSecret ? "Saved. Leave blank to keep" : "Meta app secret"} value={form.apiSecret} onChange={e => setForm(p => ({ ...p, apiSecret: e.target.value }))} />
+                <FieldInput label="WEBHOOK VERIFY TOKEN" type="password" placeholder={provider?.hasWebhookSecret ? "Saved. Leave blank to keep" : "Any long random text"} value={form.webhookSecret} onChange={e => setForm(p => ({ ...p, webhookSecret: e.target.value }))} />
               </div>
             )}
 
@@ -334,6 +340,8 @@ function WhatsAppConfig({ provider, onSaved }: { provider?: Provider; onSaved: (
                 <div>3. Add a phone number and complete business verification</div>
                 <div>4. Create a System User and generate a Permanent Access Token</div>
                 <div>5. Phone Number ID and WABA ID are in the WhatsApp Manager</div>
+                <div>6. Webhook callback URL: {window.location.origin}{BASE_URL}/api/messages/webhooks/meta (subscribe to "messages"), using the verify token above</div>
+                <div className="text-yellow-400">Free-text messages only reach contacts who messaged you in the last 24 hours. Others need an approved template.</div>
               </>}
               {providerVal === "africastalking_wa" && <>
                 <div className="text-green-400 font-bold mb-1">AFRICA'S TALKING WHATSAPP:</div>
@@ -372,6 +380,8 @@ function EmailConfig({ provider, onSaved }: { provider?: Provider; onSaved: () =
     smtpPort: provider?.smtpPort ?? "587",
     smtpUser: provider?.smtpUser ?? "",
     apiSecret: "",
+    username: "",
+    webhookSecret: "",
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -424,6 +434,31 @@ function EmailConfig({ provider, onSaved }: { provider?: Provider; onSaved: () =
                 )}
                 <FieldInput label="FROM EMAIL" required type="email" placeholder="communications@example.org" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
                 <FieldInput label="FROM NAME" placeholder="Makueni County Communications" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
+                {providerVal === "sendgrid" && (
+                  <div className="col-span-2">
+                    <FieldInput label="SIGNED EVENT WEBHOOK VERIFICATION KEY (OPTIONAL)" type="password" placeholder={provider?.hasWebhookSecret ? "Saved. Leave blank to keep" : "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE..."} value={form.webhookSecret} onChange={e => setForm(p => ({ ...p, webhookSecret: e.target.value }))} />
+                    <p className="font-mono text-[9px] text-muted-foreground mt-1">For delivery and open counts: SendGrid → Settings → Mail Settings → Event Webhook. URL: {window.location.origin}{BASE_URL}/api/messages/webhooks/sendgrid. Enable "Signed Event Webhook" and paste its key here.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {providerVal === "mailgun" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <FieldInput label="PRIVATE API KEY" required type="password" placeholder={provider?.hasApiKey ? "Saved. Leave blank to keep" : "key-xxxxxxxxxxxxxxxx"} value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} />
+                </div>
+                <FieldInput label="SENDING DOMAIN" required placeholder={provider?.hasUsername ? "Saved. Leave blank to keep" : "mg.example.org"} value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} />
+                <FieldSelect label="REGION" value={form.smtpHost || "https://api.mailgun.net"} onChange={e => setForm(p => ({ ...p, smtpHost: e.target.value }))}>
+                  <option value="https://api.mailgun.net">US (api.mailgun.net)</option>
+                  <option value="https://api.eu.mailgun.net">EU (api.eu.mailgun.net)</option>
+                </FieldSelect>
+                <FieldInput label="FROM EMAIL" required type="email" placeholder="communications@mg.example.org" value={form.fromEmail} onChange={e => setForm(p => ({ ...p, fromEmail: e.target.value }))} />
+                <FieldInput label="FROM NAME" placeholder="Makueni County Communications" value={form.fromName} onChange={e => setForm(p => ({ ...p, fromName: e.target.value }))} />
+                <div className="col-span-2">
+                  <FieldInput label="HTTP WEBHOOK SIGNING KEY (OPTIONAL)" type="password" placeholder={provider?.hasWebhookSecret ? "Saved. Leave blank to keep" : "Mailgun → Sending → Webhooks → signing key"} value={form.webhookSecret} onChange={e => setForm(p => ({ ...p, webhookSecret: e.target.value }))} />
+                  <p className="font-mono text-[9px] text-muted-foreground mt-1">For delivery and open counts, add webhooks for Delivered, Opened, Clicked and Permanent failure pointing to {window.location.origin}{BASE_URL}/api/messages/webhooks/mailgun</p>
+                </div>
               </div>
             )}
 

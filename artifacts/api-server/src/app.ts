@@ -34,7 +34,11 @@ app.use(
   }),
 );
 app.use(cors());
-app.use(express.json({ limit: "5mb" }));
+// Keep the raw bytes for webhook signature checks (Meta, SendGrid).
+app.use(express.json({
+  limit: "5mb",
+  verify: (req, _res, buf) => { (req as unknown as { rawBody?: Buffer }).rawBody = Buffer.from(buf); },
+}));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 const isProd = process.env.NODE_ENV === "production";

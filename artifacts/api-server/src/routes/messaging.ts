@@ -3,6 +3,11 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { db, messageCampaignsTable, messageDeliveriesTable, membersTable, segmentsTable, messagingProvidersTable } from "@workspace/db";
 import { eq, sql, and, inArray } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
+import {
+  isValidEmail, missingProviderSettings, normalizeEventStatus,
+  sendMailgunEmail, sendMetaWhatsApp, sendSendGridEmail,
+  verifyMailgunSignature, verifyMetaSignature, verifySendGridSignature,
+} from "../lib/channel-senders";
 
 const router = Router();
 const ALLOWED_WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
@@ -30,13 +35,44 @@ function safeEqual(a: string, b: string): boolean {
 async function updateCampaignDeliveryCounts(campaignId: number) {
   const [counts] = await db.select({
     total: sql<number>`count(*)`,
-    delivered: sql<number>`sum(case when ${messageDeliveriesTable.status} = 'delivered' then 1 else 0 end)`,
+    delivered: sql<number>`sum(case when ${messageDeliveriesTable.status} in ('delivered', 'opened') then 1 else 0 end)`,
+    opened: sql<number>`sum(case when ${messageDeliveriesTable.status} = 'opened' then 1 else 0 end)`,
   }).from(messageDeliveriesTable).where(eq(messageDeliveriesTable.campaignId, campaignId));
   await db.update(messageCampaignsTable).set({
     recipientCount: Number(counts?.total ?? 0),
     deliveredCount: Number(counts?.delivered ?? 0),
+    openedCount: Number(counts?.opened ?? 0),
   }).where(eq(messageCampaignsTable.id, campaignId));
 }
+
+// Apply a provider delivery receipt without ever moving a delivery backwards
+// (e.g. a late "sent" must not overwrite "delivered" or "opened").
+const STATUS_RANK: Record<string, number> = { queued: 0, sent: 1, delivered: 2, opened: 3, failed: 2 };
+async function applyDeliveryEvent(providerMessageId: string, status: "sent" | "delivered" | "opened" | "failed", errorMessage?: string) {
+  const [delivery] = await db.select().from(messageDeliveriesTable)
+    .where(eq(messageDeliveriesTable.providerMessageId, providerMessageId));
+  if (!delivery) return false;
+  const current = STATUS_RANK[delivery.status] ?? 0;
+  if (status !== "failed" && (STATUS_RANK[status] ?? 0) <= current) return true;
+  if (status === "failed" && ["delivered", "opened"].includes(delivery.status)) return true;
+  await db.update(messageDeliveriesTable).set({
+    status,
+    deliveredAt: status === "delivered" || status === "opened" ? (delivery.deliveredAt ?? new Date()) : delivery.deliveredAt,
+    errorMessage: status === "failed" ? (errorMessage ?? "Delivery failed").slice(0, 500) : delivery.errorMessage,
+    updatedAt: new Date(),
+  }).where(eq(messageDeliveriesTable.id, delivery.id));
+  await updateCampaignDeliveryCounts(delivery.campaignId);
+  return true;
+}
+
+async function activeProvider(name: string) {
+  const [provider] = await db.select().from(messagingProvidersTable)
+    .where(and(eq(messagingProvidersTable.provider, name), eq(messagingProvidersTable.isActive, true)));
+  return provider;
+}
+
+const rawBodyOf = (req: { body: unknown }) =>
+  ((req as unknown as { rawBody?: Buffer }).rawBody) ?? Buffer.from(JSON.stringify(req.body ?? {}));
 
 router.get("/stats", async (_req, res) => {
   const [totals] = await db.select({
@@ -296,12 +332,74 @@ function personalizeMessage(template: string, member: { firstName?: string | nul
   });
 }
 
+// ── Meta WhatsApp Cloud API webhook ─────────────────────────────────────────
+// Configure in Meta App Dashboard > WhatsApp > Configuration:
+//   Callback URL: <PUBLIC_BASE_URL>/api/messages/webhooks/meta
+//   Verify token: the "Webhook verify token" saved in the provider settings.
+router.get("/webhooks/meta", async (req, res) => {
+  const provider = await activeProvider("meta");
+  const mode = String(req.query["hub.mode"] ?? "");
+  const token = String(req.query["hub.verify_token"] ?? "");
+  const challenge = String(req.query["hub.challenge"] ?? "");
+  if (mode === "subscribe" && provider?.webhookSecret && token && safeEqual(token, provider.webhookSecret)) {
+    res.status(200).type("text/plain").send(challenge); return;
+  }
+  res.status(403).json({ error: "Webhook verification failed" });
+});
+
+router.post("/webhooks/meta", async (req, res) => {
+  const provider = await activeProvider("meta");
+  if (!provider?.apiSecret || !verifyMetaSignature(provider.apiSecret, rawBodyOf(req), req.header("x-hub-signature-256") ?? undefined)) {
+    res.status(401).json({ error: "Invalid Meta webhook signature" }); return;
+  }
+  type MetaStatus = { id?: string; status?: string; errors?: Array<{ title?: string; message?: string }> };
+  const entries = (req.body?.entry ?? []) as Array<{ changes?: Array<{ value?: { statuses?: MetaStatus[] } }> }>;
+  for (const entry of entries) for (const change of entry.changes ?? []) for (const st of change.value?.statuses ?? []) {
+    const status = st.status ? normalizeEventStatus(st.status) : null;
+    if (st.id && status) await applyDeliveryEvent(st.id, status, st.errors?.[0]?.message ?? st.errors?.[0]?.title);
+  }
+  res.sendStatus(200);
+});
+
+// ── SendGrid Event Webhook (enable "Signed Event Webhook") ──────────────────
+//   URL: <PUBLIC_BASE_URL>/api/messages/webhooks/sendgrid
+router.post("/webhooks/sendgrid", async (req, res) => {
+  const provider = await activeProvider("sendgrid");
+  const ok = provider?.webhookSecret && verifySendGridSignature(
+    provider.webhookSecret, rawBodyOf(req),
+    req.header("x-twilio-email-event-webhook-signature") ?? undefined,
+    req.header("x-twilio-email-event-webhook-timestamp") ?? undefined,
+  );
+  if (!ok) { res.status(401).json({ error: "Invalid SendGrid webhook signature" }); return; }
+  const events = Array.isArray(req.body) ? req.body as Array<{ sg_message_id?: string; event?: string; reason?: string }> : [];
+  for (const ev of events) {
+    const id = ev.sg_message_id?.split(".")[0];
+    const status = ev.event ? normalizeEventStatus(ev.event) : null;
+    if (id && status) await applyDeliveryEvent(id, status, ev.reason);
+  }
+  res.sendStatus(200);
+});
+
+// ── Mailgun webhooks (delivered, opened, clicked, permanent_fail) ───────────
+//   URL: <PUBLIC_BASE_URL>/api/messages/webhooks/mailgun
+router.post("/webhooks/mailgun", async (req, res) => {
+  const provider = await activeProvider("mailgun");
+  if (!provider?.webhookSecret || !verifyMailgunSignature(provider.webhookSecret, req.body?.signature)) {
+    res.status(401).json({ error: "Invalid Mailgun webhook signature" }); return;
+  }
+  const data = req.body?.["event-data"] as { event?: string; message?: { headers?: { "message-id"?: string } }; "delivery-status"?: { description?: string; message?: string } } | undefined;
+  const id = data?.message?.headers?.["message-id"]?.replace(/^<|>$/g, "");
+  const status = data?.event ? normalizeEventStatus(data.event) : null;
+  if (id && status) await applyDeliveryEvent(id, status, data?.["delivery-status"]?.description || data?.["delivery-status"]?.message);
+  res.sendStatus(200);
+});
+
 router.post("/:id/send", async (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
   if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid campaign id" }); return; }
   const [campaign] = await db.select().from(messageCampaignsTable).where(eq(messageCampaignsTable.id, id));
   if (!campaign) { res.status(404).json({ error: "Not found" }); return; }
-  if (!["sms", "whatsapp"].includes(campaign.channel)) { res.status(400).json({ error: "Unsupported channel for live sending" }); return; }
+  if (!["sms", "whatsapp", "email"].includes(campaign.channel)) { res.status(400).json({ error: "Unsupported channel for live sending" }); return; }
   if (!["draft", "failed", "confirmed"].includes(campaign.status)) { res.status(409).json({ error: "Campaign is already processing or sent" }); return; }
   if (campaign.scheduledAt) {
     if (campaign.status !== "confirmed") {
@@ -316,10 +414,17 @@ router.post("/:id/send", async (req, res) => {
   if (!provider) { res.status(409).json({ error: `No active ${campaign.channel} provider configured` }); return; }
   const supported = campaign.channel === "sms"
     ? ["africastalking", "twilio", "onfonmedia"].includes(provider.provider)
-    : ["twilio_wa"].includes(provider.provider);
+    : campaign.channel === "whatsapp"
+      ? ["twilio_wa", "meta"].includes(provider.provider)
+      : ["sendgrid", "mailgun"].includes(provider.provider);
   if (!supported) { res.status(409).json({ error: "The configured provider is not supported for live sending yet" }); return; }
-  if (provider.provider === "twilio" || provider.provider === "twilio_wa") {
-    if (!provider.username || !provider.apiKey || !provider.senderId) { res.status(409).json({ error: "Twilio requires Account SID, Auth Token and sender phone number" }); return; }
+  const isNewProvider = ["meta", "sendgrid", "mailgun"].includes(provider.provider);
+  const missing = missingProviderSettings(provider);
+  if (missing) { res.status(409).json({ error: missing }); return; }
+  if (isNewProvider) {
+    // settings validated above
+  } else if (provider.provider === "twilio" || provider.provider === "twilio_wa") {
+    if (!provider.username || !provider.apiKey || !(provider.senderId || provider.phoneNumber)) { res.status(409).json({ error: "Twilio requires Account SID, Auth Token and sender phone number" }); return; }
   } else if (provider.provider === "onfonmedia") {
     if (!provider.apiKey || !provider.username || !provider.apiSecret || !provider.senderId) {
       res.status(409).json({ error: "Onfon Media requires API Key, Client ID, Access Key and approved Sender ID" }); return;
@@ -342,6 +447,9 @@ router.post("/:id/send", async (req, res) => {
       res.status(400).json({ error: "Saved CSV list could not be read. Re-upload the file." }); return;
     }
   }
+  if (campaign.channel === "email" && uploadedRecipients.length) {
+    res.status(400).json({ error: "CSV lists hold phone numbers only. Send email campaigns to a saved segment or all opted-in members." }); return;
+  }
   if (campaign.segmentId && uploadedRecipients.length) {
     res.status(400).json({ error: "Choose either a saved segment or an uploaded CSV list, not both." }); return;
   }
@@ -355,22 +463,32 @@ router.post("/:id/send", async (req, res) => {
     }
     if (typeof criteria.supportLevel === "string") candidates = candidates.filter(m => m.supportLevel === criteria.supportLevel);
   }
-  const consentField = campaign.channel === "whatsapp" ? "whatsappConsent" : "smsConsent";
-  const contactField = campaign.channel === "whatsapp" ? "phone" : "phone";
-  const recipients = uploadedRecipients.length ? uploadedRecipients : candidates.filter(m => Boolean(m[consentField]) && Boolean(m[contactField]?.trim()));
+  const isEmail = campaign.channel === "email";
+  const consentField = campaign.channel === "whatsapp" ? "whatsappConsent" : isEmail ? "emailConsent" : "smsConsent";
+  const contactOf = (m: { phone?: string | null; email?: string | null }) => (isEmail ? m.email : m.phone)?.trim() ?? "";
+  const recipients = uploadedRecipients.length
+    ? uploadedRecipients
+    : candidates.filter(m => Boolean(m[consentField]) && (isEmail ? isValidEmail(m.email) : Boolean(m.phone?.trim())));
   if (!recipients.length) { res.status(409).json({ error: "No active Makueni recipients with valid contact details and explicit channel consent" }); return; }
 
   await db.update(messageCampaignsTable).set({ status: "sending", recipientCount: recipients.length, deliveredCount: 0, openedCount: 0, clickedCount: 0 }).where(eq(messageCampaignsTable.id, id));
   let accepted = 0;
   let failed = 0;
   for (const member of recipients) {
-    const recipient = member.phone!.trim();
+    const recipient = contactOf(member);
     const personalizedBody = personalizeMessage(campaign.messageBody, member, campaign.name);
     try {
       let providerMessageId = "";
-      if (provider.provider === "twilio" || provider.provider === "twilio_wa") {
+      if (provider.provider === "meta") {
+        providerMessageId = await sendMetaWhatsApp(provider, recipient, personalizedBody);
+      } else if (provider.provider === "sendgrid") {
+        providerMessageId = await sendSendGridEmail(provider, recipient, personalizeMessage(campaign.name, member, campaign.name), personalizedBody, id);
+      } else if (provider.provider === "mailgun") {
+        providerMessageId = await sendMailgunEmail(provider, recipient, personalizeMessage(campaign.name, member, campaign.name), personalizedBody, id);
+      } else if (provider.provider === "twilio" || provider.provider === "twilio_wa") {
         const accountSid = provider.username!;
-        const from = provider.provider === "twilio_wa" ? `whatsapp:${provider.senderId}` : provider.senderId!;
+        const senderNumber = String(provider.senderId || provider.phoneNumber || "").replace(/^whatsapp:/i, "").trim();
+        const from = provider.provider === "twilio_wa" ? `whatsapp:${senderNumber}` : senderNumber;
         const to = provider.provider === "twilio_wa" ? `whatsapp:${recipient}` : recipient;
         const form = new URLSearchParams({ To: to, From: from, Body: personalizedBody });
         const publicBase = String(process.env.PUBLIC_BASE_URL ?? "").replace(/\/$/, "");
@@ -427,7 +545,7 @@ router.post("/:id/send", async (req, res) => {
       accepted++;
     } catch (error) {
       await db.insert(messageDeliveriesTable).values({
-        campaignId: id, memberId: member.id, channel: campaign.channel, recipient,
+        campaignId: id, ...(member.id > 0 ? { memberId: member.id } : {}), channel: campaign.channel, recipient,
         provider: provider.provider, status: "failed",
         errorMessage: String(error instanceof Error ? error.message : error).slice(0, 500), updatedAt: new Date(),
       });

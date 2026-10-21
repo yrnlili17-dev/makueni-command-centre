@@ -11,7 +11,8 @@ export function isPublicApiRoute(method: string, path: string): boolean {
     ["POST", /^\/insights\/p\/[^/]+\/(event|submit)\/?$/],
     ["GET", /^\/insights\/share\/[^/]+\/?$/],
     // Provider handlers remain responsible for verifying callback authenticity.
-    ["POST", /^\/messages\/webhooks\/(twilio|africastalking)\/?$/],
+    ["POST", /^\/messages\/webhooks\/(twilio|africastalking|meta|sendgrid|mailgun)\/?$/],
+    ["GET", /^\/messages\/webhooks\/meta\/?$/],
     ["POST", /^\/fundraising\/mpesa\/callback\/?$/],
   ].some(([allowed, pattern]) => allowed === verb && (pattern as RegExp).test(path));
 }
