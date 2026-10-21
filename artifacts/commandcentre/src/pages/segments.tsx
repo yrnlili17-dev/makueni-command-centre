@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { parseRegistrySummary } from "../lib/contact-summary";
 import {
   useListSegments, useCreateSegment, useDeleteSegment,
   getListSegmentsQueryKey
@@ -88,29 +89,37 @@ export default function Segments() {
   const [wardSearch, setWardSearch] = useState("");
   const [contactCount, setContactCount] = useState<number | null>(null);
   const [wardCounts, setWardCounts] = useState<Record<string, number> | null>(null);
+  const [countsLoading, setCountsLoading] = useState(true);
+  const [countsError, setCountsError] = useState("");
   const [segmentType, setSegmentType] = useState<"geographic" | "demographic" | "behavioral" | "strategic">("geographic");
   const [form, setForm] = useState<Partial<SegmentInput> & Record<string, any>>({ criteria: {}, isLocked: false });
 
   const { data: segments, isLoading } = useListSegments();
-  useEffect(() => {
-    let mounted = true;
-    fetch(`${import.meta.env.BASE_URL}api/members?limit=1`, { credentials: "include" })
-      .then(r => { if (!r.ok) throw new Error("Contact count unavailable"); return r.json(); })
-      .then(data => { if (mounted) setContactCount(typeof data.total === "number" ? data.total : null); })
-      .catch(() => { if (mounted) setContactCount(null); });
-    return () => { mounted = false; };
+  const loadContactCounts = useCallback(async (signal?: AbortSignal) => {
+    setCountsLoading(true);
+    setCountsError("");
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const response = await fetch(`${base}/api/voter-registry/stats`, { credentials: "include", signal });
+      if (!response.ok) throw new Error("Registry contact counts unavailable. Check your connection and registry access, then retry.");
+      const summary = parseRegistrySummary(await response.json());
+      if (signal?.aborted) return;
+      setContactCount(summary.total);
+      setWardCounts(summary.byWard);
+    } catch (err) {
+      if (signal?.aborted) return;
+      setContactCount(null);
+      setWardCounts(null);
+      setCountsError(err instanceof Error ? err.message : "Registry contact counts unavailable.");
+    } finally {
+      if (!signal?.aborted) setCountsLoading(false);
+    }
   }, []);
   useEffect(() => {
-    let mounted = true;
-    fetch(`${import.meta.env.BASE_URL}api/members/stats`, { credentials: "include" })
-      .then(r => { if (!r.ok) throw new Error("Ward counts unavailable"); return r.json(); })
-      .then(data => {
-        if (!mounted) return;
-        const rows = Array.isArray(data.byWard) ? data.byWard : [];
-        setWardCounts(Object.fromEntries(rows.map((row: { ward: string; count: number }) => [row.ward, Number(row.count)])));
-      }).catch(() => { if (mounted) setWardCounts(null); });
-    return () => { mounted = false; };
-  }, []);
+    const controller = new AbortController();
+    void loadContactCounts(controller.signal);
+    return () => controller.abort();
+  }, [loadContactCounts]);
   const createSegment = useCreateSegment({
     mutation: {
       onSuccess: () => {
@@ -198,7 +207,7 @@ export default function Segments() {
         {[
           { label: "TOTAL SEGMENTS", value: segments?.length ?? 0, icon: Layers },
           { label: "TOTAL REACH", value: (totalReach).toLocaleString(), icon: Users },
-          { label: "MAKUENI CONTACT RECORDS", value: contactCount === null ? "—" : contactCount.toLocaleString(), icon: Target },
+          { label: "MAKUENI CONTACT RECORDS", value: countsLoading ? "Loading…" : contactCount === null ? "Unavailable" : contactCount.toLocaleString(), icon: Target },
           { label: "SEGMENTS LOCKED", value: (segments ?? []).filter(s => s.isLocked).length, icon: Lock },
         ].map(({ label, value, icon: Icon }) => (
           <div key={label} className="bg-card border border-border p-3 flex items-center gap-3">
@@ -216,26 +225,35 @@ export default function Segments() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="font-mono text-xs font-bold tracking-wider">MAKUENI COUNTY · ALL 30 WARDS</h2>
-            <p className="text-[10px] text-muted-foreground mt-1">Ward directory with database contact counts. Saved segments are managed separately below.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Contact counts from the constituent registry, including SQL imports. Saved segments are managed separately below.</p>
           </div>
+          <button type="button" onClick={() => void loadContactCounts()} disabled={countsLoading} className="border border-border px-3 py-2 font-mono text-[10px] hover:bg-secondary disabled:opacity-50">{countsLoading ? "REFRESHING…" : "REFRESH COUNTS"}</button>
           <button type="button" onClick={() => setShowWardDirectory(v => !v)} className="border border-border px-3 py-2 font-mono text-[10px] hover:bg-secondary">{showWardDirectory ? "HIDE WARDS" : "SHOW WARDS"}</button>
         </div>
+        {countsError && <p role="alert" className="text-xs text-red-400">{countsError}</p>}
+        <p className="text-xs text-muted-foreground">{countsLoading ? "Loading registry totals…" : wardCounts ? `${(wardCounts.Unknown ?? 0).toLocaleString()} contacts have no recorded ward. They remain included in the total and appear under Unknown.` : "Ward counts are unavailable, not zero."}</p>
         {showWardDirectory && <>
           <input aria-label="Search Makueni wards" value={wardSearch} onChange={e => setWardSearch(e.target.value)} placeholder="Search all 30 wards…" className="w-full sm:max-w-sm bg-secondary border border-border px-3 py-2 text-xs outline-none focus:border-primary" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
-            {WARDS.filter(w => w.toLowerCase().includes(wardSearch.trim().toLowerCase())).map(ward => {
+            {[...WARDS, "Unknown"].filter(w => w.toLowerCase().includes(wardSearch.trim().toLowerCase())).map(ward => {
               const saved = (segments ?? []).filter(s => (s.criteria as Record<string, any> | null)?.ward === ward);
               return <div key={ward} className="min-w-0 border border-border p-3 bg-secondary/20">
                 <p className="font-mono text-[11px] font-semibold break-words">{ward}</p>
-                <p className="font-mono text-[10px] text-muted-foreground mt-1">{wardCounts === null ? "Contacts unavailable" : `${wardCounts[ward] ?? 0} contact records`}</p>\n                <p className="font-mono text-[9px] text-muted-foreground mt-1">{saved.length} saved {saved.length === 1 ? "segment" : "segments"}</p>
+                <p className="font-mono text-[10px] text-muted-foreground mt-1">{countsLoading ? "Loading…" : wardCounts === null ? "Contacts unavailable" : `${(wardCounts[ward] ?? 0).toLocaleString()} contact records`}</p>
+                <p className="font-mono text-[9px] text-muted-foreground mt-1">{saved.length} saved {saved.length === 1 ? "segment" : "segments"}</p>
               </div>;
             })}
           </div>
-          {WARDS.filter(w => w.toLowerCase().includes(wardSearch.trim().toLowerCase())).length === 0 && <p className="text-xs text-muted-foreground">No matching Makueni ward.</p>}
+          {[...WARDS, "Unknown"].filter(w => w.toLowerCase().includes(wardSearch.trim().toLowerCase())).length === 0 && <p className="text-xs text-muted-foreground">No matching Makueni ward.</p>}
         </>}
       </section>
 
-      <div className="border-b border-border pb-2 pt-2">\n        <h2 className="font-mono text-xs font-bold tracking-wider">SAVED SEGMENTS · {(segments ?? []).length}</h2>\n        <p className="text-[10px] text-muted-foreground mt-1">These are user-created segment definitions, not the complete list of Makueni wards.</p>\n      </div>\n\n      {/* Category tabs */}
+      <div className="border-b border-border pb-2 pt-2">
+        <h2 className="font-mono text-xs font-bold tracking-wider">SAVED SEGMENTS · {(segments ?? []).length}</h2>
+        <p className="text-[10px] text-muted-foreground mt-1">These are user-created segment definitions, not the complete list of Makueni wards.</p>
+      </div>
+
+      {/* Category tabs */}
       <div className="flex gap-1 border-b border-border pb-0">
         {CATEGORIES.map(cat => (
           <button
@@ -475,3 +493,4 @@ export default function Segments() {
     </div>
   );
 }
+
