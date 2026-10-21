@@ -128,7 +128,7 @@ router.post("/stkpush", async (req, res) => {
   }
 
   const { amount, donorName, campaignId, ward } = parsed.data;
-  const accountReference = "MULE2027";
+  const accountReference = "MAKUENI2027";
   const timestamp = darajaTimestamp();
 
   try {

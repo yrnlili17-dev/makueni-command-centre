@@ -1,3 +1,4 @@
+import { MAKUENI_WARDS } from "@/lib/makueni-wards";
 export interface TemplateQuestion {
   type: "single_choice" | "multi_choice" | "open_ended";
   text: string;
@@ -11,15 +12,14 @@ export interface PollTemplate {
   questions: TemplateQuestion[];
 }
 
-// Candidate roster for the Makueni MNA race. Edit these names/spellings in the
-// builder before publishing, and mirror any changes in the favorability and
-// second-choice questions below.
+// Candidate roster for the Makueni County governor race. Replace the
+// placeholder rivals with the real names before publishing, and mirror any
+// changes in the favorability and second-choice questions below.
 const CANDIDATES = [
-  "Hon. Stephen Mule",
-  "Munguti",
-  "Kamwana",
-  "Kathumo",
-  "Matheka",
+  "Prof. Philip Kaloki",
+  "Candidate B",
+  "Candidate C",
+  "Candidate D",
 ];
 
 const FAVORABILITY_SCALE = [
@@ -48,7 +48,7 @@ const performanceQuestions: TemplateQuestion[] = [
   "job creation for youth",
 ].map((issue) => ({
   type: "single_choice",
-  text: `How would you rate Hon. Stephen Mule's performance on ${issue}?`,
+  text: `How would you rate the Makueni County government's performance on ${issue}?`,
   options: [...PERFORMANCE_SCALE],
   required: false,
 }));
@@ -99,14 +99,7 @@ export const ADVANCED_POLL_TEMPLATE: PollTemplate = {
     {
       type: "single_choice",
       text: "Which ward do you live in?",
-      options: [
-        "Tala",
-        "Makueni North",
-        "Makueni West",
-        "Kyeleni",
-        "Kauti",
-        "Other / Not sure",
-      ],
+      options: [...MAKUENI_WARDS, "Other / Not sure"],
       required: true,
     },
     {
@@ -163,7 +156,7 @@ export const ADVANCED_POLL_TEMPLATE: PollTemplate = {
     },
     {
       type: "single_choice",
-      text: "Do you approve or disapprove of the way Hon. Stephen Mule is performing as your Member of National Assembly?",
+      text: "Do you approve or disapprove of the way the Makueni County government is performing?",
       options: [
         "Strongly approve",
         "Somewhat approve",

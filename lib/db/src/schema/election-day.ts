@@ -7,6 +7,14 @@ export const pollingStationsTable = pgTable("polling_stations", {
   code: text("code").notNull().unique(),
   name: text("name").notNull(),
   ward: text("ward").notNull(),
+  // IEBC register fields (2022 register, Makueni County 017). Nullable so
+  // stations added by hand still work.
+  wardCode: text("ward_code"),
+  constituency: text("constituency"),
+  constituencyCode: text("constituency_code"),
+  centreCode: text("centre_code"),
+  centreName: text("centre_name"),
+  registerYear: integer("register_year"),
   registeredVoters: integer("registered_voters").notNull().default(0),
   streamCount: integer("stream_count").notNull().default(1),
   agentName: text("agent_name"),

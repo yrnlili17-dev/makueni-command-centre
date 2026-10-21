@@ -1,3 +1,4 @@
+import { MAKUENI_WARDS } from "@/lib/makueni-wards";
 import { useState, useEffect, useCallback } from "react";
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
@@ -25,10 +26,10 @@ const COLORS = {
   indigo: "#6366f1",
 };
 const PIE_PALETTE = [COLORS.primary, COLORS.blue, COLORS.green, COLORS.yellow, COLORS.purple, COLORS.orange, COLORS.cyan, COLORS.pink, COLORS.teal, COLORS.indigo];
-const WARD_COLORS: Record<string, string> = {
-  "Tala": COLORS.primary, "Makueni North": COLORS.blue,
-  "Makueni West": COLORS.green, "Makueni East": COLORS.yellow, "Kyeleni": COLORS.purple,
-};
+// One colour per Makueni ward, stable across charts.
+const WARD_COLORS: Record<string, string> = Object.fromEntries(
+  MAKUENI_WARDS.map((ward, i) => [ward, PIE_PALETTE[i % PIE_PALETTE.length]!]),
+);
 
 type Tab = "growth" | "messaging" | "field" | "sentiment" | "kols" | "insights";
 

@@ -1,15 +1,10 @@
 import { useState } from "react";
+import { MAKUENI_WARDS } from "@/lib/makueni-wards";
 import { CheckCircle2, UserPlus, AlertCircle } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 const API = `${BASE}api/volunteers/register`;
-const WARDS = [
-  "Tulimani", "Mbooni", "Kithungo/Kitundu", "Kiteta/Kisau", "Kako/Waia", "Kalawa",
-  "Kiima Kiu/Kalanzoni", "Mukaa", "Kasikeu", "Kee", "Kilungu", "Ilima", "Ukia",
-  "Nzaui/Kilili/Kalamba", "Muvau/Kikumini", "Kathonzweni", "Mavindini", "Kitise/Kithuki",
-  "Wote", "Mbitini", "Makindu", "Kikumbulyu North", "Kikumbulyu South", "Nguumo",
-  "Nguu/Masumba", "Emali/Mulala", "Masongaleni", "Mtito Andei", "Thange", "Ivingoni/Nzambani",
-];
+const WARDS = MAKUENI_WARDS;
 
 export default function VolunteerRegistration() {
   const [form, setForm] = useState({ firstName: "", lastName: "", phone: "", email: "", ward: "", interests: "", availability: "", message: "" });

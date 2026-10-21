@@ -115,7 +115,7 @@ async function buildLiveDigest(): Promise<string> {
     /* keep fallback */
   }
 
-  const electionDate = new Date("2027-08-09");
+  const electionDate = new Date("2027-08-10");
   const daysToElection = Math.ceil((electionDate.getTime() - Date.now()) / 86400000);
   const readiness = milestonesTotal > 0 ? Math.round((milestonesDone / milestonesTotal) * 100) : 0;
 

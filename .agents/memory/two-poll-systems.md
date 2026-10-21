@@ -1,11 +1,11 @@
 ---
 name: Two parallel poll systems
-description: MATUNGULU COMMAND CENTRE has two unrelated poll datastores that do not sync; how to bridge them
+description: MAKUENI COMMAND CENTRE has two unrelated poll datastores that do not sync; how to bridge them
 ---
 
 # Two separate poll systems
 
-MATUNGULU COMMAND CENTRE stores polls in **two independent table groups** that are NOT linked and do NOT sync:
+MAKUENI COMMAND CENTRE stores polls in **two independent table groups** that are NOT linked and do NOT sync:
 
 1. **commandcentre "Opinion Polls"** — `opinion_polls` + `poll_votes` (schema in `lib/db/src/schema/intel-ops.ts`), served by `artifacts/api-server/src/routes/surveys.ts` at `/api/surveys/polls`. These are the "Makueni polls". `options` is jsonb `[{label, votes}]`; each vote row has `option_index`, ward/age_group/gender.
 

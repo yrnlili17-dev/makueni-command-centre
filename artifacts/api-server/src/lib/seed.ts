@@ -1,6 +1,7 @@
 import { db, adminUsersTable, adminRolesTable, systemConfigTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
 import { hashPassword } from "./auth";
+import { ensureMakueniPollingStations } from "./makueni-register";
 
 let seeded = false;
 
@@ -351,6 +352,7 @@ export async function ensureSeeded(): Promise<void> {
   await ensureAuthColumns();
   await ensureSessionTable();
   await ensureTurnoutTable();
+  await ensureMakueniPollingStations();
   await ensureGeneratedDocsTable();
   await ensureMpesaTable();
   await ensureDiTables();

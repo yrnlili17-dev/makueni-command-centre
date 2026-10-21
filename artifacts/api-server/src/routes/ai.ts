@@ -187,7 +187,7 @@ Each item must relate to Makueni County services, public reporting, or operation
 router.post("/generate-campaign-plan", async (req, res) => {
   const { electionDate, focus } = req.body as { electionDate?: string; focus?: string };
   const today = new Date().toISOString().slice(0, 10);
-  const election = electionDate || "2027-08-09";
+  const election = electionDate || "2027-08-10";
 
   try {
     const completion = await openai.chat.completions.create({

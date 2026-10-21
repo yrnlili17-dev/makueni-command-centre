@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, HeartHandshake, Users } from "lucide-react";
 
-const WARDS = ["Tala", "Makueni North", "Makueni West", "Makueni East", "Kyeleni", "Other"];
+import { MAKUENI_WARDS } from "@/lib/makueni-wards";
+
+const WARDS = [...MAKUENI_WARDS, "Not sure"];
 
 const INTEREST_OPTIONS = [
   "Door-to-door canvassing",
@@ -100,7 +102,7 @@ export default function VolunteerRegister() {
                 <HeartHandshake className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-widest text-emerald-100">Hon. Stephen Mule · Makueni</p>
+                <p className="text-xs uppercase tracking-widest text-emerald-100">Makueni County</p>
                 <h1 className="text-2xl font-bold leading-tight">Join the Volunteer Team</h1>
               </div>
             </div>

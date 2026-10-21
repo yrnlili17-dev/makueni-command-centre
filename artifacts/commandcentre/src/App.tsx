@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
+import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Members from "@/pages/members";
 import Segments from "@/pages/segments";
@@ -115,7 +116,7 @@ function Router() {
     <Switch>
       <Route path="/insights/volunteer" component={VolunteerRegistration} />
       <Route path="/poll/:id" component={PublicPoll} />
-      <Route path="/" component={Login} />
+      <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/:rest*" component={ProtectedRoutes} />
     </Switch>
