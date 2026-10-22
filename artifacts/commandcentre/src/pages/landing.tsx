@@ -1,3 +1,4 @@
+import { PwaControls } from "@/components/pwa-controls";
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Menu, X, Database, Users, Calendar, Map, BarChart3, ShieldCheck, ClipboardList, Wallet, ChevronRight } from "lucide-react";
@@ -36,6 +37,7 @@ export default function Landing() {
       <nav aria-label="Main" className="mc-public-nav">{nav.map(item => <a key={item.href} href={item.href}>{item.label}</a>)}</nav>
       <div className="mc-header-actions"><Link href={appHref} className="mc-login-link">{user ? "Dashboard" : "Log In"}</Link><Link href={appHref} className="mc-button mc-button-primary">Open Command Centre</Link><button type="button" className="mc-public-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} aria-controls="public-mobile-navigation" onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={21} /> : <Menu size={21} />}</button></div>
     </div>{menuOpen && <nav id="public-mobile-navigation" className="mc-public-mobile-nav" aria-label="Mobile">{nav.map(item => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>)}</nav>}</header>
+      <PwaControls />
     <main id="public-content">
       <section className="mc-hero"><div className="mc-public-wrap mc-hero-grid"><div className="mc-hero-copy">
         <p className="mc-eyebrow"><span /> KARIBU · WELCOME TO MAKUENI</p>

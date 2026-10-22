@@ -6,7 +6,7 @@ export function useWorkspaceRefresh(refresh: () => void) {
   const callback = useRef(refresh);
   callback.current = refresh;
   useEffect(() => {
-    const run = () => { if (!document.hidden) callback.current(); };
+    const run = () => { if (!document.hidden && navigator.onLine) callback.current(); };
     window.addEventListener(WORKSPACE_CHANGED, run);
     window.addEventListener("focus", run);
     const timer = window.setInterval(run, 30_000);
