@@ -327,7 +327,7 @@ router.get("/search-feed", requirePermission("social", "read"), async (req, res)
   }
 });
 
-router.get("/source-health", requirePermission("social", "read"), async (_req, res) => {
+router.get("/source-health", requirePermission("social", "read"), async (req, res) => {
   try {
     const rows = await db.select().from(socialSourceHealthTable).orderBy(socialSourceHealthTable.sourceKey);
     res.json(rows);
