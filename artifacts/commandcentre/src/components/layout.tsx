@@ -1,3 +1,4 @@
+import { PwaControls } from "@/components/pwa-controls";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -130,6 +131,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const controller = new AbortController();
     const check = async () => {
+      if (!navigator.onLine || document.hidden) return;
       try {
         const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         const response = await fetch(`${base}/api/healthz`, { signal: controller.signal });
@@ -195,6 +197,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="cc-topbar-title"><button ref={menuButtonRef} type="button" aria-label="Open navigation" aria-controls="workspace-navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)} className="cc-menu-button"><Menu size={22} /></button><h1>{pageTitle}</h1></div>
           <div className="cc-server-status" title="Application server reachability; provider and database health are reported in their modules." role="status"><span className={cn("cc-status-dot", serverStatus)} />{serverStatus === "online" ? "System Online" : serverStatus === "checking" ? "Checking connection" : "Connection unavailable"}</div>
         </header>
+        <PwaControls />
         <div id="workspace-content" tabIndex={-1} className="cc-content"><div className="cc-page-content">{children}</div><footer className="cc-workspace-footer"><PoweredBy /></footer></div>
       </main>
       <AiAssistPanel module={currentModule} />

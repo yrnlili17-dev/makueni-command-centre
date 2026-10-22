@@ -154,7 +154,7 @@ export function AiAssistPanel({ module, context = {} }: AiAssistPanelProps) {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-20 right-6 z-50 w-[420px] max-h-[70vh] flex flex-col bg-card border border-primary/30 shadow-2xl">
+        <div className="fixed bottom-20 right-4 sm:right-6 z-50 w-[420px] max-w-[calc(100vw_-_2rem)] max-h-[70dvh] flex flex-col bg-card border border-primary/30 shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5 shrink-0">
             <div className="flex items-center gap-2">
