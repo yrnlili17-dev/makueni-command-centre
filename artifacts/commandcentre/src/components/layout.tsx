@@ -9,6 +9,7 @@ import {
   ShieldAlert, Target, Star, Shield, LayoutDashboard, LogOut, Banknote, Vote, Database, Award, Settings, BarChart2, Crosshair, Radio, TrendingUp, Mic, BrainCircuit,
   FileCheck2, CircleUserRound, Globe,
 } from "lucide-react";
+import { PoweredBy } from "@/components/powered-by";
 import brandIcon from "@assets/brand-icon.png";
 
 const navGroups = [
@@ -194,9 +195,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="cc-topbar-title"><button ref={menuButtonRef} type="button" aria-label="Open navigation" aria-controls="workspace-navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)} className="cc-menu-button"><Menu size={22} /></button><h1>{pageTitle}</h1></div>
           <div className="cc-server-status" title="Application server reachability; provider and database health are reported in their modules." role="status"><span className={cn("cc-status-dot", serverStatus)} />{serverStatus === "online" ? "System Online" : serverStatus === "checking" ? "Checking connection" : "Connection unavailable"}</div>
         </header>
-        <div id="workspace-content" tabIndex={-1} className="cc-content">{children}</div>
+        <div id="workspace-content" tabIndex={-1} className="cc-content"><div className="cc-page-content">{children}</div><footer className="cc-workspace-footer"><PoweredBy /></footer></div>
       </main>
       <AiAssistPanel module={currentModule} />
     </div>
   );
 }
+

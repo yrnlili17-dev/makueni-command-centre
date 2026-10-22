@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Menu, X, Database, Users, Calendar, Map, BarChart3, ShieldCheck, ClipboardList, Wallet, ChevronRight } from "lucide-react";
+import { PoweredBy } from "@/components/powered-by";
 import brandIcon from "@assets/brand-icon.png";
 import { useAuth } from "@/lib/auth";
 import { MAKUENI_REGISTER_SUMMARY } from "@/lib/makueni-register-summary";
@@ -54,6 +55,7 @@ export default function Landing() {
       </div></section>
       <section id="access" className="mc-public-section"><div className="mc-public-wrap mc-access-callout"><div><p className="mc-kicker">YOUR TEAM'S WORKSPACE</p><h2>Ready to get to work?</h2><p>Sign in with your assigned account to access your team's records and tools.</p></div><Link href={appHref} className="mc-button mc-button-primary">Open Command Centre <ArrowRight size={18} /></Link></div></section>
     </main>
-    <footer className="mc-public-footer"><div className="mc-public-wrap"><div><strong>Makueni Command Centre</strong><p>Prof. Philip Kaloki · Makueni County</p></div><Link href="/login">Staff Log In</Link><p>© {new Date().getFullYear()} All rights reserved.</p></div></footer>
+    <footer className="mc-public-footer"><div className="mc-public-wrap"><div><strong>Makueni Command Centre</strong><p>Prof. Philip Kaloki · Makueni County</p></div><Link href="/login">Staff Log In</Link><PoweredBy /></div></footer>
   </div>;
 }
+
