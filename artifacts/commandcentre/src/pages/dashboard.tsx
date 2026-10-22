@@ -4,7 +4,7 @@ import { Users, MessageSquare, Map, ShieldAlert, Target, Calendar, Zap, Clock, T
 
 function StatCard({ label, value, icon: Icon, sub }: { label: string; value: string | number; icon: any; sub?: string }) {
   return (
-    <div className="bg-card border border-border p-4">
+    <div className="cc-stat-card bg-card border border-border p-5">
       <div className="flex items-start justify-between mb-3">
         <span className="text-[10px] font-mono tracking-widest text-muted-foreground">{label}</span>
         <Icon className="w-4 h-4 text-primary" />
@@ -50,15 +50,15 @@ function ModuleTag({ module }: { module: string }) {
 }
 
 export default function Dashboard() {
-  const { data: summary, isLoading: summaryLoading } = useGetDashboardSummary();
-  const { data: activity, isLoading: activityLoading } = useGetDashboardActivity();
+  const { data: summary, isLoading: summaryLoading, isError: summaryError, refetch: refreshSummary } = useGetDashboardSummary();
+  const { data: activity, isLoading: activityLoading, isError: activityError, refetch: refreshActivity } = useGetDashboardActivity();
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-widest">COMMAND OVERVIEW</h1>
-          <p className="text-[10px] font-mono text-muted-foreground mt-1 tracking-widest">[ CAMPAIGN_READ ] [ LIVE_DATA ]</p>
+          <h1 className="text-xl font-bold tracking-widest">Dashboard</h1>
+          <p className="text-[10px] font-mono text-muted-foreground mt-1 tracking-widest">Makueni County · Workspace overview</p>
         </div>
         {summary?.daysToElection != null && (
           <div className="bg-primary/10 border border-primary/30 px-6 py-3 text-center">
@@ -68,6 +68,7 @@ export default function Dashboard() {
         )}
       </div>
 
+      {summaryError && <div role="alert" className="rounded-lg border border-red-400/30 bg-red-400/5 p-4 text-sm">Overview data is unavailable. <button onClick={() => void refreshSummary()} className="underline">Retry</button></div>}
       {summaryLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -94,13 +95,13 @@ export default function Dashboard() {
         <div className="bg-card border border-border">
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <User className="w-4 h-4 text-primary" />
-            <span className="font-mono text-xs tracking-widest">CANDIDATE_PROFILE</span>
+            <span className="font-mono text-xs tracking-widest">Candidate profile</span>
           </div>
           <div className="p-4 space-y-2.5">
             <div className="flex items-start justify-between mb-1">
               <div>
                 <p className="font-bold text-sm tracking-wide">PROF. PHILIP KALOKI</p>
-                <p className="font-mono text-[10px] text-primary tracking-widest mt-0.5">MAKUENI GOVERNOR · 2027</p>
+                <p className="font-mono text-[10px] text-primary tracking-widest mt-0.5">MAKUENI GOVERNOR ASPIRANT · 2027</p>
               </div>
               <span className="font-mono text-[9px] border border-primary/30 px-2 py-0.5 text-primary shrink-0">2027</span>
             </div>
@@ -129,7 +130,7 @@ export default function Dashboard() {
         <div className="bg-card border border-border">
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <Building2 className="w-4 h-4 text-primary" />
-            <span className="font-mono text-xs tracking-widest">CONSTITUENCY_INTEL</span>
+            <span className="font-mono text-xs tracking-widest">County reference</span>
           </div>
           <div className="p-4 space-y-3">
             <div className="grid grid-cols-2 gap-2">
@@ -159,9 +160,9 @@ export default function Dashboard() {
         <div className="lg:col-span-2 bg-card border border-border">
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <Zap className="w-4 h-4 text-primary" />
-            <span className="font-mono text-xs tracking-widest">ACTIVITY_FEED</span>
+            <span className="font-mono text-xs tracking-widest">Recent activity</span>
           </div>
-          {activityLoading ? (
+          {activityError ? <div role="alert" className="p-4 text-sm text-red-300">Activity is unavailable. <button className="underline" onClick={() => void refreshActivity()}>Retry</button></div> : activityLoading ? (
             <div className="p-4 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="h-10 bg-secondary/50 animate-pulse" />
@@ -194,20 +195,16 @@ export default function Dashboard() {
         <div className="bg-card border border-border">
           <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <Clock className="w-4 h-4 text-primary" />
-            <span className="font-mono text-xs tracking-widest">SYSTEM_STATUS</span>
+            <span className="font-mono text-xs tracking-widest">Data connections</span>
           </div>
           <div className="p-4 space-y-3">
             {[
-              { label: "IDENTITY_GRAPH", status: "OPERATIONAL" },
-              { label: "MESSAGING_UPLINK", status: "OPERATIONAL" },
-              { label: "FIELD_OPS", status: "OPERATIONAL" },
-              { label: "NARRATIVE_CMD", status: "MONITORING" },
-              { label: "INTEL_LAYER", status: "OPERATIONAL" },
-              { label: "KOL_NETWORK", status: "OPERATIONAL" },
+              { label: "Overview data", status: summaryLoading ? "LOADING" : summary ? "AVAILABLE" : "UNAVAILABLE" },
+              { label: "Activity feed", status: activityLoading ? "LOADING" : activity ? "AVAILABLE" : "UNAVAILABLE" },
             ].map((s) => (
               <div key={s.label} className="flex items-center justify-between">
                 <span className="font-mono text-[10px] text-muted-foreground">{s.label}</span>
-                <span className={`font-mono text-[10px] ${s.status === "OPERATIONAL" ? "text-green-400" : "text-yellow-400"}`}>
+                <span className={`font-mono text-[10px] ${s.status === "AVAILABLE" ? "text-green-400" : "text-yellow-400"}`}>
                   {s.status}
                 </span>
               </div>
