@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { Link as RouterLink, useSearch } from "wouter";
 import {
   Database, Search, Upload, RefreshCw, CheckCircle, XCircle, Clock,
   AlertTriangle, Users, FileText, Settings, Plus, Trash2, Eye,
@@ -128,7 +129,10 @@ const sourceStyle: Record<string, string> = {
 // ── VOTER ROLL TAB ──────────────────────────────────────────────────────────
 function VoterRollTab({ contactMode = false }: { contactMode?: boolean }) {
   const [search, setSearch] = useState("");
-  const [ward, setWard] = useState("");
+  const [ward, setWard] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get("ward");
+    return requested === "unknown" || WARDS.some(known => known === requested) ? requested! : "";
+  });
   const [status, setStatus] = useState("");
   const [source, setSource] = useState("");
   const [page, setPage] = useState(0);
@@ -137,6 +141,7 @@ function VoterRollTab({ contactMode = false }: { contactMode?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<VoterRecord | null>(null);
   const [error, setError] = useState("");
+  const [appliedWard, setAppliedWard] = useState("");
   const LIMIT = 50;
 
   const fetchData = useCallback(async (pg = page) => {
@@ -159,6 +164,7 @@ function VoterRollTab({ contactMode = false }: { contactMode?: boolean }) {
       const st = await statsRes.json();
       setData(roll);
       setStats(st);
+      setAppliedWard(ward);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Contact data is unavailable.");
     } finally {
@@ -227,6 +233,7 @@ function VoterRollTab({ contactMode = false }: { contactMode?: boolean }) {
         </div>
       )}
 
+      {appliedWard && <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs"><span>Showing contacts: <strong>{appliedWard === "unknown" ? "Unknown ward (not recorded)" : appliedWard}</strong></span><RouterLink href="/voters-db" className="text-primary underline underline-offset-4">View all contacts</RouterLink></div>}
       {/* Search / filters */}
       <div className="flex items-end gap-3 flex-wrap">
         <div className="relative flex-1 min-w-48">
@@ -236,6 +243,7 @@ function VoterRollTab({ contactMode = false }: { contactMode?: boolean }) {
         <div>
           <select value={ward} onChange={e => setWard(e.target.value)} className="bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
             <option value="">All Wards</option>
+            <option value="unknown">Unknown / not recorded</option>
             {WARDS.map(w => <option key={w}>{w}</option>)}
           </select>
         </div>
@@ -264,7 +272,7 @@ function VoterRollTab({ contactMode = false }: { contactMode?: boolean }) {
       </div>
 
       {/* Table */}
-      {!data && !loading && (
+      {!data && !loading && !error && (
         <div className="border border-border bg-card p-12 text-center">
           <Database className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
           <div className="font-mono text-xs text-muted-foreground">VOTER ROLL WILL LOAD AUTOMATICALLY</div>
@@ -1076,6 +1084,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType; desc: string }[] 
 ];
 
 export default function VotersDb() {
+  const query = useSearch();
   const [tab, setTab] = useState<Tab>("contacts");
 
   return (
@@ -1117,9 +1126,9 @@ export default function VotersDb() {
       </div>
 
       <div>
-        {tab === "contacts" && <><div className="flex gap-3 mb-4"><button className="rounded-lg border border-border px-4 py-2 text-xs hover:border-primary" onClick={() => setTab("capture")}>Add record / Import CSV</button><button className="rounded-lg border border-border px-4 py-2 text-xs hover:border-primary" onClick={() => setTab("quality")}>View data quality</button></div><VoterRollTab key="contacts" contactMode /></>}
+        {tab === "contacts" && <><div className="flex gap-3 mb-4"><button className="rounded-lg border border-border px-4 py-2 text-xs hover:border-primary" onClick={() => setTab("capture")}>Add record / Import CSV</button><button className="rounded-lg border border-border px-4 py-2 text-xs hover:border-primary" onClick={() => setTab("quality")}>View data quality</button></div><VoterRollTab key={`contacts:${query}`} contactMode /></>}
         {tab === "quality" && <DataQualityTab />}
-        {tab === "roll" && <VoterRollTab key="roll" />}
+        {tab === "roll" && <VoterRollTab key={`roll:${query}`} />}
         {tab === "capture" && <CaptureTab />}
         {tab === "api" && <RegistryApiTab />}
         {tab === "review" && <RegistryReviewTab />}
@@ -1127,3 +1136,4 @@ export default function VotersDb() {
     </div>
   );
 }
+
