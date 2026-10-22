@@ -1,3 +1,4 @@
+import { IebcHistory } from "@/components/iebc-history";
 import { MAKUENI_WARDS } from "@/lib/makueni-wards";
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -147,6 +148,8 @@ export default function Analytics() {
           </button>
         </div>
       </div>
+
+      <IebcHistory />
 
       {/* Tabs */}
       <div className="flex gap-1 flex-wrap">

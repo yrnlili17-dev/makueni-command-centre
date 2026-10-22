@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, pollingStationsTable, tallyResultsTable, turnoutAssumptionsTable } from "@workspace/db";
-import { eq, sql, inArray } from "drizzle-orm";
+import { db, pollingStationsTable, turnoutAssumptionsTable } from "@workspace/db";
+import { sql, inArray } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
 const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 import { z } from "zod/v4";
@@ -39,20 +39,8 @@ router.get("/prediction", async (req, res) => {
   const assumptions = await db.select().from(turnoutAssumptionsTable);
   const aMap = new Map(assumptions.map((a) => [a.ward, a]));
 
-  // Actual turnout so far (from submitted tallies), for prediction-vs-actual.
-  const actualRows = await db
-    .select({
-      ward: pollingStationsTable.ward,
-      totalVotes: sql<number>`coalesce(sum(${tallyResultsTable.votes}), 0)`,
-      candidateVotes: sql<number>`coalesce(sum(${tallyResultsTable.votes}), 0)`,
-      reporting: sql<number>`count(distinct ${tallyResultsTable.stationCode})`,
-    })
-    .from(pollingStationsTable)
-    .leftJoin(tallyResultsTable, eq(pollingStationsTable.code, tallyResultsTable.stationCode))
-    .where(inArray(pollingStationsTable.ward, WARDS))
-    .groupBy(pollingStationsTable.ward);
-  const actMap = new Map(actualRows.map((a) => [a.ward, a]));
-
+  // Legacy tallies have no election date/office. Do not sum all candidates
+  // as one candidate or present mixed/unverified tally rows as observed turnout.
   const wards = wardRows.map((w) => {
     const registered = Number(w.registered);
     const asmp = aMap.get(w.ward);
@@ -66,11 +54,6 @@ router.get("/prediction", async (req, res) => {
     // High values flag where GOTV effort converts to the most extra votes.
     const gotvUpside = Math.round(registered * (supportShare / 100) * (1 - turnoutRate / 100));
 
-    const act = actMap.get(w.ward);
-    const actualVotesCast = Number(act?.totalVotes ?? 0);
-    const actualCandidateVotes = Number(act?.candidateVotes ?? 0);
-    const reportingStations = Number(act?.reporting ?? 0);
-
     return {
       ward: w.ward,
       stations: Number(w.stations),
@@ -82,10 +65,10 @@ router.get("/prediction", async (req, res) => {
       predictedVotes,
       predictedCandidateVotes,
       gotvUpside,
-      actualVotesCast,
-      actualCandidateVotes,
-      actualTurnoutRate: registered ? Math.round((actualVotesCast / registered) * 100) : 0,
-      reportingStations,
+      actualVotesCast: null,
+      actualCandidateVotes: null,
+      actualTurnoutRate: null,
+      reportingStations: 0,
     };
   });
 
@@ -105,6 +88,8 @@ router.get("/prediction", async (req, res) => {
 
   res.json({
     scope: "Makueni County",
+    modelType: "assumption-based-scenario",
+    actualsStatus: "unavailable: legacy tallies lack election date and office; candidate selection and verification are required",
     scenario: { turnoutDelta, supportDelta },
     defaults: { turnout: DEFAULT_TURNOUT, support: DEFAULT_SUPPORT },
     wards: wardsOut,
@@ -163,3 +148,4 @@ router.put("/assumptions", async (req, res) => {
 });
 
 export default router;
+

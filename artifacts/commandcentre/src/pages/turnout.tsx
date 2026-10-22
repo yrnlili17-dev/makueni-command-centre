@@ -1,3 +1,4 @@
+import { IebcHistory } from "@/components/iebc-history";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, Users, Vote, Megaphone, Save, RotateCcw, Target } from "lucide-react";
@@ -27,9 +28,9 @@ interface WardPrediction {
   predictedCandidateVotes: number;
   gotvUpside: number;
   gotvRank: number;
-  actualVotesCast: number;
-  actualCandidateVotes: number;
-  actualTurnoutRate: number;
+  actualVotesCast: number | null;
+  actualCandidateVotes: number | null;
+  actualTurnoutRate: number | null;
   reportingStations: number;
 }
 
@@ -111,10 +112,10 @@ export default function Turnout() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-wider flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" /> VOTER TURNOUT FORECAST
+            <TrendingUp className="w-5 h-5 text-primary" /> VOTER TURNOUT SCENARIOS
           </h1>
           <p className="font-mono text-[11px] text-muted-foreground mt-1">
-            Makueni County ward-level turnout estimates · based on registered-voter records
+            Assumption-based scenarios · not a trained forecast or measured current support
           </p>
         </div>
         <button
@@ -126,6 +127,8 @@ export default function Turnout() {
           {saveMutation.isPending ? "SAVING..." : "SAVE ASSUMPTIONS"}
         </button>
       </div>
+
+      <IebcHistory />
 
       {isLoading && <div className="p-8 font-mono text-xs text-muted-foreground">LOADING FORECAST...</div>}
       {error && <div className="p-8 font-mono text-xs text-red-400">FAILED TO LOAD FORECAST.</div>}
@@ -311,3 +314,4 @@ export default function Turnout() {
     </div>
   );
 }
+

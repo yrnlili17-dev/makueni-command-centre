@@ -1,3 +1,4 @@
+import { getIebcContext } from "../data/iebc-history";
 /**
  * No-token fallback for Makueni County workflows.
  *
@@ -13,6 +14,9 @@ export function buildFreeMakueniAnswer(input: {
 }): string {
   const message = input.message.trim();
   const lower = message.toLowerCase();
+  if (/iebc|election|turnout|turn out|voter|forecast|predict|swot/i.test(message)) {
+    return getIebcContext();
+  }
   const context = input.context ?? {};
   const liveSources = input.liveSources ?? [];
   const historicalCidpContext = typeof context.historicalCidpContext === "string" ? context.historicalCidpContext : "";
@@ -320,3 +324,4 @@ export async function fetchMakueniOfficialSources(): Promise<PublicSourceSnapsho
   sourceCache = { expiresAt: Date.now() + 15 * 60 * 1000, items };
   return items;
 }
+
