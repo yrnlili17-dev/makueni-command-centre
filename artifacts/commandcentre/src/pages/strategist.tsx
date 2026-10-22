@@ -21,9 +21,9 @@ interface ChatMessage {
 }
 
 const STARTER_PROMPTS = [
-  "What are the latest public Makueni County project updates?",
-  "Summarize water, roads and health service issues in Makueni",
-  "What official budget and ward profile sources should I check?",
+  "What does the Makueni CIDP say about safe-water baselines and targets?",
+  "Explain Makueni sanitation figures in the November 2019 strategy",
+  "Distinguish Makueni census population from population projections",
   "Draft a public participation speech for a Makueni ward",
   "How can residents report and follow up a stalled county project?",
   "Summarize recent public news about Makueni and cite the links",
@@ -348,3 +348,4 @@ export default function Strategist() {
     </div>
   );
 }
+

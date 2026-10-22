@@ -1,3 +1,4 @@
+import { MakueniResearch } from "@/components/makueni-research";
 import { IebcHistory } from "@/components/iebc-history";
 import { MAKUENI_WARDS } from "@/lib/makueni-wards";
 import { useState, useEffect, useCallback } from "react";
@@ -149,6 +150,7 @@ export default function Analytics() {
         </div>
       </div>
 
+      <MakueniResearch />
       <IebcHistory />
 
       {/* Tabs */}
@@ -875,3 +877,4 @@ export default function Analytics() {
     </div>
   );
 }
+
