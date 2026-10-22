@@ -1,321 +1,59 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X, Database, Users, Calendar, Map, BarChart3, ShieldCheck, ClipboardList, Wallet, ChevronRight } from "lucide-react";
+import brandIcon from "@assets/brand-icon.png";
 import { useAuth } from "@/lib/auth";
 import { MAKUENI_REGISTER_SUMMARY } from "@/lib/makueni-register-summary";
 import "./landing.css";
 
-/* Kenya's general election: second Tuesday of August (Constitution, Art. 101). */
-const ELECTION_DAY = new Date("2027-08-10T06:00:00+03:00");
-
-const CONSTITUENCIES = MAKUENI_REGISTER_SUMMARY;
-const TOTAL_VOTERS = CONSTITUENCIES.reduce((s, c) => s + c.voters, 0);
-const TOTAL_STATIONS = CONSTITUENCIES.reduce((s, c) => s + c.stations, 0);
-const TOTAL_WARDS = CONSTITUENCIES.reduce((s, c) => s + c.wards.length, 0);
-const fmt = (n: number) => n.toLocaleString("en-KE");
-
-/* Every module that already exists in the command centre, grouped the same
-   way as the in-app sidebar so people find things where they expect them. */
-const MODULE_GROUPS: { group: string; items: { name: string; href: string; does: string }[] }[] = [
-  {
-    group: "Overview",
-    items: [
-      { name: "Command overview", href: "/dashboard", does: "Today’s numbers across every ward on one screen." },
-      { name: "AI chief strategist", href: "/strategist", does: "Ask strategy questions answered from live campaign data." },
-      { name: "Analytics hub", href: "/analytics", does: "Trends in support, outreach and field work over time." },
-      { name: "Campaign countdown", href: "/campaign-plan", does: "Days to election, phases and readiness milestones." },
-    ],
-  },
-  {
-    group: "Voters",
-    items: [
-      { name: "Voters", href: "/members", does: "Supporter records with ward, support level and consent." },
-      { name: "Constituent database", href: "/voters-db", does: "The registry with contact totals and data-quality checks." },
-      { name: "Segmentation", href: "/segments", does: "Build target lists, such as undecided voters in Wote." },
-    ],
-  },
-  {
-    group: "Outreach",
-    items: [
-      { name: "Messaging", href: "/messaging", does: "SMS and WhatsApp campaigns to any segment." },
-      { name: "Speech and manifesto", href: "/speeches", does: "Draft speeches by occasion, audience, ward and language." },
-      { name: "Event logistics", href: "/events", does: "Barazas, rallies and stakeholder meetings, with attendance." },
-      { name: "Influence network", href: "/kol", does: "Elders, clergy, group leaders and their reach." },
-    ],
-  },
-  {
-    group: "Field",
-    items: [
-      { name: "Field operations", href: "/field-ops", does: "Canvass drives, door targets and visit logs per ward." },
-      { name: "Volunteer command", href: "/volunteers", does: "Recruit, assign and track volunteers and their hours." },
-    ],
-  },
-  {
-    group: "Intelligence",
-    items: [
-      { name: "Opinion polls and surveys", href: "/surveys", does: "Run polls with shareable links and see results by ward." },
-      { name: "Political intelligence", href: "/intelligence", does: "Opponent activity and threats, logged and rated." },
-      { name: "Narrative response", href: "/narrative-response", does: "Answer misinformation quickly with an agreed line." },
-      { name: "Social listening", href: "/social-listening", does: "Scan public mentions of the candidate and local issues." },
-      { name: "SWOT analysis", href: "/swot", does: "Strengths, weaknesses, opportunities and threats, kept current." },
-    ],
-  },
-  {
-    group: "Election day",
-    items: [
-      { name: "Election day operations", href: "/election-day", does: "Polling stations, agents and tallies as they report." },
-      { name: "Turnout forecast", href: "/turnout", does: "Predicted turnout per ward and where get-out-the-vote pays off most." },
-    ],
-  },
-  {
-    group: "Finance and admin",
-    items: [
-      { name: "Pledges and fundraising", href: "/fundraising", does: "Donors, pledges and M-Pesa contributions." },
-      { name: "Credentials hub", href: "/credentials", does: "The candidate’s record, documents and achievements." },
-      { name: "System admin", href: "/admin", does: "User accounts, roles and module permissions." },
-    ],
-  },
+const FEATURES = [
+  { title: "Constituent Database", description: "Maintain contact records, review imports and monitor data quality in one workspace.", icon: Database, href: "/voters-db" },
+  { title: "Volunteer Management", description: "Keep team registrations, assigned responsibilities and volunteer records organised.", icon: Users, href: "/volunteers" },
+  { title: "Field Operations", description: "Record field reports and coordinate the team's day-to-day activities.", icon: Map, href: "/field-ops" },
+  { title: "Events & Calendar", description: "Coordinate schedules, event details and attendance records.", icon: Calendar, href: "/events" },
+  { title: "Reports & Analytics", description: "Review the information recorded by your team and track operational activity.", icon: BarChart3, href: "/analytics" },
+  { title: "Planning", description: "Keep milestones, tasks and responsibilities together for the whole team.", icon: ClipboardList, href: "/campaign-plan" },
+  { title: "Finance Records", description: "Manage the fundraising and pledge records already held in your workspace.", icon: Wallet, href: "/fundraising" },
+  { title: "Administration", description: "Manage user accounts, roles and access to each part of the platform.", icon: ShieldCheck, href: "/admin" },
 ];
-
-/* ------------------------------------------------------------------ */
-/* Hero visual: the county's register, one band per constituency,     */
-/* each band's height proportional to its registered voters.          */
-/* ------------------------------------------------------------------ */
-
-function RegisterBands({ active, onActive }: { active: number | null; onActive: (i: number | null) => void }) {
-  return (
-    <div className="lp-bands" role="list" aria-label="Registered voters by constituency">
-      {CONSTITUENCIES.map((c, i) => (
-        <button
-          key={c.constituency}
-          type="button"
-          role="listitem"
-          className={"lp-band" + (active === i ? " is-active" : "")}
-          style={{ flexGrow: c.voters }}
-          onMouseEnter={() => onActive(i)}
-          onMouseLeave={() => onActive(null)}
-          onFocus={() => onActive(i)}
-          onBlur={() => onActive(null)}
-          onClick={() => onActive(active === i ? null : i)}
-          aria-label={`${c.constituency}: ${fmt(c.voters)} registered voters, ${c.wards.length} wards, ${c.stations} polling stations`}
-        >
-          <span className="lp-band-name">{c.constituency}</span>
-          <span className="lp-band-num">{fmt(c.voters)}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-
-function useCountdown(target: Date) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(t);
-  }, []);
-  return useMemo(() => {
-    const ms = Math.max(0, target.getTime() - now);
-    const days = Math.floor(ms / 86_400_000);
-    return { days, weeks: Math.floor(days / 7) };
-  }, [now, target]);
-}
 
 export default function Landing() {
   const { user } = useAuth();
-  const [active, setActive] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { days, weeks } = useCountdown(ELECTION_DAY);
-
   useEffect(() => {
-    const prev = document.title;
+    const previous = document.title;
     document.title = "Makueni Command Centre";
-    return () => { document.title = prev; };
+    return () => { document.title = previous; };
   }, []);
-
   const appHref = user ? "/dashboard" : "/login";
-  const appLabel = user ? "Open the command centre" : "Log in";
-  const focus = active === null ? null : CONSTITUENCIES[active]!;
-
-  const nav = [
-    { href: "#platform", label: "Platform" },
-    { href: "#wards", label: "Wards" },
-    { href: "#volunteer", label: "Volunteer" },
-  ];
-
-  return (
-    <div className="lp">
-      <a href="#main" className="lp-skip">Skip to content</a>
-
-      <header className="lp-header">
-        <div className="lp-wrap lp-header-row">
-          <a href="#top" className="lp-brand" aria-label="Makueni Command Centre, home">
-            <svg viewBox="0 0 40 40" aria-hidden="true" className="lp-brand-mark">
-              <path d="M3 33 L13 15 L19 24 L26 9 L37 33 Z" />
-              <path d="M3 33 H37" fill="none" strokeWidth="2.4" strokeLinecap="round" />
-            </svg>
-            <span>
-              <strong>Makueni</strong>
-              <small>Command Centre</small>
-            </span>
-          </a>
-
-          <nav className="lp-nav" aria-label="Main">
-            {nav.map(n => <a key={n.href} href={n.href}>{n.label}</a>)}
-          </nav>
-
-          <div className="lp-header-cta">
-            <Link href={appHref} className="lp-btn lp-btn-solid">{appLabel}</Link>
-            <button
-              type="button"
-              className="lp-menu-btn"
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen(o => !o)}
-            >
-              {menuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          </div>
-        </div>
-        {menuOpen && (
-          <nav className="lp-mobile-nav" aria-label="Mobile">
-            {nav.map(n => <a key={n.href} href={n.href} onClick={() => setMenuOpen(false)}>{n.label}</a>)}
-          </nav>
-        )}
-      </header>
-
-      <main id="main">
-        <section id="top" className="lp-hero">
-          <div className="lp-wrap lp-hero-grid">
-            <div className="lp-hero-copy">
-              <p className="lp-slogan">Makueni County</p>
-              <h1>Every ward in Makueni, on one screen.</h1>
-              <p className="lp-lede">
-                Campaign operations for {TOTAL_WARDS} wards, {fmt(TOTAL_STATIONS)} polling stations and{" "}
-                {fmt(TOTAL_VOTERS)} registered voters. Voters, volunteers, polls, outreach and
-                election-day tallies, run from one place.
-              </p>
-              <div className="lp-actions">
-                <Link href={appHref} className="lp-btn lp-btn-solid lp-btn-lg">{appLabel}</Link>
-                <Link href="/insights/volunteer" className="lp-btn lp-btn-ghost lp-btn-lg">Volunteer with us</Link>
-              </div>
-            </div>
-
-            <figure className="lp-hero-figure">
-              <RegisterBands active={active} onActive={setActive} />
-              <figcaption className="lp-band-caption" aria-live="polite">
-                {focus ? (
-                  <>
-                    <strong>{focus.constituency}</strong>: {focus.wards.length} wards, {focus.stations} polling stations.{" "}
-                    {focus.wards.map(w => w.ward).join(", ")}.
-                  </>
-                ) : (
-                  <>Registered voters by constituency. Select a band to see its wards.</>
-                )}
-              </figcaption>
-            </figure>
-          </div>
-
-          <div className="lp-wrap">
-            <p className="lp-countdown">
-              <span className="lp-countdown-num">{fmt(days)}</span>
-              <span className="lp-countdown-text">
-                days to the general election on Tuesday 10 August 2027. That is {weeks} weekends of canvassing.
-              </span>
-            </p>
-          </div>
-        </section>
-
-        <section id="platform" className="lp-section">
-          <div className="lp-wrap">
-            <div className="lp-section-head">
-              <h2>What the command centre does</h2>
-              <p>
-                Twenty-three tools, grouped the way the team works. Each opens inside the command centre
-                once you have logged in, and what you can see depends on the role your administrator gives you.
-              </p>
-            </div>
-
-            <div className="lp-modules">
-              {MODULE_GROUPS.map(g => (
-                <div key={g.group} className="lp-module-group">
-                  <h3>{g.group}</h3>
-                  <ul>
-                    {g.items.map(m => (
-                      <li key={m.href}>
-                        <Link href={user ? m.href : "/login"} className="lp-module">
-                          <span className="lp-module-name">{m.name}</span>
-                          <span className="lp-module-does">{m.does}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="wards" className="lp-section lp-section-ink">
-          <div className="lp-wrap">
-            <div className="lp-section-head">
-              <h2>All {TOTAL_WARDS} wards, from the IEBC register</h2>
-              <p>
-                Every voter record, volunteer, canvass drive and polling station in the system belongs to one
-                of these wards. Figures are from the IEBC register of voters for the 2022 general election.
-              </p>
-            </div>
-
-            <div className="lp-geo">
-              {CONSTITUENCIES.map(c => (
-                <div key={c.constituency} className="lp-geo-group">
-                  <h3>
-                    {c.constituency}
-                    <span>{fmt(c.voters)} voters</span>
-                  </h3>
-                  <table className="lp-geo-table">
-                    <thead>
-                      <tr><th scope="col">Ward</th><th scope="col">Stations</th><th scope="col">Voters</th></tr>
-                    </thead>
-                    <tbody>
-                      {c.wards.map(w => (
-                        <tr key={w.ward}>
-                          <th scope="row">{w.ward}</th>
-                          <td>{w.stations}</td>
-                          <td>{fmt(w.voters)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="volunteer" className="lp-section lp-contact">
-          <div className="lp-wrap lp-contact-grid">
-            <div>
-              <h2>Join the team</h2>
-              <p>
-                Canvassers, phone bankers, polling agents and data clerks are needed in every ward.
-                Register and your ward coordinator will get in touch.
-              </p>
-            </div>
-            <div className="lp-actions lp-actions-end">
-              <Link href="/insights/volunteer" className="lp-btn lp-btn-solid lp-btn-lg">Register as a volunteer</Link>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="lp-footer">
-        <div className="lp-wrap lp-footer-row">
-          <p>Makueni County Command Centre. Register data: IEBC, 2022.</p>
-          <p><Link href="/login">Staff log in</Link></p>
-        </div>
-      </footer>
-    </div>
-  );
+  const nav = [{ href: "#home", label: "Home" }, { href: "#features", label: "Features" }, { href: "#makueni", label: "Makueni" }, { href: "#access", label: "Access" }];
+  return <div className="mc-public" id="home">
+    <a href="#public-content" className="mc-skip">Skip to content</a>
+    <header className="mc-public-header"><div className="mc-public-wrap mc-public-header-row">
+      <a href="#home" className="mc-public-brand"><img src={brandIcon} alt="" /><span><strong>Command Centre OS</strong><small>MAKUENI COUNTY</small></span></a>
+      <nav aria-label="Main" className="mc-public-nav">{nav.map(item => <a key={item.href} href={item.href}>{item.label}</a>)}</nav>
+      <div className="mc-header-actions"><Link href={appHref} className="mc-login-link">{user ? "Dashboard" : "Log In"}</Link><Link href={appHref} className="mc-button mc-button-primary">Open Command Centre</Link><button type="button" className="mc-public-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} aria-controls="public-mobile-navigation" onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={21} /> : <Menu size={21} />}</button></div>
+    </div>{menuOpen && <nav id="public-mobile-navigation" className="mc-public-mobile-nav" aria-label="Mobile">{nav.map(item => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>)}</nav>}</header>
+    <main id="public-content">
+      <section className="mc-hero"><div className="mc-public-wrap">
+        <p className="mc-eyebrow"><span /> ONE COUNTY. ONE TEAM. ONE WORKSPACE.</p>
+        <h1>Makueni<br /><span>Command Centre</span> OS</h1>
+        <p className="mc-hero-subtitle">One place to coordinate the whole team.</p>
+        <p className="mc-hero-description">Contacts, field reports, volunteers, events and administration — together in the Makueni County workspace.</p>
+        <div className="mc-hero-actions"><Link href={appHref} className="mc-button mc-button-primary">{user ? "Open Dashboard" : "Log In to Your Workspace"}<ArrowRight size={18} /></Link><a href="#features" className="mc-button mc-button-outline">Explore Features</a></div>
+      </div></section>
+      <section className="mc-platform-strip" aria-label="Workspace overview"><div className="mc-public-wrap"><p>CONNECTED WORKFLOWS FOR YOUR EXISTING TEAM AND RECORDS</p><div>{["Contact Management", "Field Reports", "Volunteer Records", "Events & Scheduling", "Reporting", "Administration"].map(label => <span key={label}>{label}</span>)}</div></div></section>
+      <section className="mc-facts"><div className="mc-public-wrap mc-facts-grid">{[["6", "CONSTITUENCIES"], ["30", "COUNTY ASSEMBLY WARDS"], ["16", "ADMINISTRATIVE DIVISIONS"], ["127", "SUB-LOCATIONS"]].map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div></section>
+      <section id="features" className="mc-public-section"><div className="mc-public-wrap">
+        <div className="mc-section-heading"><p className="mc-kicker">THE PLATFORM</p><h2>One unified command centre.</h2><p>The tools your team uses, in one consistent workspace.</p></div>
+        <div className="mc-feature-grid">{FEATURES.map(feature => <Link key={feature.href} href={user ? feature.href : "/login"} className="mc-feature-card"><feature.icon size={25} strokeWidth={1.6} /><h3>{feature.title}</h3><p>{feature.description}</p><span>Open module <ChevronRight size={15} /></span></Link>)}</div>
+      </div></section>
+      <section id="makueni" className="mc-public-section mc-geography-section"><div className="mc-public-wrap">
+        <div className="mc-section-heading"><p className="mc-kicker">MAKUENI COUNTY</p><h2>Six constituencies. Thirty wards.</h2><p>County geography and the existing IEBC 2022 register reference. These reference figures are separate from your private contact records.</p></div>
+        <div className="mc-geography-grid">{MAKUENI_REGISTER_SUMMARY.map(item => <article key={item.constituency} className="mc-geography-card"><h3>{item.constituency}</h3><p>{item.wards.length} wards · {item.stations.toLocaleString("en-KE")} polling stations</p><ul>{item.wards.map(ward => <li key={ward.ward}>{ward.ward}</li>)}</ul></article>)}</div>
+      </div></section>
+      <section id="access" className="mc-public-section"><div className="mc-public-wrap mc-access-callout"><div><p className="mc-kicker">YOUR TEAM'S WORKSPACE</p><h2>Ready to get to work?</h2><p>Sign in with your assigned account to access your team's records and tools.</p></div><Link href={appHref} className="mc-button mc-button-primary">Open Command Centre <ArrowRight size={18} /></Link></div></section>
+    </main>
+    <footer className="mc-public-footer"><div className="mc-public-wrap"><div><strong>Makueni Command Centre</strong><p>Prof. Philip Kaloki · Makueni County</p></div><Link href="/login">Staff Log In</Link><p>© {new Date().getFullYear()} All rights reserved.</p></div></footer>
+  </div>;
 }

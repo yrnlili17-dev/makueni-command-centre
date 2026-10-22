@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { AiAssistPanel } from "@/components/ai-assist-panel";
@@ -7,70 +7,43 @@ import {
   Menu, X, Activity, Users, PieChart, MessageSquare, 
   Map, UserPlus, FileText, Calendar, 
   ShieldAlert, Target, Star, Shield, LayoutDashboard, LogOut, Banknote, Vote, Database, Award, Settings, BarChart2, Crosshair, Radio, TrendingUp, Mic, BrainCircuit,
-  FileCheck2,
+  FileCheck2, CircleUserRound, Globe,
 } from "lucide-react";
 import brandIcon from "@assets/brand-icon.png";
 
 const navGroups = [
-  {
-    title: "COMMAND",
-    items: [
-      { href: "/dashboard", label: "COMMAND OVERVIEW", icon: LayoutDashboard },
-      { href: "/strategist", label: "AI CHIEF STRATEGIST", icon: BrainCircuit },
-      { href: "/analytics", label: "ANALYTICS HUB", icon: BarChart2 },
-      { href: "/campaign-plan", label: "CAMPAIGN COUNTDOWN", icon: Target },
-    ],
-  },
-  {
-    title: "VOTER DATA",
-    items: [
-      { href: "/members", label: "VOTERS", icon: Users },
-      { href: "/voters-db", label: "CONSTITUENT DATABASE", icon: Database },
-      { href: "/segments", label: "SEGMENTATION", icon: PieChart },
-    ],
-  },
-  {
-    title: "OUTREACH & MESSAGING",
-    items: [
-      { href: "/messaging", label: "MESSAGING", icon: MessageSquare },
-      { href: "/wa-templates", label: "WA TEMPLATES", icon: FileCheck2 },
-      { href: "/speeches", label: "SPEECH & MANIFESTO", icon: Mic },
-      { href: "/events", label: "EVENT LOGISTICS", icon: Calendar },
-      { href: "/kol", label: "KOL INFLUENCE NETWORK", icon: Star },
-    ],
-  },
-  {
-    title: "FIELD OPERATIONS",
-    items: [
-      { href: "/field-ops", label: "FIELD OPERATIONS", icon: Map },
-      { href: "/volunteers", label: "VOLUNTEER COMMAND", icon: UserPlus },
-    ],
-  },
-  {
-    title: "INTELLIGENCE",
-    items: [
-      { href: "/surveys", label: "OPINION POLLS & SURVEYS", icon: FileText },
-      { href: "/intelligence", label: "POLITICAL INTELLIGENCE", icon: ShieldAlert },
-      { href: "/narrative-response", label: "NARRATIVE RESPONSE CENTRE", icon: MessageSquare },
-      { href: "/social-listening", label: "POLITICAL SOCIAL LISTENING", icon: Radio },
-      { href: "/swot", label: "SWOT ANALYSIS", icon: Crosshair },
-    ],
-  },
-  {
-    title: "ELECTION DAY",
-    items: [
-      { href: "/election-day", label: "ELECTION DAY OPS", icon: Vote },
-      { href: "/turnout", label: "TURNOUT FORECAST", icon: TrendingUp },
-    ],
-  },
-  {
-    title: "ADMINISTRATION",
-    items: [
-      { href: "/fundraising", label: "PLEDGES & FUNDRAISING", icon: Banknote },
-      { href: "/credentials", label: "CREDENTIALS HUB", icon: Award },
-      { href: "/admin", label: "SYSTEM ADMIN", icon: Settings },
-    ],
-  },
+  { title: "Mission control", items: [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/members", label: "Members", icon: Users },
+    { href: "/voters-db", label: "Constituent Database", icon: Database },
+    { href: "/segments", label: "Segments", icon: PieChart },
+    { href: "/surveys", label: "Opinion Polls", icon: FileText },
+    { href: "/messaging", label: "Messaging", icon: MessageSquare },
+    { href: "/wa-templates", label: "WA Templates", icon: FileCheck2 },
+    { href: "/field-ops", label: "Field Ops", icon: Map },
+    { href: "/events", label: "Events", icon: Calendar },
+    { href: "/volunteers", label: "Volunteers", icon: UserPlus },
+  ] },
+  { title: "Planning & reporting", items: [
+    { href: "/campaign-plan", label: "Campaign Plan", icon: Target },
+    { href: "/analytics", label: "Analytics", icon: BarChart2 },
+    { href: "/fundraising", label: "Fundraising", icon: Banknote },
+    { href: "/election-day", label: "Election Day", icon: Vote },
+    { href: "/turnout", label: "Turnout", icon: TrendingUp },
+  ] },
+  { title: "Intelligence", items: [
+    { href: "/strategist", label: "AI Assistant", icon: BrainCircuit },
+    { href: "/intelligence", label: "Intelligence", icon: ShieldAlert },
+    { href: "/narrative-response", label: "Narrative Response", icon: MessageSquare },
+    { href: "/social-listening", label: "Social Listening", icon: Radio },
+    { href: "/swot", label: "SWOT Analysis", icon: Crosshair },
+    { href: "/kol", label: "KOL Network", icon: Star },
+    { href: "/speeches", label: "Speeches & Manifesto", icon: Mic },
+  ] },
+  { title: "Administration", items: [
+    { href: "/credentials", label: "Credentials", icon: Award },
+    { href: "/admin", label: "Settings", icon: Settings },
+  ] },
 ];
 
 // Maps a nav href to its backend permission module key (see admin MODULES list).
@@ -148,85 +121,80 @@ export function Layout({ children }: { children: React.ReactNode }) {
     setLocation("/login");
   };
 
-  return (
-    <div className="flex h-dvh min-h-0 w-full max-w-full overflow-hidden bg-background text-foreground font-sans">
-      {mobileMenuOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-40 bg-black/70 lg:hidden" onClick={() => setMobileMenuOpen(false)} />}
-      <aside className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] border-r border-border bg-card flex flex-col transition-transform lg:static lg:translate-x-0 lg:shrink-0`}>
-        <div className="p-4 md:p-6 flex items-center gap-3 border-b border-border">
-          <img src={brandIcon} alt="CommandCentre OS" className="w-8 h-8 object-contain" />
-          <div className="flex flex-col">
-            <span className="font-bold tracking-widest text-sm">PROF. PHILIP KALOKI COMMAND CENTRE</span>
-            <span className="text-[10px] text-primary font-mono tracking-widest">[ SYSTEM_ACTIVE ]</span>
-          </div>
-          <button type="button" aria-label="Close menu" className="ml-auto p-1 lg:hidden" onClick={() => setMobileMenuOpen(false)}><X className="w-5 h-5" /></button>
-          <div className="hidden">
-          </div>
-        </div>
-        
-        <nav className="flex-1 py-4 overflow-y-auto">
-          <div className="space-y-5 px-2">
-            {visibleGroups.map((group) => (
-              <div key={group.title}>
-                <div className="mb-1.5 flex items-center gap-2 bg-secondary/60 border-l-2 border-primary px-3 py-1.5">
-                  <span className="text-primary font-mono text-[10px] font-bold">▸</span>
-                  <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-foreground uppercase">
-                    {group.title}
-                  </span>
-                </div>
-                <ul className="space-y-1">
-                  {group.items.map((item) => {
-                    const isActive = location === item.href;
-                    return (
-                      <li key={item.href}>
-                        <Link href={item.href} onClick={() => setMobileMenuOpen(false)} className={cn(
-                          "flex items-center gap-3 px-3 py-2 text-xs font-mono tracking-wider transition-colors",
-                          isActive
-                            ? "bg-primary text-primary-foreground border-l-2 border-primary-foreground"
-                            : "text-muted-foreground hover:bg-secondary hover:text-foreground border-l-2 border-transparent"
-                        )}>
-                          <item.icon className="w-4 h-4" />
-                          {item.label}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </nav>
+  const sidebarRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const [serverStatus, setServerStatus] = useState<"checking" | "online" | "unavailable">("checking");
+  const pageTitle = navGroups.flatMap(group => group.items).find(item => item.href === location)?.label ?? "Makueni Command Centre";
 
-        <div className="p-4 border-t border-border mt-auto space-y-2">
-          {user && (
-            <div className="px-3 py-2 bg-secondary/50 border border-border">
-              <p className="font-mono text-[11px] text-foreground truncate">{user.name}</p>
-              <p className="font-mono text-[9px] text-primary tracking-widest uppercase truncate">{user.role}</p>
-            </div>
-          )}
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-xs font-mono tracking-wider text-muted-foreground hover:bg-secondary hover:text-foreground">
-            <LogOut className="w-4 h-4" />
-            TERMINATE SESSION
-          </button>
+  useEffect(() => {
+    const controller = new AbortController();
+    const check = async () => {
+      try {
+        const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+        const response = await fetch(`${base}/api/healthz`, { signal: controller.signal });
+        if (!controller.signal.aborted) setServerStatus(response.ok ? "online" : "unavailable");
+      } catch {
+        if (!controller.signal.aborted) setServerStatus("unavailable");
+      }
+    };
+    void check();
+    const timer = setInterval(() => void check(), 60_000);
+    return () => { controller.abort(); clearInterval(timer); };
+  }, []);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    sidebarRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setMobileMenuOpen(false); menuButtonRef.current?.focus(); }
+      if (event.key !== "Tab" || window.matchMedia("(min-width: 1024px)").matches) return;
+      const items = [...(sidebarRef.current?.querySelectorAll<HTMLElement>('a[href],button,summary') ?? [])]
+        .filter(element => element.getClientRects().length > 0);
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [mobileMenuOpen]);
+
+  return (
+    <div className="cc-shell">
+      <a href="#workspace-content" className="cc-skip">Skip to content</a>
+      {mobileMenuOpen && <button type="button" aria-label="Close navigation" className="cc-backdrop" onClick={() => setMobileMenuOpen(false)} />}
+      <aside ref={sidebarRef} id="workspace-navigation" className={cn("cc-sidebar", mobileMenuOpen && "is-open")} aria-label="Workspace navigation">
+        <div className="cc-brand">
+          <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="cc-brand-link">
+            <img src={brandIcon} alt="" className="cc-brand-icon" />
+            <span><strong>Command Centre</strong><small>OS // MAKUENI</small></span>
+          </Link>
+          <button type="button" aria-label="Close menu" className="cc-mobile-close" onClick={() => { setMobileMenuOpen(false); menuButtonRef.current?.focus(); }}><X size={20} /></button>
+        </div>
+        <nav className="cc-nav" aria-label="Main navigation">
+          {visibleGroups.map(group => <section key={group.title} className="cc-nav-group">
+            <h2>{group.title}</h2>
+            <ul>{group.items.map(item => <li key={item.href}>
+              <Link href={item.href} aria-current={location === item.href ? "page" : undefined} onClick={() => setMobileMenuOpen(false)} className={cn("cc-nav-link", location === item.href && "is-active")}>
+                <item.icon size={20} strokeWidth={1.7} /><span>{item.label}</span>
+              </Link>
+            </li>)}</ul>
+          </section>)}
+        </nav>
+        <div className="cc-sidebar-footer">
+          {user && <details className="cc-profile">
+            <summary><CircleUserRound size={20} /><span>My Profile</span></summary>
+            <div className="cc-profile-details"><strong>{user.name}</strong><span>{user.email}</span><small>{user.role.replace(/[_-]/g, " ")}</small></div>
+          </details>}
+          <div className="cc-workspace-label"><Globe size={17} /><span>Makueni County</span><small>EN</small></div>
+          <button onClick={handleLogout} className="cc-nav-link cc-logout"><LogOut size={20} strokeWidth={1.7} /><span>Logout</span></button>
         </div>
       </aside>
-
-      <main className="min-w-0 flex-1 flex flex-col h-full overflow-hidden">
-        <header className="min-h-14 border-b border-border flex items-center gap-2 px-3 md:px-6 justify-between shrink-0 bg-card/50">
-          <div className="flex min-w-0 items-center gap-2 md:gap-4">
-            <button type="button" aria-label="Open navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)} className="p-2 border border-border lg:hidden"><Menu className="w-5 h-5" /></button>
-            <div className="hidden md:block w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="font-mono text-[10px] md:text-xs text-muted-foreground tracking-widest truncate">MAKUENI COMMAND CENTRE</span>
-          </div>
-          <div className="hidden lg:flex items-center gap-4">
-            <span className="font-mono text-[10px] text-muted-foreground">TIME: {new Date().toLocaleString("en-KE", { timeZone: "Africa/Nairobi", hour12: false })}</span>
-            <div className="px-2 py-1 bg-primary/10 text-primary font-mono text-[10px] border border-primary/30">
-              PROF. PHILIP KALOKI COMMAND CENTRE · 2027
-            </div>
-          </div>
+      <main className="cc-main">
+        <header className="cc-topbar">
+          <div className="cc-topbar-title"><button ref={menuButtonRef} type="button" aria-label="Open navigation" aria-controls="workspace-navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)} className="cc-menu-button"><Menu size={22} /></button><h1>{pageTitle}</h1></div>
+          <div className="cc-server-status" title="Application server reachability; provider and database health are reported in their modules." role="status"><span className={cn("cc-status-dot", serverStatus)} />{serverStatus === "online" ? "System Online" : serverStatus === "checking" ? "Checking connection" : "Connection unavailable"}</div>
         </header>
-        <div className="min-w-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-6">
-          {children}
-        </div>
+        <div id="workspace-content" tabIndex={-1} className="cc-content">{children}</div>
       </main>
       <AiAssistPanel module={currentModule} />
     </div>
