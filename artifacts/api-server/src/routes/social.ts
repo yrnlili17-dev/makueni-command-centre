@@ -1,7 +1,9 @@
+import { createSocialStorageInitializer, settleSocialHealthWrites, socialDatabaseErrorCode } from "../lib/social-storage-policy";
+import { logger } from "../lib/logger";
 import { MAKUENI_MONITORING_KEYWORDS, makueniMonitoringQueries, matchMakueniMonitoringKeywords } from "../data/makueni-monitoring-keywords";
 import { Router } from "express";
 import { z } from "zod/v4";
-import { db, socialMentionsTable, socialSourceHealthTable } from "@workspace/db";
+import { db, pool, socialMentionsTable, socialSourceHealthTable } from "@workspace/db";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { requireAuth, requirePermission } from "../lib/auth";
@@ -9,6 +11,14 @@ import { searchFreeMakueniWeb } from "./makueni-free-ai";
 
 const router = Router();
 router.use(requireAuth);
+const ensureSocialStorage = createSocialStorageInitializer({
+  inspect: async () => {
+    const result = await pool.query("SELECT to_regclass('public.social_mentions') AS mentions, to_regclass('public.social_source_health') AS health");
+    return { mentions: Boolean(result.rows[0]?.mentions), health: Boolean(result.rows[0]?.health) };
+  },
+  execute: statement => pool.query(statement),
+  onHealthError: err => logger.warn({ err }, "Optional social source-health storage is unavailable"),
+});
 
 const SENTIMENTS = new Set(["positive", "negative", "neutral"]);
 
@@ -135,6 +145,7 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
   scanInFlight = true;
   const failedCategories = new Set<string>();
   try {
+  await ensureSocialStorage();
   const perCategory = await Promise.all(
     SCAN_CATEGORIES.map(async (cat) => {
       try {
@@ -242,7 +253,7 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
   }
 
   const now = new Date();
-  await Promise.all(SCAN_CATEGORIES.map(async (cat) => {
+  const warnings = await settleSocialHealthWrites(SCAN_CATEGORIES.map((cat) => async () => {
     const failed = failedCategories.has(cat.key);
     const count = deduped.filter((mention) => mention.category === cat.key).length;
     await db.insert(socialSourceHealthTable).values({
@@ -266,13 +277,22 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
         updatedAt: now,
       },
     });
-  }));
+  }), err => req.log.warn({ err }, "Optional social source-health write failed"));
 
   req.log.info({ scanned: deduped.length, inserted: inserted.length }, "social scan complete");
-  return res.json({ scanned: deduped.length, inserted: inserted.length, mentions: inserted });
+  return res.json({ scanned: deduped.length, inserted: inserted.length, mentions: inserted, warnings });
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
     req.log.error({ err, name: error.name, message: error.message }, "social scan failed outside provider query handling");
+    const databaseCode = socialDatabaseErrorCode(err);
+    if (databaseCode === "42P01" || databaseCode === "42703" || databaseCode === "42501") {
+      return res.status(503).json({
+        error: databaseCode === "42501"
+          ? "Social Listening cannot prepare or save its storage. Check the database role permissions in the database connected to this application."
+          : "Social Listening storage is incomplete in the connected database. Apply the social-listening schema migration and run the scan again.",
+        code: "SOCIAL_STORAGE_NOT_READY",
+      });
+    }
     return res.status(500).json({
       error: "The scan reached the API but failed while processing or saving results. Check the Render API logs for the 'social scan failed outside provider query handling' entry.",
       code: "SOCIAL_SCAN_PROCESSING_FAILED",
@@ -308,8 +328,13 @@ router.get("/search-feed", requirePermission("social", "read"), async (req, res)
 });
 
 router.get("/source-health", requirePermission("social", "read"), async (_req, res) => {
-  const rows = await db.select().from(socialSourceHealthTable).orderBy(socialSourceHealthTable.sourceKey);
-  res.json(rows);
+  try {
+    const rows = await db.select().from(socialSourceHealthTable).orderBy(socialSourceHealthTable.sourceKey);
+    res.json(rows);
+  } catch (err) {
+    req.log.warn({ err }, "Social source-health read failed");
+    res.status(503).json({ error: "Source-health logging is unavailable; this does not mean a mention scan failed.", code: "SOCIAL_HEALTH_UNAVAILABLE" });
+  }
 });
 
 router.get("/mentions", requirePermission("social", "read"), async (req, res) => {
@@ -322,6 +347,7 @@ router.get("/mentions", requirePermission("social", "read"), async (req, res) =>
   if (category) conditions.push(eq(socialMentionsTable.category, category));
   if (sentiment) conditions.push(eq(socialMentionsTable.sentiment, sentiment));
   const where = conditions.length ? and(...conditions) : undefined;
+  try {
   const mentions = await db
     .select()
     .from(socialMentionsTable)
@@ -329,6 +355,10 @@ router.get("/mentions", requirePermission("social", "read"), async (req, res) =>
     .orderBy(desc(socialMentionsTable.scannedAt))
     .limit(300);
   return res.json(mentions);
+  } catch (err) {
+    req.log.error({ err }, "Social mentions read failed");
+    return res.status(503).json({ error: "Could not read saved mentions. Run a scan to initialize missing storage, or check the connected database and permissions.", code: "SOCIAL_STORAGE_NOT_READY" });
+  }
 });
 
 router.delete("/mentions/:id", requirePermission("social", "write"), async (req, res) => {
@@ -341,4 +371,5 @@ router.delete("/mentions/:id", requirePermission("social", "write"), async (req,
 });
 
 export default router;
+
 
