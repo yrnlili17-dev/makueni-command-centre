@@ -63,6 +63,15 @@ function sentimentStyle(s: string) {
 
 export default function SocialListening() {
   const qc = useQueryClient();
+  const [monitoringKeywords, setMonitoringKeywords] = useState<{ requested: string[]; rule: string; coverage: string } | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${import.meta.env.BASE_URL}api/social/monitoring-keywords`, { credentials: "include", signal: controller.signal })
+      .then(r => r.ok ? r.json() : null)
+      .then(value => { if (!controller.signal.aborted) setMonitoringKeywords(value); })
+      .catch(() => { /* Existing scan and feed remain usable if configuration cannot be read. */ });
+    return () => controller.abort();
+  }, []);
   const { data: mentions = [], isLoading } = useListSocialMentions();
   const [category, setCategory] = useState("all");
   const [sentiment, setSentiment] = useState("all");
@@ -152,6 +161,13 @@ export default function SocialListening() {
           </button>
         </div>
       </div>
+
+      {monitoringKeywords && <section className="rounded-xl border border-primary/25 bg-card/60 p-4 space-y-2">
+        <h2 className="text-sm font-semibold">Configured public-mention keywords</h2>
+        <div className="flex flex-wrap gap-2">{monitoringKeywords.requested.map(term => <span key={term} className="rounded-full border border-border px-3 py-1 text-xs">{term}</span>)}</div>
+        <p className="text-xs text-muted-foreground">{monitoringKeywords.rule}</p>
+        <p className="text-xs text-muted-foreground">{monitoringKeywords.coverage}</p>
+      </section>}
 
       {feedSearch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={`${feedSearch.platform} public search results`} onMouseDown={event => { if (event.target === event.currentTarget) setFeedSearch(null); }}>
@@ -353,3 +369,4 @@ function FilterRow({
     </div>
   );
 }
+

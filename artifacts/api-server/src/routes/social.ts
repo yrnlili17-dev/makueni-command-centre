@@ -1,3 +1,4 @@
+import { MAKUENI_MONITORING_KEYWORDS, makueniMonitoringQueries, matchMakueniMonitoringKeywords } from "../data/makueni-monitoring-keywords";
 import { Router } from "express";
 import { z } from "zod/v4";
 import { db, socialMentionsTable, socialSourceHealthTable } from "@workspace/db";
@@ -27,7 +28,7 @@ const idParamSchema = z.object({ id: z.coerce.number().int().positive() });
 const SCAN_CATEGORIES = [
   {
     key: "candidate",
-    prompt: "public mentions, interviews, official notices, community forums and news about Prof. Philip Kyalo Kaloki (also written Philip Kaloki, Prof Kaloki or Pro Kaloki) in Makueni County, Kenya",
+    prompt: `public mentions in Makueni County matching ${MAKUENI_MONITORING_KEYWORDS.requested.join(", ")}. Include corrected spelling variants Prof. Philip Kaloki and Makueni Governor 2027. Kaloki, UDA and Ukambani need explicit Makueni context. These are public mentions, not proof that a candidate authored a post.`,
   },
   {
     key: "issues",
@@ -42,6 +43,7 @@ const SCAN_CATEGORIES = [
 function queriesForCategory(key: (typeof SCAN_CATEGORIES)[number]["key"]): string[] {
   if (key === "candidate") {
     return [
+      ...makueniMonitoringQueries(),
       '"Prof. Philip Kyalo Kaloki" Makueni',
       '"Philip Kaloki" Makueni',
       '"Pro Kaloki" Makueni',
@@ -116,6 +118,10 @@ function isMakueniRelevant(raw: RawMention): boolean {
   return MAKUENI_RELEVANCE_TERMS.some((term) => text.includes(term));
 }
 
+router.get("/monitoring-keywords", requirePermission("social", "read"), (_req, res) => {
+  res.json(MAKUENI_MONITORING_KEYWORDS);
+});
+
 router.post("/scan", requirePermission("social", "write"), async (req, res) => {
   if (scanInFlight) {
     return res.status(429).json({ error: "A scan is already in progress. Please wait." });
@@ -163,7 +169,7 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
               url: item.url,
               // Search-result sentiment is not reliably classifiable without review.
               sentiment: "neutral",
-              topic: cat.key === "candidate" ? "Pro Kaloki / Philip Kaloki" : cat.key === "issues" ? "Makueni service delivery" : "County public accountability",
+              topic: cat.key === "candidate" ? "Makueni public keyword mention" : cat.key === "issues" ? "Makueni service delivery" : "County public accountability",
               date: item.publishedAt ?? "",
             } as RawMention,
             category: cat.key,
@@ -190,7 +196,9 @@ router.post("/scan", requirePermission("social", "write"), async (req, res) => {
 
   const normalized = perCategory
     .flat()
-    .filter(({ raw }) => isMakueniRelevant(raw))
+    .filter(({ raw, category }) => category === "candidate"
+      ? matchMakueniMonitoringKeywords([raw.summary, raw.url].filter((v): v is string => typeof v === "string").join(" ")).matched
+      : isMakueniRelevant(raw))
     .map(({ raw, category }) => {
       const summary = asStr(raw.summary);
       if (!summary) return null;
@@ -333,3 +341,4 @@ router.delete("/mentions/:id", requirePermission("social", "write"), async (req,
 });
 
 export default router;
+
