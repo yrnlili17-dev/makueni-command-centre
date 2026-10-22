@@ -1,3 +1,4 @@
+import { buildMakueniResearchAnswer, isMakueniResearchQuestion } from "../data/makueni-research";
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, strategistConversations, strategistMessages } from "@workspace/db";
@@ -255,7 +256,7 @@ router.post("/chat", async (req, res) => {
       .limit(12);
     prior.reverse();
 
-    const digest = await buildLiveDigest();
+    const digest = isMakueniResearchQuestion(text) ? "" : await buildLiveDigest();
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -263,7 +264,11 @@ router.post("/chat", async (req, res) => {
     res.write(`data: ${JSON.stringify({ conversationId: convId })}\n\n`);
 
     let assistantText = "";
-    if (process.env.MAKUENI_AI_MODE === "free") {
+    if (isMakueniResearchQuestion(text)) {
+      // Public-source research stays separate from the campaign digest and model advice.
+      assistantText = buildMakueniResearchAnswer(text);
+      res.write(`data: ${JSON.stringify({ content: assistantText, mode: "source-grounded-research" })}\n\n`);
+    } else if (process.env.MAKUENI_AI_MODE === "free") {
       const [liveSources, publicWebResults] = await Promise.all([
         fetchMakueniOfficialSources(),
         searchFreeMakueniWeb(text),
@@ -346,3 +351,4 @@ router.post("/chat", async (req, res) => {
 });
 
 export default router;
+

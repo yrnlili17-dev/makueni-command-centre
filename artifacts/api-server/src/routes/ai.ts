@@ -1,3 +1,4 @@
+import { buildCountyEvidenceReview, buildMakueniResearchAnswer, getMakueniResearch, isMakueniResearchQuestion } from "../data/makueni-research";
 import { getIebcContext, getIebcHistory, buildIebcSwot } from "../data/iebc-history";
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
@@ -5,6 +6,11 @@ import { buildFreeMakueniAnswer, buildFreeMakueniSpeech, fetchMakueniOfficialSou
 import { getCidp2013Context } from "./cidp-2013-2017-knowledge";
 
 const router = Router();
+function buildResearchSwot() {
+  const county = buildCountyEvidenceReview();
+  const electoral = buildIebcSwot();
+  return { ...county, sources: [...county.sources, ...electoral.sources], electoralEvidence: electoral.evidence };
+}
 /** In free mode these generation routes must never fall through to OpenAI. */
 router.use((req, res, next) => {
   if (process.env.MAKUENI_AI_MODE !== "free" || req.method !== "POST") return next();
@@ -28,7 +34,7 @@ router.use((req, res, next) => {
       { title: "Schedule follow-up", description: "Assign owners and dates to unresolved service questions.", dueDate: today, category: "Follow-up", priority: "medium", owner: "Operations team" }
     ], note: "Template milestones only; no live project status is implied." });
   }
-  if (routePath === "/generate-swot") return res.json(buildIebcSwot());
+  if (routePath === "/generate-swot") return res.json(buildResearchSwot());
   return next();
 });
 
@@ -91,6 +97,7 @@ router.get("/county-knowledge", async (req, res) => {
   res.json({
     query,
     electoralEvidence: getIebcHistory(),
+    countyResearch: getMakueniResearch(query),
     webResults,
     mode: process.env.MAKUENI_AI_MODE === "free" ? "free-template-retrieval" : "provider-assisted",
     checkedAt: new Date().toISOString(),
@@ -235,7 +242,7 @@ Generate 18-22 strategic milestones spanning from today to 2 weeks before electi
 });
 
 // The historical evidence supports an operational data review, not invented candidate strengths.
-router.post("/generate-swot", (_req, res) => { res.json(buildIebcSwot()); });
+router.post("/generate-swot", (_req, res) => { res.json(buildResearchSwot()); });
 
 router.post("/assist", async (req, res) => {
   const { module = "dashboard", context = {}, message } = req.body as {
@@ -259,6 +266,14 @@ router.post("/assist", async (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
+
+  // Neutral source questions always use reviewed records, including when a provider is enabled.
+  if (isMakueniResearchQuestion(message)) {
+    res.write(`data: ${JSON.stringify({ content: buildMakueniResearchAnswer(message), mode: "source-grounded-research" })}\n\n`);
+    res.write(`data: ${JSON.stringify({ done: true, mode: "source-grounded-research" })}\n\n`);
+    res.end();
+    return;
+  }
 
   // Explicit no-token mode avoids calling the paid model at all.
   if (process.env.MAKUENI_AI_MODE === "free") {
@@ -302,4 +317,5 @@ router.post("/assist", async (req, res) => {
 });
 
 export default router;
+
 

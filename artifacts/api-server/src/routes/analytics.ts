@@ -1,9 +1,21 @@
+import { getMakueniResearch, RESEARCH_TOPICS, type ResearchTopic } from "../data/makueni-research";
 import { getIebcHistory } from "../data/iebc-history";
 import { Router } from "express";
 import { db, membersTable, messageCampaignsTable, canvassSessionsTable, canvassVisitsTable, volunteersTable, opinionPollsTable, pollVotesTable, topicalIssuesTable, kolTable, fundraisingCampaignsTable, donationsTable, surveysTable, surveyResponsesTable, narrativeMentionsTable, volunteerTasksTable, volunteerIssuesTable, legislativeRecordsTable, achievementsTable } from "@workspace/db";
 import { sql, desc } from "drizzle-orm";
 
 const router = Router();
+
+router.get("/county-research", (req, res) => {
+  const county = req.query.county;
+  const topic = req.query.topic ?? "all";
+  const query = req.query.q ?? "";
+  if ((county !== undefined && county !== "017") || typeof query !== "string" || query.length > 400 || typeof topic !== "string" || !RESEARCH_TOPICS.includes(topic as ResearchTopic)) {
+    res.status(400).json({ error: "Use Makueni county 017, a supported topic and a query of up to 400 characters." });
+    return;
+  }
+  res.json(getMakueniResearch(query, topic as ResearchTopic));
+});
 
 router.get("/iebc-history", (_req, res) => res.json(getIebcHistory()));
 
@@ -332,4 +344,5 @@ router.get("/insights", async (_req, res) => {
 });
 
 export default router;
+
 
