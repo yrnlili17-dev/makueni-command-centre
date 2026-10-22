@@ -1,10 +1,22 @@
 import { Router } from "express";
-import { db, membersTable, volunteersTable, messageCampaignsTable, canvassVisitsTable, canvassSessionsTable, narrativeMentionsTable, milestonesTable, campaignEventsTable, campaignSettingsTable, warRoomBriefsTable, messagingProvidersTable, pollingStationsTable } from "@workspace/db";
+import { db, membersTable, volunteersTable, messageCampaignsTable, canvassVisitsTable, canvassSessionsTable, narrativeMentionsTable, milestonesTable, campaignEventsTable, campaignSettingsTable, warRoomBriefsTable, messagingProvidersTable, pollingStationsTable, volunteerTasksTable } from "@workspace/db";
 import { sql, eq, gte, inArray, and, or, isNull } from "drizzle-orm";
 import { MAKUENI_WARDS } from "../data/makueni-geography";
 const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
 
 const router = Router();
+router.use((_req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
+router.get("/operations", async (_req, res) => {
+  const [volunteers] = await db.select({
+    registered: sql<number>`count(*)`,
+    pending: sql<number>`count(*) filter (where ${volunteersTable.status} = 'pending')`,
+  }).from(volunteersTable).where(inArray(volunteersTable.ward, WARDS));
+  const [tasks] = await db.select({
+    open: sql<number>`count(*) filter (where ${volunteerTasksTable.status} not in ('completed', 'cancelled'))`,
+    completed: sql<number>`count(*) filter (where ${volunteerTasksTable.status} = 'completed')`,
+  }).from(volunteerTasksTable).innerJoin(volunteersTable, eq(volunteersTable.id, volunteerTasksTable.volunteerId)).where(inArray(volunteersTable.ward, WARDS));
+  res.json({ registeredVolunteers: Number(volunteers?.registered ?? 0), pendingVolunteers: Number(volunteers?.pending ?? 0), openVolunteerTasks: Number(tasks?.open ?? 0), completedVolunteerTasks: Number(tasks?.completed ?? 0), updatedAt: new Date().toISOString() });
+});
 
 router.get("/summary", async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
@@ -47,15 +59,19 @@ router.get("/summary", async (req, res) => {
 router.get("/activity", async (req, res) => {
   const activity: Array<{ id: number; type: string; description: string; timestamp: string; module: string }> = [];
 
-  const [members, visits, campaigns, events, mentions, briefs] = await Promise.all([
+  const [members, visits, campaigns, events, mentions, briefs, volunteers, tasks] = await Promise.all([
     db.select({ id: membersTable.id, firstName: membersTable.firstName, lastName: membersTable.lastName, createdAt: membersTable.createdAt }).from(membersTable).orderBy(sql`${membersTable.createdAt} desc`).limit(3),
     db.select({ id: canvassVisitsTable.id, address: canvassVisitsTable.address, outcome: canvassVisitsTable.outcome, visitedAt: canvassVisitsTable.visitedAt }).from(canvassVisitsTable).orderBy(sql`${canvassVisitsTable.visitedAt} desc`).limit(3),
     db.select({ id: messageCampaignsTable.id, name: messageCampaignsTable.name, channel: messageCampaignsTable.channel, sentAt: messageCampaignsTable.sentAt }).from(messageCampaignsTable).where(sql`${messageCampaignsTable.sentAt} is not null`).orderBy(sql`${messageCampaignsTable.sentAt} desc`).limit(3),
     db.select({ id: campaignEventsTable.id, title: campaignEventsTable.title, createdAt: campaignEventsTable.createdAt }).from(campaignEventsTable).orderBy(sql`${campaignEventsTable.createdAt} desc`).limit(2),
     db.select({ id: narrativeMentionsTable.id, platform: narrativeMentionsTable.platform, threatLevel: narrativeMentionsTable.threatLevel, detectedAt: narrativeMentionsTable.detectedAt }).from(narrativeMentionsTable).orderBy(sql`${narrativeMentionsTable.detectedAt} desc`).limit(2),
     db.select({ id: warRoomBriefsTable.id, title: warRoomBriefsTable.title, createdAt: warRoomBriefsTable.createdAt }).from(warRoomBriefsTable).orderBy(sql`${warRoomBriefsTable.createdAt} desc`).limit(2),
+    db.select().from(volunteersTable).where(inArray(volunteersTable.ward, WARDS)).orderBy(sql`${volunteersTable.joinedAt} desc`).limit(3),
+    db.select({ id: volunteerTasksTable.id, title: volunteerTasksTable.title, status: volunteerTasksTable.status, updatedAt: volunteerTasksTable.updatedAt }).from(volunteerTasksTable).innerJoin(volunteersTable, eq(volunteersTable.id, volunteerTasksTable.volunteerId)).where(inArray(volunteersTable.ward, WARDS)).orderBy(sql`${volunteerTasksTable.updatedAt} desc`).limit(3),
   ]);
 
+  volunteers.forEach(v => activity.push({ id: 1000000 + v.id, type: "volunteer_registered", description: `Volunteer registration: ${v.firstName} ${v.lastName} (${v.status})`, timestamp: v.joinedAt.toISOString(), module: "volunteers" }));
+  tasks.forEach(t => activity.push({ id: 2000000 + t.id, type: "volunteer_task_updated", description: `Volunteer task: ${t.title} — ${t.status}`, timestamp: t.updatedAt.toISOString(), module: "volunteers" }));
   members.forEach((m, i) => activity.push({ id: i * 100 + 1, type: "member_added", description: `New contact registered: ${m.firstName} ${m.lastName}`, timestamp: m.createdAt.toISOString(), module: "members" }));
   visits.forEach((v, i) => activity.push({ id: i * 100 + 2, type: "visit_logged", description: `Door knock logged at ${v.address} — ${v.outcome}`, timestamp: v.visitedAt.toISOString(), module: "field-ops" }));
   campaigns.forEach((c, i) => activity.push({ id: i * 100 + 3, type: "campaign_sent", description: `${c.channel.toUpperCase()} campaign dispatched: ${c.name}`, timestamp: (c.sentAt ?? new Date()).toISOString(), module: "messaging" }));
@@ -74,7 +90,7 @@ router.get("/growth", async (_req, res) => {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const twelveWeeksAgo = new Date(now.getTime() - 12 * 7 * 86400000);
-  const [thisMonth, lastMonth, weekly, openTasks, msgs] = await Promise.all([
+  const [thisMonth, lastMonth, weekly, openTasks, msgs, volunteerTasks] = await Promise.all([
     db.select({ n: sql<number>`count(*)` }).from(membersTable)
       .where(and(inArray(membersTable.ward, WARDS), gte(membersTable.createdAt, monthStart))),
     db.select({ n: sql<number>`count(*)` }).from(membersTable)
@@ -88,6 +104,9 @@ router.get("/growth", async (_req, res) => {
     db.select({ n: sql<number>`count(*)` }).from(milestonesTable).where(sql`${milestonesTable.status} <> 'completed'`),
     db.select({ n: sql<number>`coalesce(sum(${messageCampaignsTable.recipientCount}), 0)` }).from(messageCampaignsTable)
       .where(gte(messageCampaignsTable.sentAt, monthStart)),
+    db.select({ n: sql<number>`count(*)` }).from(volunteerTasksTable)
+      .innerJoin(volunteersTable, eq(volunteersTable.id, volunteerTasksTable.volunteerId))
+      .where(and(inArray(volunteersTable.ward, WARDS), sql`${volunteerTasksTable.status} not in ('completed', 'cancelled')`)),
   ]);
   // Fill missing weeks with zero so the chart has a continuous axis.
   const byWeek = new Map(weekly.map(w => [w.week, Number(w.n)]));
@@ -105,7 +124,7 @@ router.get("/growth", async (_req, res) => {
     // null when last month had no sign-ups: a percentage would be meaningless.
     growthRate: prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null,
     weeks,
-    openTasks: Number(openTasks[0]?.n ?? 0),
+    openTasks: Number(openTasks[0]?.n ?? 0) + Number(volunteerTasks[0]?.n ?? 0),
     messagesThisMonth: Number(msgs[0]?.n ?? 0),
   });
 });

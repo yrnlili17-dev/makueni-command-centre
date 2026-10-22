@@ -1,3 +1,4 @@
+import { getMakueniGovernorHistory } from "../data/makueni-governor-history";
 import { getMakueniResearch, RESEARCH_TOPICS, type ResearchTopic } from "../data/makueni-research";
 import { getIebcHistory } from "../data/iebc-history";
 import { Router } from "express";
@@ -5,6 +6,7 @@ import { db, membersTable, messageCampaignsTable, canvassSessionsTable, canvassV
 import { sql, desc } from "drizzle-orm";
 
 const router = Router();
+router.get("/governor-history", (_req, res) => res.json(getMakueniGovernorHistory()));
 
 router.get("/county-research", (req, res) => {
   const county = req.query.county;

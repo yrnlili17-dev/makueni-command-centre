@@ -1,3 +1,6 @@
+import { isCalendarDate } from "../lib/operational-validation";
+import { ensurePollQuestionColumns } from "../lib/poll-storage";
+import { pollQuestionsSchema, questionsFor, validateAnswers, questionResults } from "../lib/poll-questions";
 import { Router } from "express";
 import { requireAuth, requirePermission } from "../lib/auth";
 import { db, pool, surveysTable, surveyResponsesTable, opinionPollsTable, pollVotesTable, topicalIssuesTable } from "@workspace/db";
@@ -7,6 +10,11 @@ const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 const isMakueniWard = (ward: unknown): ward is string => typeof ward === "string" && (WARDS.includes(ward) || ward === "county-wide" || ward === "all");
 
 const router = Router();
+router.use(async (req, res, next) => {
+  if (!req.path.includes("poll")) return next();
+  try { await ensurePollQuestionColumns(); next(); }
+  catch (error) { req.log.error({ err: error }, "Poll schema unavailable"); res.status(503).json({ error: "Poll schema update unavailable. Run the additive poll-questions migration in the database connected to Render." }); }
+});
 
 // ─── Opinion Polls ────────────────────────────────────────────────────────────
 
@@ -17,18 +25,19 @@ router.get("/polls", async (req, res) => {
 
 router.post("/polls", async (req, res) => {
   const { title, description, category = "general", ward = "all", options = [], deadline, createdBy = "County team" } = req.body;
-  if (!title || !options.length) { res.status(400).json({ error: "title and options required" }); return; }
+  const parsed = pollQuestionsSchema.safeParse(req.body.questions ?? [{ title, options }]);
+  if (typeof title !== "string" || !title.trim() || title.length > 300 || !parsed.success) { res.status(400).json({ error: "Enter a poll title and 1–20 questions, each with 2–12 distinct answers." }); return; }
   if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
-  if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward or county-wide" }); return; }
-  const opts = (options as string[]).map((label: string) => ({ label, votes: 0 }));
-  const [poll] = await db.insert(opinionPollsTable).values({ title, description, category, ward, options: opts, deadline, createdBy, status: "active", totalVotes: 0 }).returning();
+  if (deadline && !isCalendarDate(deadline)) { res.status(400).json({ error: "Enter a valid deadline" }); return; }
+  const opts = parsed.data[0]!.options.map(label => ({ label, votes: 0 }));
+  const [poll] = await db.insert(opinionPollsTable).values({ title: title.trim(), description, category, ward, options: opts, questions: parsed.data, deadline: deadline || null, createdBy, status: "active", totalVotes: 0 }).returning();
   res.status(201).json(poll);
 });
 
 router.patch("/polls/:id", async (req, res) => {
   const { status, deadline } = req.body ?? {};
   if (status !== undefined && !["active", "closed"].includes(status)) { res.status(400).json({ error: "Invalid status" }); return; }
-  if (deadline !== undefined && deadline !== null && (typeof deadline !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(deadline))) { res.status(400).json({ error: "Invalid deadline" }); return; }
+  if (deadline !== undefined && deadline !== null && !isCalendarDate(deadline)) { res.status(400).json({ error: "Invalid deadline" }); return; }
   const updates: { status?: string; deadline?: string | null } = {};
   if (status !== undefined) updates.status = status;
   if (deadline !== undefined) updates.deadline = deadline || null;
@@ -39,8 +48,12 @@ router.patch("/polls/:id", async (req, res) => {
 });
 
 router.delete("/polls/:id", async (req, res) => {
-  await db.delete(pollVotesTable).where(eq(pollVotesTable.pollId, parseInt(req.params.id)));
-  await db.delete(opinionPollsTable).where(eq(opinionPollsTable.id, parseInt(req.params.id)));
+  const id = Number(req.params.id);
+  await db.transaction(async tx => {
+    await tx.select({ id: opinionPollsTable.id }).from(opinionPollsTable).where(eq(opinionPollsTable.id, id)).for("update");
+    await tx.delete(pollVotesTable).where(eq(pollVotesTable.pollId, id));
+    await tx.delete(opinionPollsTable).where(eq(opinionPollsTable.id, id));
+  });
   res.json({ ok: true });
 });
 
@@ -51,27 +64,30 @@ router.get("/public/polls/:id", async (req, res) => {
   const [poll] = await db.select().from(opinionPollsTable).where(eq(opinionPollsTable.id, id));
   if (!poll || !isMakueniWard(poll.ward)) { res.status(404).json({ error: "Poll not found" }); return; }
   const options = poll.options as Array<{ label: string; votes: number }>;
-  res.json({ id: poll.id, title: poll.title, description: poll.description, status: poll.status, deadline: poll.deadline, options: options.map(o => ({ label: o.label })) });
+  res.json({ id: poll.id, title: poll.title, description: poll.description, status: poll.status, deadline: poll.deadline, options: options.map(o => ({ label: o.label })), questions: questionsFor(poll) });
 });
 
 router.post("/polls/:id/vote", async (req, res) => {
   const pollId = Number(req.params.id);
-  const { optionIndex } = req.body ?? {};
-  if (!Number.isSafeInteger(pollId) || pollId < 1 || !Number.isInteger(optionIndex)) { res.status(400).json({ error: "Invalid poll or option" }); return; }
-  const [poll] = await db.select().from(opinionPollsTable).where(eq(opinionPollsTable.id, pollId));
-  if (!poll || !isMakueniWard(poll.ward)) { res.status(404).json({ error: "Makueni poll not found" }); return; }
-  if (poll.status !== "active") { res.status(400).json({ error: "Poll is not active" }); return; }
-  if (poll.deadline && String(poll.deadline).slice(0, 10) < new Date().toISOString().slice(0, 10)) { res.status(400).json({ error: "Poll has closed" }); return; }
-  const options = poll.options as Array<{ label: string; votes: number }>;
-  if (optionIndex < 0 || optionIndex >= options.length) { res.status(400).json({ error: "Invalid answer" }); return; }
-  // Session-level duplicate protection is a safeguard, not proof of one vote per person.
+  if (!Number.isSafeInteger(pollId) || pollId < 1) { res.status(400).json({ error: "Invalid poll" }); return; }
   const session = req.session as typeof req.session & { publicPollVotes?: number[] };
   if (session.publicPollVotes?.includes(pollId)) { res.status(409).json({ error: "This browser session already voted in this poll" }); return; }
-  const [vote] = await db.insert(pollVotesTable).values({ pollId, optionIndex, respondentName: null, ward: null, ageGroup: null, gender: null }).returning();
-  const nextOptions = options.map((o, index) => ({ ...o, votes: (o.votes ?? 0) + (index === optionIndex ? 1 : 0) }));
-  await db.update(opinionPollsTable).set({ options: nextOptions, totalVotes: sql`${opinionPollsTable.totalVotes} + 1` }).where(eq(opinionPollsTable.id, pollId));
+  const result = await db.transaction(async tx => {
+    // Serializes option updates so concurrent respondents cannot overwrite counts.
+    const [poll] = await tx.select().from(opinionPollsTable).where(eq(opinionPollsTable.id, pollId)).for("update");
+    if (!poll || !isMakueniWard(poll.ward)) return { status: 404, error: "Makueni poll not found" };
+    if (poll.status !== "active" || (poll.deadline && poll.deadline < new Date().toISOString().slice(0, 10))) return { status: 400, error: "Poll has closed" };
+    const questions = questionsFor(poll);
+    const answers = req.body?.answers ?? [req.body?.optionIndex];
+    if (!validateAnswers(questions, answers)) return { status: 400, error: "Answer every question with one of its listed options" };
+    await tx.insert(pollVotesTable).values({ pollId, optionIndex: answers[0]!, answers, respondentName: null, ward: null, ageGroup: null, gender: null });
+    const options = (poll.options as { label: string; votes: number }[]).map((option, index) => ({ ...option, votes: (option.votes ?? 0) + (index === answers[0] ? 1 : 0) }));
+    await tx.update(opinionPollsTable).set({ options, totalVotes: sql`${opinionPollsTable.totalVotes} + 1` }).where(eq(opinionPollsTable.id, pollId));
+    return { status: 201, error: null };
+  });
+  if (result.error) { res.status(result.status).json({ error: result.error }); return; }
   session.publicPollVotes = [...(session.publicPollVotes ?? []), pollId];
-  res.status(201).json({ ok: true, message: "Thank you for voting" });
+  res.status(201).json({ ok: true, message: "Thank you for responding" });
 });
 
 router.get("/polls/:id/results", async (req, res) => {
@@ -104,6 +120,7 @@ router.get("/polls/:id/results", async (req, res) => {
 
   res.json({
     poll, total,
+    questions: questionResults(questionsFor(poll), votes),
     options: opts.map((o, i) => ({ ...o, pct: total > 0 ? Math.round((o.votes / total) * 100) : 0, index: i })),
     wardBreakdown, ageBreakdown, genderBreakdown,
     recentVotes: votes.slice(-10).reverse(),

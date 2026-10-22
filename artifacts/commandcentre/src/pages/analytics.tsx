@@ -1,3 +1,4 @@
+import { useWorkspaceRefresh } from "@/hooks/use-workspace-refresh";
 import { MakueniResearch } from "@/components/makueni-research";
 import { IebcHistory } from "@/components/iebc-history";
 import { MAKUENI_WARDS } from "@/lib/makueni-wards";
@@ -122,6 +123,7 @@ export default function Analytics() {
     } catch { } finally { setLoading(false); }
   }, [tab]);
 
+  useWorkspaceRefresh(() => { void reload(); });
   useEffect(() => { load(tab); }, [tab, load]);
 
   const d = data[tab];

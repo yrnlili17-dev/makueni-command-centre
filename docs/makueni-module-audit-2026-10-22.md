@@ -1,0 +1,29 @@
+# Makueni module audit — 22 October 2026
+
+Repository baseline: f43cfeedb7b74eabbd34e3ffae0449149c305fbb. Scope is Makueni County only. This is a source-code audit and local validation, not a claim of production acceptance.
+
+| Request | Change or finding | Remaining verification |
+| --- | --- | --- |
+| Dashboard follows module changes | Successful same-origin API writes invalidate cached queries and refresh legacy panels. Other browser tabs receive a payload-free signal. Dashboard polls every 30 seconds. Volunteer registration and task activity are included. | Confirm against the production database after deployment. This is periodic refresh, not a WebSocket feed. |
+| Turnout totals follow either input | Unsaved turnout/support edits drive row values, total votes, weighted turnout/share and summary cards immediately. Reset restores saved assumptions; save retains changed ward assumptions. | Live save/reload with authorized access. These are arithmetic scenarios, not a calibrated forecast. |
+| Gubernatorial history | Historical results panels now show the five Makueni 2022 governor candidate totals, not presidential candidates. Sources: Kenya Law paragraph 1 and KNA 14 August 2022 indexed passages. | Review original IEBC Form 37C. Registered/rejected/ballots cast are not established by these passages; gubernatorial turnout remains unavailable. No 2027 win probability is asserted. |
+| Imported wards | The ward directory already reads `voter_registry`, while saved segments read `members`. It now refreshes, and blank/whitespace ward entries remain visible as Unknown. | Inspect supplied source data and connected production DB to reconcile actual missing assignments. No locations are randomly assigned or inferred from names/phone numbers. |
+| Geographic/demographic segments | Existing saved member counts recalculate on read. Unavailable attributes are labeled unavailable. Fabricated demographic defaults and fixed 78,000-person reach percentage are removed; explicit manual sizes remain labeled estimates. | The registry and member list remain distinct. Missing demographics cannot be supplied by software; no demographic voter-targeting system was added. |
+| Multi-question polls | Up to 20 questions, 2–12 distinct options each, one required answer per question. Anonymous submission, per-question results and legacy single-question compatibility. Ballot/count writes are transactional with a parent row lock. | Production migration and concurrent submission smoke test. Browser-session duplicate checks do not verify one person/one vote. |
+| Meta WhatsApp Cloud API | Existing provider adapter/configuration found. UI now explains the platform's political-candidate/campaign exclusion and links the official policy. | Cloud API not activated. No alternative WhatsApp provider should be used to evade Meta eligibility restrictions. |
+| Field operations | Valid dates/counts, open-session checks, atomic visit/count writes and transactional deletion. Session statuses can be changed in the UI. Ward coverage denominator corrected from 5 to 30. | Device/offline behavior and every production workflow are not certified by this code audit. Existing playbook claims were not validated. |
+| Volunteer registration | Kenyan phone normalization/deduplication; public response no longer exposes the stored volunteer record. Dashboard distinguishes all registrations from pending review and active volunteers. | Live test with a consenting volunteer; normalization does not verify phone ownership. |
+| Volunteer tasks | New tasks require an existing Makueni volunteer. Progress must match the assigned volunteer, validates values, updates task state and dashboard counters. Completion averages use percentages rather than raw target values. | Assignment is internal: no automatic SMS/email notification or delivery receipt exists. UI states this clearly. An authorized delivery channel and end-to-end recipient test remain necessary. |
+| Campaign plan | Candidate-facing title updated in page, print and download. Valid milestone dates/ranges and election date; failed milestone saves no longer count as success. | Scheduling is not a guarantee of campaign effectiveness; no candidate-winning strategy was implemented. |
+| Generated plan review | Free mode returns generic public-information templates. UI identifies templates/drafts and requires human review of dates and owners before saving. | Non-free generation branch contains old constituency scope and strategic prompts; not enabled, tested or improved here. Neither model access nor generated text establishes accuracy. |
+| Analytics historical evidence | Source evidence remains relevant and visible as gubernatorial historical reference, with sources in an expandable section. Analytics refreshes when data changes. | Original electoral form verification remains outstanding. |
+
+## Database change
+
+`supabase/poll-questions.sql` adds only `opinion_polls.questions` and `poll_votes.answers`, each JSONB with an empty-array default. Existing contacts, ballots, polls and tasks are retained. Poll routes attempt the same additive migration once; if the database user cannot alter schema, they return an actionable 503. Run the SQL manually against the project named by Render's `DATABASE_URL` if needed.
+
+## Validation and release limits
+
+Regression tests cover unsaved turnout and support edits, weighted totals, zero cases, governor source separation, multi-question validation/results/legacy compatibility, real calendar dates, numeric bounds and refresh signals without private payloads. Existing access-policy and research tests remain enabled. Typecheck and production builds must pass before merge.
+
+No live database credentials, Meta credentials, AI API keys or private uploaded contact files were used. No production records were changed during the audit. Render deployment, actual delivery to volunteers and full device/offline acceptance remain unverified.

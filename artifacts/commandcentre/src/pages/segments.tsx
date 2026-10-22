@@ -1,3 +1,4 @@
+import { useWorkspaceRefresh } from "@/hooks/use-workspace-refresh";
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
 import { parseRegistrySummary } from "../lib/contact-summary";
@@ -121,6 +122,7 @@ export default function Segments() {
     void loadContactCounts(controller.signal);
     return () => controller.abort();
   }, [loadContactCounts]);
+  useWorkspaceRefresh(() => { void loadContactCounts(); });
   const createSegment = useCreateSegment({
     mutation: {
       onSuccess: () => {
@@ -155,21 +157,9 @@ export default function Segments() {
     } else if (segmentType === "demographic") {
       if (form._demographic) {
         criteria.demographic = form._demographic;
-        const demo = DEMOGRAPHIC_TYPES.find(d => d.key === form._demographic);
+
         if (form._manualSize) criteria.manualSize = parseInt(form._manualSize);
-        else if (demo) {
-          const defaultSizes: Record<string, number> = {
-            youth: 21840, first_time_voters: 5460,
-            women: 39800, chama_women: 8400,
-            men: 38200, bodaboda: 2100,
-            religious_leaders: 847, civil_society: 1240,
-            teachers: 1380, organized_groups: 8540,
-            swing_voters: 12400, undecided: 15600,
-            diaspora: 3200, opinion_leaders: 1170,
-            wiper_loyalists: 14040, market_traders: 4500,
-          };
-          criteria.manualSize = defaultSizes[demo.key] ?? 5000;
-        }
+
       }
     } else if (segmentType === "behavioral") {
       if (form._smsConsent) criteria.smsConsent = true;
@@ -276,6 +266,7 @@ export default function Segments() {
       </div>
 
       {/* New segment form */}
+      <p className="text-xs text-muted-foreground">Ward directory totals come from imported contacts. Saved segments count the separate member list; these datasets are not automatically merged. Demographic counts require supplied data; manual sizes are estimates.</p>
       {showAdd && (
         <div className="bg-card border border-primary/40 p-5 relative">
           <div className="absolute top-0 left-0 w-full h-0.5 bg-primary" />
@@ -446,17 +437,9 @@ export default function Segments() {
 
                 <div className="flex items-end justify-between mb-2">
                   <div>
-                    <span className="text-lg font-bold tabular-nums">{reach.toLocaleString()}</span>
+                    <span className="text-lg font-bold tabular-nums">{(seg as any).countStatus === "unavailable" ? "—" : reach.toLocaleString()}</span>
                     <span className="font-mono text-[8px] text-muted-foreground ml-1.5">CONTACTS</span>
                   </div>
-                  <div className="text-right">
-                    <span className="font-mono text-[9px] text-muted-foreground">{pct}% of constituency</span>
-                  </div>
-                </div>
-
-                {/* Reach bar */}
-                <div className="h-1 bg-secondary mb-3">
-                  <div className="h-full transition-all" style={{ width: `${pct}%`, background: color }} />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -466,6 +449,7 @@ export default function Segments() {
                         {demo.description}
                       </span>
                     )}
+                    {(seg as any).countStatus && <p className="text-[10px] text-muted-foreground">{(seg as any).countStatus === "manual-estimate" ? "Manual estimate" : (seg as any).countStatus === "unavailable" ? "Count unavailable: source attributes not supplied" : "Live member count"}</p>}
                     {criteria.ward && (
                       <span className="font-mono text-[9px] px-1.5 py-0.5 border border-border bg-secondary text-muted-foreground">
                         {criteria.ward.toUpperCase()}

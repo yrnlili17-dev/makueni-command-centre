@@ -1,3 +1,4 @@
+import { useWorkspaceRefresh } from "@/hooks/use-workspace-refresh";
 import { useState, useEffect, useCallback } from "react";
 import { useListVolunteers, useCreateVolunteer, getListVolunteersQueryKey } from "@workspace/api-client-react";
 import type { VolunteerInput } from "@workspace/api-client-react";
@@ -93,10 +94,11 @@ function Badge({ label, className }: { label: string; className: string }) {
 
 export default function Volunteers() {
   const qc = useQueryClient();
+  const [requestError, setRequestError] = useState("");
   const [tab, setTab] = useState<Tab>("roster");
 
   // roster
-  const { data: volunteers, isLoading: volLoading } = useListVolunteers();
+  const { data: volunteers, isLoading: volLoading } = useListVolunteers(undefined, { query: { queryKey: getListVolunteersQueryKey(), refetchInterval: 30_000 } });
   const [showEnlist, setShowEnlist] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const publicFormPath = "/insights/volunteer";
@@ -136,21 +138,22 @@ export default function Volunteers() {
 
   const loadTasks = useCallback(async () => {
     setTasksLoading(true);
-    try { setTasks(await apiFetch("/tasks")); } catch { /* ignore */ } finally { setTasksLoading(false); }
+    try { setTasks(await apiFetch("/tasks")); setRequestError(""); } catch { setRequestError("Volunteer tasks could not be loaded. Refresh to retry."); } finally { setTasksLoading(false); }
   }, []);
   const loadIssues = useCallback(async () => {
     setIssuesLoading(true);
-    try { setIssues(await apiFetch("/issues")); } catch { /* ignore */ } finally { setIssuesLoading(false); }
+    try { setIssues(await apiFetch("/issues")); setRequestError(""); } catch { setRequestError("Volunteer issues could not be loaded. Refresh to retry."); } finally { setIssuesLoading(false); }
   }, []);
   const loadReport = useCallback(async () => {
     setReportLoading(true);
-    try { setReport(await apiFetch("/daily-report")); } catch { /* ignore */ } finally { setReportLoading(false); }
+    try { setReport(await apiFetch("/daily-report")); setRequestError(""); } catch { setRequestError("Daily report could not be loaded. Refresh to retry."); } finally { setReportLoading(false); }
   }, []);
 
   useEffect(() => { if (tab === "tasks" || tab === "progress") loadTasks(); }, [tab, loadTasks]);
   useEffect(() => { if (tab === "issues") loadIssues(); }, [tab, loadIssues]);
   useEffect(() => { if (tab === "report") loadReport(); }, [tab, loadReport]);
 
+  useWorkspaceRefresh(() => { void loadTasks(); if (tab === "issues") void loadIssues(); if (tab === "report") void loadReport(); });
   async function loadTaskLogs(taskId: number) {
     const logs = await apiFetch(`/tasks/${taskId}/progress`);
     setTaskLogs(prev => ({ ...prev, [taskId]: logs }));
@@ -224,6 +227,7 @@ export default function Volunteers() {
   return (
     <div className="space-y-4">
 
+      {requestError && <p role="alert" className="text-red-400 text-sm">{requestError}</p>}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -414,6 +418,7 @@ export default function Volunteers() {
       )}
 
       {/* ─── TASK ASSIGNMENTS ─── */}
+      {tab === "tasks" && <p className="rounded-lg border border-amber-400/30 p-3 text-xs text-muted-foreground">Assignments are saved internally. No SMS, email or WhatsApp notification is sent automatically; contact the assigned volunteer separately.</p>}
       {tab === "tasks" && (
         <div className="space-y-3">
           {showNewTask && (

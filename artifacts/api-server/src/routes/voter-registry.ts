@@ -27,12 +27,12 @@ router.get("/stats", async (req, res) => {
     fromUpload: sql<number>`count(*) filter (where source = 'upload')`,
     fromApi: sql<number>`count(*) filter (where source = 'api')`,
     fromManual: sql<number>`count(*) filter (where source = 'manual')`,
-  }).from(voterRegistryTable).where(or(inArray(voterRegistryTable.ward, WARDS), isNull(voterRegistryTable.ward)));
+  }).from(voterRegistryTable).where(or(inArray(voterRegistryTable.ward, WARDS), sql`nullif(trim(${voterRegistryTable.ward}), '') is null`));
 
   const wardBreakdown = await db
     .select({ ward: voterRegistryTable.ward, count: sql<number>`count(*)` })
     .from(voterRegistryTable)
-    .where(or(inArray(voterRegistryTable.ward, WARDS), isNull(voterRegistryTable.ward)))
+    .where(or(inArray(voterRegistryTable.ward, WARDS), sql`nullif(trim(${voterRegistryTable.ward}), '') is null`))
     .groupBy(voterRegistryTable.ward);
 
   const recentLogs = await db
@@ -61,7 +61,7 @@ router.get("/stats", async (req, res) => {
     fromUpload: Number(totals?.fromUpload ?? 0),
     fromApi: Number(totals?.fromApi ?? 0),
     fromManual: Number(totals?.fromManual ?? 0),
-    wardBreakdown: wardBreakdown.map(w => ({ ward: w.ward ?? "Unknown", count: Number(w.count) })),
+    wardBreakdown: wardBreakdown.map(w => ({ ward: w.ward?.trim() || "Unknown", count: Number(w.count) })),
     recentLogs,
   });
 });
@@ -72,7 +72,7 @@ router.get("/", async (req, res) => {
   const limit = parseInt(limitStr ?? "100");
   const offset = parseInt(offsetStr ?? "0");
 
-  const conditions = [or(inArray(voterRegistryTable.ward, WARDS), isNull(voterRegistryTable.ward))!];
+  const conditions = [or(inArray(voterRegistryTable.ward, WARDS), sql`nullif(trim(${voterRegistryTable.ward}), '') is null`)!];
   if (search) {
     const searchCondition = or(
       ilike(voterRegistryTable.fullName, `%${search}%`),
@@ -84,7 +84,7 @@ router.get("/", async (req, res) => {
   }
   const wardFilter = parseRegistryWardFilter(ward, WARDS);
   if (wardFilter.kind === "invalid") { res.status(400).json({ error: "Select a valid Makueni County ward or Unknown" }); return; }
-  if (wardFilter.kind === "unknown") conditions.push(isNull(voterRegistryTable.ward));
+  if (wardFilter.kind === "unknown") conditions.push(sql`nullif(trim(${voterRegistryTable.ward}), '') is null`);
   if (wardFilter.kind === "known") conditions.push(eq(voterRegistryTable.ward, wardFilter.ward));
   if (status) conditions.push(eq(voterRegistryTable.status, status));
   if (source) conditions.push(eq(voterRegistryTable.source, source));
@@ -231,7 +231,7 @@ router.patch("/:id", async (req, res) => {
 
   const [record] = await db.update(voterRegistryTable)
     .set(updates)
-    .where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), or(inArray(voterRegistryTable.ward, WARDS), isNull(voterRegistryTable.ward))))
+    .where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), or(inArray(voterRegistryTable.ward, WARDS), sql`nullif(trim(${voterRegistryTable.ward}), '') is null`)))
     .returning();
 
   if (!record) { res.status(404).json({ error: "Not found" }); return; }
@@ -253,7 +253,7 @@ router.post("/bulk-review", async (req, res) => {
 
 // ── Delete ─────────────────────────────────────────────────────────────────
 router.delete("/:id", async (req, res) => {
-  await db.delete(voterRegistryTable).where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), or(inArray(voterRegistryTable.ward, WARDS), isNull(voterRegistryTable.ward))));
+  await db.delete(voterRegistryTable).where(and(eq(voterRegistryTable.id, parseInt(req.params.id)), or(inArray(voterRegistryTable.ward, WARDS), sql`nullif(trim(${voterRegistryTable.ward}), '') is null`)));
   res.status(204).send();
 });
 

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { installWorkspaceRefresh } from "@/lib/workspace-refresh";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Loader2, ShieldAlert } from "lucide-react";
@@ -126,6 +127,7 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => installWorkspaceRefresh(() => { void queryClient.invalidateQueries(); }), []);
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

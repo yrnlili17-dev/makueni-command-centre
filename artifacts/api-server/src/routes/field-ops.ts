@@ -1,3 +1,4 @@
+import { isCalendarDate, isNonNegativeInteger } from "../lib/operational-validation";
 import { Router } from "express";
 import { db, canvassSessionsTable, canvassVisitsTable } from "@workspace/db";
 import { eq, sql, inArray } from "drizzle-orm";
@@ -21,6 +22,7 @@ router.post("/sessions", async (req, res) => {
   const { name, type = "door-to-door", ward, date, doorsTarget = 0, assignedVolunteers = 0, notes } = req.body;
   if (!name || !ward || !date) { res.status(400).json({ error: "name, ward, date required" }); return; }
   if (!isMakueniWard(ward)) { res.status(400).json({ error: "A valid Makueni County ward is required" }); return; }
+  if (!isCalendarDate(date) || !isNonNegativeInteger(doorsTarget) || !isNonNegativeInteger(assignedVolunteers)) { res.status(400).json({ error: "Enter a valid date and non-negative whole-number targets" }); return; }
   const [session] = await db.insert(canvassSessionsTable).values({
     name, type, ward, date, doorsTarget, assignedVolunteers, notes,
     status: "planned", doorsCompleted: 0
@@ -38,6 +40,10 @@ router.get("/sessions/:id", async (req, res) => {
 router.patch("/sessions/:id", async (req, res) => {
   const id = parseInt(req.params.id);
   const { status, assignedVolunteers, doorsTarget, doorsCompleted, notes, ward } = req.body;
+  if (status !== undefined && !["planned", "active", "completed", "cancelled"].includes(status)) { res.status(400).json({ error: "Invalid session status" }); return; }
+  if ([assignedVolunteers, doorsTarget, doorsCompleted].some(value => value !== undefined && !isNonNegativeInteger(value))) { res.status(400).json({ error: "Session counts must be non-negative integers" }); return; }
+  const [current] = await db.select().from(canvassSessionsTable).where(eq(canvassSessionsTable.id, id));
+  if (!current || !isMakueniWard(current.ward)) { res.status(404).json({ error: "Makueni session not found" }); return; }
   const updates: Record<string, unknown> = {};
   if (ward !== undefined) { if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } updates.ward = ward; }
   if (status !== undefined) updates.status = status;
@@ -52,8 +58,13 @@ router.patch("/sessions/:id", async (req, res) => {
 });
 
 router.delete("/sessions/:id", async (req, res) => {
-  await db.delete(canvassVisitsTable).where(eq(canvassVisitsTable.sessionId, parseInt(req.params.id)));
-  await db.delete(canvassSessionsTable).where(eq(canvassSessionsTable.id, parseInt(req.params.id)));
+  const id = Number(req.params.id);
+  const [session] = await db.select().from(canvassSessionsTable).where(eq(canvassSessionsTable.id, id));
+  if (!session || !isMakueniWard(session.ward)) { res.status(404).json({ error: "Makueni session not found" }); return; }
+  await db.transaction(async tx => {
+    await tx.delete(canvassVisitsTable).where(eq(canvassVisitsTable.sessionId, id));
+    await tx.delete(canvassSessionsTable).where(eq(canvassSessionsTable.id, id));
+  });
   res.status(204).send();
 });
 
@@ -70,10 +81,15 @@ router.get("/visits", async (req, res) => {
 router.post("/visits", async (req, res) => {
   const { sessionId, memberId, address, outcome, supportLevel, notes } = req.body;
   if (!sessionId || !address || !outcome) { res.status(400).json({ error: "sessionId, address, outcome required" }); return; }
-  const [parentSession] = await db.select().from(canvassSessionsTable).where(eq(canvassSessionsTable.id, sessionId));
-  if (!parentSession || !isMakueniWard(parentSession.ward)) { res.status(400).json({ error: "A valid Makueni field session is required" }); return; }
-  const [visit] = await db.insert(canvassVisitsTable).values({ sessionId, memberId, address, outcome, supportLevel, notes }).returning();
-  await db.update(canvassSessionsTable).set({ doorsCompleted: sql`${canvassSessionsTable.doorsCompleted} + 1` }).where(eq(canvassSessionsTable.id, sessionId));
+  if (!isNonNegativeInteger(Number(sessionId)) || !["support", "oppose", "undecided", "not_home", "refused"].includes(outcome)) { res.status(400).json({ error: "Invalid field session or visit outcome" }); return; }
+  const visit = await db.transaction(async tx => {
+    const [parentSession] = await tx.select().from(canvassSessionsTable).where(eq(canvassSessionsTable.id, Number(sessionId))).for("update");
+    if (!parentSession || !isMakueniWard(parentSession.ward) || ["completed", "cancelled"].includes(parentSession.status)) return null;
+    const [saved] = await tx.insert(canvassVisitsTable).values({ sessionId: Number(sessionId), memberId, address, outcome, supportLevel, notes }).returning();
+    await tx.update(canvassSessionsTable).set({ doorsCompleted: sql`${canvassSessionsTable.doorsCompleted} + 1` }).where(eq(canvassSessionsTable.id, Number(sessionId)));
+    return saved;
+  });
+  if (!visit) { res.status(400).json({ error: "Select an open Makueni field session" }); return; }
   res.status(201).json(visit);
 });
 
