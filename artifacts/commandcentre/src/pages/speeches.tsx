@@ -33,7 +33,7 @@ interface GeneratedDocument {
   createdAt: string;
 }
 
-const OCCASIONS = ["County Service Update", "Public Participation Forum", "Water Service Notice", "Road Maintenance Update", "Health Service Announcement", "Budget Briefing", "Agriculture Advisory", "Community Meeting", "Emergency Notice", "Radio Public Information"];
+const OCCASIONS = ["Policy Discussion", "Public Participation Forum", "Water Policy Discussion", "Roads Discussion", "Health Policy Discussion", "Budget Discussion", "Agriculture Discussion", "Community Meeting", "Community Concerns", "Radio Interview"];
 const WARDS = ["county-wide","Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa","Kiima Kiu/Kalanzoni","Mukaa","Kasikeu","Kee","Kilungu","Ilima","Ukia","Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini","Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala","Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"];
 const LANGUAGES = ["English", "Swahili", "English + Swahili mix"];
 const TONES = ["Inspirational", "Fiery / Passionate", "Solemn / Respectful", "Warm / Personal", "Statesmanlike", "Conversational"];
@@ -193,7 +193,7 @@ export default function Speeches() {
           <Sparkles className="w-5 h-5 text-primary" /> AI SPEECH &amp; MANIFESTO GENERATOR
         </h1>
         <p className="font-mono text-[11px] text-muted-foreground mt-1">
-          Prepare Makueni County public-service announcements and development briefs using verified information
+          Prof. Philip Kaloki · Makueni Governor Aspirant, 2027. Draft material does not represent an announcement by the county government.
         </p>
       </div>
 
@@ -424,3 +424,4 @@ function LibraryItem({ doc, onDelete, deleting }: { doc: GeneratedDocument; onDe
     </div>
   );
 }
+

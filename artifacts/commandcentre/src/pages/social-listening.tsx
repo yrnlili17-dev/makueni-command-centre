@@ -72,7 +72,7 @@ export default function SocialListening() {
       .catch(() => { /* Existing scan and feed remain usable if configuration cannot be read. */ });
     return () => controller.abort();
   }, []);
-  const { data: mentions = [], isLoading } = useListSocialMentions();
+  const { data: mentions = [], isLoading, error: mentionsError } = useListSocialMentions();
   const [category, setCategory] = useState("all");
   const [sentiment, setSentiment] = useState("all");
   const [replyItemId, setReplyItemId] = useState<number | null>(null);
@@ -132,7 +132,7 @@ export default function SocialListening() {
       return bDate - aDate;
     });
 
-  const scanResult = scan.data;
+  const scanResult = scan.data as (typeof scan.data & { warnings?: string[] });
 
   return (
     <div className="space-y-4">
@@ -164,6 +164,7 @@ export default function SocialListening() {
 
       {monitoringKeywords && <section className="rounded-xl border border-primary/25 bg-card/60 p-4 space-y-2">
         <h2 className="text-sm font-semibold">Configured public-mention keywords</h2>
+        <a href="https://www.facebook.com/prof.philipkaloki/" target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-primary underline">Provided Facebook page · public reference</a>
         <div className="flex flex-wrap gap-2">{monitoringKeywords.requested.map(term => <span key={term} className="rounded-full border border-border px-3 py-1 text-xs">{term}</span>)}</div>
         <p className="text-xs text-muted-foreground">{monitoringKeywords.rule}</p>
         <p className="text-xs text-muted-foreground">{monitoringKeywords.coverage}</p>
@@ -202,7 +203,7 @@ export default function SocialListening() {
         <div className="flex items-start gap-2 bg-red-400/10 border border-red-400/40 text-red-400 px-3 py-2 font-mono text-[11px]">
           <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           <div>
-            <p>Scan failed. Existing mentions are unchanged.</p>
+            <p>Scan did not complete. Refresh the feed to check any items saved before the error.</p>
             <p className="mt-1 text-red-300/90 break-words">
               {scan.error instanceof Error ? scan.error.message.replace(/<[^>]*>/g, "").slice(0, 400) : "The API did not provide a readable error. Check the Render API logs."}
             </p>
@@ -215,6 +216,9 @@ export default function SocialListening() {
           <span className="text-green-400">{scanResult.inserted} new</span> added.
         </div>
       )}
+
+      {scanResult?.warnings?.map(warning => <div key={warning} role="status" className="border border-amber-400/30 bg-amber-400/10 p-3 text-xs text-amber-400">{warning}</div>)}
+      {mentionsError && <div role="alert" className="border border-red-400/30 p-3 text-xs text-red-400">Saved mentions could not be loaded. Run a scan to prepare missing storage, or check the database connection.</div>}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -369,4 +373,5 @@ function FilterRow({
     </div>
   );
 }
+
 
