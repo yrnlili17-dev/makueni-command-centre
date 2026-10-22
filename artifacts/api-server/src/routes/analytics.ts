@@ -1,8 +1,11 @@
+import { getIebcHistory } from "../data/iebc-history";
 import { Router } from "express";
 import { db, membersTable, messageCampaignsTable, canvassSessionsTable, canvassVisitsTable, volunteersTable, opinionPollsTable, pollVotesTable, topicalIssuesTable, kolTable, fundraisingCampaignsTable, donationsTable, surveysTable, surveyResponsesTable, narrativeMentionsTable, volunteerTasksTable, volunteerIssuesTable, legislativeRecordsTable, achievementsTable } from "@workspace/db";
 import { sql, desc } from "drizzle-orm";
 
 const router = Router();
+
+router.get("/iebc-history", (_req, res) => res.json(getIebcHistory()));
 
 // ─── Growth ──────────────────────────────────────────────────────────────────
 router.get("/growth", async (_req, res) => {
@@ -329,3 +332,4 @@ router.get("/insights", async (_req, res) => {
 });
 
 export default router;
+

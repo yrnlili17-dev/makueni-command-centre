@@ -1,3 +1,4 @@
+import { getIebcContext, getIebcHistory, buildIebcSwot } from "../data/iebc-history";
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { buildFreeMakueniAnswer, buildFreeMakueniSpeech, fetchMakueniOfficialSources, searchFreeMakueniWeb } from "./makueni-free-ai";
@@ -27,12 +28,7 @@ router.use((req, res, next) => {
       { title: "Schedule follow-up", description: "Assign owners and dates to unresolved service questions.", dueDate: today, category: "Follow-up", priority: "medium", owner: "Operations team" }
     ], note: "Template milestones only; no live project status is implied." });
   }
-  if (routePath === "/generate-swot") return res.json({ mode: "free-template",
-    strengths: [{ title: "Published county records", detail: "Official portals publish plans and project information.", impact: "medium", category: "Evidence", action: "Link claims to dated sources." }],
-    weaknesses: [{ title: "Evidence gaps", detail: "Some records may be old or incomplete.", impact: "medium", category: "Data quality", action: "Track source dates and missing fields." }],
-    opportunities: [{ title: "Ward-level reporting", detail: "Ward profiles help structure service reviews.", impact: "medium", category: "Reporting", action: "Use a consistent evidence checklist." }],
-    threats: [{ title: "Outdated information", detail: "Old reports can be mistaken for current status.", impact: "high", category: "Verification", action: "Confirm status with the official project portal." }],
-    generatedAt: new Date().toISOString(), note: "Evidence-led public-service framework." });
+  if (routePath === "/generate-swot") return res.json(buildIebcSwot());
   return next();
 });
 
@@ -94,6 +90,7 @@ router.get("/county-knowledge", async (req, res) => {
   const [sources, webResults] = await Promise.all([fetchMakueniOfficialSources(), searchFreeMakueniWeb(query)]);
   res.json({
     query,
+    electoralEvidence: getIebcHistory(),
     webResults,
     mode: process.env.MAKUENI_AI_MODE === "free" ? "free-template-retrieval" : "provider-assisted",
     checkedAt: new Date().toISOString(),
@@ -237,61 +234,8 @@ Generate 18-22 strategic milestones spanning from today to 2 weeks before electi
   }
 });
 
-router.post("/generate-swot", async (req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
-
-  // One call per quadrant — 4 items each — keeps output ~250 tokens per call (safe in prod)
-  const ITEM = `{"title":"string","detail":"string","impact":"high|medium|low","category":"Political|Financial|Grassroots|Narrative|Demographic|Infrastructure|Legal|External","action":"string"}`;
-  const CTX = `Political strategist supporting Prof. Philip Kaloki in Makueni County, Kenya, for the 2027 election. Keep analysis evidence-led and specific to Makueni County. Do not reference places outside Makueni County. Do not invent personal history, party affiliation, funding, polling, or election results. Output ONLY raw JSON, no markdown. Keep every string field under 90 characters.`;
-
-  function makePrompt(quadrant: string, hint: string) {
-    return {
-      system: `${CTX}\nSchema: {"${quadrant}":[${ITEM}]}\nGenerate exactly 4 items. ${hint}`,
-      user: `Generate the 4-item ${quadrant} JSON now.`,
-    };
-  }
-
-  const prompts = {
-    strengths: makePrompt("strengths", "Assess verifiable assets such as local community engagement, policy proposals, public profile, team capacity and documented service record. Do not assume any are proven without evidence."),
-    weaknesses: makePrompt("weaknesses", "Identify areas requiring evidence and improvement: ward coverage, communications reach, volunteer coordination, resourcing, and documented policy detail. Do not state unverified weaknesses as facts."),
-    opportunities: makePrompt("opportunities", "Consider Makueni-specific community priorities, youth and women participation, ward listening, public forums, digital information access, and transparent policy commitments."),
-    threats: makePrompt("threats", "Consider misinformation, low public trust, fragmented communications, poor source verification, volunteer safety and uneven ward coverage without asserting unverified opponents or polling trends."),
-  };
-
-  try {
-    const call = (system: string, user: string) =>
-      openai.chat.completions.create({
-        model: "gpt-5.1",
-        max_completion_tokens: 800,
-        messages: [{ role: "system", content: system }, { role: "user", content: user }],
-      });
-
-    const [sRes, wRes, oRes, tRes] = await Promise.all([
-      call(prompts.strengths.system, prompts.strengths.user),
-      call(prompts.weaknesses.system, prompts.weaknesses.user),
-      call(prompts.opportunities.system, prompts.opportunities.user),
-      call(prompts.threats.system, prompts.threats.user),
-    ]);
-
-    function parse(res: any, key: string) {
-      const text = res.choices[0]?.message?.content ?? "";
-      const m = text.match(/\{[\s\S]*\}/);
-      if (!m) return [];
-      try { return JSON.parse(m[0])[key] ?? []; } catch { return []; }
-    }
-
-    res.json({
-      strengths: parse(sRes, "strengths"),
-      weaknesses: parse(wRes, "weaknesses"),
-      opportunities: parse(oRes, "opportunities"),
-      threats: parse(tRes, "threats"),
-      generatedAt: new Date().toISOString(),
-    });
-  } catch (err) {
-    req.log.error({ err }, "generate-swot failed");
-    res.status(500).json({ error: "Failed to generate SWOT analysis. Please retry." });
-  }
-});
+// The historical evidence supports an operational data review, not invented candidate strengths.
+router.post("/generate-swot", (_req, res) => { res.json(buildIebcSwot()); });
 
 router.post("/assist", async (req, res) => {
   const { module = "dashboard", context = {}, message } = req.body as {
@@ -333,7 +277,7 @@ router.post("/assist", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: `${CAMPAIGN_CONTEXT}\n\nHISTORICAL SOURCE — MAKUENI CIDP 2013-2017:\n${historicalCidpContext}\n\nThis source is historical. Never treat its baselines or planned projects as current statistics or current project status. Use it for historical context and compare against current dated evidence.\n\nMODULE: ${module.toUpperCase()}\nROLE: ${moduleCtx}${contextStr}`,
+          content: `${CAMPAIGN_CONTEXT}\n\n${getIebcContext()}\n\nHISTORICAL SOURCE — MAKUENI CIDP 2013-2017:\n${historicalCidpContext}\n\nThis source is historical. Never treat its baselines or planned projects as current statistics or current project status. Use it for historical context and compare against current dated evidence.\n\nMODULE: ${module.toUpperCase()}\nROLE: ${moduleCtx}${contextStr}`,
         },
         { role: "user", content: message },
       ],
@@ -358,3 +302,4 @@ router.post("/assist", async (req, res) => {
 });
 
 export default router;
+
