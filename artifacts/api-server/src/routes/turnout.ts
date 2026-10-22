@@ -1,3 +1,4 @@
+import { getMakueniGovernorHistory } from "../data/makueni-governor-history";
 import { Router } from "express";
 import { db, pollingStationsTable, turnoutAssumptionsTable } from "@workspace/db";
 import { sql, inArray } from "drizzle-orm";
@@ -6,6 +7,7 @@ const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
 import { z } from "zod/v4";
 
 const router = Router();
+router.get("/history", (_req, res) => res.json(getMakueniGovernorHistory()));
 
 // Candidate identity is not hardcoded in county turnout reporting.
 

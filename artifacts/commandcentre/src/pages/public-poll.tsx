@@ -3,7 +3,7 @@ import { useRoute } from "wouter";
 
 const BASE = import.meta.env.BASE_URL;
 const WARDS = ["Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa","Kiima Kiu/Kalanzoni","Mukaa","Kasikeu","Kee","Kilungu","Ilima","Ukia","Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini","Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala","Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"];
-type Poll = { id: number; title: string; description?: string; status: string; deadline?: string; options: { label: string }[] };
+type Poll = { id: number; title: string; description?: string; status: string; deadline?: string; options: { label: string }[]; questions?: { title: string; options: string[] }[] };
 
 function VoluntaryRegistration() {
   const [name, setName] = useState("");
@@ -41,7 +41,8 @@ export default function PublicPoll() {
   const [, params] = useRoute("/poll/:id");
   const id = Number(params?.id);
   const [poll, setPoll] = useState<Poll | null>(null);
-  const [choice, setChoice] = useState<number | null>(null);
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const questions = poll?.questions?.length ? poll.questions : poll ? [{ title: poll.title, options: poll.options.map(o => o.label) }] : [];
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -53,10 +54,10 @@ export default function PublicPoll() {
       .then(setPoll).catch(e => setError(e.message)).finally(() => setLoading(false));
   }, [id]);
   async function submit() {
-    if (choice === null || sending) return;
+    if (!questions.length || questions.some((_, i) => answers[i] === undefined) || sending) return;
     setSending(true); setError("");
     try {
-      const r = await fetch(`${BASE}api/surveys/polls/${id}/vote`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionIndex: choice }) });
+      const r = await fetch(`${BASE}api/surveys/polls/${id}/vote`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answers: questions.map((_, i) => answers[i]) }) });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Could not record response");
       setSubmitted(true);
@@ -71,10 +72,11 @@ export default function PublicPoll() {
         {poll.description && <p className="text-sm text-muted-foreground">{poll.description}</p>}
         <p className="text-xs text-muted-foreground">Your selection is anonymous. We do not request your name or phone number, and do not link an individual to a candidate choice.</p>
         {poll.status !== "active" || (poll.deadline && poll.deadline < new Date().toISOString().slice(0,10)) ? <p className="text-sm text-primary">This poll is closed.</p> : <>
-          <div className="space-y-2" role="radiogroup" aria-label="Poll choices">
-            {poll.options.map((option, index) => <label key={index} className="flex gap-3 items-center border border-border p-3 cursor-pointer hover:bg-secondary"><input type="radio" name="poll-option" checked={choice === index} onChange={() => setChoice(index)} /><span>{option.label}</span></label>)}
-          </div>
-          <button type="button" disabled={choice === null || sending} onClick={submit} className="w-full bg-primary text-primary-foreground font-bold p-3 disabled:opacity-50">{sending ? "Submitting…" : "Submit vote"}</button>
+          {questions.map((question, qi) => <fieldset key={qi} className="space-y-2 border border-border rounded-lg p-3">
+            <legend className="px-1 text-sm font-semibold">{qi + 1}. {question.title}</legend>
+            {question.options.map((label, index) => <label key={index} className="flex gap-3 items-center p-2 cursor-pointer hover:bg-secondary"><input type="radio" name={`poll-question-${qi}`} checked={answers[qi] === index} onChange={() => setAnswers(previous => ({ ...previous, [qi]: index }))} /><span>{label}</span></label>)}
+          </fieldset>)}
+          <button type="button" disabled={questions.some((_, i) => answers[i] === undefined) || sending} onClick={submit} className="w-full bg-primary text-primary-foreground font-bold p-3 disabled:opacity-50">{sending ? "Submitting…" : "Submit answers"}</button>
         </>}
       </> : null}
       {error && <p role="alert" className="text-sm text-red-400">{error}</p>}

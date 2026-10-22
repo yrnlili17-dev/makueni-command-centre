@@ -1,3 +1,4 @@
+import { isCalendarDate } from "../lib/operational-validation";
 import { Router } from "express";
 import { db, milestonesTable, campaignSettingsTable, candidateReadinessTable } from "@workspace/db";
 import { eq, sql, desc, asc, and, lte, gte } from "drizzle-orm";
@@ -19,6 +20,7 @@ router.get("/milestones", async (req, res) => {
 router.post("/milestones", async (req, res) => {
   const { title, description, dueDate, startDate, category, priority = "medium", owner, notes } = req.body;
   if (!title || !dueDate || !category) { res.status(400).json({ error: "title, dueDate, category required" }); return; }
+  if (!isCalendarDate(dueDate) || (startDate && (!isCalendarDate(startDate) || startDate > dueDate))) { res.status(400).json({ error: "Enter valid milestone dates; start must not follow the due date" }); return; }
   const [milestone] = await db.insert(milestonesTable).values({ title, description, dueDate, startDate, category, priority, owner, notes, status: "pending" }).returning();
   res.status(201).json(milestone);
 });
@@ -27,6 +29,12 @@ router.patch("/milestones/:id", async (req, res) => {
   const updates: Record<string, unknown> = {};
   const fields = ["title","description","dueDate","startDate","status","category","priority","owner","notes"];
   fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+  const [existing] = await db.select().from(milestonesTable).where(eq(milestonesTable.id, Number(req.params.id)));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  const due = req.body.dueDate ?? existing.dueDate;
+  const start = req.body.startDate !== undefined ? req.body.startDate : existing.startDate;
+  if (!isCalendarDate(due) || (start && (!isCalendarDate(start) || start > due))) { res.status(400).json({ error: "Enter valid milestone dates; start must not follow the due date" }); return; }
+  if (req.body.status !== undefined && !["pending", "in_progress", "completed", "cancelled"].includes(req.body.status)) { res.status(400).json({ error: "Invalid milestone status" }); return; }
   if (req.body.status === "completed") updates.completedAt = new Date();
   else if (req.body.status !== undefined) updates.completedAt = null;
   const [milestone] = await db.update(milestonesTable).set(updates).where(eq(milestonesTable.id, parseInt(req.params.id))).returning();
@@ -86,7 +94,7 @@ router.get("/countdown", async (req, res) => {
 
 router.post("/countdown", async (req, res) => {
   const { electionDate } = req.body;
-  if (!electionDate) { res.status(400).json({ error: "electionDate required" }); return; }
+  if (!isCalendarDate(electionDate)) { res.status(400).json({ error: "electionDate required" }); return; }
   const existing = await db.select().from(campaignSettingsTable).where(eq(campaignSettingsTable.key, "election_date"));
   if (existing.length > 0) {
     await db.update(campaignSettingsTable).set({ value: electionDate, updatedAt: new Date() }).where(eq(campaignSettingsTable.key, "election_date"));

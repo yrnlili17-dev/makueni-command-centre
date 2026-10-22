@@ -1,5 +1,7 @@
+import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { DashboardInsights } from "@/components/dashboard-insights";
-import { useGetDashboardSummary, useGetDashboardActivity } from "@workspace/api-client-react";
+import { useGetDashboardSummary, useGetDashboardActivity, getGetDashboardSummaryQueryKey, getGetDashboardActivityQueryKey } from "@workspace/api-client-react";
 import { Users, MessageSquare, Map, ShieldAlert, Target, Calendar, Zap, Clock, TrendingUp, Activity, User, Building2 } from "lucide-react";
 
 function StatCard({ label, value, icon: Icon, sub }: { label: string; value: string | number; icon: any; sub?: string }) {
@@ -50,9 +52,13 @@ function ModuleTag({ module }: { module: string }) {
 }
 
 export default function Dashboard() {
-  const { data: summary, isLoading: summaryLoading, isError: summaryError, refetch: refreshSummary } = useGetDashboardSummary();
-  const { data: activity, isLoading: activityLoading, isError: activityError, refetch: refreshActivity } = useGetDashboardActivity();
+  const { data: summary, isLoading: summaryLoading, isError: summaryError, refetch: refreshSummary } = useGetDashboardSummary({ query: { queryKey: getGetDashboardSummaryQueryKey(), refetchInterval: 30_000, staleTime: 0 } });
+  const { data: activity, isLoading: activityLoading, isError: activityError, refetch: refreshActivity } = useGetDashboardActivity({ query: { queryKey: getGetDashboardActivityQueryKey(), refetchInterval: 30_000, staleTime: 0 } });
 
+  const { data: operations } = useQuery<{ registeredVolunteers: number; pendingVolunteers: number; openVolunteerTasks: number; completedVolunteerTasks: number }>({
+    queryKey: ["dashboard-operations"], refetchInterval: 30_000,
+    queryFn: async () => { const r = await fetch(`${import.meta.env.BASE_URL}api/dashboard/operations`); if (!r.ok) throw new Error("Operations unavailable"); return r.json(); },
+  });
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -88,6 +94,11 @@ export default function Dashboard() {
         </div>
       ) : null}
 
+      <div className="flex flex-wrap gap-3 text-sm">
+        <Link href="/turnout" className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">Turnout scenarios and historical results →</Link>
+        <Link href="/volunteers" className="rounded-xl border border-border px-4 py-3">{operations ? `${operations.registeredVolunteers} registrations · ${operations.pendingVolunteers} awaiting review · ${operations.openVolunteerTasks} open tasks · ${operations.completedVolunteerTasks} completed` : "Volunteer registrations and tasks →"}</Link>
+      </div>
+      <p className="text-xs text-muted-foreground">Updates after saved changes; checks for other users’ changes every 30 seconds while open.</p>
       <DashboardInsights />
 
       {/* Candidate Profile + Constituency Intel */}

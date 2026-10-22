@@ -1,5 +1,6 @@
 import { IebcHistory } from "@/components/iebc-history";
-import { useState, useEffect } from "react";
+import { calculateTurnoutPreview } from "@/lib/turnout-preview";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, Users, Vote, Megaphone, Save, RotateCcw, Target } from "lucide-react";
 
@@ -67,23 +68,13 @@ export default function Turnout() {
   const [turnoutDelta, setTurnoutDelta] = useState(0);
   const [edits, setEdits] = useState<Record<string, { turnout: number; support: number }>>({});
 
-  const { data, isLoading, error } = useQuery<Prediction>({
-    queryKey: ["turnout-prediction", turnoutDelta],
-    queryFn: () => fetchJson(`/prediction?turnoutDelta=${turnoutDelta}`),
+  const { data: savedData, isLoading, error } = useQuery<Prediction>({
+    queryKey: ["turnout-prediction"], refetchInterval: 30_000,
+    queryFn: () => fetchJson("/prediction"),
   });
 
-  // Seed the editable assumptions from the server's baseline (unaffected by the
-  // scenario slider, which only shifts the projection view).
-  useEffect(() => {
-    if (!data) return;
-    setEdits((prev) => {
-      const next = { ...prev };
-      for (const w of data.wards) {
-        if (!next[w.ward]) next[w.ward] = { turnout: w.expectedTurnoutRate, support: w.supportShare };
-      }
-      return next;
-    });
-  }, [data]);
+  const preview = savedData ? calculateTurnoutPreview(savedData.wards, edits, turnoutDelta) : null;
+  const data = savedData && preview ? { ...savedData, ...preview } : undefined;
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -97,12 +88,12 @@ export default function Turnout() {
           })),
         }),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["turnout-prediction"] }),
+    onSuccess: async () => { await qc.invalidateQueries({ queryKey: ["turnout-prediction"] }); setEdits({}); },
   });
 
   const setEdit = (ward: string, key: "turnout" | "support", raw: string) => {
     const n = Math.max(0, Math.min(100, parseInt(raw) || 0));
-    setEdits((prev) => ({ ...prev, [ward]: { ...prev[ward]!, [key]: n } }));
+    setEdits((prev) => ({ ...prev, [ward]: { ...(prev[ward] ?? { turnout: savedData?.wards.find(w => w.ward === ward)?.expectedTurnoutRate ?? 65, support: savedData?.wards.find(w => w.ward === ward)?.supportShare ?? 50 }), [key]: n } }));
   };
 
   const hasTally = (data?.wards ?? []).some((w) => w.reportingStations > 0);
@@ -128,14 +119,17 @@ export default function Turnout() {
         </button>
       </div>
 
-      <IebcHistory />
+      <IebcHistory endpoint="turnout/history" />
+      <p className="text-sm text-muted-foreground">Edits immediately update each row, the TOTAL row and summary cards. Save assumptions to keep ward percentages; the turnout-shift slider is a temporary preview.</p>
+      {saveMutation.isError && <p role="alert" className="text-red-400">Could not save assumptions. Your preview is retained; retry.</p>}
+      {saveMutation.isSuccess && Object.keys(edits).length === 0 && <p role="status" className="text-emerald-400">Ward assumptions saved.</p>}
 
-      {isLoading && <div className="p-8 font-mono text-xs text-muted-foreground">LOADING FORECAST...</div>}
-      {error && <div className="p-8 font-mono text-xs text-red-400">FAILED TO LOAD FORECAST.</div>}
+      {isLoading && <div className="p-8 font-mono text-xs text-muted-foreground">LOADING SCENARIO...</div>}
+      {error && <div className="p-8 font-mono text-xs text-red-400">FAILED TO LOAD SCENARIO.</div>}
 
       {data && (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
               label="PROJECTED TURNOUT"
               value={`${data.totals.predictedTurnoutRate}%`}
@@ -152,12 +146,7 @@ export default function Turnout() {
               value={fmt(data.totals.registered)}
               sub={`${data.wards.length} WARDS · MAKUENI COUNTY`}
             />
-            <StatCard
-              label="TOP GOTV PRIORITY"
-              value={data.totals.topGotvWard ?? "—"}
-              sub={`+${fmt(data.totals.topGotvUpside)} POTENTIAL VOTES`}
-              accent="text-yellow-400"
-            />
+
           </div>
 
           {/* Scenario slider */}
@@ -167,7 +156,7 @@ export default function Turnout() {
                 <Target className="w-3.5 h-3.5" /> SCENARIO · TURNOUT SHIFT
               </div>
               <button
-                onClick={() => setTurnoutDelta(0)}
+                onClick={() => { setTurnoutDelta(0); setEdits({}); }}
                 className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground"
               >
                 <RotateCcw className="w-3 h-3" /> RESET
@@ -195,14 +184,14 @@ export default function Turnout() {
               </span>
             </div>
             <p className="font-mono text-[10px] text-muted-foreground mt-2">
-              Model a constituency-wide turnout change on top of your saved ward assumptions. Does not overwrite saved values.
+              Model a county-wide turnout change on top of the ward percentages shown below. Does not overwrite saved values.
             </p>
           </div>
 
           {/* Ward table */}
           <div className="bg-card border border-border">
             <div className="font-mono text-[10px] text-muted-foreground p-4 pb-3 tracking-widest border-b border-border">
-              WARD-BY-WARD FORECAST · EDIT EXPECTED TURNOUT &amp; SUPPORT
+              WARD-BY-WARD SCENARIO · EDIT EXPECTED TURNOUT &amp; SUPPORT
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -214,24 +203,18 @@ export default function Turnout() {
                     <th className="text-center p-3">SUPPORT %</th>
                     <th className="text-right p-3">PROJ. VOTES</th>
                     <th className="text-right p-3">PROJ. CANDIDATE</th>
-                    <th className="text-right p-3">GOTV UPSIDE</th>
                     {hasTally && <th className="text-right p-3">ACTUAL T/O</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {data.wards.map((w) => {
                     const e = edits[w.ward] ?? { turnout: w.expectedTurnoutRate, support: w.supportShare };
-                    const isTopPriority = w.gotvRank <= 2;
                     return (
                       <tr key={w.ward} className="border-b border-border/50 hover:bg-secondary/30">
                         <td className="p-3 font-medium">
                           <div className="flex items-center gap-2">
                             {w.ward}
-                            {isTopPriority && (
-                              <span className="flex items-center gap-1 font-mono text-[9px] text-yellow-400 border border-yellow-400/30 px-1 py-0.5">
-                                <Megaphone className="w-2.5 h-2.5" /> GOTV #{w.gotvRank}
-                              </span>
-                            )}
+
                           </div>
                           <div className="font-mono text-[10px] text-muted-foreground">{w.stations} STATIONS</div>
                         </td>
@@ -239,6 +222,9 @@ export default function Turnout() {
                         <td className="p-3 text-center">
                           <input
                             type="number"
+                            disabled={saveMutation.isPending}
+                            step={1}
+                            aria-label={`${w.ward} turnout percentage`}
                             min={0}
                             max={100}
                             value={e.turnout}
@@ -249,6 +235,9 @@ export default function Turnout() {
                         <td className="p-3 text-center">
                           <input
                             type="number"
+                            disabled={saveMutation.isPending}
+                            step={1}
+                            aria-label={`${w.ward} support percentage`}
                             min={0}
                             max={100}
                             value={e.support}
@@ -258,7 +247,6 @@ export default function Turnout() {
                         </td>
                         <td className="p-3 text-right font-mono">{fmt(w.predictedVotes)}</td>
                         <td className="p-3 text-right font-mono text-green-400">{fmt(w.predictedCandidateVotes)}</td>
-                        <td className="p-3 text-right font-mono text-yellow-400">+{fmt(w.gotvUpside)}</td>
                         {hasTally && (
                           <td className="p-3 text-right font-mono text-muted-foreground">
                             {w.reportingStations > 0 ? `${w.actualTurnoutRate}%` : "—"}
@@ -276,9 +264,7 @@ export default function Turnout() {
                     <td className="p-3 text-center font-bold">{data.totals.predictedCandidateShare}%</td>
                     <td className="p-3 text-right font-bold">{fmt(data.totals.predictedVotes)}</td>
                     <td className="p-3 text-right font-bold text-green-400">{fmt(data.totals.predictedCandidateVotes)}</td>
-                    <td className="p-3 text-right font-bold text-yellow-400">
-                      +{fmt(data.wards.reduce((s, w) => s + w.gotvUpside, 0))}
-                    </td>
+
                     {hasTally && <td className="p-3" />}
                   </tr>
                 </tfoot>
@@ -286,7 +272,7 @@ export default function Turnout() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-card border border-border p-4 flex items-start gap-3">
               <Users className="w-4 h-4 text-primary mt-0.5 shrink-0" />
               <div>
@@ -301,13 +287,7 @@ export default function Turnout() {
                 <p className="text-xs text-muted-foreground">Set the ward-level candidate share assumption; defaults to {data.defaults.support}%.</p>
               </div>
             </div>
-            <div className="bg-card border border-border p-4 flex items-start gap-3">
-              <Megaphone className="w-4 h-4 text-yellow-400 mt-0.5 shrink-0" />
-              <div>
-                <div className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">GOTV UPSIDE</div>
-                <p className="text-xs text-muted-foreground">Supporters not projected to vote — the mobilization opportunity per ward.</p>
-              </div>
-            </div>
+
           </div>
         </>
       )}

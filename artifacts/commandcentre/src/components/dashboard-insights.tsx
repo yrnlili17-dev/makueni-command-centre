@@ -94,8 +94,8 @@ function downloadReport(growth: Growth | undefined, health: Health | undefined) 
 export function DashboardInsights() {
   const { can } = useAuth();
   const canSeeFeed = can("admin");
-  const growth = useQuery({ queryKey: ["dashboard-growth"], queryFn: () => getJson<Growth>("/dashboard/growth") });
-  const health = useQuery({ queryKey: ["dashboard-health"], queryFn: () => getJson<Health>("/dashboard/health") });
+  const growth = useQuery({ queryKey: ["dashboard-growth"], refetchInterval: 30_000, queryFn: () => getJson<Growth>("/dashboard/growth") });
+  const health = useQuery({ queryKey: ["dashboard-health"], refetchInterval: 30_000, queryFn: () => getJson<Health>("/dashboard/health") });
   const feed = useQuery({
     queryKey: ["admin-activity-feed"], enabled: canSeeFeed, refetchInterval: 30_000,
     queryFn: () => getJson<FeedItem[]>("/admin/activity-feed"),
@@ -110,7 +110,7 @@ export function DashboardInsights() {
           value={g ? (g.growthRate == null ? (g.joinedThisMonth ? "NEW" : "–") : `${g.growthRate > 0 ? "+" : ""}${g.growthRate}%`) : "…"}
           sub={g ? `${g.joinedThisMonth} joined this month, ${g.joinedLastMonth} last month` : "MONTH ON MONTH"} />
         <Kpi label="JOINED THIS MONTH" icon={LogIn} value={g ? g.joinedThisMonth.toLocaleString() : "…"} sub="NEW MEMBERS" />
-        <Kpi label="OPEN TASKS" icon={ListTodo} value={g ? String(g.openTasks) : "…"} sub="MILESTONES NOT DONE" />
+        <Kpi label="OPEN TASKS" icon={ListTodo} value={g ? String(g.openTasks) : "…"} sub="MILESTONES + VOLUNTEER TASKS" />
         <Kpi label="MESSAGES THIS MONTH" icon={Send} value={g ? g.messagesThisMonth.toLocaleString() : "…"} sub="ALL CHANNELS" />
       </div>
 

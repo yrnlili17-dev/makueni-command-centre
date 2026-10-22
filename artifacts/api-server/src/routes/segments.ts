@@ -8,16 +8,23 @@ const CONSTITUENCIES: string[] = [...MAKUENI_CONSTITUENCIES];
 function hasValidMakueniGeography(criteria: unknown): boolean {
   if (!criteria || typeof criteria !== "object" || Array.isArray(criteria)) return true;
   const value = criteria as Record<string, unknown>;
+  if (value.manualSize !== undefined && (typeof value.manualSize !== "number" || !Number.isSafeInteger(value.manualSize) || value.manualSize < 0)) return false;
   if (typeof value.ward === "string" && !["all", "county-wide"].includes(value.ward) && !WARDS.includes(value.ward)) return false;
   if (typeof value.constituency === "string" && !CONSTITUENCIES.includes(value.constituency)) return false;
   if (typeof value.county === "string" && !["makueni", "makueni county"].includes(value.county.toLowerCase())) return false;
   return true;
 }
 
+function countStatus(criteria: Record<string, any> | null) {
+  if (criteria?.manualSize !== undefined) return "manual-estimate";
+  if (criteria?.demographic || criteria?.strategic || criteria?.transportNeeded || criteria?.isGOTV) return "unavailable";
+  return "live-count";
+}
 const router = Router();
 
 async function computeMemberCount(criteria: Record<string, any>) {
   if (criteria.manualSize !== undefined) return Number(criteria.manualSize);
+  if (criteria.demographic || criteria.strategic || criteria.transportNeeded || criteria.isGOTV) return 0;
   const conditions = [];
   if (typeof criteria.ward === "string" && criteria.ward !== "all" && criteria.ward !== "county-wide" && WARDS.includes(criteria.ward)) conditions.push(eq(membersTable.ward, criteria.ward));
   if (criteria.supportLevel) conditions.push(eq(membersTable.supportLevel, criteria.supportLevel));
@@ -32,7 +39,11 @@ async function computeMemberCount(criteria: Record<string, any>) {
 router.get("/", async (_req, res) => {
   const segs = (await db.select().from(segmentsTable).orderBy(segmentsTable.createdAt))
     .filter(seg => hasValidMakueniGeography(seg.criteria));
-  res.json(segs);
+  res.json(await Promise.all(segs.map(async seg => ({ ...seg,
+    memberCount: await computeMemberCount((seg.criteria ?? {}) as Record<string, any>),
+    countStatus: countStatus(seg.criteria as Record<string, any>),
+    countSource: "members",
+  }))));
 });
 
 router.post("/", async (req, res) => {
@@ -48,7 +59,7 @@ router.get("/:id", async (req, res) => {
   const [seg] = await db.select().from(segmentsTable).where(eq(segmentsTable.id, parseInt(req.params.id)));
   if (!seg || !hasValidMakueniGeography(seg.criteria)) { res.status(404).json({ error: "Not found" }); return; }
   const memberCount = await computeMemberCount(seg.criteria as any);
-  res.json({ ...seg, memberCount });
+  res.json({ ...seg, memberCount, countStatus: countStatus(seg.criteria as Record<string, any>), countSource: "members" });
 });
 
 router.patch("/:id", async (req, res) => {

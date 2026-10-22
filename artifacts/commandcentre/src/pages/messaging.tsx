@@ -276,6 +276,7 @@ function WhatsAppConfig({ provider, onSaved }: { provider?: Provider; onSaved: (
 
   return (
     <div className="bg-card border border-border">
+      <p className="p-4 text-sm text-amber-500">Meta’s WhatsApp Business Platform policy excludes political candidates and campaigns. This campaign workspace is not eligible for Cloud API activation. <a className="underline" href="https://business.whatsapp.com/policy" target="_blank" rel="noreferrer">Read Meta’s policy</a></p>
       <button type="button" onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/30">
         <div className="flex items-center gap-3">
           <Settings className="w-3.5 h-3.5 text-muted-foreground" />

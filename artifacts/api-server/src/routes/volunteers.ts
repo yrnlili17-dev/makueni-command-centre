@@ -51,15 +51,18 @@ router.post("/register", async (req, res) => {
     return;
   }
   const d = parsed.data;
+  const phoneDigits = d.phone.replace(/[^0-9]/g, "");
+  d.phone = /^0[17]\d{8}$/.test(phoneDigits) ? "254" + phoneDigits.slice(1) : phoneDigits;
+  if (!/^254[17]\d{8}$/.test(d.phone)) { res.status(400).json({ error: "Enter a valid Kenyan phone number" }); return; }
 
   // Dedupe: if this phone already self-registered, return the existing record (idempotent re-submit).
   const existing = await db
     .select()
     .from(volunteersTable)
-    .where(and(eq(volunteersTable.phone, d.phone), eq(volunteersTable.source, "online_registration")))
+    .where(and(sql`regexp_replace(${volunteersTable.phone}, '[^0-9]', '', 'g') in (${d.phone}, ${"0" + d.phone.slice(3)})`, eq(volunteersTable.source, "online_registration")))
     .limit(1);
   if (existing.length > 0) {
-    res.status(201).json(existing[0]);
+    res.status(201).json({ ok: true, message: "Registration received" });
     return;
   }
 
@@ -77,7 +80,7 @@ router.post("/register", async (req, res) => {
     role: "volunteer",
   }).returning();
   req.log.info({ volunteerId: volunteer.id }, "volunteer self-registered");
-  res.status(201).json(volunteer);
+  res.status(201).json({ ok: true, message: "Registration received" });
 });
 
 // ─── Assignments (before /:id wildcard) ──────────────────────────────────────
@@ -110,6 +113,8 @@ router.get("/tasks", async (req, res) => {
 router.post("/tasks", async (req, res) => {
   const { volunteerId, title, description, category = "canvassing", ward, priority = "medium", targetMetric, targetValue, dueDate, assignedBy = "Campaign Manager", notes } = req.body;
   if (!volunteerId || !title) { res.status(400).json({ error: "volunteerId and title required" }); return; }
+  const [volunteer] = await db.select().from(volunteersTable).where(eq(volunteersTable.id, Number(volunteerId)));
+  if (!volunteer || !isMakueniWard(volunteer.ward) || (ward && !isMakueniWard(ward))) { res.status(400).json({ error: "Select a registered Makueni volunteer and valid ward" }); return; }
   const [task] = await db.insert(volunteerTasksTable).values({
     volunteerId, title, description, category, ward, priority, targetMetric,
     targetValue: targetValue ? parseInt(targetValue) : undefined,
@@ -124,7 +129,9 @@ router.patch("/tasks/:id", async (req, res) => {
   const fields = ["title","description","category","ward","priority","status","targetMetric","targetValue","currentValue","dueDate","notes","assignedBy"];
   fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
   if (updates.ward !== undefined && !isMakueniWard(updates.ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; }
+  if (req.body.status !== undefined && !["assigned", "in_progress", "completed", "cancelled"].includes(req.body.status)) { res.status(400).json({ error: "Invalid task status" }); return; }
   if (req.body.status === "completed") updates.completedAt = new Date();
+  else if (req.body.status !== undefined) updates.completedAt = null;
   const [task] = await db.update(volunteerTasksTable).set(updates).where(eq(volunteerTasksTable.id, id)).returning();
   if (!task) { res.status(404).json({ error: "Not found" }); return; }
   res.json(task);
@@ -148,6 +155,9 @@ router.post("/tasks/:id/progress", async (req, res) => {
   const taskId = parseInt(req.params.id);
   const { volunteerId, completionPct, valueAchieved, notes, blockers, hoursSpent } = req.body;
   if (!volunteerId) { res.status(400).json({ error: "volunteerId required" }); return; }
+  const [task] = await db.select().from(volunteerTasksTable).where(eq(volunteerTasksTable.id, taskId));
+  if (!task || task.volunteerId !== Number(volunteerId)) { res.status(400).json({ error: "Progress must belong to the assigned volunteer" }); return; }
+  if (!Number.isInteger(completionPct) || completionPct < 0 || completionPct > 100 || (valueAchieved !== undefined && (!Number.isInteger(valueAchieved) || valueAchieved < 0)) || (hoursSpent !== undefined && (!Number.isInteger(hoursSpent) || hoursSpent < 0))) { res.status(400).json({ error: "Enter completion from 0 to 100 and non-negative progress values" }); return; }
   const today = new Date().toISOString().slice(0, 10);
   // upsert today's log
   const existing = await db.select().from(volunteerProgressLogsTable)
@@ -158,10 +168,7 @@ router.post("/tasks/:id/progress", async (req, res) => {
   } else {
     [log] = await db.insert(volunteerProgressLogsTable).values({ taskId, volunteerId, logDate: today, completionPct, valueAchieved, notes, blockers, hoursSpent }).returning();
   }
-  // update task currentValue
-  if (valueAchieved !== undefined) {
-    await db.update(volunteerTasksTable).set({ currentValue: valueAchieved, updatedAt: new Date() }).where(eq(volunteerTasksTable.id, taskId));
-  }
+  await db.update(volunteerTasksTable).set({ ...(valueAchieved !== undefined ? { currentValue: valueAchieved } : {}), status: completionPct === 100 ? "completed" : "in_progress", completedAt: completionPct === 100 ? new Date() : null, updatedAt: new Date() }).where(eq(volunteerTasksTable.id, taskId));
   res.status(201).json(log);
 });
 
@@ -228,7 +235,7 @@ router.get("/daily-report", async (req, res) => {
     const tasks = allTasks.filter(t => t.volunteerId === v.id);
     const logs = todayLogs.filter(l => l.volunteerId === v.id);
     const avgCompletion = tasks.length > 0
-      ? Math.round(tasks.reduce((sum, t) => sum + t.currentValue, 0) / tasks.length)
+      ? Math.round(tasks.reduce((sum, t) => sum + (t.status === "completed" ? 100 : t.targetValue ? Math.min(100, t.currentValue / t.targetValue * 100) : 0), 0) / tasks.length)
       : 0;
     const hasBlockers = logs.some(l => l.blockers && l.blockers.trim().length > 0);
     const checkedIn = logs.length > 0;

@@ -1,3 +1,4 @@
+import { useWorkspaceRefresh } from "@/hooks/use-workspace-refresh";
 import { useState, useEffect, useCallback } from "react";
 import {
   useListSurveys, useCreateSurvey, useGetSurvey, useGetSurveyResponses,
@@ -117,6 +118,8 @@ export default function Surveys() {
   const [selectedPoll, setSelectedPoll] = useState<number | null>(null);
   const [pollResults, setPollResults] = useState<Record<number, any>>({});
   const [votingPollId, setVotingPollId] = useState<number | null>(null);
+  const [extraQuestions, setExtraQuestions] = useState<{ title: string; optionsText: string }[]>([]);
+  const [creatingPoll, setCreatingPoll] = useState(false);
   const [voteForm, setVoteForm] = useState<Record<string, any>>({ optionIndex: null });
 
   // Issues
@@ -182,13 +185,20 @@ export default function Surveys() {
   useEffect(() => { if (tab === "analytics") loadAnalytics(); }, [tab, loadAnalytics]);
   useEffect(() => { if (selectedPoll) loadPollResults(selectedPoll); }, [selectedPoll, loadPollResults]);
 
+  useWorkspaceRefresh(() => { if (tab === "polls") { void loadPolls(); if (selectedPoll) void loadPollResults(selectedPoll).catch(error => setRequestError(error instanceof Error ? error.message : "Could not refresh results")); } if (tab === "issues") void loadIssues(); if (tab === "analytics") void loadAnalytics(); });
+
   async function createPoll() {
-    const opts = (pollForm.options as string[]).filter(o => o.trim().length > 0);
-    if (!pollForm.title || opts.length < 2) return;
-    await apiFetch("/polls", { method: "POST", body: JSON.stringify({ ...pollForm, options: opts }) });
-    await loadPolls();
-    setShowNewPoll(false);
-    setPollForm({ category: "general", ward: "all", options: ["", ""] });
+    if (creatingPoll) return;
+    const opts = (pollForm.options as string[]).map(o => o.trim()).filter(Boolean);
+    const questions = [{ title: pollForm.title, options: opts }, ...extraQuestions.map(q => ({ title: q.title, options: q.optionsText.split("\n").map(o => o.trim()).filter(Boolean) }))];
+    if (!pollForm.title || questions.some(q => !q.title.trim() || q.options.length < 2)) { setRequestError("Each question needs a title and at least two answers."); return; }
+    setCreatingPoll(true);
+    try {
+      await apiFetch("/polls", { method: "POST", body: JSON.stringify({ ...pollForm, options: opts, questions }) });
+      setShowNewPoll(false); setPollForm({ category: "general", ward: "all", options: ["", ""] }); setExtraQuestions([]);
+      await loadPolls();
+    } catch (error) { setRequestError(error instanceof Error ? error.message : "Could not create poll"); }
+    finally { setCreatingPoll(false); }
   }
 
   async function submitVote(pollId: number) {
@@ -383,9 +393,18 @@ export default function Surveys() {
                     </div>
                   ))}
                 </div>
+                <div className="col-span-3 space-y-3">
+                  {extraQuestions.map((question, index) => <fieldset key={index} className="border border-border rounded-lg p-3 space-y-2">
+                    <legend className="text-xs">Question {index + 2}</legend>
+                    <input aria-label={`Question ${index + 2}`} value={question.title} onChange={e => setExtraQuestions(previous => previous.map((q, i) => i === index ? { ...q, title: e.target.value } : q))} placeholder="Question text" className="w-full bg-secondary border border-border p-2 text-sm" />
+                    <textarea aria-label={`Question ${index + 2} options`} value={question.optionsText} onChange={e => setExtraQuestions(previous => previous.map((q, i) => i === index ? { ...q, optionsText: e.target.value } : q))} placeholder="Answer options: one per line (at least two)" rows={3} className="w-full bg-secondary border border-border p-2 text-sm" />
+                    <button type="button" className="text-xs underline" onClick={() => setExtraQuestions(previous => previous.filter((_, i) => i !== index))}>Remove question</button>
+                  </fieldset>)}
+                  <button type="button" disabled={extraQuestions.length >= 19} onClick={() => setExtraQuestions(previous => [...previous, { title: "", optionsText: "" }])} className="border border-primary/40 text-primary px-3 py-2 text-xs">+ Add another question</button>
+                </div>
                 <div className="col-span-3 flex gap-2 justify-end">
                   <button onClick={() => { setShowNewPoll(false); setPollForm({ category: "general", ward: "all", options: ["", ""] }); }} className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs hover:bg-secondary"><X className="w-3 h-3" /> ABORT</button>
-                  <button onClick={createPoll} disabled={!pollForm.title || (pollForm.options as string[]).filter((o: string) => o.trim()).length < 2} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 font-mono text-xs hover:bg-primary/90 disabled:opacity-60"><Vote className="w-3 h-3" /> DEPLOY POLL</button>
+                  <button onClick={createPoll} disabled={creatingPoll || !pollForm.title || (pollForm.options as string[]).filter((o: string) => o.trim()).length < 2} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 font-mono text-xs hover:bg-primary/90 disabled:opacity-60"><Vote className="w-3 h-3" /> DEPLOY POLL</button>
                 </div>
               </div>
             </div>
@@ -425,7 +444,7 @@ export default function Surveys() {
                           }} className="border border-primary/50 text-primary px-2 py-1 font-mono text-[9px] hover:bg-primary/10">COPY SHARE LINK</button>
                           <a href={`https://wa.me/?text=${encodeURIComponent(poll.title + " " + new URL(`poll/${poll.id}`, window.location.origin + import.meta.env.BASE_URL).toString())}`} target="_blank" rel="noopener noreferrer" className="border border-border px-2 py-1 font-mono text-[9px] hover:bg-secondary">WHATSAPP</a>
                           {poll.status === "active" && (
-                            <button onClick={() => { setVotingPollId(poll.id); setVoteForm({ optionIndex: null }); }} className="flex items-center gap-1 border border-primary/30 text-primary px-2 py-0.5 font-mono text-[9px] hover:bg-primary hover:text-primary-foreground">CAST VOTE</button>
+                            <button onClick={() => { if (poll.questions?.length > 1) { window.open(`${BASE}poll/${poll.id}`, "_blank", "noopener,noreferrer"); return; } setVotingPollId(poll.id); setVoteForm({ optionIndex: null }); }} className="flex items-center gap-1 border border-primary/30 text-primary px-2 py-0.5 font-mono text-[9px] hover:bg-primary hover:text-primary-foreground">CAST VOTE</button>
                           )}
                           {(poll.status !== "active" || (poll.deadline && poll.deadline < new Date().toISOString().slice(0, 10))) && <button onClick={() => keepPollOpen(poll.id)} className="font-mono text-[9px] text-green-400 hover:text-green-300 px-1">REOPEN · NO DEADLINE</button>}
                           {poll.status === "active" && <button onClick={() => closePoll(poll.id)} className="font-mono text-[9px] text-muted-foreground hover:text-foreground px-1">CLOSE</button>}
@@ -502,6 +521,7 @@ export default function Surveys() {
                     <button onClick={() => loadPollResults(selectedPoll)} className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground"><RefreshCw className="w-3 h-3" /></button>
                   </div>
 
+                  {(pollResults[selectedPoll].questions ?? []).length > 1 && <div className="space-y-4">{pollResults[selectedPoll].questions.map((question: any, qi: number) => <section key={qi} className="border border-border rounded-lg p-3 space-y-2"><h4 className="text-sm font-semibold">{qi + 1}. {question.title}</h4><p className="text-xs text-muted-foreground">{question.total} answers</p>{question.options.map((option: any) => <ResultBar key={option.index} label={option.label} votes={option.votes} pct={option.pct} total={question.total} />)}</section>)}</div>}
                   {pollResults[selectedPoll].total === 0 ? (
                     <p className="font-mono text-xs text-muted-foreground text-center py-6">[ NO_VOTES_CAST_YET ]</p>
                   ) : (

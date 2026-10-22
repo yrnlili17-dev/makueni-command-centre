@@ -1,3 +1,4 @@
+import { useWorkspaceRefresh } from "@/hooks/use-workspace-refresh";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -164,6 +165,7 @@ export default function FieldOps() {
   const [showPlaybook, setShowPlaybook] = useState(false);
   const [sessionForm, setSessionForm] = useState<Record<string, any>>({ type: "baraza", ward: WARDS[0] });
   const [visitForm, setVisitForm] = useState<Partial<CanvassVisitInput>>({});
+  const [operationError, setOperationError] = useState("");
   const [fieldStats, setFieldStats] = useState<FieldStats | null>(null);
 
   const { data: sessions, isLoading } = useListCanvassSessions();
@@ -177,18 +179,29 @@ export default function FieldOps() {
     mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: getListCanvassVisitsQueryKey() }); qc.invalidateQueries({ queryKey: getGetFieldCoverageQueryKey() }); setShowVisitForm(false); setVisitForm({}); } }
   });
 
-  useEffect(() => {
+  const refreshStats = () => {
     fetch(`${BASE}api/field-ops/stats`)
       .then(r => r.ok ? r.json() : null)
       .then(d => d && setFieldStats(d))
       .catch(() => {});
-  }, []);
+  };
+  useEffect(refreshStats, []);
+  useWorkspaceRefresh(refreshStats);
 
+  async function changeSessionStatus(id: number, status: string) {
+    setOperationError("");
+    try {
+      const r = await fetch(`${BASE}api/field-ops/sessions/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+      if (!r.ok) throw new Error("Could not update session status");
+      await qc.invalidateQueries({ queryKey: getListCanvassSessionsQueryKey() }); refreshStats();
+    } catch (error) { setOperationError(error instanceof Error ? error.message : "Update failed"); }
+  }
   const filtered = (sessions ?? []).filter(s => typeFilter === "all" || s.type === typeFilter);
   const selectedSessionData = (sessions ?? []).find(s => s.id === selectedSession);
 
   return (
     <div className="space-y-4">
+      {operationError && <p role="alert" className="text-sm text-red-400">{operationError}</p>}
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -220,7 +233,7 @@ export default function FieldOps() {
             { label: "CONTACTS MADE", value: fieldStats.totalContacts.toLocaleString(), color: "text-foreground" },
             { label: "SUPPORTERS ID'd", value: fieldStats.supporters.toLocaleString(), color: "text-primary" },
             { label: "UNDECIDED", value: fieldStats.undecided.toLocaleString(), color: "text-yellow-400" },
-            { label: "WARDS ACTIVE", value: `${fieldStats.wards}/5`, color: "text-foreground" },
+            { label: "WARDS ACTIVE", value: `${fieldStats.wards}/${WARDS.length}`, color: "text-foreground" },
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-card border border-border p-3">
               <p className="font-mono text-[8px] text-muted-foreground tracking-widest">{label}</p>
@@ -365,6 +378,7 @@ export default function FieldOps() {
                         <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                           <TypeBadge type={s.type} />
                           <StatusBadge status={s.status} />
+                          <select aria-label={`${s.name} status`} value={s.status} onClick={e => e.stopPropagation()} onChange={e => { e.stopPropagation(); void changeSessionStatus(s.id, e.target.value); }} className="bg-secondary border border-border text-xs p-1">{["planned", "active", "completed", "cancelled"].map(status => <option key={status} value={status}>{status}</option>)}</select>
                         </div>
                         <h3 className="font-bold text-[11px] leading-tight">{s.name}</h3>
                         <p className="font-mono text-[9px] text-muted-foreground flex items-center gap-1 mt-0.5">
