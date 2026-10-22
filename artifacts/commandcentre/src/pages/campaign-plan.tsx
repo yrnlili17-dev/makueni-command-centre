@@ -133,6 +133,7 @@ export default function CampaignPlan() {
   const [showAiPlan, setShowAiPlan] = useState(false);
   const [aiPlanLoading, setAiPlanLoading] = useState(false);
   const [aiPlanError, setAiPlanError] = useState<string | null>(null);
+  const [aiPlanNote, setAiPlanNote] = useState("");
   const [aiPlan, setAiPlan] = useState<any[]>([]);
   const [aiPlanSelected, setAiPlanSelected] = useState<Set<number>>(new Set());
   const [aiPlanLoadingInto, setAiPlanLoadingInto] = useState(false);
@@ -245,6 +246,7 @@ export default function CampaignPlan() {
   async function generateAiPlan() {
     setAiPlanLoading(true);
     setAiPlanError(null);
+    setAiPlanNote("");
     setAiPlan([]);
     setAiPlanLoaded(0);
     try {
@@ -255,7 +257,7 @@ export default function CampaignPlan() {
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      setAiPlanError(data.mode === "free-template" ? "Template draft: not a tailored AI campaign strategy. Review dates and assign real owners before saving." : "AI draft: verify scope, dates and owners before saving.");
+      setAiPlanNote(data.mode === "free-template" ? "Template draft: not a tailored AI campaign strategy. Review dates and assign real owners before saving." : "AI draft: verify scope, dates and owners before saving.");
       const plan: any[] = data.milestones ?? [];
       setAiPlan(plan);
       setAiPlanSelected(new Set(plan.map((_: any, i: number) => i)));
@@ -705,6 +707,7 @@ export default function CampaignPlan() {
                   </div>
                 )}
 
+                {aiPlanNote && !aiPlanLoading && <p role="status" className="px-4 py-3 text-xs text-amber-500">{aiPlanNote}</p>}
                 {/* Error state */}
                 {aiPlanError && !aiPlanLoading && (
                   <div className="px-4 py-4 flex items-center justify-between">
