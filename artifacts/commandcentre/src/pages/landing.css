@@ -73,3 +73,69 @@
 .mc-public-brand img { filter: hue-rotate(155deg) drop-shadow(0 0 14px #10b98140); }
 .mc-public-footer .cc-powered-by { width: 100%; justify-content: flex-start; border-top: 1px solid #ffffff10; padding-top: 20px; }
 .mc-public .mc-skip { color: #062c20; }
+
+
+/* A welcoming Makueni landing page: soft light, warm accents and translucent glass. */
+.mc-public { background: radial-gradient(ellipse at 4% 7%,#0d5b493f,transparent 32%),radial-gradient(ellipse at 96% 24%,#d4b26312,transparent 30%),linear-gradient(160deg,#10252a,#0e1c22 48%,#102222); }
+.mc-public-header { background: #102328bb; border-bottom-color: #d5fff019; -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); }
+.mc-hero { background: transparent; padding: 74px 0 82px; }
+.mc-hero::before { opacity: .12; background-size: 64px 64px; }
+.mc-hero::after { width: 430px; height: 430px; top: -130px; left: -200px; border: 0; transform: none; background: #34d39915; border-radius: 50%; filter: blur(70px); }
+.mc-hero-grid { display: grid; grid-template-columns: 1.02fr 1fr; align-items: center; gap: 56px; }
+.mc-hero-copy { text-align: left; min-width: 0; }
+.mc-eyebrow { font-size: 10px; letter-spacing: .11em; margin-bottom: 28px; padding: 10px 15px; color: #c6f7dc; border-color: #b6f5cf2e; background: #b8ffdc09; box-shadow: inset 0 1px #ffffff0c; }
+.mc-hero h1 { font-size: clamp(44px,4.6vw,65px); line-height: 1.07; letter-spacing: -.055em; }
+.mc-hero h1 span { color: #7ce5b7; }
+.mc-hero-subtitle { font-size: 20px; line-height: 1.5; color: #dbece4; margin: 26px 0 14px; max-width: 420px; }
+.mc-hero-description { margin: 0; max-width: 445px; color: #a8bfbb; font-size: 15px; line-height: 1.9; }
+.mc-hero-actions { justify-content: flex-start; margin-top: 32px; gap: 12px; flex-wrap: wrap; }
+.mc-button { border-radius: 10px; }
+.mc-hero-actions .mc-button { min-height: 51px; padding: 13px 20px; font-size: 13px; }
+.mc-button-primary { background: linear-gradient(135deg,#6ee7b7,#34d399); border-color: #a7f3d040; color: #063a2a; box-shadow: 0 7px 25px #10b9811a,inset 0 1px #ffffff70; }
+.mc-button-primary:hover { background: linear-gradient(135deg,#a7f3d0,#6ee7b7); border-color: #a7f3d0; }
+.mc-button-outline { border-color: #d2f5e633; background: #e5fff807; box-shadow: inset 0 1px #ffffff09; }
+.mc-map-card { position: relative; min-width: 0; margin: 0; padding: 23px 24px 15px; border: 1px solid #d9fff329; border-radius: 25px; background: linear-gradient(145deg,#d4fff314,#b2d9c804 70%); box-shadow: 0 25px 65px #00140f35,inset 0 1px #ffffff1c; -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
+.mc-map-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; position: relative; z-index: 1; }
+.mc-map-heading p { color: #d9c18a; letter-spacing: .16em; font-size: 9px; margin-bottom: 7px; }
+.mc-map-heading h2 { display: flex; align-items: center; gap: 7px; font-size: 18px; font-weight: 650; color: #e9faf0; }
+.mc-map-heading h2 svg { color: #8eeac1; }
+.mc-map-country { padding: 5px 11px; border: 1px solid #dcfce718; border-radius: 20px; color: #acc8bb; font-size: 11px; background: #dcfce706; }
+.mc-map-stage { position: relative; margin: 12px -10px 0; }
+.mc-county-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.mc-map-label { fill: #e7fff2; font-family: var(--app-font-sans); font-size: 13px; font-weight: 650; letter-spacing: 2px; paint-order: stroke; stroke: #0c382680; stroke-width: 3px; stroke-linejoin: round; }
+.mc-map-label-small { font-size: 8px; letter-spacing: 3.5px; font-weight: 400; }
+.mc-map-north { fill: #d4b263; font-size: 10px; letter-spacing: 1px; }
+.mc-kenya-inset { position: absolute; bottom: 64px; left: 0; width: 86px; text-align: center; padding: 8px 5px; background: #0d262b8c; border: 1px solid #b6e9d512; border-radius: 13px; }
+.mc-kenya-inset svg { display: block; width: 100%; height: auto; }
+.mc-kenya-shape { fill: #c7efdd13; stroke: #b6d8c65c; stroke-width: .7; }
+.mc-kenya-highlight { fill: #d4b263; stroke: #f2dca0; stroke-width: .6; }
+.mc-kenya-inset > span { display: block; color: #a6bcb1; font-size: 7px; line-height: 1.5; margin-top: 3px; }
+.mc-map-caption { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin: -5px 9px 17px; position: relative; }
+.mc-map-caption > span { border: 1px solid #b6f5cf20; color: #bad8c9; background: #12362b65; border-radius: 8px; padding: 6px 9px; font-size: 10px; }
+.mc-map-caption > a { margin-left: auto; display: flex; align-items: center; gap: 3px; color: #dfc88c; font-size: 10px; padding: 6px 0; }
+.mc-map-constituencies { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; padding-top: 14px; border-top: 1px solid #d1fae51a; }
+.mc-map-constituencies a { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 10px; color: #bdd5cb; padding: 8px; border: 1px solid #d1fae514; border-radius: 7px; background: #e5fff803; }
+.mc-map-constituencies a:hover { background: #d1fae512; border-color: #d4b26370; color: #f0dfb1; }
+.mc-map-source { color: #8faea2; font-size: 8px; margin-top: 14px; line-height: 1.6; text-align: center; }
+.mc-map-source a { text-decoration: underline; text-underline-offset: 3px; }
+.mc-platform-strip { background: #d4fff304; border-block-color: #ddffef0f; }
+.mc-platform-strip p { color: #a1b9b1; }
+.mc-platform-strip .mc-public-wrap > div { color: #b5cbc2; }
+.mc-facts { border-bottom: 0; padding: 30px 0 0; }
+.mc-facts-grid { gap: 14px; padding: 0; }
+.mc-facts-grid > div { padding: 27px 15px; border: 1px solid #ddfff01c; border-radius: 17px; background: linear-gradient(135deg,#e2fff00c,#d1fae503); box-shadow: inset 0 1px #ffffff0c; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.mc-facts strong { color: #d9eddf; font-size: 31px; }
+.mc-facts span { color: #a1b9b1; font-size: 9px; }
+.mc-feature-card, .mc-geography-card { border-color: #dcfce71c; border-radius: 18px; background: linear-gradient(140deg,#d1fae50a,#ffffff02); box-shadow: 0 12px 28px #00100a0f,inset 0 1px #ffffff0a; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+.mc-feature-card:hover { background: #d1fae50d; border-color: #b7eac542; }
+.mc-feature-card p, .mc-section-heading > p:last-child { color: #a6bdb6; }
+.mc-geography-section { background: #e5fff802; border-block-color: #d1fae50c; }
+.mc-geography-card { scroll-margin-top: 105px; }
+.mc-geography-card:target { border-color: #d4b2639c; box-shadow: 0 0 0 3px #d4b26310; }
+.mc-geography-card > p { color: #a4bfb2; }
+.mc-geography-card li { color: #b6d0c4; border-color: #d1fae512; background: #d1fae503; }
+.mc-access-callout { border-radius: 23px; border-color: #e8d49b33; background: radial-gradient(ellipse at top right,#d4b26313,transparent 70%),linear-gradient(130deg,#b6e9d50c,#ffffff02); box-shadow: inset 0 1px #ffffff12; -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
+@supports not (backdrop-filter: blur(1px)) { .mc-map-card,.mc-feature-card,.mc-geography-card,.mc-facts-grid > div,.mc-access-callout { background-color: #19322f; } }
+@media(max-width:1050px) { .mc-hero-grid { gap: 28px; } .mc-hero h1 { font-size: 48px; } .mc-map-card { padding: 20px 17px 14px; } .mc-map-caption > a { margin-left: 0; } }
+@media(max-width:800px) { .mc-hero-grid { grid-template-columns: 1fr; gap: 38px; } .mc-hero { padding: 50px 0 55px; } .mc-hero-copy { text-align: center; } .mc-hero-description,.mc-hero-subtitle { margin-inline: auto; } .mc-hero-actions { justify-content: center; } .mc-hero h1 { font-size: clamp(43px,8vw,66px); } .mc-map-card { width: min(100%,520px); margin-inline: auto; } .mc-facts-grid { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:550px) { .mc-hero-actions { align-items: stretch; } .mc-hero-subtitle { font-size: 18px; } .mc-eyebrow { font-size: 9px; } .mc-hero-actions .mc-button { width: 100%; } .mc-map-heading h2 { font-size: 16px; } .mc-kenya-inset { width: 70px; left: 5px; } .mc-map-caption { margin-bottom: 13px; gap: 6px; } .mc-map-caption > span { font-size: 9px; } .mc-map-constituencies a { font-size: 9px; padding: 8px 6px; } .mc-facts-grid { gap: 10px; } .mc-facts-grid > div { padding: 22px 10px; } .mc-access-callout { padding: 28px; } }
