@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Shield, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { PoweredBy } from "@/components/powered-by";
 import brandIcon from "@assets/brand-icon.png";
 import { useAuth } from "@/lib/auth";
 import "./access.css";
@@ -37,7 +38,9 @@ export default function Login() {
         <p className="cc-access-help">Need an account or password reset?<br /><span>Contact your system administrator.</span></p>
         <Link href="/" className="cc-access-back">← Back to Makueni Command Centre</Link>
       </div>
+      <footer className="cc-login-footer"><PoweredBy /></footer>
     </section>
     <aside className="cc-access-visual" aria-label="Makueni workspace"><div><strong>MC_OS</strong><span>Makueni County</span><p>[ SECURE ACCESS ]<br />[ TEAM WORKSPACE ]<br />[ ROLE BASED PERMISSIONS ]</p></div></aside>
   </main>;
 }
+
