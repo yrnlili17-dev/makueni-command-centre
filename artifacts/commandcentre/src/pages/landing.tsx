@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Menu, X, Database, Users, Calendar, Map, BarChart3, ShieldCheck, ClipboardList, Wallet, ChevronRight } from "lucide-react";
+import { MakueniLandingMap } from "@/components/makueni-landing-map";
 import { PoweredBy } from "@/components/powered-by";
 import brandIcon from "@assets/brand-icon.png";
 import { useAuth } from "@/lib/auth";
@@ -36,13 +37,13 @@ export default function Landing() {
       <div className="mc-header-actions"><Link href={appHref} className="mc-login-link">{user ? "Dashboard" : "Log In"}</Link><Link href={appHref} className="mc-button mc-button-primary">Open Command Centre</Link><button type="button" className="mc-public-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} aria-controls="public-mobile-navigation" onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={21} /> : <Menu size={21} />}</button></div>
     </div>{menuOpen && <nav id="public-mobile-navigation" className="mc-public-mobile-nav" aria-label="Mobile">{nav.map(item => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>)}</nav>}</header>
     <main id="public-content">
-      <section className="mc-hero"><div className="mc-public-wrap">
-        <p className="mc-eyebrow"><span /> ONE COUNTY. ONE TEAM. ONE WORKSPACE.</p>
+      <section className="mc-hero"><div className="mc-public-wrap mc-hero-grid"><div className="mc-hero-copy">
+        <p className="mc-eyebrow"><span /> KARIBU · WELCOME TO MAKUENI</p>
         <h1>Makueni<br /><span>Command Centre</span> OS</h1>
-        <p className="mc-hero-subtitle">One place to coordinate the whole team.</p>
+        <p className="mc-hero-subtitle">Your people. Your county. One connected workspace.</p>
         <p className="mc-hero-description">Contacts, field reports, volunteers, events and administration — together in the Makueni County workspace.</p>
         <div className="mc-hero-actions"><Link href={appHref} className="mc-button mc-button-primary">{user ? "Open Dashboard" : "Log In to Your Workspace"}<ArrowRight size={18} /></Link><a href="#features" className="mc-button mc-button-outline">Explore Features</a></div>
-      </div></section>
+      </div><MakueniLandingMap /></div></section>
       <section className="mc-platform-strip" aria-label="Workspace overview"><div className="mc-public-wrap"><p>CONNECTED WORKFLOWS FOR YOUR EXISTING TEAM AND RECORDS</p><div>{["Contact Management", "Field Reports", "Volunteer Records", "Events & Scheduling", "Reporting", "Administration"].map(label => <span key={label}>{label}</span>)}</div></div></section>
       <section className="mc-facts"><div className="mc-public-wrap mc-facts-grid">{[["6", "CONSTITUENCIES"], ["30", "COUNTY ASSEMBLY WARDS"], ["16", "ADMINISTRATIVE DIVISIONS"], ["127", "SUB-LOCATIONS"]].map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div></section>
       <section id="features" className="mc-public-section"><div className="mc-public-wrap">
@@ -51,11 +52,12 @@ export default function Landing() {
       </div></section>
       <section id="makueni" className="mc-public-section mc-geography-section"><div className="mc-public-wrap">
         <div className="mc-section-heading"><p className="mc-kicker">MAKUENI COUNTY</p><h2>Six constituencies. Thirty wards.</h2><p>County geography and the existing IEBC 2022 register reference. These reference figures are separate from your private contact records.</p></div>
-        <div className="mc-geography-grid">{MAKUENI_REGISTER_SUMMARY.map(item => <article key={item.constituency} className="mc-geography-card"><h3>{item.constituency}</h3><p>{item.wards.length} wards · {item.stations.toLocaleString("en-KE")} polling stations</p><ul>{item.wards.map(ward => <li key={ward.ward}>{ward.ward}</li>)}</ul></article>)}</div>
+        <div className="mc-geography-grid">{MAKUENI_REGISTER_SUMMARY.map(item => <article key={item.constituency} id={`constituency-${item.constituency.toLowerCase().replace(/\s+/g, "-")}`} className="mc-geography-card"><h3>{item.constituency}</h3><p>{item.wards.length} wards · {item.stations.toLocaleString("en-KE")} polling stations</p><ul>{item.wards.map(ward => <li key={ward.ward}>{ward.ward}</li>)}</ul></article>)}</div>
       </div></section>
       <section id="access" className="mc-public-section"><div className="mc-public-wrap mc-access-callout"><div><p className="mc-kicker">YOUR TEAM'S WORKSPACE</p><h2>Ready to get to work?</h2><p>Sign in with your assigned account to access your team's records and tools.</p></div><Link href={appHref} className="mc-button mc-button-primary">Open Command Centre <ArrowRight size={18} /></Link></div></section>
     </main>
     <footer className="mc-public-footer"><div className="mc-public-wrap"><div><strong>Makueni Command Centre</strong><p>Prof. Philip Kaloki · Makueni County</p></div><Link href="/login">Staff Log In</Link><PoweredBy /></div></footer>
   </div>;
 }
+
 
