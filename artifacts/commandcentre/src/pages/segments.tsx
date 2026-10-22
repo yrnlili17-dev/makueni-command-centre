@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "wouter";
 import { parseRegistrySummary } from "../lib/contact-summary";
 import {
   useListSegments, useCreateSegment, useDeleteSegment,
@@ -225,7 +226,7 @@ export default function Segments() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="font-mono text-xs font-bold tracking-wider">MAKUENI COUNTY · ALL 30 WARDS</h2>
-            <p className="text-[10px] text-muted-foreground mt-1">Contact counts from the constituent registry, including SQL imports. Saved segments are managed separately below.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Contact counts from the constituent registry, including SQL imports. Select a ward to view its contact records. Saved segments are managed separately below.</p>
           </div>
           <button type="button" onClick={() => void loadContactCounts()} disabled={countsLoading} className="border border-border px-3 py-2 font-mono text-[10px] hover:bg-secondary disabled:opacity-50">{countsLoading ? "REFRESHING…" : "REFRESH COUNTS"}</button>
           <button type="button" onClick={() => setShowWardDirectory(v => !v)} className="border border-border px-3 py-2 font-mono text-[10px] hover:bg-secondary">{showWardDirectory ? "HIDE WARDS" : "SHOW WARDS"}</button>
@@ -237,11 +238,12 @@ export default function Segments() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
             {[...WARDS, "Unknown"].filter(w => w.toLowerCase().includes(wardSearch.trim().toLowerCase())).map(ward => {
               const saved = (segments ?? []).filter(s => (s.criteria as Record<string, any> | null)?.ward === ward);
-              return <div key={ward} className="min-w-0 border border-border p-3 bg-secondary/20">
+              return <Link key={ward} href={`/voters-db?${new URLSearchParams({ ward: ward === "Unknown" ? "unknown" : ward })}`} aria-label={`View contacts in ${ward === "Unknown" ? "Unknown ward" : ward}`} className="block min-w-0 border border-border p-3 bg-secondary/20 rounded-lg transition-colors hover:border-primary/60 hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2">
                 <p className="font-mono text-[11px] font-semibold break-words">{ward}</p>
                 <p className="font-mono text-[10px] text-muted-foreground mt-1">{countsLoading ? "Loading…" : wardCounts === null ? "Contacts unavailable" : `${(wardCounts[ward] ?? 0).toLocaleString()} contact records`}</p>
                 <p className="font-mono text-[9px] text-muted-foreground mt-1">{saved.length} saved {saved.length === 1 ? "segment" : "segments"}</p>
-              </div>;
+                <span className="inline-flex items-center gap-1 text-[10px] text-primary mt-2">View contact records <ChevronRight className="w-3 h-3" /></span>
+              </Link>;
             })}
           </div>
           {[...WARDS, "Unknown"].filter(w => w.toLowerCase().includes(wardSearch.trim().toLowerCase())).length === 0 && <p className="text-xs text-muted-foreground">No matching Makueni ward.</p>}
@@ -493,4 +495,5 @@ export default function Segments() {
     </div>
   );
 }
+
 

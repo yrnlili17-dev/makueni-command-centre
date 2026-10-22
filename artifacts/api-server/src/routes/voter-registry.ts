@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { parseRegistryWardFilter } from "../data/registry-ward-filter";
 import { db, voterRegistryTable, voterSyncLogsTable, iebcCredentialsTable } from "@workspace/db";
 import { eq, sql, desc, ilike, or, and, inArray, isNull } from "drizzle-orm";
 import { MAKUENI_CONSTITUENCIES, MAKUENI_WARDS } from "../data/makueni-geography";
@@ -81,7 +82,10 @@ router.get("/", async (req, res) => {
     );
     if (searchCondition) conditions.push(searchCondition);
   }
-  if (ward) { if (!isMakueniWard(ward)) { res.status(400).json({ error: "Select a valid Makueni County ward" }); return; } conditions.push(eq(voterRegistryTable.ward, ward)); }
+  const wardFilter = parseRegistryWardFilter(ward, WARDS);
+  if (wardFilter.kind === "invalid") { res.status(400).json({ error: "Select a valid Makueni County ward or Unknown" }); return; }
+  if (wardFilter.kind === "unknown") conditions.push(isNull(voterRegistryTable.ward));
+  if (wardFilter.kind === "known") conditions.push(eq(voterRegistryTable.ward, wardFilter.ward));
   if (status) conditions.push(eq(voterRegistryTable.status, status));
   if (source) conditions.push(eq(voterRegistryTable.source, source));
 
@@ -416,4 +420,5 @@ router.get("/sync-logs", async (req, res) => {
 });
 
 export default router;
+
 
