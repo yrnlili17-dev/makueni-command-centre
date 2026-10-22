@@ -863,14 +863,15 @@ export type ResearchTopic = typeof RESEARCH_TOPICS[number];
 /** Deterministic retrieval; user text is never fetched as a URL or executed. */
 export function getMakueniResearch(query = "", topic: ResearchTopic = "all", limit = 100) {
   const cleaned = query.trim().slice(0, 400).toLowerCase();
-  const terms = cleaned.match(/[\p{L}\p{N}-]+/gu) ?? [];
-  const stop = new Set(["a", "an", "the", "is", "was", "are", "what", "how", "of", "in", "for", "to", "and", "county", "makueni", "show", "tell", "me", "about", "current", "latest", "details", "summarize", "compare"]);
-  const meaningful = terms.filter(t => !stop.has(t));
+  const tokens = (value: string) => (value.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []).map(t => t.length > 4 && t.endsWith("s") ? t.slice(0, -1) : t);
+  const stop = new Set(["a", "an", "the", "is", "was", "are", "what", "how", "of", "in", "for", "to", "and", "county", "makueni", "show", "tell", "me", "about", "current", "latest", "detail", "summarize", "compare", "does", "do", "say", "cidp", "plan", "please"]);
+  const meaningful = tokens(cleaned).filter(t => !stop.has(t));
   const take = Number.isFinite(limit) ? Math.max(1, Math.min(100, Math.floor(limit))) : 100;
   const ranked = RESEARCH_FACTS.filter(f => f.countyCode === "017" && (topic === "all" || f.topic === topic))
     .map(f => {
-      const words = `${f.label} ${f.period} ${f.topic} ${f.tags.join(" ")}`.toLowerCase();
-      return { fact: f, score: meaningful.reduce((sum, term) => sum + (words.includes(term) ? 1 : 0), 0) };
+      const labels = new Set(tokens(`${f.label} ${f.topic} ${f.tags.join(" ")}`));
+      const period = new Set(tokens(f.period));
+      return { fact: f, score: meaningful.reduce((sum, term) => sum + (labels.has(term) ? 3 : period.has(term) ? 1 : 0), 0) };
     })
     .filter(r => !meaningful.length || r.score > 0)
     .sort((a, b) => b.score - a.score || a.fact.id.localeCompare(b.fact.id))

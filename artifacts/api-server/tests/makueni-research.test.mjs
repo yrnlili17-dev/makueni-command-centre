@@ -59,3 +59,12 @@ test('unreviewed discoveries cannot become numerical facts or candidate assessme
   assert.match(buildMakueniResearchAnswer('unmatched'), /No reviewed indicator/);
   assert.match(buildCountyEvidenceReview().note, /not a candidate assessment/);
 });
+
+
+test('natural questions rank the requested indicator above general CIDP metadata', () => {
+  const rows = getMakueniResearch('What does the Makueni CIDP say about safe-water baselines and targets?', 'all', 6).facts;
+  assert.ok(rows.some(f => f.id === 'safe-water-baseline-2021'));
+  assert.ok(rows.some(f => f.id === 'safe-water-target-2027'));
+  assert.ok(rows.every(f => f.topic === 'water'));
+  assert.equal(getMakueniResearch('health facilities', 'all', 1).facts[0].topic, 'health');
+});
