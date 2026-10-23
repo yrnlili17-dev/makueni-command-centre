@@ -1,0 +1,72 @@
+MAKUENI COMBINED CONTACT IMPORT
+
+1. Select the Makueni Supabase project used by the Render application's
+   DATABASE_URL. The KaitiOS project is a separate database.
+
+2. Open SQL Editor, paste all of 01_create_contacts_staging.sql and Run.
+   An uploaded_rows result of 0 is expected before the CSV upload.
+
+3. Open Table Editor and select public.makueni_contacts_stage_20261021.
+   Choose Insert > Import data from CSV. Upload the previously supplied
+   makueni_combined_contacts_full.csv (126,445 rows, approximately 14 MB).
+   Keep phone and source_rows as text. Match the ten CSV headers exactly.
+   Leave import_state, registry_id, import_message and processed_at at defaults.
+   The table is restricted to privileged database access; do not add public
+   access policies or use an anon key to upload the file.
+
+4. Open SQL Editor, paste all of 02_merge_contacts.sql and Run once.
+   It stops if staging does not contain all 126,445 distinct phone entries
+   representing the 127,816 original source rows.
+
+5. Read the two result tables: inserted/updated totals, then quality notes.
+   All 126,445 uploaded entries are imported or linked to existing records,
+   including the 1,015 flagged entries. Flags remain attached for later
+   correction. Refresh the application's Constituent Database afterwards.
+
+BEHAVIOR
+
+- Normalize phone matching across 07..., 7..., +254... and 254... formats.
+- Add new contacts and fill blank fields of a single existing match.
+- Preserve existing names, wards, constituency, identity fields and status.
+- Back up existing records that will be changed into the private table
+  public.makueni_contacts_backup_20261021 before modifying them.
+- If several existing records share a phone, link the CSV row to the lowest
+  existing ID and attach a note. Do not delete the other existing records.
+- Flagged new records retain their phone/name and notes, with location fields
+  left blank. Invalid phone values remain uncorrected for later review.
+- Do not invent wards. Unspecified Kibwezi remains NULL in sub_county and
+  its original location stays available in staging and import notes.
+- New contacts have status pending. No electoral or identity verification is
+  performed. Existing record statuses are preserved.
+- No SMS is sent and no consent status is inferred.
+- Only public.voter_registry is updated, not members/volunteers or a separate
+  campaign's database. Segmentation based on another table is not synchronized.
+
+RERUNS AND ERRORS
+
+- Re-running setup does not erase the uploaded CSV.
+- Do not upload the same CSV again after success; phone is the staging primary
+  key. If an upload is interrupted, inspect which rows arrived before retrying.
+- Re-running the merge ignores rows already marked inserted or updated.
+  It does not insert duplicate contacts from those rows. Review flags are
+  metadata, not exclusions or a separate approval queue.
+- The merge is one transaction. If a query times out or a lock is unavailable,
+  none of its changes commit. Uploaded staging data is retained. Do not delete
+  or reset tables. Share the exact error so the batch size can be adjusted.
+- The backup contains original rows touched by this import, not a full database
+  backup. Keep your normal database backup as well. Any restoration should be
+  planned against subsequent edits rather than blindly overwriting them.
+
+VALIDATION
+
+The SQL was parsed and executed against an isolated PostgreSQL-compatible
+test engine. Fixtures covered normalized matching, geography/source conflicts,
+existing duplicates, inclusion of flagged entries, blank preservation, backups,
+re-running the import and an incomplete-upload failure. These checks are not
+confirmation of execution in your Supabase project.
+
+Supabase CSV import documentation:
+https://supabase.com/docs/guides/database/import-data
+
+A full-file test also loaded all 126,445 CSV entries into an isolated empty
+registry, imported all 126,445 and retained 1,015 quality flags.
