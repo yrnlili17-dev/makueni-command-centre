@@ -1,0 +1,2037 @@
+diff --git a/.github/workflows/validate.yml b/.github/workflows/validate.yml
+index 90211fb..d0bd25e 100644
+--- a/.github/workflows/validate.yml
++++ b/.github/workflows/validate.yml
+@@ -27,7 +27,7 @@ jobs:
+       - name: Install dependencies
+         run: pnpm install --frozen-lockfile
+       - name: Test API access policy
+-        run: node --experimental-strip-types --test artifacts/api-server/tests/api-access.test.mjs artifacts/commandcentre/tests/contact-summary.test.mjs artifacts/api-server/tests/registry-ward-filter.test.mjs artifacts/api-server/tests/iebc-history.test.mjs artifacts/api-server/tests/makueni-research.test.mjs artifacts/api-server/tests/makueni-monitoring-keywords.test.mjs artifacts/api-server/tests/social-storage-policy.test.mjs artifacts/api-server/tests/poll-questions.test.mjs artifacts/api-server/tests/operational-validation.test.mjs artifacts/commandcentre/tests/turnout-preview.test.mjs artifacts/commandcentre/tests/workspace-refresh.test.mjs artifacts/commandcentre/tests/pwa.test.mjs
++        run: node --experimental-strip-types --test artifacts/api-server/tests/api-access.test.mjs artifacts/commandcentre/tests/contact-summary.test.mjs artifacts/api-server/tests/registry-ward-filter.test.mjs artifacts/api-server/tests/iebc-history.test.mjs artifacts/api-server/tests/makueni-research.test.mjs artifacts/api-server/tests/makueni-monitoring-keywords.test.mjs artifacts/api-server/tests/social-storage-policy.test.mjs artifacts/api-server/tests/poll-questions.test.mjs artifacts/api-server/tests/operational-validation.test.mjs artifacts/api-server/tests/ward-names.test.mjs artifacts/commandcentre/tests/turnout-preview.test.mjs artifacts/commandcentre/tests/workspace-refresh.test.mjs artifacts/commandcentre/tests/pwa.test.mjs
+       - name: Typecheck and build
+         env:
+           PORT: "3000"
+diff --git a/artifacts/api-server/src/lib/candidate-plan.ts b/artifacts/api-server/src/lib/candidate-plan.ts
+new file mode 100644
+index 0000000..8e3e8ce
+--- /dev/null
++++ b/artifacts/api-server/src/lib/candidate-plan.ts
+@@ -0,0 +1,127 @@
++import { db, volunteersTable, voterRegistryTable, pollingStationsTable, milestonesTable } from "@workspace/db";
++import { sql } from "drizzle-orm";
++import { MAKUENI_WARDS } from "../data/makueni-geography";
++import { computeTurnoutForecast } from "./turnout-forecast";
++import { canonicalWard } from "./ward-lookup";
++
++export type PlanMilestone = { title: string; description: string; dueDate: string; category: string; priority: "low" | "medium" | "high" | "critical"; owner: string; phase: string };
++
++const CANDIDATE = () => process.env.CANDIDATE_NAME?.trim() || "Prof. Philip Kaloki";
++const SEAT = "Governor, Makueni County";
++
++/** Live campaign facts the plan is built from (also given to the AI model). */
++export async function campaignPlanFacts() {
++  const [forecast, vols, contacts, stations, milestones] = await Promise.all([
++    computeTurnoutForecast(),
++    db.select({ ward: volunteersTable.ward, active: sql<number>`count(*) filter (where ${volunteersTable.status} = 'active')`, pending: sql<number>`count(*) filter (where ${volunteersTable.status} = 'pending')` }).from(volunteersTable).groupBy(volunteersTable.ward),
++    db.select({ ward: voterRegistryTable.ward, n: sql<number>`count(*)` }).from(voterRegistryTable).where(sql`${voterRegistryTable.status} <> 'rejected'`).groupBy(voterRegistryTable.ward),
++    db.select({ total: sql<number>`count(*)`, withAgent: sql<number>`count(nullif(trim(${pollingStationsTable.agentName}), ''))` }).from(pollingStationsTable),
++    db.select({ total: sql<number>`count(*)`, done: sql<number>`count(*) filter (where ${milestonesTable.status} = 'completed')` }).from(milestonesTable),
++  ]);
++  const volByWard = new Map<string, number>();
++  let pendingVolunteers = 0;
++  for (const v of vols) { const w = canonicalWard(v.ward); if (w) volByWard.set(w, (volByWard.get(w) ?? 0) + Number(v.active)); pendingVolunteers += Number(v.pending); }
++  const contactsByWard = new Map<string, number>();
++  for (const c of contacts) { const w = canonicalWard(c.ward); if (w) contactsByWard.set(w, (contactsByWard.get(w) ?? 0) + Number(c.n)); }
++  const wards = forecast.wards.map(w => ({ ...w, volunteers: volByWard.get(w.ward) ?? 0, contacts: contactsByWard.get(w.ward) ?? 0 }));
++  return {
++    candidate: CANDIDATE(), seat: SEAT,
++    registered: forecast.totals.registered, forecast: forecast.totals,
++    topGotvWards: [...wards].sort((a, b) => a.gotvRank - b.gotvRank).slice(0, 5).map(w => ({ ward: w.ward, upside: w.gotvUpside, registered: w.registered })),
++    wardsWithoutVolunteers: wards.filter(w => w.volunteers === 0).sort((a, b) => b.registered - a.registered).map(w => w.ward),
++    lowestReachWards: [...wards].filter(w => w.registered > 0).sort((a, b) => a.contacts / a.registered - b.contacts / b.registered).slice(0, 5).map(w => w.ward),
++    activeVolunteers: [...volByWard.values()].reduce((a, b) => a + b, 0), pendingVolunteers,
++    contacts: [...contactsByWard.values()].reduce((a, b) => a + b, 0),
++    stations: Number(stations[0]?.total ?? 0), stationsWithAgents: Number(stations[0]?.withAgent ?? 0),
++    milestones: Number(milestones[0]?.total ?? 0), milestonesDone: Number(milestones[0]?.done ?? 0),
++  };
++}
++export type PlanFacts = Awaited<ReturnType<typeof campaignPlanFacts>>;
++
++export function factsDigest(f: PlanFacts): string {
++  return [
++    `Candidate: ${f.candidate} · Seat: ${f.seat} (6 constituencies, 30 wards).`,
++    `Registered voters (IEBC 2022): ${f.registered.toLocaleString("en-KE")} across ${f.stations.toLocaleString("en-KE")} polling stations; ${f.stationsWithAgents} have an agent.`,
++    `Turnout model: ${f.forecast.predictedTurnoutRate}% turnout, ${f.forecast.predictedCandidateVotes.toLocaleString("en-KE")} forecast votes (${f.forecast.predictedCandidateShare}%). ${f.forecast.wardsWithSavedAssumptions}/${f.forecast.wardsInModel} wards have team estimates.`,
++    `Top GOTV wards: ${f.topGotvWards.map(w => `${w.ward} (${w.upside.toLocaleString("en-KE")})`).join(", ")}.`,
++    `Volunteers: ${f.activeVolunteers} active, ${f.pendingVolunteers} awaiting approval; ${f.wardsWithoutVolunteers.length} wards have none${f.wardsWithoutVolunteers.length ? ` (largest: ${f.wardsWithoutVolunteers.slice(0, 6).join(", ")})` : ""}.`,
++    `Constituent contacts in wards: ${f.contacts.toLocaleString("en-KE")}; lowest reach: ${f.lowestReachWards.join(", ")}.`,
++    `Existing plan milestones: ${f.milestones} (${f.milestonesDone} completed).`,
++  ].join("\n");
++}
++
++const iso = (d: Date) => d.toISOString().slice(0, 10);
++const addDays = (d: Date, n: number) => new Date(d.getTime() + n * 86_400_000);
++
++/**
++ * Candidate campaign plan from today to election day, phased backwards from the
++ * election date and shaped by live ward data. Statutory dates are placeholders to
++ * confirm against the IEBC and party timetables when they are published.
++ */
++export function buildCandidatePlan(f: PlanFacts, electionDate: string, todayIso = iso(new Date()), focus?: string): PlanMilestone[] {
++  const today = new Date(`${todayIso}T00:00:00Z`);
++  const election = new Date(`${electionDate}T00:00:00Z`);
++  const daysLeft = Math.max(1, Math.round((election.getTime() - today.getTime()) / 86_400_000));
++  // Place a milestone N days before the election, never in the past; spread early items from today.
++  // N days before the election; if that date has already passed, schedule it a week from today.
++  const before = (n: number) => { const d = addDays(election, -n); return iso(d < today ? addDays(today, Math.min(7, daysLeft - 1)) : d); };
++  const fromNow = (n: number) => iso(addDays(today, Math.min(n, daysLeft - 1)));
++  const gotv = f.topGotvWards.map(w => w.ward).join(", ");
++  const noVol = f.wardsWithoutVolunteers;
++  const agentGap = Math.max(0, f.stations - f.stationsWithAgents);
++  const C = f.candidate;
++  const plan: PlanMilestone[] = [
++    // Phase 1 · Foundation
++    { phase: "Foundation", title: "Confirm campaign leadership and budget", description: `Appoint campaign manager, finance lead, field director, communications lead and legal adviser for ${C}'s governor bid; approve a phased budget to ${electionDate}.`, dueDate: fromNow(14), category: "Logistics", priority: "critical", owner: "Candidate & campaign manager" },
++    { phase: "Foundation", title: "Appoint coordinators for all 30 wards", description: noVol.length ? `${noVol.length} wards have no active volunteer. Start with the largest: ${noVol.slice(0, 6).join(", ")}.` : "Every ward has an active volunteer; confirm one accountable coordinator per ward and 6 constituency leads.", dueDate: fromNow(30), category: "Ground Game", priority: "critical", owner: "Field director" },
++    { phase: "Foundation", title: "Approve pending volunteer registrations", description: f.pendingVolunteers ? `${f.pendingVolunteers} online registrations are awaiting approval in Volunteers. Call, verify ward and activate.` : "Review new online registrations weekly and activate within 48 hours.", dueDate: fromNow(7), category: "Ground Game", priority: "high", owner: "Volunteer coordinator" },
++    { phase: "Foundation", title: "Clean and assign the contact database", description: `${f.contacts.toLocaleString("en-KE")} contacts are matched to wards. Resolve contacts without a ward and lift reach in ${f.lowestReachWards.slice(0, 3).join(", ")}.`, dueDate: fromNow(21), category: "Polling", priority: "high", owner: "Data lead" },
++    { phase: "Foundation", title: "Baseline opinion poll across 6 constituencies", description: "Run a ward-weighted baseline on name recognition, top issues and voting intention; use results to set ward turnout and support estimates in Turnout.", dueDate: fromNow(45), category: "Polling", priority: "high", owner: "Research lead" },
++    { phase: "Foundation", title: "Finalise manifesto and message house", description: "Lock the five pillars (Nduani development, markets & prices, water, agriculture, health) with costed, verifiable commitments and one-line messages per constituency.", dueDate: fromNow(60), category: "Messaging", priority: "high", owner: "Policy & communications leads" },
++    // Phase 2 · Build
++    { phase: "Build", title: "Fundraising plan and compliance set-up", description: "Open the campaign account, set monthly targets, enable M-Pesa collections and record every contribution for IEBC campaign-finance reporting.", dueDate: fromNow(30), category: "Fundraising", priority: "high", owner: "Finance lead" },
++    { phase: "Build", title: "Voter registration and transfer drive", description: "Mobilise first-time voters and residents registered elsewhere during IEBC registration windows; track sign-ups per ward.", dueDate: before(300), category: "Ground Game", priority: "high", owner: "Youth & field coordinators" },
++    { phase: "Build", title: "Stakeholder and opinion-leader engagement", description: "Meet elders, faith leaders, chamas, boda boda and market associations in every constituency; log them in KOL Network with follow-ups.", dueDate: before(240), category: "Events", priority: "medium", owner: "Political liaison" },
++    { phase: "Build", title: "Manifesto launch and constituency tour", description: "Public launch, then a pillar-by-pillar tour of all 6 constituencies with local media.", dueDate: before(200), category: "Media", priority: "high", owner: "Communications lead" },
++    // Phase 3 · Nomination
++    { phase: "Nomination", title: "Secure the party ticket", description: "Complete party nomination requirements and primaries. Confirm exact dates against the party and IEBC timetables when gazetted.", dueDate: before(130), category: "Legal", priority: "critical", owner: "Legal adviser" },
++    { phase: "Nomination", title: "Select running mate and file IEBC nomination", description: "Agree the deputy governor running mate; prepare clearance documents and file nomination papers with the IEBC returning officer.", dueDate: before(90), category: "Legal", priority: "critical", owner: "Candidate & legal adviser" },
++    // Phase 4 · Persuade
++    { phase: "Persuade", title: "Door-to-door in the top GOTV wards", description: `Prioritise ${gotv}: these wards hold the most likely supporters not yet projected to vote. Log every visit in Field Ops.`, dueDate: before(75), category: "Ground Game", priority: "critical", owner: "Field director" },
++    { phase: "Persuade", title: "Monthly tracking polls", description: "Repeat the baseline monthly; update ward support estimates in Turnout after each wave.", dueDate: before(60), category: "Polling", priority: "high", owner: "Research lead" },
++    { phase: "Persuade", title: "Rapid response and narrative monitoring", description: "Daily social-listening scan, 2-hour response target for false claims, weekly media brief.", dueDate: before(60), category: "Narrative", priority: "high", owner: "Communications lead" },
++    { phase: "Persuade", title: "Candidate debates and major rallies", description: "Prepare debate briefs per pillar; one major rally per constituency in the final two months.", dueDate: before(30), category: "Events", priority: "high", owner: "Campaign manager" },
++    // Phase 5 · Protect & GOTV
++    { phase: "Protect the vote", title: "Recruit polling agents for every station", description: `${agentGap.toLocaleString("en-KE")} of ${f.stations.toLocaleString("en-KE")} polling stations still need an agent. Recruit one agent and one reserve per station.`, dueDate: before(35), category: "Logistics", priority: "critical", owner: "Election-day lead" },
++    { phase: "Protect the vote", title: "Train agents and test results transmission", description: "Train every agent on Form 37A/B/C checks; run a full test of tally entry in Election Day.", dueDate: before(14), category: "Logistics", priority: "critical", owner: "Election-day lead" },
++    { phase: "Get out the vote", title: "GOTV contact programme", description: `SMS/WhatsApp and phone reminders to opted-in supporters, starting with ${gotv}.`, dueDate: before(7), category: "GOTV", priority: "critical", owner: "Field director" },
++    { phase: "Get out the vote", title: "Election-day transport and logistics", description: "Transport for elderly and distant voters, agent meals and airtime, ward command posts.", dueDate: before(3), category: "GOTV", priority: "high", owner: "Logistics lead" },
++    { phase: "Get out the vote", title: "Election day: turnout and tally war room", description: "Hourly turnout check-ins per ward; verify and record Form 37A results from every station.", dueDate: electionDate, category: "GOTV", priority: "critical", owner: "Campaign manager" },
++  ];
++  if (focus?.trim()) plan.unshift({ phase: "Focus", title: `Focus: ${focus.trim().slice(0, 80)}`, description: `Set a measurable target, owner and weekly review for "${focus.trim().slice(0, 160)}".`, dueDate: fromNow(14), category: "Logistics", priority: "high", owner: "Campaign manager" });
++  return plan.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
++}
++
++export function buildCandidateReadiness(f: PlanFacts) {
++  const items: Array<{ domain: string; item: string; weight: "low" | "medium" | "high"; notes?: string }> = [
++    { domain: "Legal & Compliance", item: "Party membership and nomination requirements confirmed in writing", weight: "high" },
++    { domain: "Legal & Compliance", item: "IEBC clearance documents ready (ID, degree certificate, tax compliance, EACC self-declaration)", weight: "high", notes: "Governor candidates must hold a degree recognised in Kenya." },
++    { domain: "Legal & Compliance", item: "Running mate agreed and cleared", weight: "high" },
++    { domain: "Financial", item: "Campaign bank account and M-Pesa collections set up", weight: "high" },
++    { domain: "Financial", item: "Budget approved by phase with monthly expenditure tracking", weight: "high" },
++    { domain: "Ground Game", item: "Coordinator appointed in all 30 wards", weight: "high", notes: f.wardsWithoutVolunteers.length ? `${f.wardsWithoutVolunteers.length} wards still have no active volunteer.` : "All wards covered." },
++    { domain: "Ground Game", item: "Polling agent and reserve for every station", weight: "high", notes: `${f.stationsWithAgents}/${f.stations} stations have an agent.` },
++    { domain: "Ground Game", item: "Door-to-door plan for top GOTV wards", weight: "high", notes: f.topGotvWards.map(w => w.ward).join(", ") },
++    { domain: "Messaging & Brand", item: "Manifesto with costed commitments for all five pillars", weight: "high" },
++    { domain: "Messaging & Brand", item: "Slogan, visual identity and Kikamba/Swahili/English materials", weight: "medium" },
++    { domain: "Media & PR", item: "Radio schedule on Kikamba-language and county stations, and press contacts list", weight: "medium" },
++    { domain: "Media & PR", item: "Crisis communication protocol and spokesperson", weight: "medium" },
++    { domain: "Polling & Intelligence", item: "Baseline poll completed and ward estimates entered in Turnout", weight: "high", notes: `${f.forecast.wardsWithSavedAssumptions}/${f.forecast.wardsInModel} wards have team estimates.` },
++    { domain: "Polling & Intelligence", item: "Opponent tracking and daily social listening", weight: "medium" },
++    { domain: "Technology & Data", item: "Contact database cleaned and assigned to wards", weight: "high", notes: `${f.contacts.toLocaleString("en-KE")} contacts in wards.` },
++    { domain: "Technology & Data", item: "SMS and WhatsApp providers active and tested", weight: "high" },
++    { domain: "Candidate Welfare", item: "Security plan, schedule management and transport", weight: "medium" },
++    { domain: "Candidate Welfare", item: "Rest days and health check-ups in the schedule", weight: "low" },
++  ];
++  return items;
++}
+diff --git a/artifacts/api-server/src/lib/direct-message.ts b/artifacts/api-server/src/lib/direct-message.ts
+new file mode 100644
+index 0000000..3f4a8a0
+--- /dev/null
++++ b/artifacts/api-server/src/lib/direct-message.ts
+@@ -0,0 +1,90 @@
++import { db, pool, messagingProvidersTable, type MessagingProvider } from "@workspace/db";
++import { and, eq, inArray } from "drizzle-orm";
++import { missingProviderSettings, sendMetaWhatsApp, toWhatsAppDigits } from "./channel-senders";
++
++/**
++ * One-to-one operational text (e.g. "you have been assigned a task") through the
++ * active SMS provider, falling back to the active WhatsApp provider. Campaign
++ * broadcasts still go through Messaging, which enforces consent and segments.
++ */
++export type DirectResult = { ok: true; channel: string; provider: string; providerMessageId: string } | { ok: false; error: string; channel?: string; provider?: string };
++
++const SMS = ["africastalking", "onfonmedia", "twilio"];
++const WHATSAPP = ["meta", "twilio_wa"];
++
++async function sendWith(provider: MessagingProvider, phone: string, body: string): Promise<string> {
++  const digits = toWhatsAppDigits(phone);
++  switch (provider.provider) {
++    case "meta":
++      return sendMetaWhatsApp(provider, digits, body);
++    case "onfonmedia": {
++      if (!provider.apiKey || !provider.username || !provider.apiSecret || !provider.senderId) throw new Error("Onfon Media settings are incomplete");
++      const r = await fetch("https://api.onfonmedia.co.ke/v1/sms/SendBulkSMS", {
++        method: "POST", headers: { "Content-Type": "application/json", AccessKey: provider.apiSecret },
++        body: JSON.stringify({ SenderId: provider.senderId, IsUnicode: /[^\x00-\x7F]/.test(body), IsFlash: false, MessageParameters: [{ Number: digits, Text: body }], ApiKey: provider.apiKey, ClientId: provider.username }),
++        signal: AbortSignal.timeout(15_000),
++      });
++      const p = await r.json().catch(() => ({})) as { ErrorCode?: number | string; ErrorDescription?: string; Data?: Array<{ MessageId?: string }> };
++      const id = p.Data?.[0]?.MessageId;
++      if (!r.ok || !["0", "000"].includes(String(p.ErrorCode ?? "")) || !id) throw new Error(p.ErrorDescription ?? `Onfon Media HTTP ${r.status}`);
++      return id;
++    }
++    case "twilio":
++    case "twilio_wa": {
++      const sid = provider.username; const sender = String(provider.senderId || provider.phoneNumber || "").replace(/^whatsapp:/i, "").trim();
++      if (!sid || !provider.apiKey || !sender) throw new Error("Twilio settings are incomplete");
++      const wa = provider.provider === "twilio_wa";
++      const form = new URLSearchParams({ To: `${wa ? "whatsapp:" : ""}+${digits}`, From: wa ? `whatsapp:${sender}` : sender, Body: body });
++      const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
++        method: "POST", headers: { Authorization: `Basic ${Buffer.from(`${sid}:${provider.apiKey}`).toString("base64")}`, "Content-Type": "application/x-www-form-urlencoded" },
++        body: form, signal: AbortSignal.timeout(15_000),
++      });
++      const p = await r.json().catch(() => ({})) as { sid?: string; message?: string };
++      if (!r.ok || !p.sid) throw new Error(p.message ?? `Twilio HTTP ${r.status}`);
++      return p.sid;
++    }
++    default: {
++      if (!provider.apiKey || !provider.username) throw new Error("Africa's Talking settings are incomplete");
++      const form = new URLSearchParams({ username: provider.username, to: `+${digits}`, message: body });
++      if (provider.senderId) form.set("from", provider.senderId);
++      const r = await fetch("https://api.africastalking.com/version1/messaging", {
++        method: "POST", headers: { apiKey: provider.apiKey, Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
++        body: form, signal: AbortSignal.timeout(15_000),
++      });
++      const p = await r.json().catch(() => ({})) as { SMSMessageData?: { Recipients?: Array<{ messageId?: string; status?: string; statusCode?: number }> } };
++      const res = p.SMSMessageData?.Recipients?.[0];
++      if (!r.ok || !res?.messageId || (res.statusCode !== undefined && res.statusCode >= 400)) throw new Error(res?.status ?? `Africa's Talking HTTP ${r.status}`);
++      return res.messageId;
++    }
++  }
++}
++
++export async function sendDirectText(phone: string | null | undefined, body: string): Promise<DirectResult> {
++  if (!phone || !/^254[17]\d{8}$/.test(toWhatsAppDigits(phone))) return { ok: false, error: "No valid Kenyan phone number on record" };
++  const providers = await db.select().from(messagingProvidersTable)
++    .where(and(eq(messagingProvidersTable.isActive, true), inArray(messagingProvidersTable.provider, [...SMS, ...WHATSAPP])));
++  const ordered = [...providers.filter(p => SMS.includes(p.provider)), ...providers.filter(p => WHATSAPP.includes(p.provider))]
++    .filter(p => !missingProviderSettings(p));
++  if (!ordered.length) return { ok: false, error: "No active SMS or WhatsApp provider is configured in Messaging" };
++  let last: DirectResult = { ok: false, error: "Not sent" };
++  for (const provider of ordered) {
++    const channel = SMS.includes(provider.provider) ? "sms" : "whatsapp";
++    try {
++      return { ok: true, channel, provider: provider.provider, providerMessageId: await sendWith(provider, phone, body) };
++    } catch (err) {
++      last = { ok: false, channel, provider: provider.provider, error: String(err instanceof Error ? err.message : err).slice(0, 300) };
++    }
++  }
++  return last;
++}
++
++let ready: Promise<void> | undefined;
++/** Additive and repeatable: one row per notification attempt for a volunteer task. */
++export function ensureTaskNotificationTable(): Promise<void> {
++  if (!ready) ready = pool.query(`CREATE TABLE IF NOT EXISTS public.volunteer_task_notifications (
++    id serial PRIMARY KEY, task_id integer NOT NULL, volunteer_id integer NOT NULL, channel text, provider text,
++    provider_message_id text, status text NOT NULL, error text, created_at timestamptz NOT NULL DEFAULT now());
++    CREATE INDEX IF NOT EXISTS volunteer_task_notifications_task_idx ON public.volunteer_task_notifications(task_id, created_at DESC);`)
++    .then(() => undefined).catch(e => { ready = undefined; throw e; });
++  return ready;
++}
+diff --git a/artifacts/api-server/src/lib/turnout-forecast.ts b/artifacts/api-server/src/lib/turnout-forecast.ts
+new file mode 100644
+index 0000000..09191f5
+--- /dev/null
++++ b/artifacts/api-server/src/lib/turnout-forecast.ts
+@@ -0,0 +1,76 @@
++import { db, pollingStationsTable, turnoutAssumptionsTable } from "@workspace/db";
++import { sql, inArray } from "drizzle-orm";
++import { MAKUENI_WARDS } from "../data/makueni-geography";
++
++const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
++
++// Baseline assumptions used for any ward that has no saved override.
++// These are configurable modelling defaults, not observed Makueni turnout; support is
++// intentionally neutral (50%) until the team sets ward-level estimates.
++export const DEFAULT_TURNOUT = 65;
++export const DEFAULT_SUPPORT = 50;
++
++const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
++
++export type WardForecast = {
++  ward: string; constituency: string; stations: number; registered: number;
++  expectedTurnoutRate: number; supportShare: number; turnoutRate: number; effectiveSupportShare: number;
++  predictedVotes: number; predictedCandidateVotes: number; gotvUpside: number; gotvRank: number;
++  hasSavedAssumption: boolean;
++};
++
++/**
++ * Transparent model shared by Turnout, Dashboard and Analytics: real registered-voter
++ * counts per ward (IEBC 2022 polling stations) × adjustable turnout/support assumptions.
++ */
++export async function computeTurnoutForecast(turnoutDelta = 0, supportDelta = 0) {
++  const [wardRows, assumptions] = await Promise.all([
++    db.select({
++      ward: pollingStationsTable.ward,
++      registered: sql<number>`coalesce(sum(${pollingStationsTable.registeredVoters}), 0)`,
++      stations: sql<number>`count(*)`,
++    }).from(pollingStationsTable).where(inArray(pollingStationsTable.ward, WARDS)).groupBy(pollingStationsTable.ward),
++    db.select().from(turnoutAssumptionsTable),
++  ]);
++  const aMap = new Map(assumptions.map(a => [a.ward, a]));
++  const constituencyOf = new Map(MAKUENI_WARDS.map(w => [w.ward as string, w.constituency as string]));
++
++  const wards = wardRows.map(w => {
++    const registered = Number(w.registered);
++    const asmp = aMap.get(w.ward);
++    const baseTurnout = asmp?.expectedTurnoutRate ?? DEFAULT_TURNOUT;
++    const baseSupport = asmp?.muleSupportShare ?? DEFAULT_SUPPORT;
++    const turnoutRate = clamp(baseTurnout + turnoutDelta);
++    const supportShare = clamp(baseSupport + supportDelta);
++    const predictedVotes = Math.round((registered * turnoutRate) / 100);
++    const predictedCandidateVotes = Math.round((predictedVotes * supportShare) / 100);
++    // Mobilization upside: expected supporters who are NOT projected to vote.
++    const gotvUpside = Math.round(registered * (supportShare / 100) * (1 - turnoutRate / 100));
++    return {
++      ward: w.ward, constituency: constituencyOf.get(w.ward) ?? "", stations: Number(w.stations), registered,
++      expectedTurnoutRate: baseTurnout, supportShare: baseSupport, turnoutRate, effectiveSupportShare: supportShare,
++      predictedVotes, predictedCandidateVotes, gotvUpside, gotvRank: 0, hasSavedAssumption: Boolean(asmp),
++    } satisfies WardForecast;
++  });
++  [...wards].sort((a, b) => b.gotvUpside - a.gotvUpside).forEach((w, i) => { w.gotvRank = i + 1; });
++  wards.sort((a, b) => b.registered - a.registered);
++
++  const registered = wards.reduce((s, w) => s + w.registered, 0);
++  const predictedVotes = wards.reduce((s, w) => s + w.predictedVotes, 0);
++  const predictedCandidateVotes = wards.reduce((s, w) => s + w.predictedCandidateVotes, 0);
++  const topGotv = [...wards].sort((a, b) => b.gotvUpside - a.gotvUpside)[0];
++  return {
++    wards,
++    totals: {
++      registered, predictedVotes,
++      predictedTurnoutRate: registered ? Math.round((predictedVotes / registered) * 100) : 0,
++      predictedCandidateVotes,
++      predictedCandidateShare: predictedVotes ? Math.round((predictedCandidateVotes / predictedVotes) * 100) : 0,
++      topGotvWard: topGotv?.ward ?? null,
++      topGotvUpside: topGotv?.gotvUpside ?? 0,
++      wardsWithSavedAssumptions: wards.filter(w => w.hasSavedAssumption).length,
++      wardsInModel: wards.length,
++    },
++    defaults: { turnout: DEFAULT_TURNOUT, support: DEFAULT_SUPPORT },
++  };
++}
+diff --git a/artifacts/api-server/src/lib/ward-lookup.ts b/artifacts/api-server/src/lib/ward-lookup.ts
+new file mode 100644
+index 0000000..70d9fcb
+--- /dev/null
++++ b/artifacts/api-server/src/lib/ward-lookup.ts
+@@ -0,0 +1,5 @@
++import { MAKUENI_WARDS } from "../data/makueni-geography";
++import { createWardMatcher } from "./ward-names";
++
++/** Official Makueni ward name for a free-text ward, or null. */
++export const canonicalWard = createWardMatcher(MAKUENI_WARDS.map(({ ward }) => ward));
+diff --git a/artifacts/api-server/src/lib/ward-names.ts b/artifacts/api-server/src/lib/ward-names.ts
+new file mode 100644
+index 0000000..5715be4
+--- /dev/null
++++ b/artifacts/api-server/src/lib/ward-names.ts
+@@ -0,0 +1,30 @@
++/** Letters only, lower case: "Kiima Kiu / Kalanzoni Ward" -> "kiimakiukalanzoni". */
++export function wardKey(value: string | null | undefined): string {
++  return String(value ?? "").toLowerCase().replace(/\bward\b/g, "").replace(/[^a-z]/g, "");
++}
++
++// Spellings seen in IEBC, KNBS and field lists for the official 30 wards.
++const ALIASES: Record<string, string> = {
++  waiakako: "Kako/Waia", kakowaia: "Kako/Waia", waia: "Kako/Waia", kako: "Kako/Waia",
++  muvaukikuumini: "Muvau/Kikumini", muvaukikumini: "Muvau/Kikumini", muvau: "Muvau/Kikumini", kikumini: "Muvau/Kikumini", kikuumini: "Muvau/Kikumini",
++  kithungo: "Kithungo/Kitundu", kitundu: "Kithungo/Kitundu", kithungokitundu: "Kithungo/Kitundu",
++  kiteta: "Kiteta/Kisau", kisau: "Kiteta/Kisau", kisaukiteta: "Kiteta/Kisau",
++  kiimakiu: "Kiima Kiu/Kalanzoni", kalanzoni: "Kiima Kiu/Kalanzoni", kiimakiukalanzoni: "Kiima Kiu/Kalanzoni",
++  nzaui: "Nzaui/Kilili/Kalamba", kilili: "Nzaui/Kilili/Kalamba", kalamba: "Nzaui/Kilili/Kalamba", nzauikililikalamba: "Nzaui/Kilili/Kalamba",
++  kitise: "Kitise/Kithuki", kithuki: "Kitise/Kithuki", kitisekithuki: "Kitise/Kithuki",
++  nguu: "Nguu/Masumba", masumba: "Nguu/Masumba", nguumasumba: "Nguu/Masumba",
++  emali: "Emali/Mulala", mulala: "Emali/Mulala", emalimulala: "Emali/Mulala",
++  ivingoni: "Ivingoni/Nzambani", nzambani: "Ivingoni/Nzambani", ivingoninzambani: "Ivingoni/Nzambani",
++  mtitoandei: "Mtito Andei", mtito: "Mtito Andei",
++  kikumbulyunorth: "Kikumbulyu North", kikumbulyusouth: "Kikumbulyu South",
++  wotetown: "Wote", kilungu: "Kilungu", kee: "Kee", ilima: "Ilima", ukia: "Ukia",
++};
++/** Returns a matcher giving the official ward name for free text, or null when blank or not recognisable. */
++export function createWardMatcher(officialWards: readonly string[]) {
++  const byKey = new Map<string, string>(officialWards.map(ward => [wardKey(ward), ward]));
++  for (const [k, v] of Object.entries(ALIASES)) if (!byKey.has(k) && officialWards.includes(v)) byKey.set(k, v);
++  return (value: string | null | undefined): string | null => {
++    const key = wardKey(value);
++    return key ? byKey.get(key) ?? null : null;
++  };
++}
+diff --git a/artifacts/api-server/src/routes/ai.ts b/artifacts/api-server/src/routes/ai.ts
+index 479e356..3b12dda 100644
+--- a/artifacts/api-server/src/routes/ai.ts
++++ b/artifacts/api-server/src/routes/ai.ts
+@@ -4,6 +4,7 @@ import { Router } from "express";
+ import { openai } from "@workspace/integrations-openai-ai-server";
+ import { buildFreeMakueniAnswer, buildFreeMakueniSpeech, fetchMakueniOfficialSources, searchFreeMakueniWeb } from "./makueni-free-ai";
+ import { getCidp2013Context } from "./cidp-2013-2017-knowledge";
++import { buildCandidatePlan, buildCandidateReadiness, campaignPlanFacts, factsDigest } from "../lib/candidate-plan";
+ 
+ const router = Router();
+ function buildResearchSwot() {
+@@ -15,24 +16,18 @@ function buildResearchSwot() {
+ router.use((req, res, next) => {
+   if (process.env.MAKUENI_AI_MODE !== "free" || req.method !== "POST") return next();
+   const routePath = req.path;
+-  if (routePath === "/generate-readiness") return res.json({ mode: "free-template", items: [
+-    { domain: "Evidence and records", item: "Confirm each reported service issue against a dated official source.", weight: "high" },
+-    { domain: "Ward coverage", item: "Check that reports identify the correct Makueni sub-county and ward.", weight: "high" },
+-    { domain: "Public participation", item: "Record concerns, responsible office, action owner and follow-up date.", weight: "medium" },
+-    { domain: "Budget transparency", item: "Distinguish approved allocation, expenditure and verified outputs.", weight: "high" },
+-    { domain: "Data protection", item: "Restrict personal data to authorized users and log access.", weight: "high" },
+-    { domain: "Reporting", item: "Publish reviewed information with source links and update dates.", weight: "medium" }
+-  ], note: "Template checklist, not a live audit." });
+-  if (routePath === "/generate-campaign-plan") {
+-    const today = new Date().toISOString().slice(0, 10);
+-    const focus = typeof req.body?.focus === "string" ? req.body.focus.slice(0, 200).replace(/[<>]/g, "") : "county service delivery";
+-    return res.json({ mode: "free-template", milestones: [
+-      { title: "Verify official source material", description: "Collect current county plans, ward profiles, budget reports and project records.", dueDate: today, category: "Research", priority: "high", owner: "Research team" },
+-      { title: "Map service issues by ward", description: "Record location, department, source date and verification status.", dueDate: today, category: "Service delivery", priority: "high", owner: "County information team" },
+-      { title: "Review budget evidence", description: "Separate allocations, expenditure and documented outputs.", dueDate: today, category: "Finance", priority: "high", owner: "Finance review team" },
+-      { title: "Prepare public information brief", description: "Prepare a neutral brief about " + focus + " using verified sources only.", dueDate: today, category: "Reporting", priority: "medium", owner: "Communications team" },
+-      { title: "Schedule follow-up", description: "Assign owners and dates to unresolved service questions.", dueDate: today, category: "Follow-up", priority: "medium", owner: "Operations team" }
+-    ], note: "Template milestones only; no live project status is implied." });
++  if (routePath === "/generate-readiness" || routePath === "/generate-campaign-plan") {
++    void (async () => {
++      const facts = await campaignPlanFacts();
++      if (routePath === "/generate-readiness") {
++        res.json({ mode: "live-data-plan", items: buildCandidateReadiness(facts), note: "Built from live campaign data. Confirm legal items against current IEBC and party rules." });
++        return;
++      }
++      const electionDate = typeof req.body?.electionDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(req.body.electionDate) ? req.body.electionDate : "2027-08-10";
++      const focus = typeof req.body?.focus === "string" ? req.body.focus.slice(0, 200).replace(/[<>]/g, "") : undefined;
++      res.json({ mode: "live-data-plan", milestones: buildCandidatePlan(facts, electionDate, undefined, focus), facts: factsDigest(facts), note: "Phased from today to election day using live ward, volunteer, contact and polling-station data. Nomination dates are placeholders until the IEBC and party timetables are published." });
++    })().catch(next);
++    return;
+   }
+   if (routePath === "/generate-swot") return res.json(buildResearchSwot());
+   return next();
+@@ -60,7 +55,7 @@ const MODULE_CONTEXTS: Record<string, string> = {
+   surveys: "Design neutral surveys about Makueni County services and interpret results with clear limitations.",
+   events: "Plan public participation forums and county service events within Makueni County.",
+   intelligence: "Analyze verified public-service information, emerging issues and misinformation affecting Makueni County.",
+-  "campaign-plan": "Track Makueni County project milestones, dependencies, deadlines and evidence of completion.",
++  "campaign-plan": "Plan and track the candidate's governor campaign: phases, milestones, owners, deadlines, ward priorities and readiness to election day.",
+   kol: "Maintain a directory of Makueni County public-service stakeholders and community organizations.",
+   fundraising: "Support transparent, compliant finance recording for authorized Makueni County activities.",
+   "election-day": "Support neutral election administration records for polling stations located in Makueni County.",
+@@ -80,7 +75,7 @@ const QUICK_PROMPTS: Record<string, string[]> = {
+   surveys: ["Draft a neutral county service survey", "Summarize responses by official ward", "Identify missing survey metadata"],
+   events: ["Plan a county public participation forum", "Create an event logistics checklist", "Draft a post-event report template"],
+   intelligence: ["Summarize verified public-service issues", "Flag claims that lack source links", "Draft a factual service update"],
+-  "campaign-plan": ["List overdue county project milestones", "Identify project dependencies", "Prepare a monthly progress report"],
++  "campaign-plan": ["List overdue campaign milestones", "Which wards need volunteers first?", "Prepare a weekly campaign progress report"],
+   kol: ["Review the county stakeholder directory", "Find records missing organization details", "Prepare a public meeting attendance template"],
+   fundraising: ["Review transaction reconciliation status", "Summarize verified county activity expenses", "List missing payment configuration details"],
+   "election-day": ["Check Makueni polling-station data completeness", "Summarize station reporting status", "List records awaiting verification"],
+@@ -183,8 +178,8 @@ Each item must relate to Makueni County services, public reporting, or operation
+     const parsed = JSON.parse(jsonMatch[0]);
+     res.json({ items: parsed.items ?? [] });
+   } catch (err) {
+-    req.log.error({ err }, "generate-readiness failed");
+-    res.status(500).json({ error: "Failed to generate readiness checklist. Please retry." });
++    req.log.error({ err }, "generate-readiness failed; using live-data checklist");
++    res.json({ mode: "live-data-plan", items: buildCandidateReadiness(await campaignPlanFacts()) });
+   }
+ });
+ 
+@@ -192,6 +187,7 @@ router.post("/generate-campaign-plan", async (req, res) => {
+   const { electionDate, focus } = req.body as { electionDate?: string; focus?: string };
+   const today = new Date().toISOString().slice(0, 10);
+   const election = electionDate || "2027-08-10";
++  const facts = await campaignPlanFacts();
+ 
+   try {
+     const completion = await openai.chat.completions.create({
+@@ -202,7 +198,10 @@ router.post("/generate-campaign-plan", async (req, res) => {
+           role: "system",
+           content: `${CAMPAIGN_CONTEXT}
+ 
+-You are generating a structured milestone plan. Today is ${today}. Election date: ${election}.
++You are the campaign planner for ${facts.candidate}, candidate for ${facts.seat}, in the August 2027 general election. Today is ${today}. Election date: ${election}.
++This is the candidate's own campaign plan (winning votes, organisation, compliance), not a county-government project tracker.
++Live campaign data (use these numbers; do not invent others):
++${factsDigest(facts)}
+ 
+ Return ONLY a raw JSON object with no markdown, no code fences, no explanation — just the JSON:
+ {
+@@ -218,7 +217,7 @@ Return ONLY a raw JSON object with no markdown, no code fences, no explanation 
+   ]
+ }
+ 
+-Generate 18-22 strategic milestones spanning from today to 2 weeks before election day. Spread them across all categories. Make each milestone specific, actionable and realistic for Makueni Constituency. Assign owners from the campaign team.`,
++Generate 18-22 strategic milestones from today to election day, in phases: foundation, build, party nomination and IEBC filing, persuasion, protecting the vote (agents) and GOTV. Spread them across all categories. Make each specific to Makueni County's 6 constituencies and named wards from the data above. Owners must be roles (e.g. "Field director"), never invented personal names. Mark statutory dates as "confirm against IEBC timetable".`,
+         },
+         {
+           role: "user",
+@@ -234,10 +233,11 @@ Generate 18-22 strategic milestones spanning from today to 2 weeks before electi
+     const jsonMatch = content.match(/\{[\s\S]*\}/);
+     if (!jsonMatch) { res.status(500).json({ error: "Invalid AI response format" }); return; }
+     const parsed = JSON.parse(jsonMatch[0]);
+-    res.json({ milestones: parsed.milestones ?? [] });
++    res.json({ mode: "ai", milestones: parsed.milestones ?? [], facts: factsDigest(facts) });
+   } catch (err) {
+-    req.log.error({ err }, "generate-campaign-plan failed");
+-    res.status(500).json({ error: "Failed to generate campaign plan. Please retry." });
++    // Never leave the team without a plan: fall back to the live-data plan.
++    req.log.error({ err }, "generate-campaign-plan failed; using live-data plan");
++    res.json({ mode: "live-data-plan", milestones: buildCandidatePlan(facts, election, today, focus), facts: factsDigest(facts) });
+   }
+ });
+ 
+diff --git a/artifacts/api-server/src/routes/analytics.ts b/artifacts/api-server/src/routes/analytics.ts
+index 670bbdc..b6ca6b1 100644
+--- a/artifacts/api-server/src/routes/analytics.ts
++++ b/artifacts/api-server/src/routes/analytics.ts
+@@ -1,3 +1,4 @@
++import { computeTurnoutForecast } from "../lib/turnout-forecast";
+ import { getMakueniGovernorHistory } from "../data/makueni-governor-history";
+ import { getMakueniResearch, RESEARCH_TOPICS, type ResearchTopic } from "../data/makueni-research";
+ import { getIebcHistory } from "../data/iebc-history";
+@@ -8,6 +9,35 @@ import { sql, desc } from "drizzle-orm";
+ const router = Router();
+ router.get("/governor-history", (_req, res) => res.json(getMakueniGovernorHistory()));
+ 
++// 2022 governor result next to the 2027 scenario from the Turnout module.
++router.get("/governor-projection", async (_req, res) => {
++  const history = getMakueniGovernorHistory();
++  const forecast = await computeTurnoutForecast();
++  const winner2022 = [...history.candidates].sort((a, b) => b.votes - a.votes)[0]!;
++  const byConstituency = new Map<string, { constituency: string; registered: number; predictedVotes: number; predictedCandidateVotes: number; gotvUpside: number }>();
++  for (const w of forecast.wards) {
++    const row = byConstituency.get(w.constituency) ?? { constituency: w.constituency, registered: 0, predictedVotes: 0, predictedCandidateVotes: 0, gotvUpside: 0 };
++    row.registered += w.registered; row.predictedVotes += w.predictedVotes; row.predictedCandidateVotes += w.predictedCandidateVotes; row.gotvUpside += w.gotvUpside;
++    byConstituency.set(w.constituency, row);
++  }
++  const t = forecast.totals;
++  res.json({
++    candidate: process.env.CANDIDATE_NAME?.trim() || "Prof. Philip Kaloki",
++    history2022: { candidates: history.candidates, candidateVoteSum: history.candidateVoteSum, winner: winner2022, sources: history.sources, note: history.note },
++    projection2027: {
++      registered: t.registered, predictedTurnoutRate: t.predictedTurnoutRate, predictedVotes: t.predictedVotes,
++      predictedCandidateVotes: t.predictedCandidateVotes, predictedCandidateShare: t.predictedCandidateShare,
++      // Governor is first-past-the-post: a simple majority of votes cast guarantees the seat.
++      majorityThreshold: Math.floor(t.predictedVotes / 2) + 1,
++      gapToMajority: Math.floor(t.predictedVotes / 2) + 1 - t.predictedCandidateVotes,
++      vs2022Winner: t.predictedCandidateVotes - winner2022.votes,
++      wardsWithSavedAssumptions: t.wardsWithSavedAssumptions, wardsInModel: t.wardsInModel,
++      byConstituency: [...byConstituency.values()].map(c => ({ ...c, share: c.predictedVotes ? Math.round(c.predictedCandidateVotes / c.predictedVotes * 100) : 0 })),
++    },
++    method: "Projection = IEBC 2022 registered voters per ward × the team's expected turnout × expected support (Turnout module). It is a scenario, not a poll or a prediction of the result.",
++  });
++});
++
+ router.get("/county-research", (req, res) => {
+   const county = req.query.county;
+   const topic = req.query.topic ?? "all";
+diff --git a/artifacts/api-server/src/routes/dashboard.ts b/artifacts/api-server/src/routes/dashboard.ts
+index a396fad..070803d 100644
+--- a/artifacts/api-server/src/routes/dashboard.ts
++++ b/artifacts/api-server/src/routes/dashboard.ts
+@@ -1,7 +1,9 @@
+ import { Router } from "express";
+-import { db, membersTable, volunteersTable, messageCampaignsTable, canvassVisitsTable, canvassSessionsTable, narrativeMentionsTable, milestonesTable, campaignEventsTable, campaignSettingsTable, warRoomBriefsTable, messagingProvidersTable, pollingStationsTable, volunteerTasksTable } from "@workspace/db";
++import { db, voterRegistryTable, membersTable, volunteersTable, messageCampaignsTable, canvassVisitsTable, canvassSessionsTable, narrativeMentionsTable, milestonesTable, campaignEventsTable, campaignSettingsTable, warRoomBriefsTable, messagingProvidersTable, pollingStationsTable, volunteerTasksTable } from "@workspace/db";
+ import { sql, eq, gte, inArray, and, or, isNull } from "drizzle-orm";
+ import { MAKUENI_WARDS } from "../data/makueni-geography";
++import { computeTurnoutForecast } from "../lib/turnout-forecast";
++import { canonicalWard } from "../lib/ward-lookup";
+ const WARDS = MAKUENI_WARDS.map(({ ward }) => ward);
+ 
+ const router = Router();
+@@ -18,6 +20,103 @@ router.get("/operations", async (_req, res) => {
+   res.json({ registeredVolunteers: Number(volunteers?.registered ?? 0), pendingVolunteers: Number(volunteers?.pending ?? 0), openVolunteerTasks: Number(tasks?.open ?? 0), completedVolunteerTasks: Number(tasks?.completed ?? 0), updatedAt: new Date().toISOString() });
+ });
+ 
++// Ward picture: every module's records, joined on the official ward list, plus the
++// turnout forecast. Ward names from imports are matched case- and spacing-insensitively.
++router.get("/wards", async (_req, res) => {
++  const [registry, members, volunteers, visits, forecast] = await Promise.all([
++    db.select({ ward: voterRegistryTable.ward, n: sql<number>`count(*)`, withPhone: sql<number>`count(*) filter (where nullif(trim(${voterRegistryTable.phone}), '') is not null)` })
++      .from(voterRegistryTable).where(sql`${voterRegistryTable.status} <> 'rejected'`).groupBy(voterRegistryTable.ward),
++    db.select({ ward: membersTable.ward, n: sql<number>`count(*)` }).from(membersTable).groupBy(membersTable.ward),
++    db.select({ ward: volunteersTable.ward, active: sql<number>`count(*) filter (where ${volunteersTable.status} = 'active')`, pending: sql<number>`count(*) filter (where ${volunteersTable.status} = 'pending')` })
++      .from(volunteersTable).groupBy(volunteersTable.ward),
++    db.select({ ward: canvassSessionsTable.ward, n: sql<number>`count(${canvassVisitsTable.id})` })
++      .from(canvassSessionsTable).leftJoin(canvassVisitsTable, eq(canvassVisitsTable.sessionId, canvassSessionsTable.id)).groupBy(canvassSessionsTable.ward),
++    computeTurnoutForecast(),
++  ]);
++  type Row = { contacts: number; contactsWithPhone: number; members: number; activeVolunteers: number; pendingVolunteers: number; doorsKnocked: number };
++  const rows = new Map<string, Row>(WARDS.map(w => [w, { contacts: 0, contactsWithPhone: 0, members: 0, activeVolunteers: 0, pendingVolunteers: 0, doorsKnocked: 0 }]));
++  let unassignedContacts = 0;
++  let unmatchedContacts = 0;
++  for (const r of registry) {
++    const ward = canonicalWard(r.ward);
++    if (ward) { const row = rows.get(ward)!; row.contacts += Number(r.n); row.contactsWithPhone += Number(r.withPhone); }
++    else if (!r.ward?.trim()) unassignedContacts += Number(r.n);
++    else unmatchedContacts += Number(r.n);
++  }
++  for (const m of members) { const w = canonicalWard(m.ward); if (w) rows.get(w)!.members += Number(m.n); }
++  for (const v of volunteers) { const w = canonicalWard(v.ward); if (w) { rows.get(w)!.activeVolunteers += Number(v.active); rows.get(w)!.pendingVolunteers += Number(v.pending); } }
++  for (const v of visits) { const w = canonicalWard(v.ward); if (w) rows.get(w)!.doorsKnocked += Number(v.n); }
++  const fMap = new Map(forecast.wards.map(w => [w.ward, w]));
++  const wards = MAKUENI_WARDS.map(({ ward, constituency }) => {
++    const f = fMap.get(ward);
++    const row = rows.get(ward)!;
++    const registered = f?.registered ?? 0;
++    return {
++      ward, constituency, registered, ...row,
++      contactReachPct: registered ? Math.round((row.contacts / registered) * 1000) / 10 : null,
++      expectedTurnoutRate: f?.turnoutRate ?? null, predictedVotes: f?.predictedVotes ?? null,
++      predictedCandidateVotes: f?.predictedCandidateVotes ?? null, gotvUpside: f?.gotvUpside ?? null, gotvRank: f?.gotvRank ?? null,
++    };
++  });
++  const sum = (k: keyof Row) => wards.reduce((s, w) => s + w[k], 0);
++  res.json({
++    wards,
++    totals: {
++      contacts: sum("contacts") + unassignedContacts + unmatchedContacts,
++      contactsInWards: sum("contacts"), unassignedContacts, unmatchedContacts,
++      members: sum("members"), activeVolunteers: sum("activeVolunteers"), pendingVolunteers: sum("pendingVolunteers"), doorsKnocked: sum("doorsKnocked"),
++      wardsWithContacts: wards.filter(w => w.contacts > 0).length,
++    },
++    forecast: forecast.totals,
++    updatedAt: new Date().toISOString(),
++  });
++});
++
++// Everything captured in the system, module by module: totals, last 7 days and the
++// latest entry. Fixed table/column names only (no user input reaches this SQL).
++const RECORD_SOURCES: Array<{ key: string; label: string; module: string; href: string; table: string; at: string; extra?: string }> = [
++  { key: "contacts", label: "Constituent contacts", module: "constituents", href: "/voters-db", table: "voter_registry", at: "created_at" },
++  { key: "members", label: "Members", module: "members", href: "/members", table: "members", at: "created_at" },
++  { key: "volunteers", label: "Volunteers registered", module: "volunteers", href: "/volunteers", table: "volunteers", at: "joined_at", extra: "count(*) filter (where status = 'pending')" },
++  { key: "volunteerTasks", label: "Volunteer tasks", module: "volunteers", href: "/volunteers", table: "volunteer_tasks", at: "created_at", extra: "count(*) filter (where status = 'completed')" },
++  { key: "canvassVisits", label: "Doors knocked", module: "field-ops", href: "/field-ops", table: "canvass_visits", at: "visited_at" },
++  { key: "canvassSessions", label: "Field sessions", module: "field-ops", href: "/field-ops", table: "canvass_sessions", at: "created_at" },
++  { key: "events", label: "Events", module: "events", href: "/events", table: "campaign_events", at: "created_at" },
++  { key: "pollVotes", label: "Opinion poll responses", module: "surveys", href: "/surveys", table: "poll_votes", at: "submitted_at" },
++  { key: "polls", label: "Opinion polls", module: "surveys", href: "/surveys", table: "opinion_polls", at: "created_at" },
++  { key: "surveyResponses", label: "Survey responses", module: "surveys", href: "/surveys", table: "survey_responses", at: "submitted_at" },
++  { key: "messageCampaigns", label: "Message campaigns", module: "messaging", href: "/messaging", table: "message_campaigns", at: "created_at", extra: "coalesce(sum(recipient_count), 0)" },
++  { key: "donations", label: "Donations", module: "fundraising", href: "/fundraising", table: "donations", at: "created_at", extra: "coalesce(sum(amount), 0)" },
++  { key: "kol", label: "Key opinion leaders", module: "kol", href: "/kol", table: "kol", at: "created_at" },
++  { key: "socialMentions", label: "Social mentions", module: "social", href: "/social-listening", table: "social_mentions", at: "scanned_at" },
++  { key: "narrativeMentions", label: "Narrative threats", module: "intelligence", href: "/narrative-response", table: "narrative_mentions", at: "detected_at", extra: "count(*) filter (where status = 'open')" },
++  { key: "milestones", label: "Campaign plan milestones", module: "campaign-plan", href: "/campaign-plan", table: "milestones", at: "created_at", extra: "count(*) filter (where status = 'completed')" },
++  { key: "tallies", label: "Election-day tallies", module: "election-day", href: "/election-day", table: "tally_results", at: "created_at" },
++  { key: "documents", label: "Speeches & documents", module: "speeches", href: "/speeches", table: "generated_documents", at: "created_at" },
++];
++
++router.get("/records", async (_req, res) => {
++  const results = await Promise.all(RECORD_SOURCES.map(async src => {
++    try {
++      const r = await db.execute(sql.raw(`SELECT count(*)::bigint AS total,
++        count(*) FILTER (WHERE ${src.at} >= now() - interval '7 days')::bigint AS last7,
++        max(${src.at}) AS last_at${src.extra ? `, (${src.extra})::bigint AS extra` : ""}
++        FROM public.${src.table}`));
++      const row = r.rows[0] as { total: string; last7: string; last_at: string | Date | null; extra?: string } | undefined;
++      return {
++        key: src.key, label: src.label, module: src.module, href: src.href, available: true,
++        total: Number(row?.total ?? 0), last7Days: Number(row?.last7 ?? 0),
++        lastAt: row?.last_at ? new Date(row.last_at).toISOString() : null,
++        extra: row?.extra !== undefined ? Number(row.extra) : null,
++      };
++    } catch {
++      // Table not created yet on this database (modules create theirs on first use).
++      return { key: src.key, label: src.label, module: src.module, href: src.href, available: false, total: 0, last7Days: 0, lastAt: null, extra: null };
++    }
++  }));
++  res.json({ records: results, updatedAt: new Date().toISOString() });
++});
++
+ router.get("/summary", async (req, res) => {
+   const today = new Date().toISOString().slice(0, 10);
+   const [members, volunteers, messages, doors, wards, threats, milestones, events, settings] = await Promise.all([
+diff --git a/artifacts/api-server/src/routes/segments.ts b/artifacts/api-server/src/routes/segments.ts
+index c493932..8b188e6 100644
+--- a/artifacts/api-server/src/routes/segments.ts
++++ b/artifacts/api-server/src/routes/segments.ts
+@@ -1,6 +1,6 @@
+ import { Router } from "express";
+-import { db, segmentsTable, membersTable } from "@workspace/db";
+-import { eq, sql, and } from "drizzle-orm";
++import { db, segmentsTable, membersTable, voterRegistryTable } from "@workspace/db";
++import { eq, sql, and, inArray } from "drizzle-orm";
+ import { MAKUENI_CONSTITUENCIES, MAKUENI_WARDS } from "../data/makueni-geography";
+ const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
+ const CONSTITUENCIES: string[] = [...MAKUENI_CONSTITUENCIES];
+@@ -15,35 +15,85 @@ function hasValidMakueniGeography(criteria: unknown): boolean {
+   return true;
+ }
+ 
++// Demographics that can be counted from the Constituent Database (gender / date of birth).
++const COUNTABLE_DEMOGRAPHICS = ["women", "men", "youth", "first_time_voters"];
++// Criteria that only members carry (support level and channel consent).
++const memberOnly = (c: Record<string, any>) => Boolean(c.supportLevel || c.smsConsent || c.whatsappConsent || c.emailConsent);
++
+ function countStatus(criteria: Record<string, any> | null) {
+   if (criteria?.manualSize !== undefined) return "manual-estimate";
+-  if (criteria?.demographic || criteria?.strategic || criteria?.transportNeeded || criteria?.isGOTV) return "unavailable";
++  if (criteria?.strategic || criteria?.transportNeeded || criteria?.isGOTV) return "unavailable";
++  if (criteria?.demographic && !COUNTABLE_DEMOGRAPHICS.includes(criteria.demographic)) return "unavailable";
+   return "live-count";
+ }
+ const router = Router();
+ 
++// Age from birth year only (never fails on malformed dates): 2004-05-01, 01/05/2004 or 2004.
++const AGE = sql`(extract(year from current_date)::int - (case
++  when ${voterRegistryTable.dateOfBirth} ~ '^\\s*\\d{4}-' then substr(trim(${voterRegistryTable.dateOfBirth}), 1, 4)
++  when ${voterRegistryTable.dateOfBirth} ~ '/\\d{4}\\s*$' then right(trim(${voterRegistryTable.dateOfBirth}), 4)
++  when ${voterRegistryTable.dateOfBirth} ~ '^\\s*\\d{4}\\s*$' then trim(${voterRegistryTable.dateOfBirth})
++end)::int)`;
++const GENDER = sql`lower(trim(coalesce(${voterRegistryTable.gender}, '')))`;
++
++function wardsFor(criteria: Record<string, any>): string[] | null {
++  if (typeof criteria.ward === "string" && WARDS.includes(criteria.ward)) return [criteria.ward];
++  if (typeof criteria.constituency === "string" && CONSTITUENCIES.includes(criteria.constituency)) {
++    return MAKUENI_WARDS.filter(w => w.constituency === criteria.constituency).map(w => w.ward);
++  }
++  return null;
++}
++
++/** Live counts from both sources: Constituent Database contacts and the member list. */
++async function computeSegmentCounts(criteria: Record<string, any>) {
++  if (criteria.manualSize !== undefined) return { total: Number(criteria.manualSize), contacts: null, members: null };
++  if (countStatus(criteria) === "unavailable") return { total: 0, contacts: null, members: null };
++  const wards = wardsFor(criteria);
++  const wardKeys = wards?.map(w => w.toLowerCase());
++
++  // Members: no gender/age on member records, so demographic segments count contacts only.
++  let members: number | null = null;
++  if (!criteria.demographic) {
++    const conditions = [];
++    if (wards) conditions.push(sql`lower(trim(${membersTable.ward})) in (${sql.join(wardKeys!.map(w => sql`${w}`), sql`, `)})`);
++    else conditions.push(inArray(membersTable.ward, WARDS));
++    if (criteria.supportLevel) conditions.push(eq(membersTable.supportLevel, criteria.supportLevel));
++    if (criteria.smsConsent) conditions.push(eq(membersTable.smsConsent, true));
++    if (criteria.whatsappConsent) conditions.push(eq(membersTable.whatsappConsent, true));
++    if (criteria.emailConsent) conditions.push(eq(membersTable.emailConsent, true));
++    const [r] = await db.select({ count: sql<number>`count(*)` }).from(membersTable).where(and(...conditions));
++    members = Number(r?.count ?? 0);
++  }
++
++  // Contacts: support level and consent are not recorded in the Constituent Database.
++  let contacts: number | null = null;
++  if (!memberOnly(criteria)) {
++    const conditions = [sql`${voterRegistryTable.status} <> 'rejected'`];
++    if (wards) conditions.push(sql`lower(trim(${voterRegistryTable.ward})) in (${sql.join(wardKeys!.map(w => sql`${w}`), sql`, `)})`);
++    switch (criteria.demographic) {
++      case "women": conditions.push(sql`${GENDER} in ('f', 'female', 'woman', 'w')`); break;
++      case "men": conditions.push(sql`${GENDER} in ('m', 'male', 'man')`); break;
++      case "youth": conditions.push(sql`${AGE} between 18 and 35`); break;
++      case "first_time_voters": conditions.push(sql`${AGE} between 18 and 22`); break;
++    }
++    const [r] = await db.select({ count: sql<number>`count(*)` }).from(voterRegistryTable).where(and(...conditions));
++    contacts = Number(r?.count ?? 0);
++  }
++  return { total: (contacts ?? 0) + (members ?? 0), contacts, members };
++}
+ async function computeMemberCount(criteria: Record<string, any>) {
+-  if (criteria.manualSize !== undefined) return Number(criteria.manualSize);
+-  if (criteria.demographic || criteria.strategic || criteria.transportNeeded || criteria.isGOTV) return 0;
+-  const conditions = [];
+-  if (typeof criteria.ward === "string" && criteria.ward !== "all" && criteria.ward !== "county-wide" && WARDS.includes(criteria.ward)) conditions.push(eq(membersTable.ward, criteria.ward));
+-  if (criteria.supportLevel) conditions.push(eq(membersTable.supportLevel, criteria.supportLevel));
+-  if (criteria.smsConsent) conditions.push(eq(membersTable.smsConsent, true));
+-  if (criteria.whatsappConsent) conditions.push(eq(membersTable.whatsappConsent, true));
+-  if (criteria.emailConsent) conditions.push(eq(membersTable.emailConsent, true));
+-  const where = conditions.length ? and(...conditions) : undefined;
+-  const [result] = await db.select({ count: sql<number>`count(*)` }).from(membersTable).where(where);
+-  return Number(result?.count ?? 0);
++  return (await computeSegmentCounts(criteria)).total;
++}
++async function withCounts<T extends { criteria: unknown }>(seg: T) {
++  const criteria = (seg.criteria ?? {}) as Record<string, any>;
++  const counts = await computeSegmentCounts(criteria);
++  return { ...seg, memberCount: counts.total, countBreakdown: { contacts: counts.contacts, members: counts.members }, countStatus: countStatus(criteria), countSource: "contacts+members" };
+ }
+ 
+ router.get("/", async (_req, res) => {
+   const segs = (await db.select().from(segmentsTable).orderBy(segmentsTable.createdAt))
+     .filter(seg => hasValidMakueniGeography(seg.criteria));
+-  res.json(await Promise.all(segs.map(async seg => ({ ...seg,
+-    memberCount: await computeMemberCount((seg.criteria ?? {}) as Record<string, any>),
+-    countStatus: countStatus(seg.criteria as Record<string, any>),
+-    countSource: "members",
+-  }))));
++  res.json(await Promise.all(segs.map(withCounts)));
+ });
+ 
+ router.post("/", async (req, res) => {
+@@ -52,17 +102,21 @@ router.post("/", async (req, res) => {
+   if (!hasValidMakueniGeography(criteria)) { res.status(400).json({ error: "Select a valid Makueni County constituency and ward" }); return; }
+   const memberCount = await computeMemberCount(criteria);
+   const [seg] = await db.insert(segmentsTable).values({ name, description, criteria, memberCount, isLocked }).returning();
+-  res.status(201).json(seg);
++  res.status(201).json(await withCounts(seg));
+ });
+ 
+ router.get("/:id", async (req, res) => {
+   const [seg] = await db.select().from(segmentsTable).where(eq(segmentsTable.id, parseInt(req.params.id)));
+   if (!seg || !hasValidMakueniGeography(seg.criteria)) { res.status(404).json({ error: "Not found" }); return; }
+-  const memberCount = await computeMemberCount(seg.criteria as any);
+-  res.json({ ...seg, memberCount, countStatus: countStatus(seg.criteria as Record<string, any>), countSource: "members" });
++  res.json(await withCounts(seg));
+ });
+ 
+ router.patch("/:id", async (req, res) => {
++  const [existing] = await db.select().from(segmentsTable).where(eq(segmentsTable.id, parseInt(req.params.id)));
++  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
++  if (existing.isLocked && req.body.isLocked !== false && (req.body.criteria !== undefined || req.body.name !== undefined)) {
++    res.status(409).json({ error: "This segment is locked. Unlock it before editing." }); return;
++  }
+   const updates: any = {};
+   if (req.body.name !== undefined) updates.name = req.body.name;
+   if (req.body.description !== undefined) updates.description = req.body.description;
+@@ -74,7 +128,7 @@ router.patch("/:id", async (req, res) => {
+   if (req.body.isLocked !== undefined) updates.isLocked = req.body.isLocked;
+   const [seg] = await db.update(segmentsTable).set(updates).where(eq(segmentsTable.id, parseInt(req.params.id))).returning();
+   if (!seg) { res.status(404).json({ error: "Not found" }); return; }
+-  res.json(seg);
++  res.json(await withCounts(seg));
+ });
+ 
+ router.delete("/:id", async (req, res) => {
+diff --git a/artifacts/api-server/src/routes/turnout.ts b/artifacts/api-server/src/routes/turnout.ts
+index bcf297f..b0b8fef 100644
+--- a/artifacts/api-server/src/routes/turnout.ts
++++ b/artifacts/api-server/src/routes/turnout.ts
+@@ -1,7 +1,7 @@
+ import { getMakueniGovernorHistory } from "../data/makueni-governor-history";
+ import { Router } from "express";
+-import { db, pollingStationsTable, turnoutAssumptionsTable } from "@workspace/db";
+-import { sql, inArray } from "drizzle-orm";
++import { db, turnoutAssumptionsTable } from "@workspace/db";
++import { computeTurnoutForecast } from "../lib/turnout-forecast";
+ import { MAKUENI_WARDS } from "../data/makueni-geography";
+ const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
+ import { z } from "zod/v4";
+@@ -10,100 +10,24 @@ const router = Router();
+ router.get("/history", (_req, res) => res.json(getMakueniGovernorHistory()));
+ 
+ // Candidate identity is not hardcoded in county turnout reporting.
+-
+-// Baseline assumptions used for any ward that has no saved override.
+-// These are configurable modelling defaults, not observed Makueni turnout; support is
+-// intentionally neutral (50%) until the team sets ward-level estimates.
+-const DEFAULT_TURNOUT = 65;
+-const DEFAULT_SUPPORT = 50;
+-
+-const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
+-
+ // ── Prediction ─────────────────────────────────────────────────────────────
+-// Transparent model: predictions are derived from real registered-voter counts
+-// per ward (polling_stations) combined with adjustable turnout/support
+-// assumptions. `turnoutDelta`/`supportDelta` let the UI run what-if scenarios
+-// on top of the saved assumptions without persisting them.
++// `turnoutDelta`/`supportDelta` let the UI run what-if scenarios on top of the
++// saved assumptions without persisting them. The model lives in lib/turnout-forecast.
+ router.get("/prediction", async (req, res) => {
+   const turnoutDelta = Number(req.query.turnoutDelta) || 0;
+   const supportDelta = Number(req.query.supportDelta) || 0;
+-
+-  const wardRows = await db
+-    .select({
+-      ward: pollingStationsTable.ward,
+-      registered: sql<number>`coalesce(sum(${pollingStationsTable.registeredVoters}), 0)`,
+-      stations: sql<number>`count(*)`,
+-    })
+-    .from(pollingStationsTable)
+-    .where(inArray(pollingStationsTable.ward, WARDS))
+-    .groupBy(pollingStationsTable.ward);
+-
+-  const assumptions = await db.select().from(turnoutAssumptionsTable);
+-  const aMap = new Map(assumptions.map((a) => [a.ward, a]));
+-
++  const forecast = await computeTurnoutForecast(turnoutDelta, supportDelta);
+   // Legacy tallies have no election date/office. Do not sum all candidates
+   // as one candidate or present mixed/unverified tally rows as observed turnout.
+-  const wards = wardRows.map((w) => {
+-    const registered = Number(w.registered);
+-    const asmp = aMap.get(w.ward);
+-    const baseTurnout = asmp?.expectedTurnoutRate ?? DEFAULT_TURNOUT;
+-    const baseSupport = asmp?.muleSupportShare ?? DEFAULT_SUPPORT;
+-    const turnoutRate = clamp(baseTurnout + turnoutDelta);
+-    const supportShare = clamp(baseSupport + supportDelta);
+-    const predictedVotes = Math.round((registered * turnoutRate) / 100);
+-    const predictedCandidateVotes = Math.round((predictedVotes * supportShare) / 100);
+-    // Mobilization upside: expected supporters who are NOT projected to vote.
+-    // High values flag where GOTV effort converts to the most extra votes.
+-    const gotvUpside = Math.round(registered * (supportShare / 100) * (1 - turnoutRate / 100));
+-
+-    return {
+-      ward: w.ward,
+-      stations: Number(w.stations),
+-      registered,
+-      expectedTurnoutRate: baseTurnout,
+-      supportShare: baseSupport,
+-      turnoutRate,
+-      effectiveSupportShare: supportShare,
+-      predictedVotes,
+-      predictedCandidateVotes,
+-      gotvUpside,
+-      actualVotesCast: null,
+-      actualCandidateVotes: null,
+-      actualTurnoutRate: null,
+-      reportingStations: 0,
+-    };
+-  });
+-
+-  const rankMap = new Map<string, number>();
+-  [...wards]
+-    .sort((a, b) => b.gotvUpside - a.gotvUpside)
+-    .forEach((w, i) => rankMap.set(w.ward, i + 1));
+-
+-  const wardsOut = wards
+-    .map((w) => ({ ...w, gotvRank: rankMap.get(w.ward) ?? 0 }))
+-    .sort((a, b) => b.registered - a.registered);
+-
+-  const totalRegistered = wardsOut.reduce((s, w) => s + w.registered, 0);
+-  const totalPredictedVotes = wardsOut.reduce((s, w) => s + w.predictedVotes, 0);
+-  const totalCandidateVotes = wardsOut.reduce((s, w) => s + w.predictedCandidateVotes, 0);
+-  const topGotv = [...wardsOut].sort((a, b) => b.gotvUpside - a.gotvUpside)[0];
+-
++  const wards = forecast.wards.map(w => ({ ...w, actualVotesCast: null, actualCandidateVotes: null, actualTurnoutRate: null, reportingStations: 0 }));
+   res.json({
+     scope: "Makueni County",
+     modelType: "assumption-based-scenario",
+     actualsStatus: "unavailable: legacy tallies lack election date and office; candidate selection and verification are required",
+     scenario: { turnoutDelta, supportDelta },
+-    defaults: { turnout: DEFAULT_TURNOUT, support: DEFAULT_SUPPORT },
+-    wards: wardsOut,
+-    totals: {
+-      registered: totalRegistered,
+-      predictedVotes: totalPredictedVotes,
+-      predictedTurnoutRate: totalRegistered ? Math.round((totalPredictedVotes / totalRegistered) * 100) : 0,
+-      predictedCandidateVotes: totalCandidateVotes,
+-      predictedCandidateShare: totalPredictedVotes ? Math.round((totalCandidateVotes / totalPredictedVotes) * 100) : 0,
+-      topGotvWard: topGotv?.ward ?? null,
+-      topGotvUpside: topGotv?.gotvUpside ?? 0,
+-    },
++    defaults: forecast.defaults,
++    wards,
++    totals: forecast.totals,
+   });
+ });
+ 
+diff --git a/artifacts/api-server/src/routes/volunteers.ts b/artifacts/api-server/src/routes/volunteers.ts
+index 7e794ac..eb0d4c3 100644
+--- a/artifacts/api-server/src/routes/volunteers.ts
++++ b/artifacts/api-server/src/routes/volunteers.ts
+@@ -3,6 +3,8 @@ import { db, volunteersTable, volunteerAssignmentsTable, volunteerTasksTable, vo
+ import { eq, and, sql, desc, gte } from "drizzle-orm";
+ import { z } from "zod/v4";
+ import { MAKUENI_WARDS } from "../data/makueni-geography";
++import { pool } from "@workspace/db";
++import { sendDirectText, ensureTaskNotificationTable } from "../lib/direct-message";
+ 
+ const WARDS: string[] = MAKUENI_WARDS.map(({ ward }) => ward);
+ const isMakueniWard = (ward: unknown): ward is string => typeof ward === "string" && WARDS.includes(ward);
+@@ -100,6 +102,48 @@ router.post("/assignments", async (req, res) => {
+ 
+ // ─── Tasks ───────────────────────────────────────────────────────────────────
+ 
++// ─── Task notifications ──────────────────────────────────────────────────────
++
++const TEAM = () => process.env.CAMPAIGN_SMS_NAME?.trim() || "Makueni campaign team";
++function taskMessage(volunteer: { firstName: string }, task: { title: string; ward?: string | null; dueDate?: string | null; description?: string | null; priority?: string | null }) {
++  const parts = [`Hello ${volunteer.firstName}, ${TEAM()} has assigned you a task: ${task.title}.`];
++  if (task.ward) parts.push(`Ward: ${task.ward}.`);
++  if (task.dueDate) parts.push(`Due: ${task.dueDate}.`);
++  if (task.priority === "high" || task.priority === "critical") parts.push("Priority: HIGH.");
++  if (task.description) parts.push(task.description.slice(0, 160));
++  parts.push("Contact your coordinator with questions or progress.");
++  return parts.join(" ").slice(0, 459);
++}
++async function notifyTask(task: typeof volunteerTasksTable.$inferSelect) {
++  await ensureTaskNotificationTable();
++  const [volunteer] = await db.select().from(volunteersTable).where(eq(volunteersTable.id, task.volunteerId));
++  const result = volunteer ? await sendDirectText(volunteer.phone, taskMessage(volunteer, task)) : { ok: false as const, error: "Volunteer not found" };
++  const row = result.ok
++    ? { status: "sent", channel: result.channel, provider: result.provider, providerMessageId: result.providerMessageId, error: null }
++    : { status: "failed", channel: result.channel ?? null, provider: result.provider ?? null, providerMessageId: null, error: result.error };
++  await pool.query(`INSERT INTO public.volunteer_task_notifications (task_id, volunteer_id, channel, provider, provider_message_id, status, error) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
++    [task.id, task.volunteerId, row.channel, row.provider, row.providerMessageId, row.status, row.error]);
++  return { status: row.status, channel: row.channel, error: row.error, at: new Date().toISOString() };
++}
++async function withNotifications<T extends { id: number }>(tasks: T[]) {
++  if (!tasks.length) return tasks.map(t => ({ ...t, notification: null }));
++  try {
++    await ensureTaskNotificationTable();
++    const { rows } = await pool.query(`SELECT DISTINCT ON (task_id) task_id, status, channel, error, created_at FROM public.volunteer_task_notifications WHERE task_id = ANY($1::int[]) ORDER BY task_id, created_at DESC`, [tasks.map(t => t.id)]);
++    const map = new Map(rows.map((r: any) => [r.task_id, { status: r.status, channel: r.channel, error: r.error, at: new Date(r.created_at).toISOString() }]));
++    return tasks.map(t => ({ ...t, notification: map.get(t.id) ?? null }));
++  } catch {
++    return tasks.map(t => ({ ...t, notification: null }));
++  }
++}
++
++router.post("/tasks/:id/notify", async (req, res) => {
++  const [task] = await db.select().from(volunteerTasksTable).where(eq(volunteerTasksTable.id, parseInt(req.params.id)));
++  if (!task) { res.status(404).json({ error: "Not found" }); return; }
++  const notification = await notifyTask(task);
++  res.status(notification.status === "sent" ? 200 : 502).json({ notification });
++});
++
+ router.get("/tasks", async (req, res) => {
+   const { volunteerId, status } = req.query as Record<string, string>;
+   const conditions = [];
+@@ -107,7 +151,7 @@ router.get("/tasks", async (req, res) => {
+   if (status) conditions.push(eq(volunteerTasksTable.status, status));
+   const where = conditions.length ? and(...conditions) : undefined;
+   const tasks = await db.select().from(volunteerTasksTable).where(where).orderBy(desc(volunteerTasksTable.createdAt));
+-  res.json(tasks);
++  res.json(await withNotifications(tasks));
+ });
+ 
+ router.post("/tasks", async (req, res) => {
+@@ -120,7 +164,9 @@ router.post("/tasks", async (req, res) => {
+     targetValue: targetValue ? parseInt(targetValue) : undefined,
+     dueDate, assignedBy, notes, status: "assigned",
+   }).returning();
+-  res.status(201).json(task);
++  // The task is saved even if the text fails; the result is shown on the task.
++  const notification = req.body.notify === false ? null : await notifyTask(task).catch(err => ({ status: "failed", channel: null, error: String(err instanceof Error ? err.message : err), at: new Date().toISOString() }));
++  res.status(201).json({ ...task, notification });
+ });
+ 
+ router.patch("/tasks/:id", async (req, res) => {
+diff --git a/artifacts/api-server/tests/ward-names.test.mjs b/artifacts/api-server/tests/ward-names.test.mjs
+new file mode 100644
+index 0000000..2cb3a98
+--- /dev/null
++++ b/artifacts/api-server/tests/ward-names.test.mjs
+@@ -0,0 +1,21 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { createWardMatcher } from '../src/lib/ward-names.ts';
++
++const canonicalWard = createWardMatcher(['Kee', 'Kiima Kiu/Kalanzoni', 'Mtito Andei', 'Kako/Waia', 'Muvau/Kikumini', 'Emali/Mulala']);
++
++test('official ward names match regardless of case, spacing and "ward" suffix', () => {
++  assert.equal(canonicalWard('KEE WARD'), 'Kee');
++  assert.equal(canonicalWard(' kiima kiu / kalanzoni '), 'Kiima Kiu/Kalanzoni');
++  assert.equal(canonicalWard('Mtito-Andei'), 'Mtito Andei');
++});
++test('IEBC and common alternative spellings map to the official ward', () => {
++  assert.equal(canonicalWard('WAIA-KAKO'), 'Kako/Waia');
++  assert.equal(canonicalWard('MUVAU/KIKUUMINI'), 'Muvau/Kikumini');
++  assert.equal(canonicalWard('Emali'), 'Emali/Mulala');
++});
++test('blank or unknown wards are not guessed', () => {
++  assert.equal(canonicalWard(''), null);
++  assert.equal(canonicalWard(null), null);
++  assert.equal(canonicalWard('Nairobi West'), null);
++});
+diff --git a/artifacts/commandcentre/src/components/dashboard-wards.tsx b/artifacts/commandcentre/src/components/dashboard-wards.tsx
+new file mode 100644
+index 0000000..0c78bc0
+--- /dev/null
++++ b/artifacts/commandcentre/src/components/dashboard-wards.tsx
+@@ -0,0 +1,171 @@
++import { useQuery } from "@tanstack/react-query";
++import { Link } from "wouter";
++import { useMemo, useState } from "react";
++import { TrendingUp } from "lucide-react";
++
++type WardRow = {
++  ward: string; constituency: string; registered: number; contacts: number; contactsWithPhone: number;
++  members: number; activeVolunteers: number; pendingVolunteers: number; doorsKnocked: number;
++  contactReachPct: number | null; expectedTurnoutRate: number | null; predictedVotes: number | null;
++  predictedCandidateVotes: number | null; gotvUpside: number | null; gotvRank: number | null;
++};
++type WardsResponse = {
++  wards: WardRow[];
++  totals: { contacts: number; contactsInWards: number; unassignedContacts: number; unmatchedContacts: number; members: number; activeVolunteers: number; pendingVolunteers: number; doorsKnocked: number; wardsWithContacts: number };
++  forecast: { registered: number; predictedVotes: number; predictedTurnoutRate: number; predictedCandidateVotes: number; predictedCandidateShare: number; topGotvWard: string | null; topGotvUpside: number; wardsWithSavedAssumptions: number; wardsInModel: number };
++  updatedAt: string;
++};
++
++const fmt = (n: number | null | undefined) => (n == null ? "—" : n.toLocaleString("en-KE"));
++
++export function useDashboardWards() {
++  return useQuery<WardsResponse>({
++    queryKey: ["dashboard-wards"], refetchInterval: 30_000, staleTime: 0,
++    queryFn: async () => {
++      const r = await fetch(`${import.meta.env.BASE_URL}api/dashboard/wards`, { credentials: "include" });
++      if (!r.ok) throw new Error("Ward data unavailable");
++      return r.json();
++    },
++  });
++}
++
++export function TurnoutForecastCard() {
++  const { data, isError, refetch } = useDashboardWards();
++  if (isError) return <div role="alert" className="rounded-lg border border-red-400/30 bg-red-400/5 p-4 text-sm">Turnout forecast is unavailable. <button onClick={() => void refetch()} className="underline">Retry</button></div>;
++  const f = data?.forecast;
++  const cards: Array<[string, string, string]> = f ? [
++    ["REGISTERED VOTERS", fmt(f.registered), `IEBC 2022 · ${f.wardsInModel} wards`],
++    ["FORECAST TURNOUT", `${f.predictedTurnoutRate}%`, `${fmt(f.predictedVotes)} expected votes`],
++    ["FORECAST CANDIDATE VOTES", fmt(f.predictedCandidateVotes), `${f.predictedCandidateShare}% of votes cast`],
++    ["TOP GOTV WARD", f.topGotvWard ?? "—", f.topGotvWard ? `${fmt(f.topGotvUpside)} supporters not yet projected to vote` : ""],
++  ] : [];
++  return (
++    <section className="bg-card border border-border">
++      <div className="px-4 py-3 border-b border-border flex flex-wrap items-center justify-between gap-2">
++        <span className="flex items-center gap-2 font-mono text-xs tracking-widest"><TrendingUp className="w-4 h-4 text-primary" />Voter turnout forecast · Governor 2027</span>
++        <Link href="/turnout" className="text-xs text-primary underline">Adjust ward assumptions →</Link>
++      </div>
++      <div className="p-4 space-y-3">
++        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
++          {f ? cards.map(([label, value, sub]) => (
++            <div key={label} className="bg-secondary/50 px-3 py-3">
++              <p className="font-mono text-[9px] text-muted-foreground">{label}</p>
++              <p className="font-bold text-xl tabular-nums text-primary">{value}</p>
++              <p className="font-mono text-[9px] text-muted-foreground mt-1">{sub}</p>
++            </div>
++          )) : Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 bg-secondary/50 animate-pulse" />)}
++        </div>
++        {f && <p className="text-xs text-muted-foreground">
++          Scenario model, not a poll: registered voters × each ward’s expected turnout × expected support.
++          {f.wardsWithSavedAssumptions < f.wardsInModel ? ` ${f.wardsInModel - f.wardsWithSavedAssumptions} of ${f.wardsInModel} wards still use the default 65% turnout and 50% support — set real estimates in Turnout.` : " All wards use saved estimates."}
++        </p>}
++      </div>
++    </section>
++  );
++}
++
++export function WardBreakdown() {
++  const { data, isError, refetch } = useDashboardWards();
++  const [constituency, setConstituency] = useState("all");
++  const rows = useMemo(() => (data?.wards ?? []).filter(w => constituency === "all" || w.constituency === constituency), [data, constituency]);
++  const constituencies = useMemo(() => [...new Set((data?.wards ?? []).map(w => w.constituency))], [data]);
++  if (isError) return <div role="alert" className="rounded-lg border border-red-400/30 bg-red-400/5 p-4 text-sm">Ward data is unavailable. <button onClick={() => void refetch()} className="underline">Retry</button></div>;
++  const t = data?.totals;
++  return (
++    <section className="bg-card border border-border min-w-0">
++      <div className="px-4 py-3 border-b border-border flex flex-wrap items-center justify-between gap-2">
++        <span className="font-mono text-xs tracking-widest">Ward coverage · all modules</span>
++        <select aria-label="Filter by constituency" value={constituency} onChange={e => setConstituency(e.target.value)} className="bg-secondary border border-border px-2 py-1 font-mono text-[10px]">
++          <option value="all">All constituencies</option>
++          {constituencies.map(c => <option key={c} value={c}>{c}</option>)}
++        </select>
++      </div>
++      {t && <p className="px-4 pt-3 text-xs text-muted-foreground">
++        {fmt(t.contacts)} constituent contacts: {fmt(t.contactsInWards)} matched to {t.wardsWithContacts} of 30 wards
++        {t.unassignedContacts ? `, ${fmt(t.unassignedContacts)} with no ward recorded` : ""}
++        {t.unmatchedContacts ? `, ${fmt(t.unmatchedContacts)} with a ward name that is not one of the 30 official wards` : ""}.
++        {(t.unassignedContacts + t.unmatchedContacts) > 0 && <> <Link href="/voters-db" className="text-primary underline">Review in Constituent Database</Link></>}
++      </p>}
++      <div className="overflow-x-auto p-4">
++        <table className="w-full text-xs tabular-nums">
++          <thead className="text-muted-foreground font-mono text-[9px] tracking-widest">
++            <tr className="text-left">
++              <th className="p-2">WARD</th><th className="p-2">CONSTITUENCY</th><th className="p-2 text-right">REGISTERED</th>
++              <th className="p-2 text-right">CONTACTS</th><th className="p-2 text-right">REACH</th><th className="p-2 text-right">MEMBERS</th>
++              <th className="p-2 text-right">VOLUNTEERS</th><th className="p-2 text-right">DOORS</th>
++              <th className="p-2 text-right">TURNOUT</th><th className="p-2 text-right">FORECAST VOTES</th><th className="p-2 text-right">GOTV RANK</th>
++            </tr>
++          </thead>
++          <tbody>
++            {data ? rows.map(w => (
++              <tr key={w.ward} className="border-t border-border">
++                <td className="p-2 font-medium">{w.ward}</td>
++                <td className="p-2 text-muted-foreground">{w.constituency}</td>
++                <td className="p-2 text-right">{fmt(w.registered)}</td>
++                <td className="p-2 text-right">{fmt(w.contacts)}</td>
++                <td className="p-2 text-right">{w.contactReachPct == null ? "—" : `${w.contactReachPct}%`}</td>
++                <td className="p-2 text-right">{fmt(w.members)}</td>
++                <td className="p-2 text-right">{w.activeVolunteers}{w.pendingVolunteers ? <span className="text-amber-400"> +{w.pendingVolunteers}</span> : null}</td>
++                <td className="p-2 text-right">{fmt(w.doorsKnocked)}</td>
++                <td className="p-2 text-right">{w.expectedTurnoutRate == null ? "—" : `${w.expectedTurnoutRate}%`}</td>
++                <td className="p-2 text-right">{fmt(w.predictedCandidateVotes)}</td>
++                <td className="p-2 text-right">{w.gotvRank ?? "—"}</td>
++              </tr>
++            )) : <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Loading wards…</td></tr>}
++          </tbody>
++        </table>
++      </div>
++      <p className="px-4 pb-4 text-[10px] text-muted-foreground">Contacts come from the Constituent Database; members, volunteers (amber = awaiting approval) and door knocks from their modules. Reach = contacts ÷ registered voters. Forecast votes = expected votes for the candidate in that ward.</p>
++    </section>
++  );
++}
++
++type RecordRow = { key: string; label: string; href: string; available: boolean; total: number; last7Days: number; lastAt: string | null; extra: number | null };
++const EXTRA_LABEL: Record<string, (n: number) => string> = {
++  volunteers: n => `${n.toLocaleString("en-KE")} awaiting approval`,
++  volunteerTasks: n => `${n.toLocaleString("en-KE")} completed`,
++  messageCampaigns: n => `${n.toLocaleString("en-KE")} recipients`,
++  donations: n => `KES ${n.toLocaleString("en-KE")} received`,
++  narrativeMentions: n => `${n.toLocaleString("en-KE")} still open`,
++  milestones: n => `${n.toLocaleString("en-KE")} completed`,
++};
++function ago(iso: string | null) {
++  if (!iso) return "nothing yet";
++  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
++  if (mins < 1) return "just now";
++  if (mins < 60) return `${mins} min ago`;
++  if (mins < 1440) return `${Math.round(mins / 60)} h ago`;
++  return new Date(iso).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
++}
++
++/** Every module's captured records, so nothing entered in the system is missing from the dashboard. */
++export function RecordsCaptured() {
++  const { data, isError, refetch } = useQuery<{ records: RecordRow[]; updatedAt: string }>({
++    queryKey: ["dashboard-records"], refetchInterval: 30_000, staleTime: 0,
++    queryFn: async () => {
++      const r = await fetch(`${import.meta.env.BASE_URL}api/dashboard/records`, { credentials: "include" });
++      if (!r.ok) throw new Error("Records unavailable");
++      return r.json();
++    },
++  });
++  if (isError) return <div role="alert" className="rounded-lg border border-red-400/30 bg-red-400/5 p-4 text-sm">Captured records are unavailable. <button onClick={() => void refetch()} className="underline">Retry</button></div>;
++  return (
++    <section className="bg-card border border-border">
++      <div className="px-4 py-3 border-b border-border flex flex-wrap items-center justify-between gap-2">
++        <span className="font-mono text-xs tracking-widest">Records captured · all modules</span>
++        {data && <span className="font-mono text-[9px] text-muted-foreground">Updated {new Date(data.updatedAt).toLocaleTimeString("en-KE")}</span>}
++      </div>
++      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 p-4">
++        {data ? data.records.map(r => (
++          <Link key={r.key} href={r.href} className="block bg-secondary/50 hover:bg-secondary px-3 py-3 min-w-0">
++            <p className="font-mono text-[9px] text-muted-foreground truncate">{r.label.toUpperCase()}</p>
++            <p className="font-bold text-xl tabular-nums">{r.available ? r.total.toLocaleString("en-KE") : "—"}</p>
++            <p className="font-mono text-[9px] text-primary">{r.available ? `+${r.last7Days.toLocaleString("en-KE")} this week` : "not set up yet"}</p>
++            {r.extra !== null && EXTRA_LABEL[r.key] && <p className="font-mono text-[9px] text-muted-foreground truncate">{EXTRA_LABEL[r.key]!(r.extra)}</p>}
++            <p className="font-mono text-[9px] text-muted-foreground">Last: {ago(r.lastAt)}</p>
++          </Link>
++        )) : Array.from({ length: 12 }).map((_, i) => <div key={i} className="h-24 bg-secondary/50 animate-pulse" />)}
++      </div>
++    </section>
++  );
++}
+diff --git a/artifacts/commandcentre/src/components/governor-race.tsx b/artifacts/commandcentre/src/components/governor-race.tsx
+new file mode 100644
+index 0000000..238f0b3
+--- /dev/null
++++ b/artifacts/commandcentre/src/components/governor-race.tsx
+@@ -0,0 +1,72 @@
++import { useQuery } from "@tanstack/react-query";
++import { Link } from "wouter";
++
++type Projection = {
++  candidate: string;
++  history2022: { candidates: { name: string; votes: number }[]; candidateVoteSum: number; winner: { name: string; votes: number }; sources: { title: string; date: string; locator: string; url: string }[]; note: string };
++  projection2027: { registered: number; predictedTurnoutRate: number; predictedVotes: number; predictedCandidateVotes: number; predictedCandidateShare: number; majorityThreshold: number; gapToMajority: number; vs2022Winner: number; wardsWithSavedAssumptions: number; wardsInModel: number;
++    byConstituency: { constituency: string; registered: number; predictedVotes: number; predictedCandidateVotes: number; gotvUpside: number; share: number }[] };
++  method: string;
++};
++const n = (v: number) => v.toLocaleString("en-KE");
++
++/** Governor results (2022) and the 2027 projection, side by side. */
++export function GovernorRace() {
++  const { data, error, refetch } = useQuery<Projection>({
++    queryKey: ["governor-projection"], refetchInterval: 60_000,
++    queryFn: async () => {
++      const r = await fetch(`${import.meta.env.BASE_URL}api/analytics/governor-projection`, { credentials: "include" });
++      if (!r.ok) throw new Error("Governor projection unavailable");
++      return r.json();
++    },
++  });
++  if (error) return <section role="alert" className="rounded-2xl border border-border p-5">Governor results and projection could not be loaded. <button className="underline" onClick={() => void refetch()}>Retry</button></section>;
++  if (!data) return <section className="rounded-2xl border border-border p-5">Loading governor race…</section>;
++  const p = data.projection2027;
++  const h = data.history2022;
++  const winning = p.gapToMajority <= 0;
++  return (
++    <section className="space-y-4 rounded-2xl border border-emerald-400/20 bg-emerald-950/10 p-4 sm:p-6">
++      <div className="flex flex-wrap items-start justify-between gap-2">
++        <div><h2 className="text-lg font-semibold">Governor race · Makueni County</h2><p className="text-sm text-muted-foreground">2022 results and the 2027 projection for {data.candidate}</p></div>
++        <Link href="/turnout" className="text-xs text-primary underline">Change ward assumptions →</Link>
++      </div>
++
++      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
++        {[
++          ["2027 FORECAST VOTES", n(p.predictedCandidateVotes), `${p.predictedCandidateShare}% of ${n(p.predictedVotes)} expected votes`],
++          ["MAJORITY OF VOTES CAST", n(p.majorityThreshold), winning ? `Ahead by ${n(-p.gapToMajority + 1)}` : `${n(p.gapToMajority)} more votes needed`],
++          ["VS 2022 WINNING TOTAL", `${p.vs2022Winner >= 0 ? "+" : ""}${n(p.vs2022Winner)}`, `${h.winner.name}: ${n(h.winner.votes)} in 2022`],
++          ["FORECAST TURNOUT", `${p.predictedTurnoutRate}%`, `${n(p.registered)} registered (IEBC 2022)`],
++        ].map(([label, value, sub]) => (
++          <div key={label} className="bg-secondary/50 px-3 py-3">
++            <p className="font-mono text-[9px] text-muted-foreground">{label}</p>
++            <p className={`font-bold text-xl tabular-nums ${label === "MAJORITY OF VOTES CAST" ? (winning ? "text-green-400" : "text-amber-400") : "text-primary"}`}>{value}</p>
++            <p className="font-mono text-[9px] text-muted-foreground mt-1">{sub}</p>
++          </div>
++        ))}
++      </div>
++      {p.wardsWithSavedAssumptions < p.wardsInModel && <p className="text-xs text-amber-400">{p.wardsInModel - p.wardsWithSavedAssumptions} of {p.wardsInModel} wards still use the default 65% turnout / 50% support. Enter poll-based estimates in Turnout for a meaningful projection.</p>}
++
++      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
++        <div className="overflow-x-auto">
++          <table className="w-full text-sm tabular-nums"><caption className="text-left pb-2 text-xs text-muted-foreground">2027 projection by constituency</caption>
++            <thead><tr className="text-left text-xs text-muted-foreground"><th className="p-2">Constituency</th><th className="p-2 text-right">Registered</th><th className="p-2 text-right">Forecast votes</th><th className="p-2 text-right">Share</th><th className="p-2 text-right">GOTV upside</th></tr></thead>
++            <tbody>{p.byConstituency.map(c => <tr key={c.constituency} className="border-t border-border"><td className="p-2">{c.constituency}</td><td className="p-2 text-right">{n(c.registered)}</td><td className="p-2 text-right">{n(c.predictedCandidateVotes)}</td><td className="p-2 text-right">{c.share}%</td><td className="p-2 text-right">{n(c.gotvUpside)}</td></tr>)}</tbody>
++          </table>
++        </div>
++        <div className="overflow-x-auto">
++          <table className="w-full text-sm tabular-nums"><caption className="text-left pb-2 text-xs text-muted-foreground">2022 governor results (reported totals)</caption>
++            <thead><tr className="text-left text-xs text-muted-foreground"><th className="p-2">Candidate</th><th className="p-2 text-right">Votes</th><th className="p-2 text-right">Share</th></tr></thead>
++            <tbody>{h.candidates.map(c => <tr key={c.name} className="border-t border-border"><td className="p-2">{c.name}</td><td className="p-2 text-right">{n(c.votes)}</td><td className="p-2 text-right">{Math.round(c.votes / h.candidateVoteSum * 100)}%</td></tr>)}</tbody>
++          </table>
++        </div>
++      </div>
++      <p className="text-xs text-muted-foreground">{data.method}</p>
++      <details className="text-xs"><summary className="cursor-pointer">Sources for the 2022 results</summary>
++        <p className="mt-2 text-muted-foreground">{h.note}</p>
++        <ul className="mt-2 space-y-1">{h.sources.map(s => <li key={s.url}><a className="text-primary underline" target="_blank" rel="noreferrer" href={s.url}>{s.title}</a> · {s.date} · {s.locator}</li>)}</ul>
++      </details>
++    </section>
++  );
++}
+diff --git a/artifacts/commandcentre/src/pages/analytics.tsx b/artifacts/commandcentre/src/pages/analytics.tsx
+index 4e4556c..2949697 100644
+--- a/artifacts/commandcentre/src/pages/analytics.tsx
++++ b/artifacts/commandcentre/src/pages/analytics.tsx
+@@ -1,6 +1,6 @@
+ import { useWorkspaceRefresh } from "@/hooks/use-workspace-refresh";
+ import { MakueniResearch } from "@/components/makueni-research";
+-import { IebcHistory } from "@/components/iebc-history";
++import { GovernorRace } from "@/components/governor-race";
+ import { MAKUENI_WARDS } from "@/lib/makueni-wards";
+ import { useState, useEffect, useCallback } from "react";
+ import {
+@@ -152,8 +152,7 @@ export default function Analytics() {
+         </div>
+       </div>
+ 
+-      <MakueniResearch />
+-      <IebcHistory />
++      <GovernorRace />
+ 
+       {/* Tabs */}
+       <div className="flex gap-1 flex-wrap">
+@@ -876,6 +875,7 @@ export default function Analytics() {
+           </div>
+         </div>
+       )}
++      <MakueniResearch />
+     </div>
+   );
+ }
+diff --git a/artifacts/commandcentre/src/pages/campaign-plan.tsx b/artifacts/commandcentre/src/pages/campaign-plan.tsx
+index 6a0ac67..0f6308b 100644
+--- a/artifacts/commandcentre/src/pages/campaign-plan.tsx
++++ b/artifacts/commandcentre/src/pages/campaign-plan.tsx
+@@ -257,7 +257,7 @@ export default function CampaignPlan() {
+       });
+       if (!res.ok) throw new Error(await res.text());
+       const data = await res.json();
+-      setAiPlanNote(data.mode === "free-template" ? "Template draft: not a tailored AI campaign strategy. Review dates and assign real owners before saving." : "AI draft: verify scope, dates and owners before saving.");
++      setAiPlanNote(data.mode === "live-data-plan" ? "Candidate campaign plan built from your live ward, volunteer, contact and polling-station data. Confirm nomination dates against the IEBC and party timetables, and assign named owners before saving." : "AI draft using your live campaign data: verify dates and owners before saving.");
+       const plan: any[] = data.milestones ?? [];
+       setAiPlan(plan);
+       setAiPlanSelected(new Set(plan.map((_: any, i: number) => i)));
+@@ -669,7 +669,7 @@ export default function CampaignPlan() {
+                 <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                   <div className="flex items-center gap-2">
+                     <Sparkles className="w-3.5 h-3.5 text-primary" />
+-                    <span className="font-mono text-xs font-bold tracking-widest text-primary">AI GENERATED CAMPAIGN PLAN</span>
++                    <span className="font-mono text-xs font-bold tracking-widest text-primary">CANDIDATE CAMPAIGN PLAN · DRAFT</span>
+                     {aiPlan.length > 0 && !aiPlanLoading && (
+                       <span className="font-mono text-[9px] border border-border px-1.5 py-0.5 text-muted-foreground">
+                         {aiPlanSelected.size}/{aiPlan.length} SELECTED
+diff --git a/artifacts/commandcentre/src/pages/dashboard.tsx b/artifacts/commandcentre/src/pages/dashboard.tsx
+index cea35ce..c32d664 100644
+--- a/artifacts/commandcentre/src/pages/dashboard.tsx
++++ b/artifacts/commandcentre/src/pages/dashboard.tsx
+@@ -1,6 +1,7 @@
+ import { Link } from "wouter";
+ import { useQuery } from "@tanstack/react-query";
+ import { DashboardInsights } from "@/components/dashboard-insights";
++import { RecordsCaptured, TurnoutForecastCard, WardBreakdown, useDashboardWards } from "@/components/dashboard-wards";
+ import { useGetDashboardSummary, useGetDashboardActivity, getGetDashboardSummaryQueryKey, getGetDashboardActivityQueryKey } from "@workspace/api-client-react";
+ import { Users, MessageSquare, Map, ShieldAlert, Target, Calendar, Zap, Clock, TrendingUp, Activity, User, Building2 } from "lucide-react";
+ 
+@@ -59,6 +60,7 @@ export default function Dashboard() {
+     queryKey: ["dashboard-operations"], refetchInterval: 30_000,
+     queryFn: async () => { const r = await fetch(`${import.meta.env.BASE_URL}api/dashboard/operations`); if (!r.ok) throw new Error("Operations unavailable"); return r.json(); },
+   });
++  const { data: wardData } = useDashboardWards();
+   return (
+     <div className="space-y-6">
+       <div className="flex items-center justify-between">
+@@ -83,8 +85,8 @@ export default function Dashboard() {
+         </div>
+       ) : summary ? (
+         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+-          <StatCard label="TOTAL MEMBERS" value={summary.totalMembers.toLocaleString()} icon={Users} sub="IDENTITY GRAPH" />
+-          <StatCard label="ACTIVE VOLUNTEERS" value={summary.activeVolunteers} icon={Activity} sub="DEPLOYED" />
++          <StatCard label="CONSTITUENT CONTACTS" value={wardData ? wardData.totals.contacts.toLocaleString() : "…"} icon={Users} sub={wardData ? `${wardData.totals.wardsWithContacts} OF 30 WARDS · ${summary.totalMembers.toLocaleString()} MEMBERS` : "CONSTITUENT DATABASE"} />
++          <StatCard label="VOLUNTEERS" value={summary.activeVolunteers} icon={Activity} sub={operations ? `ACTIVE · ${operations.pendingVolunteers} AWAITING APPROVAL` : "ACTIVE"} />
+           <StatCard label="MESSAGES SENT" value={summary.messagesSent.toLocaleString()} icon={MessageSquare} sub="ALL CHANNELS" />
+           <StatCard label="DOORS KNOCKED" value={summary.doorsKnocked.toLocaleString()} icon={Map} sub="FIELD OPS" />
+           <StatCard label="WARDS COVERED" value={summary.wardsCovered} icon={TrendingUp} sub="ACTIVE ZONES" />
+@@ -99,6 +101,9 @@ export default function Dashboard() {
+         <Link href="/volunteers" className="rounded-xl border border-border px-4 py-3">{operations ? `${operations.registeredVolunteers} registrations · ${operations.pendingVolunteers} awaiting review · ${operations.openVolunteerTasks} open tasks · ${operations.completedVolunteerTasks} completed` : "Volunteer registrations and tasks →"}</Link>
+       </div>
+       <p className="text-xs text-muted-foreground">Updates after saved changes; checks for other users’ changes every 30 seconds while open.</p>
++      <RecordsCaptured />
++      <TurnoutForecastCard />
++      <WardBreakdown />
+       <DashboardInsights />
+ 
+       {/* Candidate Profile + Constituency Intel */}
+@@ -159,8 +164,7 @@ export default function Dashboard() {
+               ))}
+             </div>
+             <div className="border-t border-border pt-2 space-y-1">
+-              <p className="font-mono text-[9px] text-muted-foreground">LEGACY FIGURES REMOVED</p>
+-              <p className="font-mono text-[9px] text-muted-foreground">Ward-level polling station and voter data will appear only after verified IEBC records are imported. The county total is a 2022 reference, not a live count.</p>
++              <p className="font-mono text-[9px] text-muted-foreground">Ward-level registered voters from the IEBC 2022 polling-station register are shown in the ward coverage table above.</p>
+               <a className="font-mono text-[9px] text-primary underline" href="https://www.iebc.or.ke/docs/rov_per_polling_station.pdf" target="_blank" rel="noreferrer">OPEN OFFICIAL IEBC 2022 REGISTER</a>
+             </div>
+           </div>
+diff --git a/artifacts/commandcentre/src/pages/segments.tsx b/artifacts/commandcentre/src/pages/segments.tsx
+index e89a096..7ab6991 100644
+--- a/artifacts/commandcentre/src/pages/segments.tsx
++++ b/artifacts/commandcentre/src/pages/segments.tsx
+@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
+ import { Link } from "wouter";
+ import { parseRegistrySummary } from "../lib/contact-summary";
+ import {
+-  useListSegments, useCreateSegment, useDeleteSegment,
++  useListSegments, useCreateSegment, useDeleteSegment, useUpdateSegment,
+   getListSegmentsQueryKey
+ } from "@workspace/api-client-react";
+ import type { SegmentInput } from "@workspace/api-client-react";
+@@ -14,11 +14,21 @@ import {
+   UserCheck, Church, GraduationCap, Briefcase, Baby,
+   Venus, HelpCircle, TrendingUp, Globe, Layers,
+   Zap, Filter, Bike, Heart, Building2, Plane, Star,
+-  ShoppingBag, Truck, Shield
++  ShoppingBag, Truck, Shield, Pencil
+ } from "lucide-react";
+ 
+ const WARDS = ["Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa","Kiima Kiu/Kalanzoni","Mukaa","Kasikeu","Kee","Kilungu","Ilima","Ukia","Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini","Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala","Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"];
+ 
++const CONSTITUENCY_WARDS: Record<string, string[]> = {
++  Mbooni: ["Tulimani","Mbooni","Kithungo/Kitundu","Kiteta/Kisau","Kako/Waia","Kalawa"],
++  Kilome: ["Kiima Kiu/Kalanzoni","Mukaa","Kasikeu"],
++  Kaiti: ["Kee","Kilungu","Ilima","Ukia"],
++  Makueni: ["Nzaui/Kilili/Kalamba","Muvau/Kikumini","Kathonzweni","Mavindini","Kitise/Kithuki","Wote","Mbitini"],
++  "Kibwezi West": ["Makindu","Kikumbulyu North","Kikumbulyu South","Nguumo","Nguu/Masumba","Emali/Mulala"],
++  "Kibwezi East": ["Masongaleni","Mtito Andei","Thange","Ivingoni/Nzambani"],
++};
++const COUNTABLE_DEMOGRAPHICS = ["women", "men", "youth", "first_time_voters"];
++
+ const CATEGORIES = ["ALL", "GEOGRAPHIC", "DEMOGRAPHIC", "BEHAVIORAL", "STRATEGIC"] as const;
+ type Category = typeof CATEGORIES[number];
+ 
+@@ -49,7 +59,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
+ 
+ function categoryOf(criteria: Record<string, any>): Category {
+   if (criteria.demographic && !criteria.supportLevel && !criteria.strategic) return "DEMOGRAPHIC";
+-  if (criteria.ward && !criteria.supportLevel && !criteria.demographic && !criteria.strategic) return "GEOGRAPHIC";
++  if ((criteria.ward || criteria.constituency) && !criteria.supportLevel && !criteria.demographic && !criteria.strategic) return "GEOGRAPHIC";
+   if (criteria.supportLevel || criteria.isGOTV || criteria.strategic || criteria.transportNeeded) return "STRATEGIC";
+   if (criteria.smsConsent || criteria.whatsappConsent || criteria.emailConsent) return "BEHAVIORAL";
+   if (criteria.demographic) return "DEMOGRAPHIC";
+@@ -132,6 +142,26 @@ export default function Segments() {
+       }
+     }
+   });
++  const [editingId, setEditingId] = useState<number | null>(null);
++  const [saveError, setSaveError] = useState("");
++  const closeForm = () => { setShowAdd(false); setEditingId(null); setSaveError(""); setForm({ criteria: {}, isLocked: false }); };
++  const updateSegment = useUpdateSegment({
++    mutation: {
++      onSuccess: () => { qc.invalidateQueries({ queryKey: getListSegmentsQueryKey() }); closeForm(); },
++      onError: (err: unknown) => setSaveError(err instanceof Error ? err.message : "Could not save the segment."),
++    }
++  });
++  function startEdit(seg: { id: number; name: string; description?: string | null; criteria: unknown; isLocked: boolean }) {
++    const c = (seg.criteria ?? {}) as Record<string, any>;
++    const type = c.demographic ? "demographic" : (c.smsConsent || c.whatsappConsent || c.emailConsent) ? "behavioral" : (c.supportLevel || c.isGOTV || c.strategic) ? "strategic" : "geographic";
++    setSegmentType(type);
++    setForm({ name: seg.name, description: seg.description ?? "", isLocked: seg.isLocked, criteria: {},
++      _ward: c.ward ?? "", _constituency: c.constituency ?? "", _demographic: c.demographic ?? "", _manualSize: c.manualSize ?? "",
++      _supportLevel: c.supportLevel ?? "", _smsConsent: !!c.smsConsent, _whatsappConsent: !!c.whatsappConsent, _emailConsent: !!c.emailConsent,
++      _isGOTV: !!c.isGOTV, _strategic: !!c.strategic });
++    setEditingId(seg.id); setSaveError(""); setShowAdd(true);
++    window.scrollTo({ top: 0, behavior: "smooth" });
++  }
+   const deleteSegment = useDeleteSegment({
+     mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: getListSegmentsQueryKey() }) }
+   });
+@@ -154,11 +184,14 @@ export default function Segments() {
+     const criteria: Record<string, any> = {};
+     if (segmentType === "geographic") {
+       if (form._ward) criteria.ward = form._ward;
++      else if (form._constituency) criteria.constituency = form._constituency;
+     } else if (segmentType === "demographic") {
+       if (form._demographic) {
+         criteria.demographic = form._demographic;
+ 
+         if (form._manualSize) criteria.manualSize = parseInt(form._manualSize);
++        if (form._ward) criteria.ward = form._ward;
++        else if (form._constituency) criteria.constituency = form._constituency;
+ 
+       }
+     } else if (segmentType === "behavioral") {
+@@ -173,7 +206,9 @@ export default function Segments() {
+       if (form._isGOTV) criteria.isGOTV = true;
+       if (form._strategic) criteria.strategic = true;
+     }
+-    createSegment.mutate({ data: { name: form.name, description: form.description, criteria, isLocked: form.isLocked } as SegmentInput });
++    const data = { name: form.name, description: form.description, criteria, isLocked: form.isLocked } as SegmentInput;
++    if (editingId !== null) updateSegment.mutate({ id: editingId, data } as any);
++    else createSegment.mutate({ data });
+   }
+ 
+   const totalReach = (segments ?? []).reduce((acc, s) => acc + (s.memberCount ?? 0), 0);
+@@ -266,16 +301,16 @@ export default function Segments() {
+       </div>
+ 
+       {/* New segment form */}
+-      <p className="text-xs text-muted-foreground">Ward directory totals come from imported contacts. Saved segments count the separate member list; these datasets are not automatically merged. Demographic counts require supplied data; manual sizes are estimates.</p>
++      <p className="text-xs text-muted-foreground">Segment counts combine Constituent Database contacts and members, and update whenever records change. Women, men, youth and first-time voters are counted from recorded gender and date of birth; support level and consent exist only on members. Other groups (chamas, teachers, bodaboda…) need a manual estimate until that data is captured.</p>
+       {showAdd && (
+         <div className="bg-card border border-primary/40 p-5 relative">
+           <div className="absolute top-0 left-0 w-full h-0.5 bg-primary" />
+           <div className="flex items-center justify-between mb-4">
+             <div className="flex items-center gap-2">
+               <Filter className="w-3.5 h-3.5 text-primary" />
+-              <h3 className="font-mono text-xs tracking-widest">DEFINE NEW SEGMENT</h3>
++              <h3 className="font-mono text-xs tracking-widest">{editingId !== null ? "EDIT SEGMENT" : "DEFINE NEW SEGMENT"}</h3>
+             </div>
+-            <button onClick={() => { setShowAdd(false); setForm({ criteria: {}, isLocked: false }); }} className="text-muted-foreground hover:text-foreground">
++            <button onClick={closeForm} className="text-muted-foreground hover:text-foreground">
+               <X className="w-4 h-4" />
+             </button>
+           </div>
+@@ -308,13 +343,22 @@ export default function Segments() {
+               </div>
+             </div>
+ 
+-            {segmentType === "geographic" && (
+-              <div className="space-y-1">
+-                <label className="text-[10px] font-mono text-muted-foreground">WARD</label>
+-                <select value={form._ward ?? ""} onChange={e => setForm(p => ({ ...p, _ward: e.target.value }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
+-                  <option value="">ALL WARDS</option>
+-                  {WARDS.map(w => <option key={w} value={w}>{w}</option>)}
+-                </select>
++            {(segmentType === "geographic" || segmentType === "demographic") && (
++              <div className="grid grid-cols-2 gap-3">
++                <div className="space-y-1">
++                  <label className="text-[10px] font-mono text-muted-foreground">CONSTITUENCY</label>
++                  <select value={form._constituency ?? ""} onChange={e => setForm(p => ({ ...p, _constituency: e.target.value, _ward: "" }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
++                    <option value="">WHOLE COUNTY</option>
++                    {Object.keys(CONSTITUENCY_WARDS).map(c => <option key={c} value={c}>{c}</option>)}
++                  </select>
++                </div>
++                <div className="space-y-1">
++                  <label className="text-[10px] font-mono text-muted-foreground">WARD</label>
++                  <select value={form._ward ?? ""} onChange={e => setForm(p => ({ ...p, _ward: e.target.value }))} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary">
++                    <option value="">{form._constituency ? `ALL ${String(form._constituency).toUpperCase()} WARDS` : "ALL WARDS"}</option>
++                    {(form._constituency ? CONSTITUENCY_WARDS[form._constituency] ?? WARDS : WARDS).map(w => <option key={w} value={w}>{w}</option>)}
++                  </select>
++                </div>
+               </div>
+             )}
+ 
+@@ -329,7 +373,7 @@ export default function Segments() {
+                 </div>
+                 <div className="space-y-1">
+                   <label className="text-[10px] font-mono text-muted-foreground">ESTIMATED REACH (OVERRIDE)</label>
+-                  <input type="number" value={form._manualSize ?? ""} onChange={e => setForm(p => ({ ...p, _manualSize: e.target.value }))} placeholder="Auto-calculated if blank" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
++                  <input type="number" value={form._manualSize ?? ""} onChange={e => setForm(p => ({ ...p, _manualSize: e.target.value }))} placeholder={COUNTABLE_DEMOGRAPHICS.includes(form._demographic) ? "Leave blank to count live" : "Required: no recorded data for this group"} className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+                 </div>
+               </div>
+             )}
+@@ -367,17 +411,18 @@ export default function Segments() {
+               </div>
+             )}
+ 
++            {saveError && <p role="alert" className="text-xs text-red-400">{saveError}</p>}
+             <div className="flex items-center justify-between pt-2">
+               <label className="flex items-center gap-2 cursor-pointer">
+                 <input type="checkbox" checked={!!form.isLocked} onChange={e => setForm(p => ({ ...p, isLocked: e.target.checked }))} className="accent-primary" />
+                 <span className="font-mono text-[10px] text-muted-foreground">LOCK AS SNAPSHOT</span>
+               </label>
+               <div className="flex gap-2">
+-                <button type="button" onClick={() => { setShowAdd(false); setForm({ criteria: {}, isLocked: false }); }} className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs hover:bg-secondary">
++                <button type="button" onClick={closeForm} className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs hover:bg-secondary">
+                   <X className="w-3 h-3" /> ABORT
+                 </button>
+-                <button type="submit" disabled={createSegment.isPending} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 font-mono text-xs hover:bg-primary/90 disabled:opacity-50">
+-                  <Check className="w-3 h-3" /> LOCK IN TARGET
++                <button type="submit" disabled={createSegment.isPending || updateSegment.isPending} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 font-mono text-xs hover:bg-primary/90 disabled:opacity-50">
++                  <Check className="w-3 h-3" /> {editingId !== null ? "SAVE CHANGES" : "LOCK IN TARGET"}
+                 </button>
+               </div>
+             </div>
+@@ -404,7 +449,7 @@ export default function Segments() {
+             const channels = channelBadges(criteria);
+             const demo = DEMOGRAPHIC_TYPES.find(d => d.key === criteria.demographic);
+             const reach = seg.memberCount ?? 0;
+-            const pct = reach > 0 ? Math.min(100, Math.round((reach / 78000) * 100)) : 0;
++            const breakdown = (seg as any).countBreakdown as { contacts: number | null; members: number | null } | undefined;
+ 
+             return (
+               <div key={seg.id} className="bg-card border border-border p-4 group relative overflow-hidden">
+@@ -420,8 +465,9 @@ export default function Segments() {
+                       <span className="font-mono text-[8px] tracking-widest" style={{ color }}>{cat}</span>
+                     </div>
+                   </div>
+-                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
++                  <div className="flex items-center gap-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                     {seg.isLocked ? <Lock className="w-3 h-3 text-yellow-400" /> : <Unlock className="w-3 h-3 text-muted-foreground" />}
++                    <button aria-label={`Edit ${seg.name}`} onClick={() => startEdit(seg as any)} className="text-muted-foreground hover:text-primary transition-colors"><Pencil className="w-3 h-3" /></button>
+                     <button
+                       onClick={() => { if (confirm("Delete segment?")) deleteSegment.mutate({ id: seg.id }); }}
+                       className="text-muted-foreground hover:text-red-400 transition-colors"
+@@ -438,7 +484,8 @@ export default function Segments() {
+                 <div className="flex items-end justify-between mb-2">
+                   <div>
+                     <span className="text-lg font-bold tabular-nums">{(seg as any).countStatus === "unavailable" ? "—" : reach.toLocaleString()}</span>
+-                    <span className="font-mono text-[8px] text-muted-foreground ml-1.5">CONTACTS</span>
++                    <span className="font-mono text-[8px] text-muted-foreground ml-1.5">PEOPLE</span>
++                    {breakdown && (seg as any).countStatus === "live-count" && <p className="font-mono text-[9px] text-muted-foreground">{breakdown.contacts !== null ? `${breakdown.contacts.toLocaleString()} contacts` : "contacts n/a"} · {breakdown.members !== null ? `${breakdown.members.toLocaleString()} members` : "members n/a"}</p>}
+                   </div>
+                 </div>
+ 
+@@ -449,7 +496,10 @@ export default function Segments() {
+                         {demo.description}
+                       </span>
+                     )}
+-                    {(seg as any).countStatus && <p className="text-[10px] text-muted-foreground">{(seg as any).countStatus === "manual-estimate" ? "Manual estimate" : (seg as any).countStatus === "unavailable" ? "Count unavailable: source attributes not supplied" : "Live member count"}</p>}
++                    {(seg as any).countStatus && <p className="text-[10px] text-muted-foreground">{(seg as any).countStatus === "manual-estimate" ? "Manual estimate" : (seg as any).countStatus === "unavailable" ? "Count unavailable: source attributes not supplied" : "Live count"}</p>}
++                    {criteria.constituency && !criteria.ward && (
++                      <span className="font-mono text-[9px] px-1.5 py-0.5 border border-border bg-secondary text-muted-foreground">{String(criteria.constituency).toUpperCase()}</span>
++                    )}
+                     {criteria.ward && (
+                       <span className="font-mono text-[9px] px-1.5 py-0.5 border border-border bg-secondary text-muted-foreground">
+                         {criteria.ward.toUpperCase()}
+diff --git a/artifacts/commandcentre/src/pages/surveys.tsx b/artifacts/commandcentre/src/pages/surveys.tsx
+index 796bfe3..537c687 100644
+--- a/artifacts/commandcentre/src/pages/surveys.tsx
++++ b/artifacts/commandcentre/src/pages/surveys.tsx
+@@ -194,7 +194,9 @@ export default function Surveys() {
+     if (!pollForm.title || questions.some(q => !q.title.trim() || q.options.length < 2)) { setRequestError("Each question needs a title and at least two answers."); return; }
+     setCreatingPoll(true);
+     try {
+-      await apiFetch("/polls", { method: "POST", body: JSON.stringify({ ...pollForm, options: opts, questions }) });
++      const pollTitle = String(pollForm.pollTitle ?? "").trim() || pollForm.title;
++      const { pollTitle: _ignored, ...rest } = pollForm as Record<string, unknown>;
++      await apiFetch("/polls", { method: "POST", body: JSON.stringify({ ...rest, title: pollTitle, options: opts, questions }) });
+       setShowNewPoll(false); setPollForm({ category: "general", ward: "all", options: ["", ""] }); setExtraQuestions([]);
+       await loadPolls();
+     } catch (error) { setRequestError(error instanceof Error ? error.message : "Could not create poll"); }
+@@ -348,8 +350,13 @@ export default function Surveys() {
+             <div className="bg-card border border-primary/50 p-4">
+               <h3 className="font-mono text-xs tracking-widest mb-4">CREATE OPINION POLL</h3>
+               <div className="grid grid-cols-3 gap-3">
++                <div className="col-span-3 space-y-1">
++                  <label className="text-[10px] font-mono text-muted-foreground">POLL TITLE (OPTIONAL)</label>
++                  <input value={pollForm.pollTitle ?? ""} onChange={e => setPollForm(p => ({ ...p, pollTitle: e.target.value }))} placeholder="e.g. Kilome ward priorities, November 2026 — leave blank to use question 1" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
++                  <p className="text-[10px] text-muted-foreground">A poll can ask up to 20 questions. Add question 1 below, then use “+ Add another question”.</p>
++                </div>
+                 <div className="col-span-2 space-y-1">
+-                  <label className="text-[10px] font-mono text-muted-foreground">POLL QUESTION *</label>
++                  <label className="text-[10px] font-mono text-muted-foreground">QUESTION 1 *</label>
+                   <input value={pollForm.title ?? ""} onChange={e => setPollForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Which development project should be prioritised?" className="w-full bg-secondary border border-border px-3 py-2 font-mono text-xs focus:outline-none focus:border-primary" />
+                 </div>
+                 <div className="space-y-1">
+@@ -375,7 +382,7 @@ export default function Surveys() {
+                 </div>
+                 <div className="col-span-3 space-y-2">
+                   <div className="flex items-center justify-between">
+-                    <label className="text-[10px] font-mono text-muted-foreground">ANSWER OPTIONS (min. 2) *</label>
++                    <label className="text-[10px] font-mono text-muted-foreground">QUESTION 1 ANSWERS (min. 2) *</label>
+                     <button type="button" onClick={() => setPollForm(p => ({ ...p, options: [...(p.options as string[]), ""] }))} className="font-mono text-[10px] border border-primary/40 text-primary px-2 py-0.5 hover:bg-primary hover:text-primary-foreground">+ OPTION</button>
+                   </div>
+                   {(pollForm.options as string[]).map((opt: string, idx: number) => (
+@@ -400,7 +407,7 @@ export default function Surveys() {
+                     <textarea aria-label={`Question ${index + 2} options`} value={question.optionsText} onChange={e => setExtraQuestions(previous => previous.map((q, i) => i === index ? { ...q, optionsText: e.target.value } : q))} placeholder="Answer options: one per line (at least two)" rows={3} className="w-full bg-secondary border border-border p-2 text-sm" />
+                     <button type="button" className="text-xs underline" onClick={() => setExtraQuestions(previous => previous.filter((_, i) => i !== index))}>Remove question</button>
+                   </fieldset>)}
+-                  <button type="button" disabled={extraQuestions.length >= 19} onClick={() => setExtraQuestions(previous => [...previous, { title: "", optionsText: "" }])} className="border border-primary/40 text-primary px-3 py-2 text-xs">+ Add another question</button>
++                  <button type="button" disabled={extraQuestions.length >= 19} onClick={() => setExtraQuestions(previous => [...previous, { title: "", optionsText: "" }])} className="border border-primary/40 text-primary px-3 py-2 text-xs hover:bg-primary hover:text-primary-foreground">+ Add another question ({extraQuestions.length + 1} so far)</button>
+                 </div>
+                 <div className="col-span-3 flex gap-2 justify-end">
+                   <button onClick={() => { setShowNewPoll(false); setPollForm({ category: "general", ward: "all", options: ["", ""] }); }} className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs hover:bg-secondary"><X className="w-3 h-3" /> ABORT</button>
+@@ -451,7 +458,7 @@ export default function Surveys() {
+                           <button onClick={() => deletePoll(poll.id)} className="text-muted-foreground hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
+                         </div>
+                       </div>
+-                      <h3 className="font-bold text-sm mb-2">{poll.title}</h3>
++                      <h3 className="font-bold text-sm mb-2">{poll.title}{(poll.questions?.length ?? 0) > 1 && <span className="ml-2 font-mono text-[9px] text-primary border border-primary/30 px-1.5 py-0.5">{poll.questions.length} QUESTIONS</span>}</h3>
+                       <div className="flex items-center justify-between">
+                         <span className="font-mono text-[10px] text-muted-foreground">{opts.length} OPTIONS · {poll.totalVotes} VOTES</span>
+                         {poll.deadline && <span className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground"><Clock className="w-2.5 h-2.5" /> CLOSES {poll.deadline}</span>}
+diff --git a/artifacts/commandcentre/src/pages/volunteers.tsx b/artifacts/commandcentre/src/pages/volunteers.tsx
+index 08845d1..685dc1a 100644
+--- a/artifacts/commandcentre/src/pages/volunteers.tsx
++++ b/artifacts/commandcentre/src/pages/volunteers.tsx
+@@ -116,6 +116,15 @@ export default function Volunteers() {
+   // tasks
+   const [tasks, setTasks] = useState<any[]>([]);
+   const [tasksLoading, setTasksLoading] = useState(false);
++  const [taskNotice, setTaskNotice] = useState("");
++  async function resendTaskText(taskId: number) {
++    try {
++      const r = await fetch(`${import.meta.env.BASE_URL}api/volunteers/tasks/${taskId}/notify`, { method: "POST", credentials: "include" });
++      const b = await r.json().catch(() => ({}));
++      setTaskNotice(b?.notification?.status === "sent" ? `Task text sent by ${String(b.notification.channel).toUpperCase()}.` : `Text not sent: ${b?.notification?.error ?? b?.error ?? "unknown error"}`);
++    } catch { setTaskNotice("Text not sent: check your connection."); }
++    await loadTasks();
++  }
+   const [showNewTask, setShowNewTask] = useState(false);
+   const [taskForm, setTaskForm] = useState<Record<string, string>>({ priority: "medium", category: "canvassing" });
+   const [expandedTask, setExpandedTask] = useState<number | null>(null);
+@@ -161,7 +170,9 @@ export default function Volunteers() {
+ 
+   async function createTask() {
+     if (!taskForm.volunteerId || !taskForm.title) return;
+-    await apiFetch("/tasks", { method: "POST", body: JSON.stringify({ ...taskForm, targetValue: taskForm.targetValue ? parseInt(taskForm.targetValue) : undefined }) });
++    const created = await apiFetch("/tasks", { method: "POST", body: JSON.stringify({ ...taskForm, targetValue: taskForm.targetValue ? parseInt(taskForm.targetValue) : undefined }) });
++    const n = created?.notification;
++    setTaskNotice(n?.status === "sent" ? `Task saved and sent to the volunteer by ${String(n.channel).toUpperCase()}.` : `Task saved, but the volunteer was not notified: ${n?.error ?? "no provider"}. Use "Resend text" on the task after fixing Messaging.`);
+     await loadTasks();
+     setShowNewTask(false);
+     setTaskForm({ priority: "medium", category: "canvassing" });
+@@ -421,6 +432,7 @@ export default function Volunteers() {
+       {tab === "tasks" && <p className="rounded-lg border border-amber-400/30 p-3 text-xs text-muted-foreground">Assignments are saved internally. No SMS, email or WhatsApp notification is sent automatically; contact the assigned volunteer separately.</p>}
+       {tab === "tasks" && (
+         <div className="space-y-3">
++          {taskNotice && <div role="status" className="flex items-start justify-between gap-3 border border-primary/30 bg-primary/5 px-3 py-2 text-xs"><span>{taskNotice}</span><button onClick={() => setTaskNotice("")} className="underline shrink-0">Dismiss</button></div>}
+           {showNewTask && (
+             <div className="bg-card border border-primary/50 p-4">
+               <h3 className="font-mono text-xs tracking-widest mb-4">ASSIGN NEW TASK</h3>
+@@ -513,6 +525,10 @@ export default function Volunteers() {
+                           <Badge label={task.priority.toUpperCase()} className={priorityColor(task.priority)} />
+                           <Badge label={isOverdue ? "OVERDUE" : task.status.replace(/_/g, " ").toUpperCase()} className={isOverdue ? "text-red-400 border-red-400/30 animate-pulse" : statusColor(task.status)} />
+                           <span className="font-mono text-[10px] text-muted-foreground">{task.category.replace(/_/g, " ").toUpperCase()}</span>
++                          {task.notification?.status === "sent"
++                            ? <span title={`Sent ${new Date(task.notification.at).toLocaleString("en-KE")}`} className="font-mono text-[10px] text-green-400">✓ VOLUNTEER NOTIFIED ({String(task.notification.channel).toUpperCase()})</span>
++                            : <span className="flex items-center gap-1 font-mono text-[10px] text-amber-400">{task.notification ? `NOT DELIVERED: ${task.notification.error ?? "failed"}` : "VOLUNTEER NOT NOTIFIED"}
++                                <button onClick={() => void resendTaskText(task.id)} className="underline">Resend text</button></span>}
+                         </div>
+                         <div className="flex items-center gap-2">
+                           {task.dueDate && <span className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground"><Calendar className="w-2.5 h-2.5" />{task.dueDate}</span>}
+diff --git a/supabase/ward-backfill-20261024/00_preview_ward_backfill.sql b/supabase/ward-backfill-20261024/00_preview_ward_backfill.sql
+new file mode 100644
+index 0000000..81efe8f
+--- /dev/null
++++ b/supabase/ward-backfill-20261024/00_preview_ward_backfill.sql
+@@ -0,0 +1,140 @@
++-- PREVIEW ONLY · Makueni ward backfill · 2026-10-24
++-- Shows how many contacts would change, then ROLLS BACK. Nothing is saved.
++-- Run in the Makueni Supabase SQL Editor (the database used by Render's DATABASE_URL).
++-- Safe to re-run. Changes ONLY the ward/sub_county columns of public.voter_registry:
++--   A. Rewrites ward spellings that are not the official form ("KEE WARD", "Waia-Kako",
++--      "kiima kiu kalanzoni") to the official ward name.
++--   B. Fills a blank ward from the 21 Oct contact import when every ward listed for that
++--      contact in the import points to the same official ward, and it agrees with any
++--      constituency on the record.
++-- Every row it changes is copied first to public.makueni_ward_backfill_backup_20261024.
++-- Contacts with conflicting or unrecognised wards are left blank and listed at the end.
++BEGIN;
++SET LOCAL lock_timeout = '5s';
++SET LOCAL statement_timeout = '120s';
++
++CREATE OR REPLACE FUNCTION pg_temp.ward_key(raw text) RETURNS text LANGUAGE sql IMMUTABLE AS $$
++  SELECT regexp_replace(regexp_replace(lower(coalesce(raw, '')), '\mward\M', '', 'g'), '[^a-z]', '', 'g');
++$$;
++
++CREATE TEMP TABLE ward_map(key text PRIMARY KEY, ward text NOT NULL, constituency text NOT NULL) ON COMMIT DROP;
++INSERT INTO ward_map VALUES
++  ('emali','Emali/Mulala','Kibwezi West'),
++  ('emalimulala','Emali/Mulala','Kibwezi West'),
++  ('ilima','Ilima','Kaiti'),
++  ('ivingoni','Ivingoni/Nzambani','Kibwezi East'),
++  ('ivingoninzambani','Ivingoni/Nzambani','Kibwezi East'),
++  ('kako','Kako/Waia','Mbooni'),
++  ('kakowaia','Kako/Waia','Mbooni'),
++  ('kalamba','Nzaui/Kilili/Kalamba','Makueni'),
++  ('kalanzoni','Kiima Kiu/Kalanzoni','Kilome'),
++  ('kalawa','Kalawa','Mbooni'),
++  ('kasikeu','Kasikeu','Kilome'),
++  ('kathonzweni','Kathonzweni','Makueni'),
++  ('kee','Kee','Kaiti'),
++  ('kiimakiu','Kiima Kiu/Kalanzoni','Kilome'),
++  ('kiimakiukalanzoni','Kiima Kiu/Kalanzoni','Kilome'),
++  ('kikumbulyunorth','Kikumbulyu North','Kibwezi West'),
++  ('kikumbulyusouth','Kikumbulyu South','Kibwezi West'),
++  ('kikumini','Muvau/Kikumini','Makueni'),
++  ('kikuumini','Muvau/Kikumini','Makueni'),
++  ('kilili','Nzaui/Kilili/Kalamba','Makueni'),
++  ('kilungu','Kilungu','Kaiti'),
++  ('kisau','Kiteta/Kisau','Mbooni'),
++  ('kisaukiteta','Kiteta/Kisau','Mbooni'),
++  ('kiteta','Kiteta/Kisau','Mbooni'),
++  ('kitetakisau','Kiteta/Kisau','Mbooni'),
++  ('kithuki','Kitise/Kithuki','Makueni'),
++  ('kithungo','Kithungo/Kitundu','Mbooni'),
++  ('kithungokitundu','Kithungo/Kitundu','Mbooni'),
++  ('kitise','Kitise/Kithuki','Makueni'),
++  ('kitisekithuki','Kitise/Kithuki','Makueni'),
++  ('kitundu','Kithungo/Kitundu','Mbooni'),
++  ('makindu','Makindu','Kibwezi West'),
++  ('masongaleni','Masongaleni','Kibwezi East'),
++  ('masumba','Nguu/Masumba','Kibwezi West'),
++  ('mavindini','Mavindini','Makueni'),
++  ('mbitini','Mbitini','Makueni'),
++  ('mbooni','Mbooni','Mbooni'),
++  ('mtito','Mtito Andei','Kibwezi East'),
++  ('mtitoandei','Mtito Andei','Kibwezi East'),
++  ('mukaa','Mukaa','Kilome'),
++  ('mulala','Emali/Mulala','Kibwezi West'),
++  ('muvau','Muvau/Kikumini','Makueni'),
++  ('muvaukikumini','Muvau/Kikumini','Makueni'),
++  ('muvaukikuumini','Muvau/Kikumini','Makueni'),
++  ('nguu','Nguu/Masumba','Kibwezi West'),
++  ('nguumasumba','Nguu/Masumba','Kibwezi West'),
++  ('nguumo','Nguumo','Kibwezi West'),
++  ('nzambani','Ivingoni/Nzambani','Kibwezi East'),
++  ('nzaui','Nzaui/Kilili/Kalamba','Makueni'),
++  ('nzauikililikalamba','Nzaui/Kilili/Kalamba','Makueni'),
++  ('thange','Thange','Kibwezi East'),
++  ('tulimani','Tulimani','Mbooni'),
++  ('ukia','Ukia','Kaiti'),
++  ('waia','Kako/Waia','Mbooni'),
++  ('waiakako','Kako/Waia','Mbooni'),
++  ('wote','Wote','Makueni'),
++  ('wotetown','Wote','Makueni');
++
++CREATE TABLE IF NOT EXISTS public.makueni_ward_backfill_backup_20261024 AS
++SELECT id, ward, sub_county, now() AS backed_up_at FROM public.voter_registry WHERE false;
++CREATE UNIQUE INDEX IF NOT EXISTS makueni_ward_backfill_backup_20261024_id_idx ON public.makueni_ward_backfill_backup_20261024(id);
++ALTER TABLE public.makueni_ward_backfill_backup_20261024 ENABLE ROW LEVEL SECURITY;
++REVOKE ALL ON TABLE public.makueni_ward_backfill_backup_20261024 FROM PUBLIC, anon, authenticated;
++
++-- A. Plan: non-official spellings of a recognisable ward.
++CREATE TEMP TABLE ward_fix_spelling ON COMMIT DROP AS
++SELECT v.id, m.ward AS new_ward, m.constituency AS new_constituency
++FROM public.voter_registry v
++JOIN ward_map m ON m.key = pg_temp.ward_key(v.ward)
++WHERE nullif(btrim(v.ward), '') IS NOT NULL AND v.ward <> m.ward
++  AND (nullif(btrim(v.sub_county), '') IS NULL OR btrim(v.sub_county) = m.constituency
++       OR (btrim(v.sub_county) = 'Kibwezi' AND m.constituency IN ('Kibwezi East', 'Kibwezi West')));
++
++-- B. Plan: blank wards with one unambiguous ward in the contact import.
++CREATE TEMP TABLE ward_fill_blank(id integer PRIMARY KEY, new_ward text, new_constituency text) ON COMMIT DROP;
++DO $$ BEGIN
++  IF to_regclass('public.makueni_contacts_stage_20261021') IS NOT NULL THEN
++    INSERT INTO ward_fill_blank
++    SELECT v.id, min(m.ward), min(m.constituency)
++    FROM public.voter_registry v
++    JOIN public.makueni_contacts_stage_20261021 s ON s.registry_id = v.id
++    CROSS JOIN LATERAL regexp_split_to_table(concat_ws(';', s.ward, s.source_wards), '\s*[;|,]\s*') AS raw(w)
++    JOIN ward_map m ON m.key = pg_temp.ward_key(raw.w)
++    WHERE nullif(btrim(v.ward), '') IS NULL
++    GROUP BY v.id, v.sub_county
++    HAVING count(DISTINCT m.ward) = 1
++       AND (nullif(btrim(v.sub_county), '') IS NULL OR btrim(min(v.sub_county)) = min(m.constituency)
++            OR (btrim(min(v.sub_county)) = 'Kibwezi' AND min(m.constituency) IN ('Kibwezi East', 'Kibwezi West')));
++  END IF;
++END $$;
++
++INSERT INTO public.makueni_ward_backfill_backup_20261024
++SELECT v.id, v.ward, v.sub_county, now() FROM public.voter_registry v
++WHERE v.id IN (SELECT id FROM ward_fix_spelling UNION SELECT id FROM ward_fill_blank)
++ON CONFLICT (id) DO NOTHING;
++
++UPDATE public.voter_registry v SET ward = f.new_ward,
++  sub_county = CASE WHEN nullif(btrim(v.sub_county), '') IS NULL OR btrim(v.sub_county) = 'Kibwezi' THEN f.new_constituency ELSE v.sub_county END,
++  updated_at = now()
++FROM ward_fix_spelling f WHERE f.id = v.id;
++
++UPDATE public.voter_registry v SET ward = f.new_ward,
++  sub_county = CASE WHEN nullif(btrim(v.sub_county), '') IS NULL OR btrim(v.sub_county) = 'Kibwezi' THEN f.new_constituency ELSE v.sub_county END,
++  review_notes = concat_ws(E'\n', nullif(v.review_notes, ''), 'Ward filled 2026-10-24 from contact import source wards (single unambiguous official ward).'),
++  updated_at = now()
++FROM ward_fill_blank f WHERE f.id = v.id;
++
++SELECT 'spelling corrected' AS change, count(*) AS records FROM ward_fix_spelling
++UNION ALL SELECT 'blank ward filled from import', count(*) FROM ward_fill_blank;
++-- Ward totals as they would be after the backfill (still inside the transaction).
++-- Where contacts now sit (rejected records excluded), plus what is still unresolved.
++SELECT coalesce(m.ward, CASE WHEN nullif(btrim(v.ward), '') IS NULL THEN '(no ward)' ELSE '(not an official ward: ' || v.ward || ')' END) AS ward,
++       count(*) AS contacts
++FROM public.voter_registry v
++LEFT JOIN (VALUES ('Tulimani'), ('Mbooni'), ('Kithungo/Kitundu'), ('Kiteta/Kisau'), ('Kako/Waia'), ('Kalawa'), ('Kiima Kiu/Kalanzoni'), ('Mukaa'), ('Kasikeu'), ('Kee'), ('Kilungu'), ('Ilima'), ('Ukia'), ('Nzaui/Kilili/Kalamba'), ('Muvau/Kikumini'), ('Kathonzweni'), ('Mavindini'), ('Kitise/Kithuki'), ('Wote'), ('Mbitini'), ('Makindu'), ('Kikumbulyu North'), ('Kikumbulyu South'), ('Nguumo'), ('Nguu/Masumba'), ('Emali/Mulala'), ('Masongaleni'), ('Mtito Andei'), ('Thange'), ('Ivingoni/Nzambani')) AS m(ward) ON m.ward = v.ward
++WHERE v.status <> 'rejected'
++GROUP BY 1 ORDER BY 2 DESC;
++
++ROLLBACK;
+diff --git a/supabase/ward-backfill-20261024/01_ward_backfill.sql b/supabase/ward-backfill-20261024/01_ward_backfill.sql
+new file mode 100644
+index 0000000..3dcb972
+--- /dev/null
++++ b/supabase/ward-backfill-20261024/01_ward_backfill.sql
+@@ -0,0 +1,138 @@
++-- Makueni ward backfill · 2026-10-24
++-- Run in the Makueni Supabase SQL Editor (the database used by Render's DATABASE_URL).
++-- Safe to re-run. Changes ONLY the ward/sub_county columns of public.voter_registry:
++--   A. Rewrites ward spellings that are not the official form ("KEE WARD", "Waia-Kako",
++--      "kiima kiu kalanzoni") to the official ward name.
++--   B. Fills a blank ward from the 21 Oct contact import when every ward listed for that
++--      contact in the import points to the same official ward, and it agrees with any
++--      constituency on the record.
++-- Every row it changes is copied first to public.makueni_ward_backfill_backup_20261024.
++-- Contacts with conflicting or unrecognised wards are left blank and listed at the end.
++BEGIN;
++SET LOCAL lock_timeout = '5s';
++SET LOCAL statement_timeout = '120s';
++
++CREATE OR REPLACE FUNCTION pg_temp.ward_key(raw text) RETURNS text LANGUAGE sql IMMUTABLE AS $$
++  SELECT regexp_replace(regexp_replace(lower(coalesce(raw, '')), '\mward\M', '', 'g'), '[^a-z]', '', 'g');
++$$;
++
++CREATE TEMP TABLE ward_map(key text PRIMARY KEY, ward text NOT NULL, constituency text NOT NULL) ON COMMIT DROP;
++INSERT INTO ward_map VALUES
++  ('emali','Emali/Mulala','Kibwezi West'),
++  ('emalimulala','Emali/Mulala','Kibwezi West'),
++  ('ilima','Ilima','Kaiti'),
++  ('ivingoni','Ivingoni/Nzambani','Kibwezi East'),
++  ('ivingoninzambani','Ivingoni/Nzambani','Kibwezi East'),
++  ('kako','Kako/Waia','Mbooni'),
++  ('kakowaia','Kako/Waia','Mbooni'),
++  ('kalamba','Nzaui/Kilili/Kalamba','Makueni'),
++  ('kalanzoni','Kiima Kiu/Kalanzoni','Kilome'),
++  ('kalawa','Kalawa','Mbooni'),
++  ('kasikeu','Kasikeu','Kilome'),
++  ('kathonzweni','Kathonzweni','Makueni'),
++  ('kee','Kee','Kaiti'),
++  ('kiimakiu','Kiima Kiu/Kalanzoni','Kilome'),
++  ('kiimakiukalanzoni','Kiima Kiu/Kalanzoni','Kilome'),
++  ('kikumbulyunorth','Kikumbulyu North','Kibwezi West'),
++  ('kikumbulyusouth','Kikumbulyu South','Kibwezi West'),
++  ('kikumini','Muvau/Kikumini','Makueni'),
++  ('kikuumini','Muvau/Kikumini','Makueni'),
++  ('kilili','Nzaui/Kilili/Kalamba','Makueni'),
++  ('kilungu','Kilungu','Kaiti'),
++  ('kisau','Kiteta/Kisau','Mbooni'),
++  ('kisaukiteta','Kiteta/Kisau','Mbooni'),
++  ('kiteta','Kiteta/Kisau','Mbooni'),
++  ('kitetakisau','Kiteta/Kisau','Mbooni'),
++  ('kithuki','Kitise/Kithuki','Makueni'),
++  ('kithungo','Kithungo/Kitundu','Mbooni'),
++  ('kithungokitundu','Kithungo/Kitundu','Mbooni'),
++  ('kitise','Kitise/Kithuki','Makueni'),
++  ('kitisekithuki','Kitise/Kithuki','Makueni'),
++  ('kitundu','Kithungo/Kitundu','Mbooni'),
++  ('makindu','Makindu','Kibwezi West'),
++  ('masongaleni','Masongaleni','Kibwezi East'),
++  ('masumba','Nguu/Masumba','Kibwezi West'),
++  ('mavindini','Mavindini','Makueni'),
++  ('mbitini','Mbitini','Makueni'),
++  ('mbooni','Mbooni','Mbooni'),
++  ('mtito','Mtito Andei','Kibwezi East'),
++  ('mtitoandei','Mtito Andei','Kibwezi East'),
++  ('mukaa','Mukaa','Kilome'),
++  ('mulala','Emali/Mulala','Kibwezi West'),
++  ('muvau','Muvau/Kikumini','Makueni'),
++  ('muvaukikumini','Muvau/Kikumini','Makueni'),
++  ('muvaukikuumini','Muvau/Kikumini','Makueni'),
++  ('nguu','Nguu/Masumba','Kibwezi West'),
++  ('nguumasumba','Nguu/Masumba','Kibwezi West'),
++  ('nguumo','Nguumo','Kibwezi West'),
++  ('nzambani','Ivingoni/Nzambani','Kibwezi East'),
++  ('nzaui','Nzaui/Kilili/Kalamba','Makueni'),
++  ('nzauikililikalamba','Nzaui/Kilili/Kalamba','Makueni'),
++  ('thange','Thange','Kibwezi East'),
++  ('tulimani','Tulimani','Mbooni'),
++  ('ukia','Ukia','Kaiti'),
++  ('waia','Kako/Waia','Mbooni'),
++  ('waiakako','Kako/Waia','Mbooni'),
++  ('wote','Wote','Makueni'),
++  ('wotetown','Wote','Makueni');
++
++CREATE TABLE IF NOT EXISTS public.makueni_ward_backfill_backup_20261024 AS
++SELECT id, ward, sub_county, now() AS backed_up_at FROM public.voter_registry WHERE false;
++CREATE UNIQUE INDEX IF NOT EXISTS makueni_ward_backfill_backup_20261024_id_idx ON public.makueni_ward_backfill_backup_20261024(id);
++ALTER TABLE public.makueni_ward_backfill_backup_20261024 ENABLE ROW LEVEL SECURITY;
++REVOKE ALL ON TABLE public.makueni_ward_backfill_backup_20261024 FROM PUBLIC, anon, authenticated;
++
++-- A. Plan: non-official spellings of a recognisable ward.
++CREATE TEMP TABLE ward_fix_spelling ON COMMIT DROP AS
++SELECT v.id, m.ward AS new_ward, m.constituency AS new_constituency
++FROM public.voter_registry v
++JOIN ward_map m ON m.key = pg_temp.ward_key(v.ward)
++WHERE nullif(btrim(v.ward), '') IS NOT NULL AND v.ward <> m.ward
++  AND (nullif(btrim(v.sub_county), '') IS NULL OR btrim(v.sub_county) = m.constituency
++       OR (btrim(v.sub_county) = 'Kibwezi' AND m.constituency IN ('Kibwezi East', 'Kibwezi West')));
++
++-- B. Plan: blank wards with one unambiguous ward in the contact import.
++CREATE TEMP TABLE ward_fill_blank(id integer PRIMARY KEY, new_ward text, new_constituency text) ON COMMIT DROP;
++DO $$ BEGIN
++  IF to_regclass('public.makueni_contacts_stage_20261021') IS NOT NULL THEN
++    INSERT INTO ward_fill_blank
++    SELECT v.id, min(m.ward), min(m.constituency)
++    FROM public.voter_registry v
++    JOIN public.makueni_contacts_stage_20261021 s ON s.registry_id = v.id
++    CROSS JOIN LATERAL regexp_split_to_table(concat_ws(';', s.ward, s.source_wards), '\s*[;|,]\s*') AS raw(w)
++    JOIN ward_map m ON m.key = pg_temp.ward_key(raw.w)
++    WHERE nullif(btrim(v.ward), '') IS NULL
++    GROUP BY v.id, v.sub_county
++    HAVING count(DISTINCT m.ward) = 1
++       AND (nullif(btrim(v.sub_county), '') IS NULL OR btrim(min(v.sub_county)) = min(m.constituency)
++            OR (btrim(min(v.sub_county)) = 'Kibwezi' AND min(m.constituency) IN ('Kibwezi East', 'Kibwezi West')));
++  END IF;
++END $$;
++
++INSERT INTO public.makueni_ward_backfill_backup_20261024
++SELECT v.id, v.ward, v.sub_county, now() FROM public.voter_registry v
++WHERE v.id IN (SELECT id FROM ward_fix_spelling UNION SELECT id FROM ward_fill_blank)
++ON CONFLICT (id) DO NOTHING;
++
++UPDATE public.voter_registry v SET ward = f.new_ward,
++  sub_county = CASE WHEN nullif(btrim(v.sub_county), '') IS NULL OR btrim(v.sub_county) = 'Kibwezi' THEN f.new_constituency ELSE v.sub_county END,
++  updated_at = now()
++FROM ward_fix_spelling f WHERE f.id = v.id;
++
++UPDATE public.voter_registry v SET ward = f.new_ward,
++  sub_county = CASE WHEN nullif(btrim(v.sub_county), '') IS NULL OR btrim(v.sub_county) = 'Kibwezi' THEN f.new_constituency ELSE v.sub_county END,
++  review_notes = concat_ws(E'\n', nullif(v.review_notes, ''), 'Ward filled 2026-10-24 from contact import source wards (single unambiguous official ward).'),
++  updated_at = now()
++FROM ward_fill_blank f WHERE f.id = v.id;
++
++SELECT 'spelling corrected' AS change, count(*) AS records FROM ward_fix_spelling
++UNION ALL SELECT 'blank ward filled from import', count(*) FROM ward_fill_blank;
++COMMIT;
++
++-- Where contacts now sit (rejected records excluded), plus what is still unresolved.
++SELECT coalesce(m.ward, CASE WHEN nullif(btrim(v.ward), '') IS NULL THEN '(no ward)' ELSE '(not an official ward: ' || v.ward || ')' END) AS ward,
++       count(*) AS contacts
++FROM public.voter_registry v
++LEFT JOIN (VALUES ('Tulimani'), ('Mbooni'), ('Kithungo/Kitundu'), ('Kiteta/Kisau'), ('Kako/Waia'), ('Kalawa'), ('Kiima Kiu/Kalanzoni'), ('Mukaa'), ('Kasikeu'), ('Kee'), ('Kilungu'), ('Ilima'), ('Ukia'), ('Nzaui/Kilili/Kalamba'), ('Muvau/Kikumini'), ('Kathonzweni'), ('Mavindini'), ('Kitise/Kithuki'), ('Wote'), ('Mbitini'), ('Makindu'), ('Kikumbulyu North'), ('Kikumbulyu South'), ('Nguumo'), ('Nguu/Masumba'), ('Emali/Mulala'), ('Masongaleni'), ('Mtito Andei'), ('Thange'), ('Ivingoni/Nzambani')) AS m(ward) ON m.ward = v.ward
++WHERE v.status <> 'rejected'
++GROUP BY 1 ORDER BY 2 DESC;
+diff --git a/supabase/ward-backfill-20261024/README.txt b/supabase/ward-backfill-20261024/README.txt
+new file mode 100644
+index 0000000..497bc44
+--- /dev/null
++++ b/supabase/ward-backfill-20261024/README.txt
+@@ -0,0 +1,17 @@
++MAKUENI WARD BACKFILL (24 Oct 2026)
++
++Why: the dashboard, segments and Constituent Database only count a contact in a
++ward when its ward is one of the 30 official names (e.g. "Kako/Waia"). Contacts
++from the 21 Oct import were left with no ward whenever the import flagged any
++issue, and spellings like "KEE WARD" or "Waia-Kako" were not recognised.
++
++1. In Supabase, open the Makueni project used by Render's DATABASE_URL.
++2. SQL Editor: paste 00_preview_ward_backfill.sql and Run. It changes nothing.
++   Read the two result tables: how many records would change, and the ward
++   totals afterwards.
++3. If the numbers look right, paste 01_ward_backfill.sql and Run once.
++4. Reload the dashboard. Contacts still under "(no ward)" or "(not an official
++   ward: ...)" need a person to review them in the Constituent Database.
++
++Undo: every changed row's previous ward/sub_county is in
++public.makueni_ward_backfill_backup_20261024 (columns id, ward, sub_county).
